@@ -10,6 +10,7 @@
 #include <QPushButton>
 #include "../menu/Menu.h"
 #include <QSettings>
+#include <QTranslator>
 
 class MainWidget : public QWidget {
 	Q_OBJECT;
@@ -40,10 +41,14 @@ private: // 布局
 	QHBoxLayout *topLayout;
 private: // 菜单
 	Menu *toolsMenu;
-private: // 程序配置
+private: // 程序配置-读写
 	QSettings *progressSetting;
-	const QString transparentForMouseEvents = "somponentStyle/TransparentForMouseEvents";
-	const QString downIniTypes = "downIni/Types";
+	QTranslator *translator;
+private: // 程序配置-名称
+	const QString transparentForMouseEvents = tr( u8"somponentStyle/TransparentForMouseEvents" );
+	const QString downIniTypes = tr( u8"downIni/Types" );
+private: // 程序配置-变量
+	QStringList downNovelTypes;
 };
 
 #endif // MAINWIDGET_H_H_HEAD__FILE__
