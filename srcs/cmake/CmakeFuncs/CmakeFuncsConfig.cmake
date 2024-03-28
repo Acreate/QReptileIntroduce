@@ -11,7 +11,6 @@ endfunction()
 # ## 文件名不区分大小写
 function( get_path_cmake_dir_path out_list check_path_dir file_name )
 	set( for_each_list_dirs ${${out_list}} )
-
 	if( IS_DIRECTORY "${check_path_dir}" )
 		# # 获取所有目录
 		file( GLOB child_dir DIRECTORY "${check_path_dir}" "${check_path_dir}/*" )
@@ -25,38 +24,52 @@ function( get_path_cmake_dir_path out_list check_path_dir file_name )
 		endforeach()
 
 		set( ${out_list} ${for_each_list_dirs} PARENT_SCOPE )
-
-		# ## 获取当前目录的文件
-		# FILE( GLOB child_dir_in_files RELATIVE "${check_path_dir}" "${check_path_dir}/*")
-
-		# foreach(current_path_file ${child_dir_in_files})
-
-		# set(current_path ${check_path_dir}/${current_path_file})
-		# if(IS_DIRECTORY ${current_path})
-		# get_path_cmake_dir_path(for_each_list_dirs ${current_path} file_name)
-		# else()
-		# ## 如果是文件，则开始比较
-		# string(TOUPPER ${current_path_file} current_path_file)
-		# message()
-		# if(current_path_file STREQUAL ${file_name})
-		# list(APPEND for_each_list_dirs ${check_path_dir} )
-		# endif()
-		# endif()
-		# endforeach()
-
-		# FILE(GLOB child_dir RELATIVE ${check_path_dir} ${check_path_dir}/*)
-		# foreach(dir_path ${child_dir})
-		# set(current_path ${check_path_dir}/${dir_path})
-		# if(IS_DIRECTORY ${current_path})
-		# FILE(GLOB child_dir_in_files RELATIVE ${current_path} ${current_path}/*)
-		# foreach(current_path_file ${child_dir_in_files})
-		# string(TOUPPER ${current_path_file} current_path_file)
-		# if(IS_DIRECTORY ${check_path_dir}/${current_path_file})
-		# elseif(current_path_file STREQUAL ${file_name})
-		# list(APPEND for_each_list_dirs ${current_path} )
-		# endif()
-		# endforeach()
-		# endif()
-		# endforeach()
 	endif()
+endfunction()
+
+
+## 拷贝目录到指定路径
+function(copy_dir_path copy_dir_target paste_dir_target)
+	execute_process(
+		COMMAND ${CMAKE_COMMAND} -E copy_directory "${copy_dir_target}/" "${paste_dir_target}"
+	)
+endfunction()
+
+## 查找指定路径的 *.cpp *.c *.hpp *.h 文件
+## check_path : 路径
+## out_file_list : 返回值
+function(get_path_cxx_and_c_sources check_path out_file_list)
+	set( for_each_list_dirs ${${out_file_list}} )
+	FILE( GLOB_RECURSE file_get_names 
+		"${check_path}/*.cpp"
+		"${check_path}/*.c"
+		"${check_path}/*.hpp"
+		"${check_path}/*.h"
+		)
+
+	foreach( get_file_name ${file_get_names} )
+		FILE( REAL_PATH   "${get_file_name}" out_value_path )
+		list(APPEND for_each_file_list ${out_value_path})
+	endforeach()
+	set(${out_file_list} ${for_each_file_list} PARENT_SCOPE)
+endfunction()
+
+### 查找匹配拓展名的文件
+### check_path : 检查路径
+### find_expansion : 拓展名列表
+### out_file_list : 返回输出
+function( get_path_sources check_path find_expansion out_file_list )
+
+	set( for_each_list_dirs ${${out_file_list}} )
+
+	foreach( types_name ${find_expansion} )
+		# message( "检测源码路径 : ${check_path}/${types_name}" )
+		FILE( GLOB_RECURSE file_get_names "${check_path}/*.${types_name}" )
+
+		foreach( get_file_name ${file_get_names} )
+			# message( "发现文件 : ${get_file_name}" )
+			list(APPEND for_each_file_list ${get_file_name})
+		endforeach()
+	endforeach()
+	set(${out_file_list} ${for_each_file_list} PARENT_SCOPE)
 endfunction()

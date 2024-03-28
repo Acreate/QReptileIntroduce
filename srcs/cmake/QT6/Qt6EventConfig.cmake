@@ -32,3 +32,42 @@ SET( QT_QMAKE_EXECUTABLE "${DEPLOY_QT_HOME}/bin/qmake.exe" )
 SET( CMAKE_AUTOUIC ON )
 SET( CMAKE_AUTOMOC ON )
 SET( CMAKE_AUTORCC ON )
+
+
+function(call_qt_deploy PROJECT_NAME )
+	target_link_libraries(
+		${PROJECT_NAME}
+		PRIVATE
+		${ARGN}
+	)
+
+	set_target_properties( ${PROJECT_NAME} PROPERTIES
+		MACOSX_BUNDLE_GUI_IDENTIFIER my.example.com
+		MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
+		MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
+		MACOSX_BUNDLE TRUE
+		WIN32_EXECUTABLE TRUE
+	)
+
+	if( APPLE )
+		set( executable_path "$<TARGET_FILE_NAME:${PROJECT_NAME}>.app" )
+	else()
+		set( executable_path "\${QT_DEPLOY_BIN_DIR}/$<TARGET_FILE_NAME:${PROJECT_NAME}>" )
+	endif()
+
+	set( deploy_script "${CMAKE_HOME_DIRECTORY}/builder/install_cmake_file/deploy_${PROJECT_NAME}.cmake" )
+
+	file( GENERATE OUTPUT ${deploy_script} CONTENT "
+	message(\"=================\")
+	message(\"============	> 执行 : ${executable_path}\")
+	message(\"=================\")
+	include(\"${QT_DEPLOY_SUPPORT}\")
+	qt_deploy_runtime_dependencies(
+	    EXECUTABLE \"${executable_path}\"
+	    PLUGINS_DIR \${QT_DEPLOY_BIN_DIR}
+	)
+	" )
+	install( TARGETS ${PROJECT_NAME} DESTINATION "${CMAKE_INSTALL_PREFIX}" )
+	install( SCRIPT ${deploy_script} )
+endfunction()
+
