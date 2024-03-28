@@ -7,7 +7,15 @@ message( "============ ${CURRENT_FOLDER}" )
 # 如果发生错误，请重新配置 qt 6 环境，该文件位于根目录的 /cmake/QT6/Qt6EventConfig.cmake
 find_package( Qt6Event REQUIRED PATHS "${CMAKE_HOME_DIRECTORY}/srcs/cmake/QT6/" )
 
-FIND_PACKAGE( Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Widgets Gui LinguistTools Network openglwidgets )
+FIND_PACKAGE( Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS
+	Core
+	Widgets
+	Gui
+	LinguistTools
+	Network
+	openglwidgets
+	Core5Compat
+)
 
 qt_standard_project_setup()
 
@@ -48,4 +56,7 @@ call_qt_deploy( ${PROJECT_NAME}
 	Qt${QT_VERSION_MAJOR}::Core
 	Qt${QT_VERSION_MAJOR}::Network
 	Qt${QT_VERSION_MAJOR}::OpenGLWidgets
+	Qt${QT_VERSION_MAJOR}::Core5Compat
 )
+
+copy_dir_path( ${CMAKE_CURRENT_LIST_DIR}/res ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/ )

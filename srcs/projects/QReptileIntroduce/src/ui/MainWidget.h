@@ -8,6 +8,7 @@
 #include <qtextedit.h>
 #include <QLineEdit>
 #include <QPushButton>
+#include "../menu/Menu.h"
 
 class MainWidget : public QWidget {
 	Q_OBJECT;
@@ -32,10 +33,12 @@ private: // 计算变量
 private: // 组件
 	QTextEdit *textComponent;
 	QLineEdit *textLine;
-	QPushButton* converTransparentForMouseEventsBtn;
+	QPushButton *converTransparentForMouseEventsBtn;
 private: // 布局
 	QVBoxLayout *mainLayout;
 	QHBoxLayout *topLayout;
+private:
+	Menu *toolsMenu;
 };
 
 #endif // MAINWIDGET_H_H_HEAD__FILE__
