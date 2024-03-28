@@ -56,21 +56,22 @@ else()
 endif()
 
 set(translation_file_list    
-	"${PROJECT_NAME}_en.ts"
-    "${PROJECT_NAME}_zh_CN.ts"
+	"${CMAKE_CURRENT_LIST_DIR}/translations/${PROJECT_NAME}_en.ts"
+    "${CMAKE_CURRENT_LIST_DIR}/translations/${PROJECT_NAME}_zh_CN.ts"
 )
 
-# D:\userCodes\qt\QReptileIntroduce\srcs\projects\QReptileIntroduce\res\ini\progress\ini
-# D:/userCodes/qt/QReptileIntroduce/srcs/projects/QReptileIntroduce
-set_source_files_properties(${translation_file_list}
-    PROPERTIES OUTPUT_LOCATION "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/ini/progress/translations/"
-)
+
+# set_source_files_properties(${translation_file_list}
+    # PROPERTIES OUTPUT_LOCATION "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/ini/progress/translations/"
+# )
 
 qt_add_translations(
     ${PROJECT_NAME}
     TS_FILES
     ${translation_file_list}
+	QM_FILES_OUTPUT_VARIABLE qm_files
 )
+install(FILES ${qm_files} DESTINATION "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/ini/progress/translations/")
 
 call_qt_deploy( ${PROJECT_NAME}
 	Qt${QT_VERSION_MAJOR}::Widgets

@@ -8,7 +8,6 @@
 
 MainWidget::MainWidget( QWidget *parent, Qt::WindowFlags fg ) : QWidget( parent, fg ), currentFont( "Arial", 10 ), currentFontMetrics( currentFont ), drawColor( 255, 0, 0 ) {
 
-
 	/// 配置 路径
 	QString progressIniPath = qApp->applicationDirPath( ).append( QDir::separator( ) ).append( tr( u8"ini" ) ).append( QDir::separator( ) ).append( tr( u8"progress" ) ).append( QDir::separator( ) );
 	QString progressIniFileName = progressIniPath;
@@ -25,12 +24,10 @@ MainWidget::MainWidget( QWidget *parent, Qt::WindowFlags fg ) : QWidget( parent,
 		qDebug( ) << tr( u8"load error" );
 	}
 
-	
 	progressSetting = new QSettings( progressIniFileName, QSettings::IniFormat ); // 使用路径方式存储
 
-	
-	setWindowTitle( tr( u8" read novels" ) );
-	
+	setWindowTitle( tr( u8"read novels" ) );
+
 	setMouseTracking( true );
 
 	auto oldLayout = this->layout( );
