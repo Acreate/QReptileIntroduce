@@ -62,15 +62,14 @@ set_target_properties( ${PROJECT_NAME} PROPERTIES
 	WIN32_EXECUTABLE TRUE
 )
 
-set( MY_APP ${PROJECT_NAME} )
 
 if( APPLE )
-	set( executable_path "$<TARGET_FILE_NAME:${MY_APP}>.app" )
+	set( executable_path "$<TARGET_FILE_NAME:${PROJECT_NAME}>.app" )
 else()
-	set( executable_path "\${QT_DEPLOY_BIN_DIR}/$<TARGET_FILE_NAME:${MY_APP}>" )
+	set( executable_path "\${QT_DEPLOY_BIN_DIR}/$<TARGET_FILE_NAME:${PROJECT_NAME}>" )
 endif()
 
-set( deploy_script "${CMAKE_HOME_DIRECTORY}/builder/install_cmake_file/deploy_${MY_APP}.cmake" )
+set( deploy_script "${CMAKE_HOME_DIRECTORY}/builder/install_cmake_file/deploy_${PROJECT_NAME}.cmake" )
 
 file( GENERATE OUTPUT ${deploy_script} CONTENT "
 message(\"=================\")
@@ -82,5 +81,5 @@ qt_deploy_runtime_dependencies(
     PLUGINS_DIR \${QT_DEPLOY_BIN_DIR}
 )
 " )
-install( TARGETS ${MY_APP} DESTINATION "${CMAKE_INSTALL_PREFIX}" )
+install( TARGETS ${PROJECT_NAME} DESTINATION "${CMAKE_INSTALL_PREFIX}" )
 install( SCRIPT ${deploy_script} )
