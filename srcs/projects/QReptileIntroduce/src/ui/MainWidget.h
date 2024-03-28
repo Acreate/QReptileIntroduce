@@ -9,6 +9,7 @@
 #include <QLineEdit>
 #include <QPushButton>
 #include "../menu/Menu.h"
+#include <QSettings>
 
 class MainWidget : public QWidget {
 	Q_OBJECT;
@@ -37,8 +38,12 @@ private: // 组件
 private: // 布局
 	QVBoxLayout *mainLayout;
 	QHBoxLayout *topLayout;
-private:
+private: // 菜单
 	Menu *toolsMenu;
+private: // 程序配置
+	QSettings *progressSetting;
+	const QString transparentForMouseEvents = "somponentStyle/TransparentForMouseEvents";
+	const QString downIniTypes = "downIni/Types";
 };
 
 #endif // MAINWIDGET_H_H_HEAD__FILE__
