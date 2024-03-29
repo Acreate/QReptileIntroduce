@@ -58,7 +58,8 @@ private: // 程序配置-读写
 private: // 程序配置-名称
 	const QString transparentForMouseEvents = tr( u8"somponentStyle/TransparentForMouseEvents" );
 	const QString downIniTypes = tr( u8"downIni/Types" );
-	const QString selectWorkPath = tr( u8"work/Path" );
+	const QString selectReadFileWorkPath = tr( u8"work/Read/Path" );
+	const QString selectWriteFileWorkPath = tr( u8"work/Write/Path" );
 private: // 程序配置-变量
 	QStringList downNovelTypes;
 private: // 定时调用

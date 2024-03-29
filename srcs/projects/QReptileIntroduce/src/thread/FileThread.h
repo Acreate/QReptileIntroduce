@@ -17,7 +17,7 @@ private:
 	QIODeviceBase::OpenMode openMode;
 	QIODeviceBase::OpenMode runOpenMode;
 public:
-	FileThread( const QString &filePath, QIODeviceBase::OpenMode openMode, QSharedPointer< FileThreadResult > fileThreadResult );
+	FileThread( const QString &filePath, QIODeviceBase::OpenMode openMode, const QSharedPointer< FileThreadResult > &fileThreadResult );
 public:
 	QIODeviceBase::OpenMode resetOpenMode( const QIODeviceBase::OpenMode &newOpenMode );
 	QSharedPointer< FileThreadResult > readFile( );
@@ -27,6 +27,19 @@ protected:
 public:
 	QSharedPointer< FileThreadResult > getFileThreadResult( ) {
 		return fileThreadResult;
+	}
+	QIODeviceBase::OpenMode getOpenMode( ) const {
+		return openMode;
+	}
+	void setOpenMode( const QIODeviceBase::OpenMode &newOpenMode ) {
+		openMode = newOpenMode;
+	}
+
+	QString getFileName( ) const {
+		return file.fileName( );
+	}
+	void setFilePath( const QString &newPath ) {
+		file.setFileName( newPath );
 	}
 };
 

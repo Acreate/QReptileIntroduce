@@ -12,7 +12,7 @@ void DateTimeThread::run( ) {
 	while( !this->isInterruptionRequested( ) ) {
 		dateTimeStrFormatMutex->lock( );
 		QDateTime currentDateTime = QDateTime::currentDateTime( );
-		currentDateTimeStrFormat = currentDateTime.toString( tr( u8"yyyy年dd月MM日 hh:mm:ss" ) );
+		currentDateTimeStrFormat = currentDateTime.toString( tr( u8"yyyy Year dd Month MM Day hh:mm:ss" ) );
 		auto resultStrTime = currentDateTimeStrFormat;
 		dateTimeStrFormatMutex->unlock( );
 		emit updateDateTimeStr( resultStrTime );

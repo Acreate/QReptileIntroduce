@@ -1,8 +1,12 @@
 ﻿#include "FileThread.h"
 #include "FileThreadResult.h"
-FileThread::FileThread( const QString &filePath, QIODeviceBase::OpenMode openMode, QSharedPointer< FileThreadResult > fileThreadResult ): file( filePath ), openMode( openMode ),
-	fileThreadResult( fileThreadResult ) {
-	runOpenMode = QIODeviceBase::NotOpen;
+FileThread::FileThread( const QString &filePath,
+	QIODeviceBase::OpenMode openMode,
+	const QSharedPointer< FileThreadResult > &fileThreadResult ):
+file( filePath ),
+fileThreadResult( fileThreadResult ),
+openMode( openMode ) {
+	runOpenMode = openMode;
 }
 QIODeviceBase::OpenMode FileThread::resetOpenMode( const QIODeviceBase::OpenMode &newOpenMode ) {
 	auto oldOpenmo = openMode;
@@ -14,19 +18,22 @@ QSharedPointer< FileThreadResult > FileThread::readFile( ) {
 	if( !file.exists( ) )
 		return nullptr;
 	if( runOpenMode & openMode && file.open( openMode ) ) {
-		emit start( );
 		return fileThreadResult;
 	}
+	emit fileThreadResult->error( -1 );
 	return nullptr;
 }
 QSharedPointer< FileThreadResult > FileThread::writeFile( ) {
 	runOpenMode = QIODeviceBase::WriteOnly;
-	if( !file.exists( ) )
-		return nullptr;
-	if( runOpenMode & openMode && file.open( openMode ) ) {
-		emit start( );
+	if( QFileInfo::exists( file.fileName( ) ) )
+		openMode = openMode | QIODeviceBase::ExistingOnly | QIODeviceBase::Truncate;
+	else
+		openMode = openMode | QIODeviceBase::NewOnly;
+	QIODeviceBase::OpenMode flags = runOpenMode & openMode;
+	if( flags && file.open( openMode ) ) {
 		return fileThreadResult;
 	}
+	emit fileThreadResult->error( -2 );
 	return nullptr;
 }
 void FileThread::run( ) {
@@ -60,7 +67,6 @@ void FileThread::run( ) {
 		qDebug( ) << "FileThread::run : QIODeviceBase::WriteOnly( " << file.fileName( ) << " )";
 		fileThreadResult->setFinish( false );
 		constexpr qsizetype readBuffSize = 1024;
-		qsizetype readSize = 0;
 		auto buff = fileThreadResult->data.data( );
 		auto writeMaxSize = fileThreadResult->data.length( );
 		qint64 writeIndex = 0;
@@ -68,14 +74,17 @@ void FileThread::run( ) {
 		do {
 			writeCount += file.write( buff + writeIndex, readBuffSize );
 			writeIndex += readBuffSize;
-			if( writeIndex >= writeMaxSize )
-				writeCount += file.write( buff + writeIndex, readBuffSize );
 			if( writeCount >= writeMaxSize || isInterruptionRequested( ) )
 				break;
+			if( writeIndex + readBuffSize >= writeMaxSize ) {
+				writeCount += file.write( buff + writeIndex, writeMaxSize - writeIndex );
+				break;
+			}
+
 		} while( true );
 
 		file.close( );
-		if( writeCount < writeMaxSize ) {
+		if( writeCount != writeMaxSize ) {
 			// 被请求中断
 			emit fileThreadResult->interruptionRequested( );
 			return;

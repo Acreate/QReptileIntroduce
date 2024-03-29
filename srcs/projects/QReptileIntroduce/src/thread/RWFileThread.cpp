@@ -23,12 +23,14 @@ QSharedPointer< FileThreadResult > RWFileThread::readFile( ) {
 	if( !file->exists( ) )
 		return QSharedPointer< FileThreadResult >( nullptr );
 	qDebug( ) << "RWFileThread::readFile : QIODeviceBase::ReadOnly( " << file->absoluteFilePath( ) << " )";
-	threadFileThreadResult = QSharedPointer< FileThreadResult >( new FileThreadResult( this ) );
-	if( !currentThread )
+	if( !currentThread ) {
+		threadFileThreadResult = QSharedPointer< FileThreadResult >( new FileThreadResult( this ) );
 		currentThread = new FileThread( file->absoluteFilePath( ), QIODeviceBase::ReadOnly, threadFileThreadResult );
-	else {
+	} else {
 		while( !currentThread->isFinished( ) )
 			currentThread->usleep( 50 );
+		currentThread->setFilePath( file->absoluteFilePath( ) );
+		currentThread->setOpenMode( QIODeviceBase::ReadOnly );
 	}
 	return currentThread->readFile( );
 }
@@ -36,12 +38,28 @@ QSharedPointer< FileThreadResult > RWFileThread::writeFile( const QString &conte
 	if( !file->makeAbsolute( ) )
 		return QSharedPointer< FileThreadResult >( nullptr );
 	qDebug( ) << "RWFileThread::writeFile : QIODeviceBase::ReadOnly( " << file->absoluteFilePath( ) << " )";
-	threadFileThreadResult = QSharedPointer< FileThreadResult >( new FileThreadResult( this, content ) );
-	if( !currentThread )
+	if( !currentThread ) {
+		threadFileThreadResult = QSharedPointer< FileThreadResult >( new FileThreadResult( this, content ) );
 		currentThread = new FileThread( file->absoluteFilePath( ), QIODeviceBase::WriteOnly, threadFileThreadResult );
-	else {
+	} else {
 		while( !currentThread->isFinished( ) )
 			currentThread->usleep( 50 );
+		currentThread->setFilePath( file->absoluteFilePath( ) );
+		currentThread->setOpenMode( QIODeviceBase::WriteOnly );
+	}
+	return currentThread->writeFile( );
+}
+QSharedPointer< FileThreadResult > RWFileThread::writeFile( const QByteArray &byteData ) {
+	qDebug( ) << "RWFileThread::writeFile : QIODeviceBase::WriteOnly( " << file->absoluteFilePath( ) << " )";
+
+	if( !currentThread ) {
+		threadFileThreadResult = QSharedPointer< FileThreadResult >( new FileThreadResult( this, byteData ) );
+		currentThread = new FileThread( file->absoluteFilePath( ), QIODeviceBase::WriteOnly, threadFileThreadResult );
+	} else {
+		while( !currentThread->isFinished( ) )
+			currentThread->usleep( 50 );
+		currentThread->setFilePath( file->absoluteFilePath( ) );
+		currentThread->setOpenMode( QIODeviceBase::WriteOnly );
 	}
 	return currentThread->writeFile( );
 }

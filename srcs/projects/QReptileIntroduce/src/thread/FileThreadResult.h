@@ -49,6 +49,7 @@ public:
 Q_SIGNALS:
 	void finish( );
 	void interruptionRequested( );
+	void error(int code);
 };
 
 #endif // FILETHREADRESULT_H_H_HEAD__FILE__

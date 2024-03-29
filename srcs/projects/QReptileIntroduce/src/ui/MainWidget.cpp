@@ -79,9 +79,7 @@ MainWidget::MainWidget( QWidget *parent, Qt::WindowFlags fg ) : QWidget( parent,
 	////////////// 菜单
 
 	toolsMenu = new Menu( this );
-	connect( toolsMenu, &QMenu::aboutToHide, [=]( ) {
 
-	} );
 	connect( toolsMenu, &QMenu::aboutToShow, [=]( ) {
 		showCount = 1;
 	} );
@@ -117,11 +115,11 @@ MainWidget::MainWidget( QWidget *parent, Qt::WindowFlags fg ) : QWidget( parent,
 	readFileAction->setText( tr( u8"readFile" ) );
 	toolsMenu->addAction( readFileAction );
 	connect( readFileAction, &QAction::triggered, [this] {
-		QString dirPath = progressSetting->value( selectWorkPath, qApp->applicationDirPath( ) ).toString( );
+		QString dirPath = progressSetting->value( selectReadFileWorkPath, qApp->applicationDirPath( ) ).toString( );
 		QString fileName = QFileDialog::getOpenFileName( nullptr, tr( u8"select file read to text editor" ), dirPath, u8"*(*)" );
 		if( fileName.isEmpty( ) )
 			return;
-		progressSetting->setValue( selectWorkPath, fileName );
+		progressSetting->setValue( selectReadFileWorkPath, fileName );
 		progressSetting->sync( );
 		fileThread->setFilePath( fileName );
 		fileThreadResult = fileThread->readFile( );
@@ -129,6 +127,22 @@ MainWidget::MainWidget( QWidget *parent, Qt::WindowFlags fg ) : QWidget( parent,
 		fileThread->start( );
 	} );
 
+	Action *writeAction = new Action;
+	writeAction->setText( tr( u8"writeFile" ) );
+	toolsMenu->addAction( writeAction );
+	connect( writeAction, &QAction::triggered, [this] {
+		QString dirPath = progressSetting->value( selectWriteFileWorkPath, qApp->applicationDirPath( ) ).toString( );
+		QString fileName = QFileDialog::getSaveFileName( nullptr, tr( u8"select file write to text editor" ), dirPath, u8"*(*)" );
+		progressSetting->setValue( selectWriteFileWorkPath, fileName );
+		progressSetting->sync( );
+		fileThread->setFilePath( fileName );
+		fileThreadResult = fileThread->writeFile( fileThreadResult->getData( ) );
+		if( !fileThreadResult )
+			return;
+		textComponent->clear( );
+		connect( fileThreadResult.data( ), &FileThreadResult::finish, this, &MainWidget::changeTextComponentContents, Qt::QueuedConnection );
+		fileThread->start( );
+	} );
 	//// 线程开始
 	dateTimeThread->start( );
 
@@ -211,6 +225,7 @@ void MainWidget::changeTransparent( bool flage ) {
 void MainWidget::changeTextComponentContents( ) {
 	textComponent->setText( fileThreadResult.data( )->getData( ) );
 }
+
 void MainWidget::updateWidgetWidth( const QList< QString > &list ) {
 	int width = 0;
 	for( auto &str : list )

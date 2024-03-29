@@ -29,6 +29,7 @@ private:
 public: // 线程函数
 	QSharedPointer< FileThreadResult > readFile( );
 	QSharedPointer< FileThreadResult > writeFile( const QString &content );
+	QSharedPointer< FileThreadResult > writeFile( const QByteArray &byteData );
 	bool await( );
 	QSharedPointer< FileThreadResult > start( );
 public:
@@ -36,6 +37,7 @@ public:
 		QMutexLocker< QMutex > locker( &mutex );
 		file->setFile( filePath );
 	}
+
 	QString getFilePath( ) {
 		QMutexLocker< QMutex > locker( &mutex );
 		return file->absoluteFilePath( );
