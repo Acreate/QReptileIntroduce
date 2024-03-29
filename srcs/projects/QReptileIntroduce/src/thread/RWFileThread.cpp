@@ -1,15 +1,15 @@
 ﻿#include "RWFileThread.h"
 #include "FileThreadResult.h"
+#include "FileThread.h"
 #include <QFile>
 
-RWFileThread::RWFileThread( QObject *parent ): QObject( parent ), file( new QFile ) {
-
+RWFileThread::RWFileThread( QObject *parent ): QObject( parent ), file( new QFileInfo ) {
 }
 RWFileThread::RWFileThread( const QString &fileName ) {
-	file = new QFile( fileName );
+	file = new QFileInfo( fileName );
 }
 RWFileThread::RWFileThread( QObject *parent, const QString &fileName ) : QObject( parent ) {
-	file = new QFile( fileName );
+	file = new QFileInfo( fileName );
 }
 RWFileThread::~RWFileThread( ) {
 	QMutexLocker< QMutex > locker( &mutex );
@@ -20,49 +20,57 @@ RWFileThread::~RWFileThread( ) {
 		QThread::usleep( 20 );
 }
 QSharedPointer< FileThreadResult > RWFileThread::readFile( ) {
-	if( !file->exists( ) || !file->open( QIODeviceBase::ReadOnly ) )
+	if( !file->exists( ) )
 		return QSharedPointer< FileThreadResult >( nullptr );
+	threadFileThreadResult = QSharedPointer< FileThreadResult >( new FileThreadResult( this ) );
 	if( !currentThread )
-		currentThread = new QThread;
-	else
+		currentThread = new FileThread( file->fileName( ), QIODeviceBase::ReadOnly, threadFileThreadResult );
+	else {
 		while( !currentThread->isFinished( ) )
 			currentThread->usleep( 50 );
-
-	QMutexLocker< QMutex > locker( &mutex );
-	auto result = new FileThreadResult( this );
-	result->setFinish( false );
-	this->moveToThread( this->currentThread );
-
-	qDebug( ) << "readFile currentThread id = " << this->currentThread;
-	connect( this->currentThread, &QThread::started, [this,result]( ) {
-		
-		emit result->finish( );
-	} );
-	connect( currentThread, &QThread::finished, [this, result]( ) {
-	} );
-	currentThread->start( );
-
-	return QSharedPointer< FileThreadResult >( result );
+	}
+	return threadFileThreadResult;
 }
 QSharedPointer< FileThreadResult > RWFileThread::writeFile( const QString &content ) {
-	if( !file->exists( ) || !file->open( QIODeviceBase::WriteOnly ) )
+	if( !file->makeAbsolute( ) )
 		return QSharedPointer< FileThreadResult >( nullptr );
+	threadFileThreadResult = QSharedPointer< FileThreadResult >( new FileThreadResult( this, content ) );
 	if( !currentThread )
-		currentThread = new QThread;
-	else
+		currentThread = new FileThread( file->fileName( ), QIODeviceBase::WriteOnly, threadFileThreadResult );
+	else {
 		while( !currentThread->isFinished( ) )
 			currentThread->usleep( 50 );
-	QMutexLocker< QMutex > locker( &mutex );
+	}
+	return threadFileThreadResult;
+}
+bool RWFileThread::await( ) {
+	if( this->currentThread )
+		qDebug( ) << "await currentThread id = " << this->currentThread;
+	while( this->currentThread && this->currentThread->isRunning( ) ) {
+		QMutexLocker< QMutex > locker( &mutex );
+		bool finished = this->currentThread->isFinished( );
+		if( finished )
+			break;
+		QThread::currentThread( )->usleep( 20 );
+	}
 
-	auto result = new FileThreadResult( this );
-	result->setFinish( false );
-	connect( currentThread, &QThread::started, [this,&result,content]( ) {
-		qint64 writeCount = file->write( content.toLocal8Bit( ) );
-		result->setData( QByteArray::number( writeCount ) );
-	} );
-	connect( currentThread, &QThread::finished, [this,&result]( ) {
-		result->setFinish( true );
-	} );
-	currentThread->start( );
-	return QSharedPointer< FileThreadResult >( result );
+	return true;
+}
+QSharedPointer< FileThreadResult > RWFileThread::start( ) {
+	if( currentThread && threadFileThreadResult ) {
+		currentThread->start( );
+		return threadFileThreadResult;
+	}
+	return nullptr;
+}
+bool RWFileThread::isFinished( ) {
+	QMutexLocker< QMutex > locker( &mutex );
+	if( currentThread != nullptr )
+		return currentThread->isFinished( );
+	return true;
+}
+void RWFileThread::requestInterruption( ) {
+	QMutexLocker< QMutex > locker( &mutex );
+	if( currentThread != nullptr && !currentThread->isFinished( ) )
+		currentThread->requestInterruption( );
 }

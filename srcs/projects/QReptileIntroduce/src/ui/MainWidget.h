@@ -27,15 +27,15 @@ public:
 protected:
 	void mouseMoveEvent( QMouseEvent *event ) override;
 	void mouseReleaseEvent( QMouseEvent *event ) override;
+	void mousePressEvent( QMouseEvent *event ) override;
 	void resizeEvent( QResizeEvent *event ) override;
 private: // 参考变量
 	QPoint winCenterPoint; // 记录窗口中间
 	QString qstrPoint = u8"坐标:( %1 , %2 )"; // 格式化字符串
 	int compoentStrNlen; // 额外增加的横向空间
-
+	qsizetype showCount = 0; // 菜单显示计数
 
 	QSharedPointer< FileThreadResult > fileThreadResult = nullptr;
-	
 private: // 计算变量
 	QPoint mousePoint; // 当前鼠标位置
 	QFont currentFont; // 当前字体
@@ -66,11 +66,23 @@ private: // 定时调用
 	RWFileThread *fileThread;
 public slots:
 	void updateDateTimeStrFunction( const QString &currentDateTimeStr );
+	void changeTransparent( bool flage );
 private:
 	/// <summary>
 	/// 更新窗口宽度
 	/// </summary>
 	void updateWidgetWidth( const QList< QString > &list );
+public:
+	QVector< QObject * > getCompoents( ) {
+		return {
+				mainLayout,
+				topLayout,
+				textComponent,
+				textLine,
+				converTransparentForMouseEventsBtn,
+				toolsMenu,
+			};
+	}
 };
 
 #endif // MAINWIDGET_H_H_HEAD__FILE__

@@ -10,11 +10,12 @@
 #include "../Thread/RWFileThread.h"
 #include "../thread/FileThreadResult.h"
 
-MainWidget::MainWidget( QWidget *parent, Qt::WindowFlags fg ) : QWidget( parent, fg ), currentFont( "Arial", 10 ), currentFontMetrics( currentFont ), drawColor( 255, 0, 0 ), compoentStrNlen( 0 ) {
+MainWidget::MainWidget( QWidget *parent, Qt::WindowFlags fg ) : QWidget( parent, fg ), compoentStrNlen( 0 ), currentFont( "Arial", 10 ), currentFontMetrics( currentFont ), drawColor( 255, 0, 0 ) {
 
+	qDebug( ) << "MainWidget::MainWidget : " << QThread::currentThread( )->currentThreadId( );
 	/////// 线程
 	dateTimeThread = new DateTimeThread;
-	connect( dateTimeThread, &DateTimeThread::updateDateTimeStr, this, &MainWidget::updateDateTimeStrFunction, Qt::DirectConnection );
+	connect( dateTimeThread, &DateTimeThread::updateDateTimeStr, this, &MainWidget::updateDateTimeStrFunction, Qt::QueuedConnection );
 
 	fileThread = new RWFileThread( );
 
@@ -73,17 +74,17 @@ MainWidget::MainWidget( QWidget *parent, Qt::WindowFlags fg ) : QWidget( parent,
 	textLine->setAttribute( Qt::WA_TransparentForMouseEvents, true );
 	converTransparentForMouseEventsBtn->setText( QString( tr( u8"current state: [%1 transparent]" ) ).arg( flageTransparentForMouseEvents ? u8"" : tr( u8"not" ) ) );
 
-	connect( converTransparentForMouseEventsBtn, &QPushButton::clicked, [=]( bool flage ) {
-		bool attribute = !textComponent->testAttribute( Qt::WA_TransparentForMouseEvents );
-		progressSetting->setValue( transparentForMouseEvents, attribute );
-		progressSetting->sync( );
-		textComponent->setAttribute( Qt::WA_TransparentForMouseEvents, attribute );
-		converTransparentForMouseEventsBtn->setText( QString( tr( u8"current state: [%1 transparent]" ) ).arg( attribute ? u8"" : tr( u8"not" ) ) );
-	} );
+	connect( converTransparentForMouseEventsBtn, &QPushButton::clicked, this, &MainWidget::changeTransparent, Qt::QueuedConnection );
 
 	////////////// 菜单
 
 	toolsMenu = new Menu( this );
+	connect( toolsMenu, &QMenu::aboutToHide, [=]( ) {
+
+	} );
+	connect( toolsMenu, &QMenu::aboutToShow, [=]( ) {
+		showCount = 1;
+	} );
 
 	Action *selectSettingFileDialogAcion = new Action( );
 	selectSettingFileDialogAcion->setText( tr( u8"assign file setting" ) );
@@ -123,17 +124,16 @@ MainWidget::MainWidget( QWidget *parent, Qt::WindowFlags fg ) : QWidget( parent,
 		progressSetting->setValue( selectWorkPath, fileName );
 		progressSetting->sync( );
 		fileThread->setFilePath( fileName );
-		auto sharedPointer = fileThread->readFile( );
-		sharedPointer.swap( fileThreadResult );
-
-		connect( fileThreadResult.data( ), &FileThreadResult::finish, [=]( const RWFileThread *const fileThread, const QByteArray &dateArry ) {
-			QString str( dateArry );
-			textComponent->setText( str );
+		fileThreadResult = fileThread->readFile( );
+		connect( fileThreadResult.data( ), &FileThreadResult::finish, [=]( ) {
+			textComponent->setText( fileThreadResult.data( )->getData( ) );
 		} );
+		fileThread->start( );
 	} );
 
 	//// 线程开始
 	dateTimeThread->start( );
+
 }
 MainWidget::~MainWidget( ) {
 	progressSetting->sync( );
@@ -159,26 +159,37 @@ void MainWidget::mouseMoveEvent( QMouseEvent *event ) {
 }
 void MainWidget::mouseReleaseEvent( QMouseEvent *event ) {
 	Qt::MouseButton mouseButton = event->button( );
-	switch( mouseButton ) {
-		case Qt::LeftButton :
-			if( converTransparentForMouseEventsBtn->geometry( ).contains( event->pos( ) ) ) {
-				emit converTransparentForMouseEventsBtn->clicked( true );
-			}
-			break;
-		case Qt::RightButton :
-			if( converTransparentForMouseEventsBtn->geometry( ).contains( event->pos( ) ) ) {
+	bool contains = converTransparentForMouseEventsBtn->geometry( ).contains( event->pos( ) );
+	if( contains )
+		switch( mouseButton ) {
+			case Qt::RightButton : {
 				QPointF position = event->globalPosition( );
-				toolsMenu->move( position.x( ), position.y( ) );
-				toolsMenu->show( );
+				toolsMenu->exec( QPoint( position.x( ), position.y( ) ) );
 			}
 			break;
-		case Qt::MiddleButton :
-			break;
-	}
+		}
+}
+void MainWidget::mousePressEvent( QMouseEvent *event ) {
+	Qt::MouseButton mouseButton = event->button( );
+	bool contains = converTransparentForMouseEventsBtn->geometry( ).contains( event->pos( ) );
+	if( contains )
+		switch( mouseButton ) {
+			case Qt::LeftButton :
+				if( showCount == 0 )
+					emit converTransparentForMouseEventsBtn->clicked( true );
+				else
+					showCount = 0;
+				break;
+		}
 }
 void MainWidget::resizeEvent( QResizeEvent *event ) {
 }
 void MainWidget::updateDateTimeStrFunction( const QString &currentDateTimeStr ) {
+	static bool isOutDbug = true;
+	if( isOutDbug ) {
+		qDebug( ) << "MainWidget::updateDateTimeStrFunction( const QString &currentDateTimeStr ) : " << QThread::currentThread( )->currentThreadId( );
+		isOutDbug = false;
+	}
 	QString string = converTransparentForMouseEventsBtn->text( );
 	qint64 newStrLen = currentDateTimeStr.length( ) + string.length( );
 	if( compoentStrNlen < newStrLen ) {
@@ -186,6 +197,18 @@ void MainWidget::updateDateTimeStrFunction( const QString &currentDateTimeStr ) 
 		updateWidgetWidth( { currentDateTimeStr, string } );
 	}
 	textLine->setText( currentDateTimeStr );
+}
+void MainWidget::changeTransparent( bool flage ) {
+	static bool isOutDbug = true;
+	if( isOutDbug ) {
+		qDebug( ) << "MainWidget::changeTransparent( bool flage ) : " << QThread::currentThread( )->currentThreadId( );
+		isOutDbug = false;
+	}
+	bool attribute = !textComponent->testAttribute( Qt::WA_TransparentForMouseEvents );
+	progressSetting->setValue( transparentForMouseEvents, attribute );
+	progressSetting->sync( );
+	textComponent->setAttribute( Qt::WA_TransparentForMouseEvents, attribute );
+	converTransparentForMouseEventsBtn->setText( QString( tr( u8"current state: [%1 transparent]" ) ).arg( attribute ? u8"" : tr( u8"not" ) ) );
 }
 void MainWidget::updateWidgetWidth( const QList< QString > &list ) {
 	int width = 0;

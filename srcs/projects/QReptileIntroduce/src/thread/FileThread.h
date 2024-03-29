@@ -6,27 +6,28 @@
 #include <qobject.h>
 #include <QFile>
 #include <QIODeviceBase>
+#include <QSharedPointer>
 
-#include "FileThreadResult.h"
+class FileThreadResult;
 class FileThread : public QThread {
 	Q_OBJECT;
 private:
 	QFile file;
-	FileThreadResult *fileThreadResult;
+	QSharedPointer< FileThreadResult > fileThreadResult;
+	QIODeviceBase::OpenMode openMode;
+	QIODeviceBase::OpenMode runOpenMode;
 public:
-	FileThread( const QString &filePath, FileThreadResult *fileThreadResult ) : file( filePath ), fileThreadResult( fileThreadResult ) {
-
-	}
-
-	FileThreadResult *readFile( ) {
-		if( !file.exists( ) )
-			return nullptr;
-		if (file.open( QIODeviceBase::ReadOnly )) {
-			
-		}
-	}
+	FileThread( const QString &filePath, QIODeviceBase::OpenMode openMode, QSharedPointer< FileThreadResult > fileThreadResult );
+public:
+	QIODeviceBase::OpenMode resetOpenMode( const QIODeviceBase::OpenMode &newOpenMode );
+	QSharedPointer< FileThreadResult > readFile( );
+	QSharedPointer< FileThreadResult > writeFile( );
 protected:
 	void run( ) override;
+public:
+	QSharedPointer< FileThreadResult > getFileThreadResult( ) {
+		return fileThreadResult;
+	}
 };
 
 #endif // FILETHREAD_H_H_HEAD__FILE__

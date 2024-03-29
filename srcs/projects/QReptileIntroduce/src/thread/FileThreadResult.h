@@ -17,6 +17,12 @@ public:
 	FileThreadResult( RWFileThread *fileThread ): fileThread( fileThread ) {
 		isFinish = true;
 	}
+	FileThreadResult( RWFileThread *fileThread, const QByteArray &data ): fileThread( fileThread ), data( data ) {
+		isFinish = true;
+	}
+	FileThreadResult( RWFileThread *fileThread, const QString &str ): fileThread( fileThread ), data( str.toLocal8Bit( ) ) {
+		isFinish = true;
+	}
 	~FileThreadResult( ) override {
 
 	}
@@ -39,9 +45,7 @@ public:
 	const QByteArray &getData( ) const {
 		return data;
 	}
-	bool await( ) {
-		return fileThread->await( );
-	}
+	bool await( );
 Q_SIGNALS:
 	void finish( );
 	void interruptionRequested( );
