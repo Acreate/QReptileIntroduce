@@ -4,10 +4,19 @@
 #include <QMenu>
 #include <QRegExp>
 #include <QFileDialog>
-#include "../codes/DateTimeThread.h"
+#include "../Thread/DateTimeThread.h"
 #include <qcoreapplication.h>
 
-MainWidget::MainWidget( QWidget *parent, Qt::WindowFlags fg ) : QWidget( parent, fg ), currentFont( "Arial", 10 ), currentFontMetrics( currentFont ), drawColor( 255, 0, 0 ), appendFontWidthSpace( 20 ) {
+#include "../Thread/RWFileThread.h"
+#include "../thread/FileThreadResult.h"
+
+MainWidget::MainWidget( QWidget *parent, Qt::WindowFlags fg ) : QWidget( parent, fg ), currentFont( "Arial", 10 ), currentFontMetrics( currentFont ), drawColor( 255, 0, 0 ), compoentStrNlen( 0 ) {
+
+	/////// 线程
+	dateTimeThread = new DateTimeThread;
+	connect( dateTimeThread, &DateTimeThread::updateDateTimeStr, this, &MainWidget::updateDateTimeStrFunction, Qt::DirectConnection );
+
+	fileThread = new RWFileThread( );
 
 	/// 配置 路径
 	QString progressIniPath = qApp->applicationDirPath( ).append( QDir::separator( ) ).append( tr( u8"ini" ) ).append( QDir::separator( ) ).append( tr( u8"progress" ) ).append( QDir::separator( ) );
@@ -63,23 +72,23 @@ MainWidget::MainWidget( QWidget *parent, Qt::WindowFlags fg ) : QWidget( parent,
 	converTransparentForMouseEventsBtn->setAttribute( Qt::WA_TransparentForMouseEvents, true );
 	textLine->setAttribute( Qt::WA_TransparentForMouseEvents, true );
 	converTransparentForMouseEventsBtn->setText( QString( tr( u8"current state: [%1 transparent]" ) ).arg( flageTransparentForMouseEvents ? u8"" : tr( u8"not" ) ) );
-	updateWidgetWidth( );
 
 	connect( converTransparentForMouseEventsBtn, &QPushButton::clicked, [=]( bool flage ) {
 		bool attribute = !textComponent->testAttribute( Qt::WA_TransparentForMouseEvents );
 		progressSetting->setValue( transparentForMouseEvents, attribute );
+		progressSetting->sync( );
 		textComponent->setAttribute( Qt::WA_TransparentForMouseEvents, attribute );
 		converTransparentForMouseEventsBtn->setText( QString( tr( u8"current state: [%1 transparent]" ) ).arg( attribute ? u8"" : tr( u8"not" ) ) );
-		updateWidgetWidth( );
 	} );
 
 	////////////// 菜单
 
 	toolsMenu = new Menu( this );
-	Action *action = new Action( );
-	action->setText( tr( u8"assign file setting" ) );
-	toolsMenu->addAction( action );
-	connect( action, &QAction::triggered, [=] {
+
+	Action *selectSettingFileDialogAcion = new Action( );
+	selectSettingFileDialogAcion->setText( tr( u8"assign file setting" ) );
+	toolsMenu->addAction( selectSettingFileDialogAcion );
+	connect( selectSettingFileDialogAcion, &QAction::triggered, [this] {
 		QString dirPath = progressSetting->value( downIniTypes, qApp->applicationDirPath( ) ).toString( );
 		QString fileName = QFileDialog::getOpenFileName( nullptr, tr( u8"set file setting" ), dirPath, u8"txt(*.txt *.ini *.setting) ;; *(*)" );
 		if( fileName.isEmpty( ) )
@@ -87,6 +96,7 @@ MainWidget::MainWidget( QWidget *parent, Qt::WindowFlags fg ) : QWidget( parent,
 		QFile file( fileName );
 		if( file.open( QIODeviceBase::ReadOnly ) ) {
 			progressSetting->setValue( downIniTypes, fileName );
+			progressSetting->sync( );
 			QRegExp qRegExp( "\\s" );
 			QByteArray readAll = file.readAll( );
 			QString contents( readAll );
@@ -102,18 +112,39 @@ MainWidget::MainWidget( QWidget *parent, Qt::WindowFlags fg ) : QWidget( parent,
 		}
 	} );
 
-	/////// 线程
-	dateTimeThread = new DateTimeThread;
-	connect( dateTimeThread, &DateTimeThread::updateDateTimeStr, this, &MainWidget::updateDateTimeStrFunction, Qt::DirectConnection );
+	Action *readFileAction = new Action( );
+	readFileAction->setText( tr( u8"readFile" ) );
+	toolsMenu->addAction( readFileAction );
+	connect( readFileAction, &QAction::triggered, [this] {
+		QString dirPath = progressSetting->value( selectWorkPath, qApp->applicationDirPath( ) ).toString( );
+		QString fileName = QFileDialog::getOpenFileName( nullptr, tr( u8"select file read to text editor" ), dirPath, u8"*(*)" );
+		if( fileName.isEmpty( ) )
+			return;
+		progressSetting->setValue( selectWorkPath, fileName );
+		progressSetting->sync( );
+		fileThread->setFilePath( fileName );
+		auto sharedPointer = fileThread->readFile( );
+		sharedPointer.swap( fileThreadResult );
+
+		connect( fileThreadResult.data( ), &FileThreadResult::finish, [=]( const RWFileThread *const fileThread, const QByteArray &dateArry ) {
+			QString str( dateArry );
+			textComponent->setText( str );
+		} );
+	} );
+
+	//// 线程开始
 	dateTimeThread->start( );
 }
 MainWidget::~MainWidget( ) {
 	progressSetting->sync( );
 	dateTimeThread->requestInterruption( );
+	fileThread->requestInterruption( );
 	delete progressSetting;
 	delete translator;
 	while( !dateTimeThread->isFinished( ) )
-		QThread::usleep( 100 );
+		QThread::usleep( 20 );
+	while( !fileThread->isFinished( ) )
+		QThread::usleep( 20 );
 	delete dateTimeThread;
 }
 QFont MainWidget::setFont( QFont &font ) {
@@ -145,19 +176,26 @@ void MainWidget::mouseReleaseEvent( QMouseEvent *event ) {
 			break;
 	}
 }
-void MainWidget::updateDateTimeStrFunction( const QString &currentDateTimeStr ) {
-	textLine->setText( currentDateTimeStr );
-	updateWidgetWidth( );
+void MainWidget::resizeEvent( QResizeEvent *event ) {
 }
-void MainWidget::updateWidgetWidth( ) {
-	QString textLineText = textLine->text( );
-	QString btnText = converTransparentForMouseEventsBtn->text( );
-	int textLineTextFontWidth = currentFontMetrics.horizontalAdvance( textLineText );
-	int btnTextFontWidth = currentFontMetrics.horizontalAdvance( btnText );
-	int width = textLineTextFontWidth + btnTextFontWidth + 70;
+void MainWidget::updateDateTimeStrFunction( const QString &currentDateTimeStr ) {
+	QString string = converTransparentForMouseEventsBtn->text( );
+	qint64 newStrLen = currentDateTimeStr.length( ) + string.length( );
+	if( compoentStrNlen < newStrLen ) {
+		compoentStrNlen = newStrLen;
+		updateWidgetWidth( { currentDateTimeStr, string } );
+	}
+	textLine->setText( currentDateTimeStr );
+}
+void MainWidget::updateWidgetWidth( const QList< QString > &list ) {
+	int width = 0;
+	for( auto &str : list )
+		width += currentFontMetrics.horizontalAdvance( str );
+	width = width + 70;
 	int thisWidthMinWidth = minimumWidth( );
 	if( thisWidthMinWidth < width ) {
 		setMinimumWidth( width );
+		qDebug( ) << "最小宽度 : " << width;
 	}
 
 }

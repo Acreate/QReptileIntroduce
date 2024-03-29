@@ -1,5 +1,7 @@
-﻿#ifndef TIMETHREAD_H_H_HEAD__FILE__
-#define TIMETHREAD_H_H_HEAD__FILE__
+﻿
+
+#ifndef DATETIMETHREAD_H_H_HEAD__FILE__
+#define DATETIMETHREAD_H_H_HEAD__FILE__
 #pragma once
 #include <QThread>
 #include <QMutexLocker>
