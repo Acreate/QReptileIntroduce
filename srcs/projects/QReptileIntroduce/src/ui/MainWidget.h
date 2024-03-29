@@ -11,7 +11,11 @@
 #include "../menu/Menu.h"
 #include <QSettings>
 #include <QTranslator>
+#include <QTimer>
 
+#include "HLyaoutBox.h"
+
+class DateTimeThread;
 class MainWidget : public QWidget {
 	Q_OBJECT;
 public:
@@ -25,6 +29,7 @@ protected:
 private: // 参考变量
 	QPoint winCenterPoint; // 记录窗口中间
 	QString qstrPoint = u8"坐标:( %1 , %2 )"; // 格式化字符串
+	int appendFontWidthSpace; // 额外增加的横向空间
 private: // 计算变量
 	QPoint mousePoint; // 当前鼠标位置
 	QFont currentFont; // 当前字体
@@ -38,7 +43,7 @@ private: // 组件
 	QPushButton *converTransparentForMouseEventsBtn;
 private: // 布局
 	QVBoxLayout *mainLayout;
-	QHBoxLayout *topLayout;
+	HLyaoutBox *topLayout;
 private: // 菜单
 	Menu *toolsMenu;
 private: // 程序配置-读写
@@ -49,6 +54,15 @@ private: // 程序配置-名称
 	const QString downIniTypes = tr( u8"downIni/Types" );
 private: // 程序配置-变量
 	QStringList downNovelTypes;
+private: // 定时调用
+	DateTimeThread *dateTimeThread;
+public slots:
+	void updateDateTimeStrFunction( const QString &currentDateTimeStr );
+private:
+	/// <summary>
+	/// 更新窗口宽度
+	/// </summary>
+	void updateWidgetWidth();
 };
 
 #endif // MAINWIDGET_H_H_HEAD__FILE__

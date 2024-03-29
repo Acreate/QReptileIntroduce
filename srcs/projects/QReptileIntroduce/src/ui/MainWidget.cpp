@@ -4,9 +4,10 @@
 #include <QMenu>
 #include <QRegExp>
 #include <QFileDialog>
+#include "../codes/DateTimeThread.h"
 #include <qcoreapplication.h>
 
-MainWidget::MainWidget( QWidget *parent, Qt::WindowFlags fg ) : QWidget( parent, fg ), currentFont( "Arial", 10 ), currentFontMetrics( currentFont ), drawColor( 255, 0, 0 ) {
+MainWidget::MainWidget( QWidget *parent, Qt::WindowFlags fg ) : QWidget( parent, fg ), currentFont( "Arial", 10 ), currentFontMetrics( currentFont ), drawColor( 255, 0, 0 ), appendFontWidthSpace( 20 ) {
 
 	/// 配置 路径
 	QString progressIniPath = qApp->applicationDirPath( ).append( QDir::separator( ) ).append( tr( u8"ini" ) ).append( QDir::separator( ) ).append( tr( u8"progress" ) ).append( QDir::separator( ) );
@@ -38,17 +39,19 @@ MainWidget::MainWidget( QWidget *parent, Qt::WindowFlags fg ) : QWidget( parent,
 
 	converTransparentForMouseEventsBtn = new QPushButton( this );
 
-	topLayout = new QHBoxLayout( );
-
+	topLayout = new HLyaoutBox( );
+	topLayout->setSpacing( 0 );
 	topLayout->addWidget( textLine );
 	topLayout->addWidget( converTransparentForMouseEventsBtn );
+	topLayout->setContentsMargins( 0, 0, 0, 0 );
 
 	mainLayout = new QVBoxLayout( this );
+	mainLayout->setSpacing( 0 );
 	this->setLayout( mainLayout );
 	mainLayout->setContentsMargins( 0, 0, 0, 0 );
 
 	mainLayout->addLayout( topLayout );
-	topLayout->setParent( mainLayout );
+
 	textComponent = new QTextEdit( this );
 	mainLayout->addWidget( textComponent );
 	textLine->setFont( currentFont );
@@ -60,11 +63,14 @@ MainWidget::MainWidget( QWidget *parent, Qt::WindowFlags fg ) : QWidget( parent,
 	converTransparentForMouseEventsBtn->setAttribute( Qt::WA_TransparentForMouseEvents, true );
 	textLine->setAttribute( Qt::WA_TransparentForMouseEvents, true );
 	converTransparentForMouseEventsBtn->setText( QString( tr( u8"current state: [%1 transparent]" ) ).arg( flageTransparentForMouseEvents ? u8"" : tr( u8"not" ) ) );
+	updateWidgetWidth( );
+
 	connect( converTransparentForMouseEventsBtn, &QPushButton::clicked, [=]( bool flage ) {
 		bool attribute = !textComponent->testAttribute( Qt::WA_TransparentForMouseEvents );
 		progressSetting->setValue( transparentForMouseEvents, attribute );
 		textComponent->setAttribute( Qt::WA_TransparentForMouseEvents, attribute );
 		converTransparentForMouseEventsBtn->setText( QString( tr( u8"current state: [%1 transparent]" ) ).arg( attribute ? u8"" : tr( u8"not" ) ) );
+		updateWidgetWidth( );
 	} );
 
 	////////////// 菜单
@@ -95,11 +101,20 @@ MainWidget::MainWidget( QWidget *parent, Qt::WindowFlags fg ) : QWidget( parent,
 			file.close( );
 		}
 	} );
+
+	/////// 线程
+	dateTimeThread = new DateTimeThread;
+	connect( dateTimeThread, &DateTimeThread::updateDateTimeStr, this, &MainWidget::updateDateTimeStrFunction, Qt::DirectConnection );
+	dateTimeThread->start( );
 }
 MainWidget::~MainWidget( ) {
 	progressSetting->sync( );
+	dateTimeThread->requestInterruption( );
 	delete progressSetting;
 	delete translator;
+	while( !dateTimeThread->isFinished( ) )
+		QThread::usleep( 100 );
+	delete dateTimeThread;
 }
 QFont MainWidget::setFont( QFont &font ) {
 	auto oldFont = currentFont;
@@ -110,9 +125,6 @@ QFont MainWidget::setFont( QFont &font ) {
 }
 
 void MainWidget::mouseMoveEvent( QMouseEvent *event ) {
-	mousePoint = event->pos( );
-	drawStr = qstrPoint.arg( mousePoint.x( ) ).arg( mousePoint.y( ) );
-	textLine->setText( drawStr );
 }
 void MainWidget::mouseReleaseEvent( QMouseEvent *event ) {
 	Qt::MouseButton mouseButton = event->button( );
@@ -132,4 +144,20 @@ void MainWidget::mouseReleaseEvent( QMouseEvent *event ) {
 		case Qt::MiddleButton :
 			break;
 	}
+}
+void MainWidget::updateDateTimeStrFunction( const QString &currentDateTimeStr ) {
+	textLine->setText( currentDateTimeStr );
+	updateWidgetWidth( );
+}
+void MainWidget::updateWidgetWidth( ) {
+	QString textLineText = textLine->text( );
+	QString btnText = converTransparentForMouseEventsBtn->text( );
+	int textLineTextFontWidth = currentFontMetrics.horizontalAdvance( textLineText );
+	int btnTextFontWidth = currentFontMetrics.horizontalAdvance( btnText );
+	int width = textLineTextFontWidth + btnTextFontWidth + 70;
+	int thisWidthMinWidth = minimumWidth( );
+	if( thisWidthMinWidth < width ) {
+		setMinimumWidth( width );
+	}
+
 }
