@@ -125,9 +125,7 @@ MainWidget::MainWidget( QWidget *parent, Qt::WindowFlags fg ) : QWidget( parent,
 		progressSetting->sync( );
 		fileThread->setFilePath( fileName );
 		fileThreadResult = fileThread->readFile( );
-		connect( fileThreadResult.data( ), &FileThreadResult::finish, [=]( ) {
-			textComponent->setText( fileThreadResult.data( )->getData( ) );
-		} );
+		connect( fileThreadResult.data( ), &FileThreadResult::finish, this, &MainWidget::changeTextComponentContents, Qt::QueuedConnection );
 		fileThread->start( );
 	} );
 
@@ -209,6 +207,9 @@ void MainWidget::changeTransparent( bool flage ) {
 	progressSetting->sync( );
 	textComponent->setAttribute( Qt::WA_TransparentForMouseEvents, attribute );
 	converTransparentForMouseEventsBtn->setText( QString( tr( u8"current state: [%1 transparent]" ) ).arg( attribute ? u8"" : tr( u8"not" ) ) );
+}
+void MainWidget::changeTextComponentContents( ) {
+	textComponent->setText( fileThreadResult.data( )->getData( ) );
 }
 void MainWidget::updateWidgetWidth( const QList< QString > &list ) {
 	int width = 0;

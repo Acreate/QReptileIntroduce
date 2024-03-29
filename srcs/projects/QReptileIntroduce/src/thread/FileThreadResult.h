@@ -24,7 +24,7 @@ public:
 		isFinish = true;
 	}
 	~FileThreadResult( ) override {
-
+		qDebug( ) << "~FileThreadResult( ) : " << this;
 	}
 private:
 	void setData( const QByteArray &data ) {

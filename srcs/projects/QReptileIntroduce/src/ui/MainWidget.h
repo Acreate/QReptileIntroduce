@@ -67,12 +67,14 @@ private: // 定时调用
 public slots:
 	void updateDateTimeStrFunction( const QString &currentDateTimeStr );
 	void changeTransparent( bool flage );
+	void changeTextComponentContents();
 private:
 	/// <summary>
 	/// 更新窗口宽度
 	/// </summary>
 	void updateWidgetWidth( const QList< QString > &list );
 public:
+	// 事件测试
 	QVector< QObject * > getCompoents( ) {
 		return {
 				mainLayout,

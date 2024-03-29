@@ -1,6 +1,6 @@
 ﻿#include "FileThread.h"
 #include "FileThreadResult.h"
-FileThread::FileThread( const QString &filePath, QIODeviceBase::OpenMode openMode, QSharedPointer<FileThreadResult> fileThreadResult ): file( filePath ), openMode( openMode ),
+FileThread::FileThread( const QString &filePath, QIODeviceBase::OpenMode openMode, QSharedPointer< FileThreadResult > fileThreadResult ): file( filePath ), openMode( openMode ),
 	fileThreadResult( fileThreadResult ) {
 	runOpenMode = QIODeviceBase::NotOpen;
 }
@@ -9,7 +9,7 @@ QIODeviceBase::OpenMode FileThread::resetOpenMode( const QIODeviceBase::OpenMode
 	openMode = newOpenMode;
 	return oldOpenmo;
 }
-QSharedPointer<FileThreadResult> FileThread::readFile( ) {
+QSharedPointer< FileThreadResult > FileThread::readFile( ) {
 	runOpenMode = QIODeviceBase::ReadOnly;
 	if( !file.exists( ) )
 		return nullptr;
@@ -19,7 +19,7 @@ QSharedPointer<FileThreadResult> FileThread::readFile( ) {
 	}
 	return nullptr;
 }
-QSharedPointer<FileThreadResult> FileThread::writeFile( ) {
+QSharedPointer< FileThreadResult > FileThread::writeFile( ) {
 	runOpenMode = QIODeviceBase::WriteOnly;
 	if( !file.exists( ) )
 		return nullptr;
@@ -30,7 +30,9 @@ QSharedPointer<FileThreadResult> FileThread::writeFile( ) {
 	return nullptr;
 }
 void FileThread::run( ) {
+	qDebug( ) << "状态" << runOpenMode << " (" << file.fileName( ) << " )";
 	if( runOpenMode == QIODeviceBase::ReadOnly ) /*读取*/ {
+		qDebug( ) << "FileThread::run : QIODeviceBase::ReadOnly( " << file.fileName( ) << " )";
 		fileThreadResult->setFinish( false );
 		fileThreadResult->data.clear( );
 		constexpr qsizetype readBuffSize = 1024;
@@ -39,7 +41,7 @@ void FileThread::run( ) {
 		qint64 readCount = 0;
 		do {
 			readCount = file.read( buff, readBuffSize );
-			if( readCount == 0 || isInterruptionRequested( ) )
+			if( readCount == -1 || readCount == 0 || isInterruptionRequested( ) )
 				break;
 			fileThreadResult->data.append( buff, readCount );
 			readSize += readCount;
@@ -55,6 +57,7 @@ void FileThread::run( ) {
 		fileThreadResult->setFinish( true );
 		emit fileThreadResult->finish( );
 	} else if( runOpenMode == QIODeviceBase::WriteOnly ) /*写入*/ {
+		qDebug( ) << "FileThread::run : QIODeviceBase::WriteOnly( " << file.fileName( ) << " )";
 		fileThreadResult->setFinish( false );
 		constexpr qsizetype readBuffSize = 1024;
 		qsizetype readSize = 0;
