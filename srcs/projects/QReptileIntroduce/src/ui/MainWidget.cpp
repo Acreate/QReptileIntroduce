@@ -219,7 +219,6 @@ void MainWidget::mousePressEvent( QMouseEvent *event ) {
 		}
 }
 void MainWidget::resizeEvent( QResizeEvent *event ) {
-	// 改变大小的时候，重置标题栏高度
 	titleHeight = frameSize( ).height( ) - event->size( ).height( );
 }
 void MainWidget::updateDateTimeStrFunction( const QString &currentDateTimeStr ) {

@@ -7,6 +7,7 @@
 #include <qtextedit.h>
 #include <QLineEdit>
 #include <QPushButton>
+#include <QLabel>
 #include "../menu/Menu.h"
 #include <QSettings>
 #include <QTranslator>
@@ -24,7 +25,7 @@ public:
 	~MainWidget( ) override;
 public:
 	virtual QFont setFont( QFont &font );
-protected:
+protected: // 事件
 	void mouseMoveEvent( QMouseEvent *event ) override;
 	void mouseReleaseEvent( QMouseEvent *event ) override;
 	void mousePressEvent( QMouseEvent *event ) override;
@@ -44,9 +45,9 @@ private: // 计算变量
 	int compoentStrNlen; // 额外增加的横向空间
 	QPoint winCenterPoint; // 记录窗口中间
 private: // 组件
-	QTextEdit *textComponent;
-	QLineEdit *textLine;
-	QPushButton *converTransparentForMouseEventsBtn;
+	QTextEdit *textComponent; // 显示文本
+	QLineEdit *textLine; // 显示时间
+	QPushButton *converTransparentForMouseEventsBtn; // 切换与鼠标点击事件
 private: // 布局
 	QVBoxLayout *mainLayout;
 	HLyaoutBox *topLayout;
