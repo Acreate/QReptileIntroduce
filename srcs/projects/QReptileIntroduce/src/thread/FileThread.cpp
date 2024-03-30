@@ -1,5 +1,6 @@
 ﻿#include "FileThread.h"
 #include "FileThreadResult.h"
+#include  "../userHread/DebugInfo.h"
 FileThread::FileThread( const QString &filePath,
 	QIODeviceBase::OpenMode openMode,
 	FileThreadResult *fileThreadResult ):
@@ -38,9 +39,9 @@ FileThreadResult *FileThread::writeFile( ) {
 	return nullptr;
 }
 void FileThread::run( ) {
-	//qDebug( ) << "状态" << runOpenMode << " (" << file.fileName( ) << " )";
+	DEBUG_RUN( qDebug( ) << "状态" << runOpenMode << " (" << file.fileName( ) << " )" );
 	if( runOpenMode == QIODeviceBase::ReadOnly ) /*读取*/ {
-		//qDebug( ) << "FileThread::run : QIODeviceBase::ReadOnly( " << file.fileName( ) << " )";
+		DEBUG_RUN( qDebug( ) << "FileThread::run : QIODeviceBase::ReadOnly( " << file.fileName( ) << " )" );
 		fileThreadResult->setFinish( false );
 		fileThreadResult->data.clear( );
 		constexpr qsizetype readBuffSize = 1024;
@@ -65,7 +66,7 @@ void FileThread::run( ) {
 		fileThreadResult->setFinish( true );
 		emit fileThreadResult->finish( );
 	} else if( runOpenMode == QIODeviceBase::WriteOnly ) /*写入*/ {
-		//qDebug( ) << "FileThread::run : QIODeviceBase::WriteOnly( " << file.fileName( ) << " )";
+		DEBUG_RUN( qDebug( ) << "FileThread::run : QIODeviceBase::WriteOnly( " << file.fileName( ) << " )" );
 		fileThreadResult->setFinish( false );
 		constexpr qsizetype readBuffSize = 1024;
 		auto buff = fileThreadResult->data.data( );

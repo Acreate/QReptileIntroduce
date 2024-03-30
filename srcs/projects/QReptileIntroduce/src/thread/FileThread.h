@@ -3,10 +3,8 @@
 #pragma once
 #include <QThread>
 #include <qfileinfo.h>
-#include <qobject.h>
 #include <QFile>
 #include <QIODeviceBase>
-#include <QSharedPointer>
 
 class FileThreadResult;
 class FileThread : public QThread {

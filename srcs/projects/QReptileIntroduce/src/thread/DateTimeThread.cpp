@@ -1,6 +1,7 @@
 ﻿#include "DateTimeThread.h"
 
 #include <qdatetime.h>
+#include "../userHread/DebugInfo.h"
 DateTimeThread::DateTimeThread( QObject *parent ) : QThread( parent ) {
 	dateTimeStrFormatMutex = new QMutex;
 }
@@ -8,7 +9,7 @@ DateTimeThread::~DateTimeThread( ) {
 	delete dateTimeStrFormatMutex;
 }
 void DateTimeThread::run( ) {
-	//qDebug( ) << "DateTimeThread : " << currentThreadId();
+	DEBUG_RUN(qDebug( ) << "DateTimeThread : " << currentThreadId());
 	while( !this->isInterruptionRequested( ) ) {
 		dateTimeStrFormatMutex->lock( );
 		QDateTime currentDateTime = QDateTime::currentDateTime( );

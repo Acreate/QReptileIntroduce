@@ -11,6 +11,9 @@
 #include "../Thread/RWFileThread.h"
 #include "../thread/FileThreadResult.h"
 
+#include "../userHread/UserDefine.h"
+#include "../userHread/DebuRunCode.h"
+
 MainWidget::MainWidget( QWidget *parent, Qt::WindowFlags fg ) : QWidget( parent, fg ), compoentStrNlen( 0 ), currentFont( "Arial", 10 ), currentFontMetrics( currentFont ), drawColor( 255, 0, 0 ) {
 
 	//qDebug( ) << "MainWidget::MainWidget : " << QThread::currentThread( )->currentThreadId( );
@@ -25,9 +28,10 @@ MainWidget::MainWidget( QWidget *parent, Qt::WindowFlags fg ) : QWidget( parent,
 	dateTimeThread = new DateTimeThread;
 	dateTimeThread->setParent( this );
 	connect( dateTimeThread, &DateTimeThread::updateDateTimeStr, this, &MainWidget::updateDateTimeStrFunction, Qt::QueuedConnection );
-
 	rwFileThread = new RWFileThread( );
 	rwFileThread->setParent( this );
+	fileThreadResult = rwFileThread->getFileResult( );
+	connect( fileThreadResult, &FileThreadResult::finish, this, &MainWidget::changeTextComponentContents, Qt::QueuedConnection );
 
 	/// 配置 路径
 	QString progressIniPath = qApp->applicationDirPath( ).append( QDir::separator( ) ).append( tr( u8"ini" ) ).append( QDir::separator( ) ).append( tr( u8"progress" ) ).append( QDir::separator( ) );
@@ -144,8 +148,10 @@ MainWidget::MainWidget( QWidget *parent, Qt::WindowFlags fg ) : QWidget( parent,
 		progressSetting->setValue( selectReadFileWorkPath, fileName );
 		progressSetting->sync( );
 		rwFileThread->setFilePath( fileName );
-		fileThreadResult = rwFileThread->readFile( );
-		connect( fileThreadResult, &FileThreadResult::finish, this, &MainWidget::changeTextComponentContents, Qt::QueuedConnection );
+		auto result = rwFileThread->readFile( );
+		if( !result )
+			return;
+		textComponent->clear( );
 		rwFileThread->start( );
 	} );
 
@@ -158,16 +164,14 @@ MainWidget::MainWidget( QWidget *parent, Qt::WindowFlags fg ) : QWidget( parent,
 		progressSetting->setValue( selectWriteFileWorkPath, fileName );
 		progressSetting->sync( );
 		rwFileThread->setFilePath( fileName );
-		fileThreadResult = rwFileThread->writeFile( fileThreadResult->getData( ) );
-		if( !fileThreadResult )
+		auto result = rwFileThread->writeFile( fileThreadResult->getData( ) );
+		if( !result )
 			return;
 		textComponent->clear( );
-		connect( fileThreadResult, &FileThreadResult::finish, this, &MainWidget::changeTextComponentContents, Qt::QueuedConnection );
 		rwFileThread->start( );
 	} );
 	//// 线程开始
 	dateTimeThread->start( );
-
 }
 MainWidget::~MainWidget( ) {
 	progressSetting->sync( );

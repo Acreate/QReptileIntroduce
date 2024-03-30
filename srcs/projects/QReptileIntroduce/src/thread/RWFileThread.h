@@ -27,11 +27,11 @@ private:
 	FileThreadResult *threadFileThreadResult = nullptr;
 	QMutex mutex;
 public: // 线程函数
-	FileThreadResult * readFile( );
-	FileThreadResult * writeFile( const QString &content );
-	FileThreadResult * writeFile( const QByteArray &byteData );
+	FileThreadResult *readFile( );
+	FileThreadResult *writeFile( const QString &content );
+	FileThreadResult *writeFile( const QByteArray &byteData );
 	bool await( );
-	FileThreadResult * start( );
+	FileThreadResult *start( );
 public:
 	void setFilePath( const QString &filePath ) {
 		QMutexLocker< QMutex > locker( &mutex );
@@ -42,6 +42,7 @@ public:
 		QMutexLocker< QMutex > locker( &mutex );
 		return file->absoluteFilePath( );
 	}
+	FileThreadResult *getFileResult( );
 public:
 	bool isFinished( );
 	void requestInterruption( );

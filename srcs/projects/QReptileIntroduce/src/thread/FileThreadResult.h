@@ -23,9 +23,7 @@ public:
 	FileThreadResult( RWFileThread *fileThread, const QString &str ): fileThread( fileThread ), data( str.toLocal8Bit( ) ) {
 		isFinish = true;
 	}
-	~FileThreadResult( ) override {
-		//qDebug( ) << "~FileThreadResult( ) : " << this;
-	}
+	~FileThreadResult( ) override;
 private:
 	void setData( const QByteArray &data ) {
 		this->data.clear( );
