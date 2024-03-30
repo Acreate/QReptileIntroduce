@@ -1,6 +1,6 @@
 ﻿#include "RWFileThread.h"
-#include "FileThreadResult.h"
-#include "FileThread.h"
+#include "FileResult.h"
+#include "../thread/FileThread.h"
 #include <QFile>
 #include  "../userHread/DebugInfo.h"
 
@@ -23,12 +23,12 @@ RWFileThread::~RWFileThread( ) {
 	}
 
 }
-FileThreadResult *RWFileThread::readFile( ) {
+FileResult *RWFileThread::readFile( ) {
 	if( !file->exists( ) )
 		return nullptr;
 	DEBUG_RUN( qDebug( ) << "RWFileThread::readFile : QIODeviceBase::ReadOnly( " << file->absoluteFilePath( ) << " )" );
 	if( !currentThread ) {
-		threadFileThreadResult = new FileThreadResult( this );
+		threadFileThreadResult = new FileResult( this );
 		currentThread = new FileThread( file->absoluteFilePath( ), QIODeviceBase::ReadOnly, threadFileThreadResult );
 	} else {
 		while( currentThread->isRunning( ) && !currentThread->isFinished( ) )
@@ -38,30 +38,32 @@ FileThreadResult *RWFileThread::readFile( ) {
 	}
 	return currentThread->readFile( );
 }
-FileThreadResult *RWFileThread::writeFile( const QString &content ) {
+FileResult *RWFileThread::writeFile( const QString &content ) {
 	if( !file->makeAbsolute( ) )
 		return nullptr;
 	DEBUG_RUN( qDebug( ) << "RWFileThread::writeFile : QIODeviceBase::ReadOnly( " << file->absoluteFilePath( ) << " )" );
 
 	if( !currentThread ) {
-		threadFileThreadResult = new FileThreadResult( this, content );
+		threadFileThreadResult = new FileResult( this, content );
 		currentThread = new FileThread( file->absoluteFilePath( ), QIODeviceBase::WriteOnly, threadFileThreadResult );
 	} else {
 		while( currentThread->isRunning( ) && !currentThread->isFinished( ) )
 			currentThread->usleep( 50 );
+		threadFileThreadResult->data = content.toUtf8( );
 		currentThread->setFilePath( file->absoluteFilePath( ) );
 		currentThread->setOpenMode( QIODeviceBase::WriteOnly );
 	}
 	return currentThread->writeFile( );
 }
-FileThreadResult *RWFileThread::writeFile( const QByteArray &byteData ) {
+FileResult *RWFileThread::writeFile( const QByteArray &byteData ) {
 	DEBUG_RUN( qDebug( ) << "RWFileThread::writeFile : QIODeviceBase::WriteOnly( " << file->absoluteFilePath( ) << " )" );
 	if( !currentThread ) {
-		threadFileThreadResult = new FileThreadResult( this, byteData );
+		threadFileThreadResult = new FileResult( this, byteData );
 		currentThread = new FileThread( file->absoluteFilePath( ), QIODeviceBase::WriteOnly, threadFileThreadResult );
 	} else {
 		while( currentThread->isRunning( ) && !currentThread->isFinished( ) )
 			currentThread->usleep( 50 );
+		threadFileThreadResult->data = byteData;
 		currentThread->setFilePath( file->absoluteFilePath( ) );
 		currentThread->setOpenMode( QIODeviceBase::WriteOnly );
 	}
@@ -82,17 +84,17 @@ bool RWFileThread::await( ) {
 
 	return true;
 }
-FileThreadResult *RWFileThread::start( ) {
+FileResult *RWFileThread::start( ) {
 	if( currentThread && threadFileThreadResult ) {
 		currentThread->start( );
 		return threadFileThreadResult;
 	}
 	return nullptr;
 }
-FileThreadResult *RWFileThread::getFileResult( ) {
+FileResult *RWFileThread::getFileResult( ) {
 	if( threadFileThreadResult )
 		return threadFileThreadResult;
-	threadFileThreadResult = new FileThreadResult( this );
+	threadFileThreadResult = new FileResult( this );
 	currentThread = new FileThread( file->absoluteFilePath( ), QIODeviceBase::NotOpen, threadFileThreadResult );
 	return threadFileThreadResult;
 }

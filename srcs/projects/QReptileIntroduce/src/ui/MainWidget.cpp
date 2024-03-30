@@ -8,15 +8,19 @@
 #include "../Thread/DateTimeThread.h"
 #include <qcoreapplication.h>
 
-#include "../Thread/RWFileThread.h"
-#include "../thread/FileThreadResult.h"
+#include "../file/RWFileThread.h"
+#include "../file/FileResult.h"
+#include "../netWork/Request.h"
+#include "../netWork/RequestConnect.h"
+#include "../userHread/DebugInfo.h"
 
-#include "../userHread/UserDefine.h"
-#include "../userHread/DebuRunCode.h"
+#include <QNetworkReply>
+#include <QInputDialog>
+#include "../userHread/QtMorc.h"
 
 MainWidget::MainWidget( QWidget *parent, Qt::WindowFlags fg ) : QWidget( parent, fg ), compoentStrNlen( 0 ), currentFont( "Arial", 10 ), currentFontMetrics( currentFont ), drawColor( 255, 0, 0 ) {
 
-	//qDebug( ) << "MainWidget::MainWidget : " << QThread::currentThread( )->currentThreadId( );
+	DEBUG_RUN( qDebug() << tr(u8"MainWidget::MainWidget currentThreadId : ")<< QThread::currentThread( )->currentThreadId( ) );
 
 	///// 窗口信息的初始化
 
@@ -30,9 +34,63 @@ MainWidget::MainWidget( QWidget *parent, Qt::WindowFlags fg ) : QWidget( parent,
 	connect( dateTimeThread, &DateTimeThread::updateDateTimeStr, this, &MainWidget::updateDateTimeStrFunction, Qt::QueuedConnection );
 	rwFileThread = new RWFileThread( );
 	rwFileThread->setParent( this );
-	fileThreadResult = rwFileThread->getFileResult( );
-	connect( fileThreadResult, &FileThreadResult::finish, this, &MainWidget::changeTextComponentContents, Qt::QueuedConnection );
 
+	// todo : 每次文件读写操作
+	fileThreadResult = rwFileThread->getFileResult( );
+	//connect( fileThreadResult, &FileResult::finish, this, &MainWidget::changeTextComponentContents, Qt::QueuedConnection );
+	connect( fileThreadResult, &FileResult::error, this, &MainWidget::error, Qt::QueuedConnection );
+
+	////// 网络请求
+	requestNetWrok = new Request( this );
+	requestConnect = new RequestConnect( );
+	connect( requestConnect, &RequestConnect::networkReplyFinished, [=]( ) {
+		QNetworkReply *networkReply = requestConnect->getNetworkReply( );
+		auto byteArray = networkReply->readAll( );
+		if( byteArray.isEmpty( ) )
+			return;
+
+		QString existingDirectory;
+		auto variant = progressSetting->value( selectWebBuffWorkPath );
+		if( variant.isNull( ) ) {
+			existingDirectory = QFileDialog::getExistingDirectory( this, tr( u8"select singleton dir save web request buff" ), qApp->applicationDirPath( ) );
+			if( existingDirectory.isEmpty( ) )
+				return;
+			existingDirectory.append( QDir::separator( ) );
+			progressSetting->setValue( selectWebBuffWorkPath, existingDirectory );
+			progressSetting->sync( );
+		} else
+			existingDirectory = variant.toString( ) + QDir::separator( );
+		QUrl url = networkReply->url( );
+		DEBUG_RUN(
+			qDebug() << "default - url.host( FullyDecoded ) : " << url.host( );
+			qDebug() << "          url.host( PrettyDecoded ) : " << url.host(QUrl::PrettyDecoded );
+			qDebug() << "          url.host( EncodeSpaces ) : " << url.host(QUrl::EncodeSpaces );
+			qDebug() << "          url.host( EncodeUnicode ) : " << url.host(QUrl::EncodeUnicode );
+			qDebug() << "          url.host( EncodeDelimiters ) : " << url.host(QUrl::EncodeDelimiters );
+			qDebug() << "          url.host( EncodeReserved ) : " << url.host(QUrl::EncodeReserved );
+			qDebug() << "          url.host( DecodeReserved ) : " << url.host(QUrl::DecodeReserved );
+			qDebug() << "          url.host( FullyEncoded ) : " << url.host(QUrl::FullyEncoded );
+			qDebug() << "          url.host( FullyDecoded ) : " << url.host(QUrl::FullyDecoded );
+			qDebug() << "default - PrettyDecoded : " << url.toString( );
+			qDebug() << "          None : " << url.toString( QUrl::None);
+			qDebug() << "          RemoveScheme : " << url.toString( QUrl::RemoveScheme);
+			qDebug() << "          RemovePassword : " << url.toString( QUrl::RemovePassword);
+			qDebug() << "          RemoveUserInfo : " << url.toString( QUrl::RemoveUserInfo);
+			qDebug() << "          RemovePort : " << url.toString( QUrl::RemovePort);
+			qDebug() << "          RemoveAuthority : " << url.toString( QUrl::RemoveAuthority);
+			qDebug() << "          RemovePath : " << url.toString( QUrl::RemovePath);
+			qDebug() << "          RemoveQuery : " << url.toString( QUrl::RemoveQuery);
+			qDebug() << "          RemoveFragment : " << url.toString( QUrl::RemoveFragment);
+			qDebug() << "          RemoveFilename : " << url.toString( QUrl::RemoveFilename);
+			qDebug() << "          PreferLocalFile : " << url.toString( QUrl::PreferLocalFile);
+			qDebug() << "          StripTrailingSlash : " << url.toString( QUrl::StripTrailingSlash);
+			qDebug() << "          NormalizePathSegments : " << url.toString( QUrl::NormalizePathSegments);
+		);
+		auto saveTemPath = existingDirectory + url.host( ) + QDir::separator( );
+		rwFileThread->setFilePath( saveTemPath + "index.html" );
+		rwFileThread->writeFile( byteArray );
+		rwFileThread->start( );
+	} );
 	/// 配置 路径
 	QString progressIniPath = qApp->applicationDirPath( ).append( QDir::separator( ) ).append( tr( u8"ini" ) ).append( QDir::separator( ) ).append( tr( u8"progress" ) ).append( QDir::separator( ) );
 	QString progressIniFileName = progressIniPath;
@@ -43,18 +101,16 @@ MainWidget::MainWidget( QWidget *parent, Qt::WindowFlags fg ) : QWidget( parent,
 	pmFilename = qApp->applicationName( ).append( "_" ).append( pmFilename );
 
 	translator = new QTranslator( );
-	if( translator->load( pmFilename, directory ) ) {
+	if( translator->load( pmFilename, directory ) )
 		qApp->installTranslator( translator );
-	} else {
-		qDebug( ) << tr( u8"load error" );
-	}
+	DEBUG_RUN_CODE_FIRST( else, qDebug( ) << tr( u8"load error" ) );
 
 	progressSetting = new QSettings( progressIniFileName, QSettings::IniFormat ); // 使用路径方式存储
-
 	setWindowTitle( tr( u8"read novels" ) );
-
+	// 窗口捕获鼠标
 	setMouseTracking( true );
 
+	// ui 组件
 	auto oldLayout = this->layout( );
 	if( oldLayout )
 		delete oldLayout;
@@ -118,23 +174,8 @@ MainWidget::MainWidget( QWidget *parent, Qt::WindowFlags fg ) : QWidget( parent,
 		QString fileName = QFileDialog::getOpenFileName( nullptr, tr( u8"set file setting" ), dirPath, u8"txt(*.txt *.ini *.setting) ;; *(*)" );
 		if( fileName.isEmpty( ) )
 			return;
-		QFile file( fileName );
-		if( file.open( QIODeviceBase::ReadOnly ) ) {
-			progressSetting->setValue( downIniTypes, fileName );
-			progressSetting->sync( );
-			QRegExp qRegExp( "\\s" );
-			QByteArray readAll = file.readAll( );
-			QString contents( readAll );
-			QStringList list = contents.split( "\n" );
-			downNovelTypes.clear( );
-			for( QString subStr : list ) {
-				subStr = qRegExp.removeIn( subStr );
-				if( !downNovelTypes.contains( subStr ) )
-					downNovelTypes.append( subStr );
-			}
-			textComponent->setText( downNovelTypes.join( "\n" ) );
-			file.close( );
-		}
+		progressSetting->setValue( downIniTypes, fileName );
+		progressSetting->sync( );
 	} );
 
 	Action *readFileAction = new Action( );
@@ -164,14 +205,56 @@ MainWidget::MainWidget( QWidget *parent, Qt::WindowFlags fg ) : QWidget( parent,
 		progressSetting->setValue( selectWriteFileWorkPath, fileName );
 		progressSetting->sync( );
 		rwFileThread->setFilePath( fileName );
-		auto result = rwFileThread->writeFile( fileThreadResult->getData( ) );
+		auto result = rwFileThread->writeFile( textComponent->toPlainText( ).toUtf8( ) );
 		if( !result )
 			return;
 		textComponent->clear( );
 		rwFileThread->start( );
 	} );
+
+	// 请求菜单
+	Menu *requestMenu = new Menu;
+	requestMenu->setTitle( tr( u8"request novel sub menu" ) );
+
+	Action *requestSettingFilePath = new Action;
+	requestSettingFilePath->setText( tr( u8"set request novel setting file path" ) );
+	connect( requestSettingFilePath, &Action::triggered, [=]( ) {
+		DEBUG_RUN( qDebug() << tr(u8"requestSettingFilePath, &Action::trigger slots") );
+		auto variant = progressSetting->value( selectWebBuffWorkPath );
+		auto existingDirectory = qApp->applicationDirPath( );
+		if( variant.isNull( ) ) {
+			existingDirectory = QFileDialog::getExistingDirectory( this, tr( u8"select singleton dir save web request buff" ), existingDirectory );
+			if( existingDirectory.isEmpty( ) )
+				return;
+			existingDirectory.append( QDir::separator( ) );
+		} else {
+			existingDirectory = QFileDialog::getExistingDirectory( this, tr( u8"select singleton dir save web request buff" ), variant.toString( ) );
+			if( existingDirectory.isEmpty( ) )
+				return;
+			existingDirectory.append( QDir::separator( ) );
+		}
+		progressSetting->setValue( selectWebBuffWorkPath, existingDirectory );
+		progressSetting->sync( );
+	} );
+	requestMenu->addAction( requestSettingFilePath );
+
+	Action *requestWeb = new Action;
+	requestWeb->setText( tr( u8"start request novel web page" ) );
+	connect( requestWeb, &Action::triggered, [=]( ) {
+		DEBUG_RUN( qDebug() << tr(u8"requestWeb, &Action::trigger slots") );
+		//// todo: 请求测试
+		requestConnect->setNetworkAccessManager( requestNetWrok->getNetworkAccessManager( ) );
+		QString urlText = QInputDialog::getText( this, tr( u8"please input request url" ), tr( u8"input url" ) );
+		if( urlText.isEmpty( ) )
+			return;
+		requestNetWrok->netGetWork( urlText, requestConnect );
+	} );
+	requestMenu->addAction( requestWeb );
+
+	toolsMenu->addMenu( requestMenu );
 	//// 线程开始
 	dateTimeThread->start( );
+
 }
 MainWidget::~MainWidget( ) {
 	progressSetting->sync( );
@@ -226,11 +309,13 @@ void MainWidget::resizeEvent( QResizeEvent *event ) {
 	titleHeight = frameSize( ).height( ) - event->size( ).height( );
 }
 void MainWidget::updateDateTimeStrFunction( const QString &currentDateTimeStr ) {
-	//static bool isOutDbug = true;
-	//if( isOutDbug ) {
-	//	qDebug( ) << "MainWidget::updateDateTimeStrFunction( const QString &currentDateTimeStr ) : " << QThread::currentThread( )->currentThreadId( );
-	//	isOutDbug = false;
-	//}
+	DEBUG_RUN(
+		static bool isOutDbug = true;
+		if( isOutDbug ) {
+		qDebug( ) << tr(u8"MainWidget::updateDateTimeStrFunction( const QString &currentDateTimeStr ) currentThreadId: ") << QThread::currentThread( )->currentThreadId( );
+		isOutDbug = false;
+		}
+	);
 	QString string = converTransparentForMouseEventsBtn->text( );
 	qint64 newStrLen = currentDateTimeStr.length( ) + string.length( );
 	if( compoentStrNlen < newStrLen ) {
@@ -240,11 +325,13 @@ void MainWidget::updateDateTimeStrFunction( const QString &currentDateTimeStr ) 
 	textLine->setText( currentDateTimeStr );
 }
 void MainWidget::changeTransparent( bool flage ) {
-	//static bool isOutDbug = true;
-	//if( isOutDbug ) {
-	//	qDebug( ) << "MainWidget::changeTransparent( bool flage ) : " << QThread::currentThread( )->currentThreadId( );
-	//	isOutDbug = false;
-	//}
+	DEBUG_RUN(
+		static bool isOutDbug = true;
+		if( isOutDbug ) {
+		qDebug( ) <<tr( u8"MainWidget::changeTransparent( bool flage ) : ") << QThread::currentThread( )->currentThreadId( );
+		isOutDbug = false;
+		}
+	);
 	bool attribute = !textComponent->testAttribute( Qt::WA_TransparentForMouseEvents );
 	progressSetting->setValue( transparentForMouseEvents, attribute );
 	progressSetting->sync( );
@@ -254,16 +341,21 @@ void MainWidget::changeTransparent( bool flage ) {
 void MainWidget::changeTextComponentContents( ) {
 	textComponent->setText( fileThreadResult->getData( ) );
 }
-
+void MainWidget::error( int errorType, QFileDevice::FileError fileErrorCode, QFileDevice::FileError dirError ) {
+	if( errorType | 1 )
+		DEBUG_RUN( qDebug() << fileErrorCode ) ;
+	if( errorType | 2 )
+		DEBUG_RUN( qDebug() << dirError ) ;
+}
 void MainWidget::updateWidgetWidth( const QList< QString > &list ) {
 	int width = 0;
 	for( auto &str : list )
 		width += currentFontMetrics.horizontalAdvance( str );
-	width = width + 70;
+	width = width + 100;
 	int thisWidthMinWidth = minimumWidth( );
 	if( thisWidthMinWidth < width ) {
 		setMinimumWidth( width );
-		//qDebug( ) << "最小宽度 : " << width;
+		resize( width, height( ) );
+		DEBUG_RUN( qDebug( ) << tr(u8"this MainWidget window min width is : ") << width );
 	}
-
 }

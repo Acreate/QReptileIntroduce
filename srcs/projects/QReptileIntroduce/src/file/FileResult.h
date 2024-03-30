@@ -3,8 +3,9 @@
 
 #pragma once
 #include <qbytearray.h>
+#include <QIODeviceBase>
 #include "RWFileThread.h"
-class FileThreadResult : public QObject {
+class FileResult : public QObject {
 	Q_OBJECT;
 public:
 	friend class RWFileThread;
@@ -14,16 +15,16 @@ private:
 	QByteArray data;
 	bool isFinish;
 public:
-	FileThreadResult( RWFileThread *fileThread ): fileThread( fileThread ) {
+	FileResult( RWFileThread *fileThread ): fileThread( fileThread ) {
 		isFinish = true;
 	}
-	FileThreadResult( RWFileThread *fileThread, const QByteArray &data ): fileThread( fileThread ), data( data ) {
+	FileResult( RWFileThread *fileThread, const QByteArray &data ): fileThread( fileThread ), data( data ) {
 		isFinish = true;
 	}
-	FileThreadResult( RWFileThread *fileThread, const QString &str ): fileThread( fileThread ), data( str.toLocal8Bit( ) ) {
+	FileResult( RWFileThread *fileThread, const QString &str ): fileThread( fileThread ), data( str.toUtf8( ) ) {
 		isFinish = true;
 	}
-	~FileThreadResult( ) override;
+	~FileResult( ) override;
 private:
 	void setData( const QByteArray &data ) {
 		this->data.clear( );
@@ -40,14 +41,20 @@ public:
 	bool runFinish( ) const {
 		return isFinish;
 	}
-	const QByteArray &getData( ) const {
+	QByteArray &getData( ) {
 		return data;
 	}
 	bool await( );
 Q_SIGNALS:
 	void finish( );
 	void interruptionRequested( );
-	void error(int code);
+	/// <summary>
+	/// 错误的槽函数
+	/// </summary>
+	/// <param name="errorType">错误类型，3 表示同时错误，1 表示文件错误，2 表示目录错误</param>
+	/// <param name="errorCode">文件错误信息</param>
+	/// <param name="dirError">目录错误信息</param>
+	void error( int errorType, QFileDevice::FileError errorCode, QFileDevice::FileError dirError );
 };
 
 #endif // FILETHREADRESULT_H_H_HEAD__FILE__

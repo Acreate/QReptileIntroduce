@@ -8,16 +8,21 @@
 #include <QLineEdit>
 #include <QPushButton>
 #include <QLabel>
+#include <QNetworkReply>
+
 #include "../menu/Menu.h"
 #include <QSettings>
 #include <QTranslator>
+#include <QFileDevice>
 #include <QTimer>
 
 #include "../layout/HLyaoutBox.h"
-
-class FileThreadResult;
+class QFile;
+class Request;
+class FileResult;
 class RWFileThread;
 class DateTimeThread;
+class RequestConnect;
 class MainWidget : public QWidget {
 	Q_OBJECT;
 public:
@@ -32,7 +37,7 @@ protected: // 事件
 	void resizeEvent( QResizeEvent *event ) override;
 private: // 参考变量 - 只读
 	QString qstrPoint = u8"坐标:( %1 , %2 )"; // 格式化字符串
-	FileThreadResult *fileThreadResult = nullptr; // 文件读取绑定指针
+	FileResult *fileThreadResult = nullptr; // 文件读取绑定指针
 private: // 计算变量
 	QPoint mousePoint; // 当前鼠标位置
 	QFont currentFont; // 当前字体
@@ -57,19 +62,24 @@ private: // 程序配置-读写
 	QSettings *progressSetting;
 	QTranslator *translator;
 	RWFileThread *rwFileThread;
+private: // 网络-请求
+	Request *requestNetWrok = nullptr; // web 网络请求对象
+	RequestConnect *requestConnect = nullptr; // web 网络响应槽函数对象
 private: // 程序配置-名称
 	const QString transparentForMouseEvents = tr( u8"somponentStyle/TransparentForMouseEvents" );
 	const QString downIniTypes = tr( u8"downIni/Types" );
 	const QString selectReadFileWorkPath = tr( u8"work/Read/Path" );
 	const QString selectWriteFileWorkPath = tr( u8"work/Write/Path" );
+	const QString selectWebBuffWorkPath = tr( u8"work/WebBuff/Path" );
 private: // 程序配置-变量
 	QStringList downNovelTypes;
 private: // 定时调用
 	DateTimeThread *dateTimeThread;
-public slots:
+public slots: // 窗口子控件信号响应
 	void updateDateTimeStrFunction( const QString &currentDateTimeStr );
 	void changeTransparent( bool flage );
 	void changeTextComponentContents( );
+	void error( int errorType, QFileDevice::FileError fileErrorCode, QFileDevice::FileError dirError );
 private:
 	/// <summary>
 	/// 更新窗口宽度

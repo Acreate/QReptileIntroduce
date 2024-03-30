@@ -1,9 +1,10 @@
 ﻿#include "FileThread.h"
-#include "FileThreadResult.h"
+#include "../file/FileResult.h"
 #include  "../userHread/DebugInfo.h"
+#include <QDir>
 FileThread::FileThread( const QString &filePath,
 	QIODeviceBase::OpenMode openMode,
-	FileThreadResult *fileThreadResult ):
+	FileResult *fileThreadResult ):
 file( filePath ),
 fileThreadResult( fileThreadResult ),
 openMode( openMode ) {
@@ -15,27 +16,41 @@ QIODeviceBase::OpenMode FileThread::resetOpenMode( const QIODeviceBase::OpenMode
 	openMode = newOpenMode;
 	return oldOpenmo;
 }
-FileThreadResult *FileThread::readFile( ) {
+FileResult *FileThread::readFile( ) {
 	runOpenMode = QIODeviceBase::ReadOnly;
 	if( !file.exists( ) )
 		return nullptr;
-	if( runOpenMode & openMode && file.open( openMode ) ) {
+
+	DEBUG_RUN( qDebug( ) << "FileThread::readFile( " << file.fileName( ) << " ) openMode = " << openMode );
+	if( runOpenMode & openMode && file.open( openMode ) )
 		return fileThreadResult;
-	}
-	emit fileThreadResult->error( -1 );
+	emit fileThreadResult->error( 1, file.error( ), QFileDevice::NoError );
 	return nullptr;
 }
-FileThreadResult *FileThread::writeFile( ) {
+FileResult *FileThread::writeFile( ) {
 	runOpenMode = QIODeviceBase::WriteOnly;
-	if( QFileInfo::exists( file.fileName( ) ) )
+	QFileInfo fileInfo( file.fileName( ) );
+	if( fileInfo.exists( ) )
 		openMode = openMode | QIODeviceBase::ExistingOnly | QIODeviceBase::Truncate;
-	else
+	else {
 		openMode = openMode | QIODeviceBase::NewOnly;
-	QIODeviceBase::OpenMode flags = runOpenMode & openMode;
-	if( flags && file.open( openMode ) ) {
-		return fileThreadResult;
+		QDir absoluteDir = fileInfo.absoluteDir( );
+		if( !absoluteDir.exists( ) ) {
+			QString absolutePath = absoluteDir.absolutePath( );
+			if( !absoluteDir.mkdir( absolutePath ) ) {
+				DEBUG_RUN( qDebug( ) << "mkdir( " <<absolutePath << " ) error :" << __FILE__ << " : " << __LINE__ );
+				emit fileThreadResult->error( 2, QFileDevice::NoError, QFileDevice::PermissionsError );
+				return nullptr;
+			}
+		}
 	}
-	emit fileThreadResult->error( -2 );
+
+	DEBUG_RUN( qDebug( ) << "FileThread::writeFile( " << file.fileName( ) << " ) openMode = " << openMode );
+	QIODeviceBase::OpenMode flags = runOpenMode & openMode;
+	if( flags && file.open( openMode ) )
+		return fileThreadResult;
+
+	emit fileThreadResult->error( 1, file.error( ), QFileDevice::NoError );
 	return nullptr;
 }
 void FileThread::run( ) {
@@ -44,12 +59,12 @@ void FileThread::run( ) {
 		DEBUG_RUN( qDebug( ) << "FileThread::run : QIODeviceBase::ReadOnly( " << file.fileName( ) << " )" );
 		fileThreadResult->setFinish( false );
 		fileThreadResult->data.clear( );
-		constexpr qsizetype readBuffSize = 1024;
 		qsizetype readSize = 0;
-		auto buff = new char[ readBuffSize ];
+		auto currentBuffSize = buffSize;
+		auto buff = new char[ currentBuffSize ];
 		qint64 readCount = 0;
 		do {
-			readCount = file.read( buff, readBuffSize );
+			readCount = file.read( buff, currentBuffSize );
 			if( readCount == -1 || readCount == 0 || isInterruptionRequested( ) )
 				break;
 			fileThreadResult->data.append( buff, readCount );
@@ -65,25 +80,30 @@ void FileThread::run( ) {
 		}
 		fileThreadResult->setFinish( true );
 		emit fileThreadResult->finish( );
+		return;
 	} else if( runOpenMode == QIODeviceBase::WriteOnly ) /*写入*/ {
 		DEBUG_RUN( qDebug( ) << "FileThread::run : QIODeviceBase::WriteOnly( " << file.fileName( ) << " )" );
 		fileThreadResult->setFinish( false );
-		constexpr qsizetype readBuffSize = 1024;
+		auto currentBuffSize = buffSize;
 		auto buff = fileThreadResult->data.data( );
 		auto writeMaxSize = fileThreadResult->data.length( );
-		qint64 writeIndex = 0;
 		qint64 writeCount = 0;
-		do {
-			writeCount += file.write( buff + writeIndex, readBuffSize );
-			writeIndex += readBuffSize;
-			if( writeCount >= writeMaxSize || isInterruptionRequested( ) )
-				break;
-			if( writeIndex + readBuffSize >= writeMaxSize ) {
-				writeCount += file.write( buff + writeIndex, writeMaxSize - writeIndex );
-				break;
-			}
+		if( writeMaxSize < buffSize ) {
+			writeCount += file.write( buff, writeMaxSize );
+		} else {
+			qint64 writeIndex = 0;
+			do {
+				writeCount += file.write( buff + writeIndex, currentBuffSize );
+				writeIndex += currentBuffSize;
+				if( writeCount >= writeMaxSize || isInterruptionRequested( ) )
+					break;
+				if( writeIndex + currentBuffSize >= writeMaxSize ) {
+					writeCount += file.write( buff + writeIndex, writeMaxSize - writeIndex );
+					break;
+				}
+			} while( true );
 
-		} while( true );
+		}
 
 		file.close( );
 		if( writeCount != writeMaxSize ) {
@@ -93,6 +113,8 @@ void FileThread::run( ) {
 		}
 		fileThreadResult->setFinish( true );
 		emit fileThreadResult->finish( );
+		return;
 	}
 
+	DEBUG_RUN( qDebug( ) << "!! FileThread::run : error ( " << file.fileName( ) << " ) !!" );
 }

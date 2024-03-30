@@ -2,16 +2,14 @@
 #define RWFILETHREAD_H_H_HEAD__FILE__
 
 #pragma once
-#include <QThread>
-#include <qfile.h>
 #include <qmutex.h>
-#include <QDebug>
-#include <QSharedPointer>
 
-#include "FileThread.h"
+#include "../thread/FileThread.h"
 
+class QFileInfo;
+class FileThread;
 class QFile;
-class FileThreadResult;
+class FileResult;
 class RWFileThread : public QObject {
 
 public:
@@ -24,14 +22,14 @@ public:
 private:
 	QFileInfo *file;
 	FileThread *currentThread = nullptr;
-	FileThreadResult *threadFileThreadResult = nullptr;
+	FileResult *threadFileThreadResult = nullptr;
 	QMutex mutex;
 public: // 线程函数
-	FileThreadResult *readFile( );
-	FileThreadResult *writeFile( const QString &content );
-	FileThreadResult *writeFile( const QByteArray &byteData );
+	FileResult *readFile( );
+	FileResult *writeFile( const QString &content );
+	FileResult *writeFile( const QByteArray &byteData );
 	bool await( );
-	FileThreadResult *start( );
+	FileResult *start( );
 public:
 	void setFilePath( const QString &filePath ) {
 		QMutexLocker< QMutex > locker( &mutex );
@@ -42,7 +40,7 @@ public:
 		QMutexLocker< QMutex > locker( &mutex );
 		return file->absoluteFilePath( );
 	}
-	FileThreadResult *getFileResult( );
+	FileResult *getFileResult( );
 public:
 	bool isFinished( );
 	void requestInterruption( );

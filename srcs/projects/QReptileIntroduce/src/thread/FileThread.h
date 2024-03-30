@@ -6,24 +6,25 @@
 #include <QFile>
 #include <QIODeviceBase>
 
-class FileThreadResult;
+class FileResult;
 class FileThread : public QThread {
 	Q_OBJECT;
 private:
+	qsizetype buffSize = 1024;
 	QFile file;
-	FileThreadResult *fileThreadResult;
+	FileResult *fileThreadResult;
 	QIODeviceBase::OpenMode openMode;
 	QIODeviceBase::OpenMode runOpenMode;
 public:
-	FileThread( const QString &filePath, QIODeviceBase::OpenMode openMode, FileThreadResult *fileThreadResult );
+	FileThread( const QString &filePath, QIODeviceBase::OpenMode openMode, FileResult *fileThreadResult );
 public:
 	QIODeviceBase::OpenMode resetOpenMode( const QIODeviceBase::OpenMode &newOpenMode );
-	FileThreadResult *readFile( );
-	FileThreadResult *writeFile( );
+	FileResult *readFile( );
+	FileResult *writeFile( );
 protected:
 	void run( ) override;
 public:
-	FileThreadResult *getFileThreadResult( ) {
+	FileResult *getFileThreadResult( ) {
 		return fileThreadResult;
 	}
 	QIODeviceBase::OpenMode getOpenMode( ) const {
@@ -38,6 +39,12 @@ public:
 	}
 	void setFilePath( const QString &newPath ) {
 		file.setFileName( newPath );
+	}
+	qsizetype getBuffSize( ) const {
+		return buffSize;
+	}
+	void setBuffSize( const qsizetype buffSize ) {
+		this->buffSize = buffSize;
 	}
 };
 

@@ -22,5 +22,12 @@
 		run_code; \
 	} while(false)
 
+#define DEBUG_RUN_CODE_FIRST( first_code, run_code ) \
+	first_code \
+	{\
+		run_code;	\
+	} \
+	while(false) \
+		continue
 
 #endif // DEBUG_H_H_HEAD__FILE__
