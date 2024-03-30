@@ -17,7 +17,7 @@ RWFileThread::~RWFileThread( ) {
 	delete file;
 	if( currentThread ) {
 		currentThread->requestInterruption( );
-		while( !currentThread->isFinished( ) )
+		while( currentThread->isRunning( ) && !currentThread->isFinished( ) )
 			QThread::usleep( 20 );
 		delete currentThread;
 	}
@@ -68,14 +68,16 @@ FileThreadResult *RWFileThread::writeFile( const QByteArray &byteData ) {
 	return currentThread->writeFile( );
 }
 bool RWFileThread::await( ) {
-	DEBUG_RUN_IF_PTR( this->currentThread, nullptr, qDebug( ) << "await currentThread id = " << this->currentThread );
+	DEBUG_RUN_IF_NOT_EQU_PTR( this->currentThread, nullptr, qDebug( ) << "await currentThread id = " << this->currentThread );
 
 	while( this->currentThread && this->currentThread->isRunning( ) ) {
 		QMutexLocker< QMutex > locker( &mutex );
-		bool finished = this->currentThread->isFinished( );
-		if( finished )
-			break;
-		QThread::currentThread( )->usleep( 20 );
+		if( this->currentThread->isRunning( ) ) {
+			bool finished = this->currentThread->isFinished( );
+			if( finished )
+				break;
+			QThread::currentThread( )->usleep( 20 );
+		}
 	}
 
 	return true;
@@ -96,8 +98,12 @@ FileThreadResult *RWFileThread::getFileResult( ) {
 }
 bool RWFileThread::isFinished( ) {
 	QMutexLocker< QMutex > locker( &mutex );
-	if( currentThread != nullptr )
-		return !currentThread->isRunning( ) && currentThread->isFinished( );
+	if( currentThread != nullptr ) {
+		bool cond = !currentThread->isRunning( );
+		if( cond )
+			return true;
+		return currentThread->isFinished( );
+	}
 	return true;
 }
 void RWFileThread::requestInterruption( ) {

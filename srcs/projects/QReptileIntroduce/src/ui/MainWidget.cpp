@@ -181,7 +181,7 @@ MainWidget::~MainWidget( ) {
 	delete progressSetting;
 	delete translator;
 
-	while( !dateTimeThread->isFinished( ) )
+	while( dateTimeThread->isRunning( ) && !dateTimeThread->isFinished( ) )
 		QThread::usleep( 20 );
 
 	while( !rwFileThread->isFinished( ) )

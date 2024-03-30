@@ -2,6 +2,8 @@
 #include <QOpenGLWidget>
 #include "../ui/MainWidget.h"
 #include "../core/Appliction.h"
+#include "../Test/TestThread.h"
+
 int main( int argc, char *argv[ ] ) {
 	Appliction appliction( argc, argv );
 	MainWidget qWidget;
