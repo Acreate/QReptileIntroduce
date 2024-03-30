@@ -13,19 +13,19 @@ class FileThread : public QThread {
 	Q_OBJECT;
 private:
 	QFile file;
-	QSharedPointer< FileThreadResult > fileThreadResult;
+	FileThreadResult *fileThreadResult;
 	QIODeviceBase::OpenMode openMode;
 	QIODeviceBase::OpenMode runOpenMode;
 public:
-	FileThread( const QString &filePath, QIODeviceBase::OpenMode openMode, const QSharedPointer< FileThreadResult > &fileThreadResult );
+	FileThread( const QString &filePath, QIODeviceBase::OpenMode openMode, FileThreadResult *fileThreadResult );
 public:
 	QIODeviceBase::OpenMode resetOpenMode( const QIODeviceBase::OpenMode &newOpenMode );
-	QSharedPointer< FileThreadResult > readFile( );
-	QSharedPointer< FileThreadResult > writeFile( );
+	FileThreadResult *readFile( );
+	FileThreadResult *writeFile( );
 protected:
 	void run( ) override;
 public:
-	QSharedPointer< FileThreadResult > getFileThreadResult( ) {
+	FileThreadResult *getFileThreadResult( ) {
 		return fileThreadResult;
 	}
 	QIODeviceBase::OpenMode getOpenMode( ) const {

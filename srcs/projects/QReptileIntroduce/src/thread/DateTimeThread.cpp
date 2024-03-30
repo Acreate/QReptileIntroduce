@@ -8,7 +8,7 @@ DateTimeThread::~DateTimeThread( ) {
 	delete dateTimeStrFormatMutex;
 }
 void DateTimeThread::run( ) {
-	qDebug( ) << "DateTimeThread : " << currentThreadId();
+	//qDebug( ) << "DateTimeThread : " << currentThreadId();
 	while( !this->isInterruptionRequested( ) ) {
 		dateTimeStrFormatMutex->lock( );
 		QDateTime currentDateTime = QDateTime::currentDateTime( );

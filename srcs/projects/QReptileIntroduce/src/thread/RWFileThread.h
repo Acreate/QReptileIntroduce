@@ -24,14 +24,14 @@ public:
 private:
 	QFileInfo *file;
 	FileThread *currentThread = nullptr;
-	QSharedPointer< FileThreadResult > threadFileThreadResult = nullptr;
+	FileThreadResult *threadFileThreadResult = nullptr;
 	QMutex mutex;
 public: // 线程函数
-	QSharedPointer< FileThreadResult > readFile( );
-	QSharedPointer< FileThreadResult > writeFile( const QString &content );
-	QSharedPointer< FileThreadResult > writeFile( const QByteArray &byteData );
+	FileThreadResult * readFile( );
+	FileThreadResult * writeFile( const QString &content );
+	FileThreadResult * writeFile( const QByteArray &byteData );
 	bool await( );
-	QSharedPointer< FileThreadResult > start( );
+	FileThreadResult * start( );
 public:
 	void setFilePath( const QString &filePath ) {
 		QMutexLocker< QMutex > locker( &mutex );

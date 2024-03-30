@@ -12,12 +12,12 @@
 
 MainWidget::MainWidget( QWidget *parent, Qt::WindowFlags fg ) : QWidget( parent, fg ), compoentStrNlen( 0 ), currentFont( "Arial", 10 ), currentFontMetrics( currentFont ), drawColor( 255, 0, 0 ) {
 
-	qDebug( ) << "MainWidget::MainWidget : " << QThread::currentThread( )->currentThreadId( );
+	//qDebug( ) << "MainWidget::MainWidget : " << QThread::currentThread( )->currentThreadId( );
 	/////// 线程
 	dateTimeThread = new DateTimeThread;
 	connect( dateTimeThread, &DateTimeThread::updateDateTimeStr, this, &MainWidget::updateDateTimeStrFunction, Qt::QueuedConnection );
 
-	fileThread = new RWFileThread( );
+	rwFileThread = new RWFileThread( );
 
 	/// 配置 路径
 	QString progressIniPath = qApp->applicationDirPath( ).append( QDir::separator( ) ).append( tr( u8"ini" ) ).append( QDir::separator( ) ).append( tr( u8"progress" ) ).append( QDir::separator( ) );
@@ -121,10 +121,10 @@ MainWidget::MainWidget( QWidget *parent, Qt::WindowFlags fg ) : QWidget( parent,
 			return;
 		progressSetting->setValue( selectReadFileWorkPath, fileName );
 		progressSetting->sync( );
-		fileThread->setFilePath( fileName );
-		fileThreadResult = fileThread->readFile( );
-		connect( fileThreadResult.data( ), &FileThreadResult::finish, this, &MainWidget::changeTextComponentContents, Qt::QueuedConnection );
-		fileThread->start( );
+		rwFileThread->setFilePath( fileName );
+		fileThreadResult = rwFileThread->readFile( );
+		connect( fileThreadResult, &FileThreadResult::finish, this, &MainWidget::changeTextComponentContents, Qt::QueuedConnection );
+		rwFileThread->start( );
 	} );
 
 	Action *writeAction = new Action;
@@ -135,13 +135,13 @@ MainWidget::MainWidget( QWidget *parent, Qt::WindowFlags fg ) : QWidget( parent,
 		QString fileName = QFileDialog::getSaveFileName( nullptr, tr( u8"select file write to text editor" ), dirPath, u8"*(*)" );
 		progressSetting->setValue( selectWriteFileWorkPath, fileName );
 		progressSetting->sync( );
-		fileThread->setFilePath( fileName );
-		fileThreadResult = fileThread->writeFile( fileThreadResult->getData( ) );
+		rwFileThread->setFilePath( fileName );
+		fileThreadResult = rwFileThread->writeFile( fileThreadResult->getData( ) );
 		if( !fileThreadResult )
 			return;
 		textComponent->clear( );
-		connect( fileThreadResult.data( ), &FileThreadResult::finish, this, &MainWidget::changeTextComponentContents, Qt::QueuedConnection );
-		fileThread->start( );
+		connect( fileThreadResult, &FileThreadResult::finish, this, &MainWidget::changeTextComponentContents, Qt::QueuedConnection );
+		rwFileThread->start( );
 	} );
 	//// 线程开始
 	dateTimeThread->start( );
@@ -150,14 +150,18 @@ MainWidget::MainWidget( QWidget *parent, Qt::WindowFlags fg ) : QWidget( parent,
 MainWidget::~MainWidget( ) {
 	progressSetting->sync( );
 	dateTimeThread->requestInterruption( );
-	fileThread->requestInterruption( );
+	rwFileThread->requestInterruption( );
+
 	delete progressSetting;
 	delete translator;
+	
 	while( !dateTimeThread->isFinished( ) )
 		QThread::usleep( 20 );
-	while( !fileThread->isFinished( ) )
-		QThread::usleep( 20 );
 	delete dateTimeThread;
+	
+	while( !rwFileThread->isFinished( ) )
+		QThread::usleep( 20 );
+	delete rwFileThread;
 }
 QFont MainWidget::setFont( QFont &font ) {
 	auto oldFont = currentFont;
@@ -197,11 +201,11 @@ void MainWidget::mousePressEvent( QMouseEvent *event ) {
 void MainWidget::resizeEvent( QResizeEvent *event ) {
 }
 void MainWidget::updateDateTimeStrFunction( const QString &currentDateTimeStr ) {
-	static bool isOutDbug = true;
-	if( isOutDbug ) {
-		qDebug( ) << "MainWidget::updateDateTimeStrFunction( const QString &currentDateTimeStr ) : " << QThread::currentThread( )->currentThreadId( );
-		isOutDbug = false;
-	}
+	//static bool isOutDbug = true;
+	//if( isOutDbug ) {
+	//	qDebug( ) << "MainWidget::updateDateTimeStrFunction( const QString &currentDateTimeStr ) : " << QThread::currentThread( )->currentThreadId( );
+	//	isOutDbug = false;
+	//}
 	QString string = converTransparentForMouseEventsBtn->text( );
 	qint64 newStrLen = currentDateTimeStr.length( ) + string.length( );
 	if( compoentStrNlen < newStrLen ) {
@@ -211,11 +215,11 @@ void MainWidget::updateDateTimeStrFunction( const QString &currentDateTimeStr ) 
 	textLine->setText( currentDateTimeStr );
 }
 void MainWidget::changeTransparent( bool flage ) {
-	static bool isOutDbug = true;
-	if( isOutDbug ) {
-		qDebug( ) << "MainWidget::changeTransparent( bool flage ) : " << QThread::currentThread( )->currentThreadId( );
-		isOutDbug = false;
-	}
+	//static bool isOutDbug = true;
+	//if( isOutDbug ) {
+	//	qDebug( ) << "MainWidget::changeTransparent( bool flage ) : " << QThread::currentThread( )->currentThreadId( );
+	//	isOutDbug = false;
+	//}
 	bool attribute = !textComponent->testAttribute( Qt::WA_TransparentForMouseEvents );
 	progressSetting->setValue( transparentForMouseEvents, attribute );
 	progressSetting->sync( );
@@ -223,7 +227,7 @@ void MainWidget::changeTransparent( bool flage ) {
 	converTransparentForMouseEventsBtn->setText( QString( tr( u8"current state: [%1 transparent]" ) ).arg( attribute ? u8"" : tr( u8"not" ) ) );
 }
 void MainWidget::changeTextComponentContents( ) {
-	textComponent->setText( fileThreadResult.data( )->getData( ) );
+	textComponent->setText( fileThreadResult->getData( ) );
 }
 
 void MainWidget::updateWidgetWidth( const QList< QString > &list ) {
@@ -234,7 +238,7 @@ void MainWidget::updateWidgetWidth( const QList< QString > &list ) {
 	int thisWidthMinWidth = minimumWidth( );
 	if( thisWidthMinWidth < width ) {
 		setMinimumWidth( width );
-		qDebug( ) << "最小宽度 : " << width;
+		//qDebug( ) << "最小宽度 : " << width;
 	}
 
 }
