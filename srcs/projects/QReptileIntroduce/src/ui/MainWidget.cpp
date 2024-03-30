@@ -1,5 +1,6 @@
 ﻿#include "MainWidget.h"
 #include <QMouseEvent>
+#include <QResizeEvent>
 #include <QScrollBar>
 #include <QMenu>
 #include <QRegExp>
@@ -13,11 +14,20 @@
 MainWidget::MainWidget( QWidget *parent, Qt::WindowFlags fg ) : QWidget( parent, fg ), compoentStrNlen( 0 ), currentFont( "Arial", 10 ), currentFontMetrics( currentFont ), drawColor( 255, 0, 0 ) {
 
 	//qDebug( ) << "MainWidget::MainWidget : " << QThread::currentThread( )->currentThreadId( );
+
+	///// 窗口信息的初始化
+
+	//connect( this, &QWidget::show, [=]( ) {
+	//
+	//} );
+
 	/////// 线程
 	dateTimeThread = new DateTimeThread;
+	dateTimeThread->setParent( this );
 	connect( dateTimeThread, &DateTimeThread::updateDateTimeStr, this, &MainWidget::updateDateTimeStrFunction, Qt::QueuedConnection );
 
 	rwFileThread = new RWFileThread( );
+	rwFileThread->setParent( this );
 
 	/// 配置 路径
 	QString progressIniPath = qApp->applicationDirPath( ).append( QDir::separator( ) ).append( tr( u8"ini" ) ).append( QDir::separator( ) ).append( tr( u8"progress" ) ).append( QDir::separator( ) );
@@ -80,8 +90,20 @@ MainWidget::MainWidget( QWidget *parent, Qt::WindowFlags fg ) : QWidget( parent,
 
 	toolsMenu = new Menu( this );
 
-	connect( toolsMenu, &QMenu::aboutToShow, [=]( ) {
-		showCount = 1;
+	//connect( toolsMenu, &QMenu::aboutToShow, [=]( ) {
+	//	showCount = 1;
+	//} );
+	connect( toolsMenu, &QMenu::aboutToHide, [=]( ) {
+		auto point = QCursor::pos( );
+		auto pos = this->pos( );
+		point -= pos;
+		point.setY( point.y( ) - titleHeight );
+		QRect geometry = converTransparentForMouseEventsBtn->geometry( );
+		if( geometry.contains( point ) )
+			showCount = 1;
+	} );
+	connect( toolsMenu, &QMenu::triggered, [=]( ) {
+		showCount = 0;
 	} );
 
 	Action *selectSettingFileDialogAcion = new Action( );
@@ -154,14 +176,12 @@ MainWidget::~MainWidget( ) {
 
 	delete progressSetting;
 	delete translator;
-	
+
 	while( !dateTimeThread->isFinished( ) )
 		QThread::usleep( 20 );
-	delete dateTimeThread;
-	
+
 	while( !rwFileThread->isFinished( ) )
 		QThread::usleep( 20 );
-	delete rwFileThread;
 }
 QFont MainWidget::setFont( QFont &font ) {
 	auto oldFont = currentFont;
@@ -199,6 +219,8 @@ void MainWidget::mousePressEvent( QMouseEvent *event ) {
 		}
 }
 void MainWidget::resizeEvent( QResizeEvent *event ) {
+	// 改变大小的时候，重置标题栏高度
+	titleHeight = frameSize( ).height( ) - event->size( ).height( );
 }
 void MainWidget::updateDateTimeStrFunction( const QString &currentDateTimeStr ) {
 	//static bool isOutDbug = true;

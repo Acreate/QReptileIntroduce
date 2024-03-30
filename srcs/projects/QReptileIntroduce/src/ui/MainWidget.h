@@ -29,13 +29,9 @@ protected:
 	void mouseReleaseEvent( QMouseEvent *event ) override;
 	void mousePressEvent( QMouseEvent *event ) override;
 	void resizeEvent( QResizeEvent *event ) override;
-private: // 参考变量
-	QPoint winCenterPoint; // 记录窗口中间
+private: // 参考变量 - 只读
 	QString qstrPoint = u8"坐标:( %1 , %2 )"; // 格式化字符串
-	int compoentStrNlen; // 额外增加的横向空间
-	qsizetype showCount = 0; // 菜单显示计数
-
-	FileThreadResult *fileThreadResult = nullptr;
+	FileThreadResult *fileThreadResult = nullptr; // 文件读取绑定指针
 private: // 计算变量
 	QPoint mousePoint; // 当前鼠标位置
 	QFont currentFont; // 当前字体
@@ -43,6 +39,10 @@ private: // 计算变量
 	QString drawStr; // 当前绘制字体
 	QPoint drawPoint; // 当前绘制坐标
 	QColor drawColor; // 当前绘制颜色
+	int titleHeight; // 标题高度
+	qsizetype showCount = 0; // 菜单显示计数
+	int compoentStrNlen; // 额外增加的横向空间
+	QPoint winCenterPoint; // 记录窗口中间
 private: // 组件
 	QTextEdit *textComponent;
 	QLineEdit *textLine;
