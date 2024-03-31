@@ -10,9 +10,10 @@ private:
 	QNetworkAccessManager *networkAccessManager;
 	QNetworkReply *networkReply;
 public:
-	RequestConnect( ) : networkAccessManager( nullptr ), networkReply( nullptr ) {
+	RequestConnect( QObject *parent ) : QObject( parent ), networkAccessManager( nullptr ), networkReply( nullptr ) {
 	}
-
+	~RequestConnect( ) override;
+public:
 	QNetworkAccessManager *getNetworkAccessManager( ) const {
 		return networkAccessManager;
 	}

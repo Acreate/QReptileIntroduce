@@ -13,10 +13,12 @@
 #include "../netWork/Request.h"
 #include "../netWork/RequestConnect.h"
 #include "../userHread/DebugInfo.h"
-
-#include <QNetworkReply>
 #include <QInputDialog>
-#include "../userHread/QtMorc.h"
+#include <QMessageBox>
+
+#include "NovelInfoWidget.h"
+
+#include "../layout/VLayoutBox.h"
 
 MainWidget::MainWidget( QWidget *parent, Qt::WindowFlags fg ) : QWidget( parent, fg ), compoentStrNlen( 0 ), currentFont( "Arial", 10 ), currentFontMetrics( currentFont ), drawColor( 255, 0, 0 ) {
 
@@ -40,57 +42,6 @@ MainWidget::MainWidget( QWidget *parent, Qt::WindowFlags fg ) : QWidget( parent,
 	//connect( fileThreadResult, &FileResult::finish, this, &MainWidget::changeTextComponentContents, Qt::QueuedConnection );
 	connect( fileThreadResult, &FileResult::error, this, &MainWidget::error, Qt::QueuedConnection );
 
-	////// 网络请求
-	requestNetWrok = new Request( this );
-	requestConnect = new RequestConnect( );
-	connect( requestConnect, &RequestConnect::networkReplyFinished, [=]( ) {
-		QNetworkReply *networkReply = requestConnect->getNetworkReply( );
-		auto byteArray = networkReply->readAll( );
-		if( byteArray.isEmpty( ) )
-			return;
-
-		QString existingDirectory;
-		auto variant = progressSetting->value( selectWebBuffWorkPath );
-		if( variant.isNull( ) ) {
-			existingDirectory = QFileDialog::getExistingDirectory( this, tr( u8"select singleton dir save web request buff" ), qApp->applicationDirPath( ) );
-			if( existingDirectory.isEmpty( ) )
-				return;
-			existingDirectory.append( QDir::separator( ) );
-			progressSetting->setValue( selectWebBuffWorkPath, existingDirectory );
-			progressSetting->sync( );
-		} else
-			existingDirectory = variant.toString( ) + QDir::separator( );
-		QUrl url = networkReply->url( );
-		DEBUG_RUN(
-			qDebug() << "default - url.host( FullyDecoded ) : " << url.host( );
-			qDebug() << "          url.host( PrettyDecoded ) : " << url.host(QUrl::PrettyDecoded );
-			qDebug() << "          url.host( EncodeSpaces ) : " << url.host(QUrl::EncodeSpaces );
-			qDebug() << "          url.host( EncodeUnicode ) : " << url.host(QUrl::EncodeUnicode );
-			qDebug() << "          url.host( EncodeDelimiters ) : " << url.host(QUrl::EncodeDelimiters );
-			qDebug() << "          url.host( EncodeReserved ) : " << url.host(QUrl::EncodeReserved );
-			qDebug() << "          url.host( DecodeReserved ) : " << url.host(QUrl::DecodeReserved );
-			qDebug() << "          url.host( FullyEncoded ) : " << url.host(QUrl::FullyEncoded );
-			qDebug() << "          url.host( FullyDecoded ) : " << url.host(QUrl::FullyDecoded );
-			qDebug() << "default - PrettyDecoded : " << url.toString( );
-			qDebug() << "          None : " << url.toString( QUrl::None);
-			qDebug() << "          RemoveScheme : " << url.toString( QUrl::RemoveScheme);
-			qDebug() << "          RemovePassword : " << url.toString( QUrl::RemovePassword);
-			qDebug() << "          RemoveUserInfo : " << url.toString( QUrl::RemoveUserInfo);
-			qDebug() << "          RemovePort : " << url.toString( QUrl::RemovePort);
-			qDebug() << "          RemoveAuthority : " << url.toString( QUrl::RemoveAuthority);
-			qDebug() << "          RemovePath : " << url.toString( QUrl::RemovePath);
-			qDebug() << "          RemoveQuery : " << url.toString( QUrl::RemoveQuery);
-			qDebug() << "          RemoveFragment : " << url.toString( QUrl::RemoveFragment);
-			qDebug() << "          RemoveFilename : " << url.toString( QUrl::RemoveFilename);
-			qDebug() << "          PreferLocalFile : " << url.toString( QUrl::PreferLocalFile);
-			qDebug() << "          StripTrailingSlash : " << url.toString( QUrl::StripTrailingSlash);
-			qDebug() << "          NormalizePathSegments : " << url.toString( QUrl::NormalizePathSegments);
-		);
-		auto saveTemPath = existingDirectory + url.host( ) + QDir::separator( );
-		rwFileThread->setFilePath( saveTemPath + "index.html" );
-		rwFileThread->writeFile( byteArray );
-		rwFileThread->start( );
-	} );
 	/// 配置 路径
 	QString progressIniPath = qApp->applicationDirPath( ).append( QDir::separator( ) ).append( tr( u8"ini" ) ).append( QDir::separator( ) ).append( tr( u8"progress" ) ).append( QDir::separator( ) );
 	QString progressIniFileName = progressIniPath;
@@ -125,7 +76,7 @@ MainWidget::MainWidget( QWidget *parent, Qt::WindowFlags fg ) : QWidget( parent,
 	topLayout->addWidget( converTransparentForMouseEventsBtn );
 	topLayout->setContentsMargins( 0, 0, 0, 0 );
 
-	mainLayout = new QVBoxLayout( this );
+	mainLayout = new VLayoutBox( );
 	mainLayout->setSpacing( 0 );
 	this->setLayout( mainLayout );
 	mainLayout->setContentsMargins( 0, 0, 0, 0 );
@@ -220,47 +171,46 @@ MainWidget::MainWidget( QWidget *parent, Qt::WindowFlags fg ) : QWidget( parent,
 	requestSettingFilePath->setText( tr( u8"set request novel setting file path" ) );
 	connect( requestSettingFilePath, &Action::triggered, [=]( ) {
 		DEBUG_RUN( qDebug() << tr(u8"requestSettingFilePath, &Action::trigger slots") );
-		auto variant = progressSetting->value( selectWebBuffWorkPath );
-		auto existingDirectory = qApp->applicationDirPath( );
-		if( variant.isNull( ) ) {
-			existingDirectory = QFileDialog::getExistingDirectory( this, tr( u8"select singleton dir save web request buff" ), existingDirectory );
-			if( existingDirectory.isEmpty( ) )
-				return;
-			existingDirectory.append( QDir::separator( ) );
-		} else {
-			existingDirectory = QFileDialog::getExistingDirectory( this, tr( u8"select singleton dir save web request buff" ), variant.toString( ) );
-			if( existingDirectory.isEmpty( ) )
-				return;
-			existingDirectory.append( QDir::separator( ) );
-		}
-		progressSetting->setValue( selectWebBuffWorkPath, existingDirectory );
-		progressSetting->sync( );
+		QString settingFilePath = progressSetting->value( selectWebSettingPath ).toString( );
+		QString caption = tr( u8"select singleton dir save web request buff" );
+		QFileInfo fileInfo;
+		do {
+			settingFilePath = QFileDialog::getOpenFileName( this, caption, qApp->applicationDirPath( ), tr( u8"setting file(*.txt *.ini *.setting *.set) ;; all type file(*)" ) );
+			if( settingFilePath.isEmpty( ) ) {
+				auto selectOption = QMessageBox::question( this, tr( u8"please select option" ), tr( u8"web request setting file error, alagin select setting file?" ) );
+				if( selectOption == QMessageBox::No )
+					return;
+			} else {
+				fileInfo.setFile( settingFilePath );
+				if( fileInfo.isFile( ) ) {
+					progressSetting->setValue( selectWebSettingPath, fileInfo.absoluteFilePath( ) );
+					progressSetting->sync( );
+					subWidgetNovelInfoWidget->setNetWorkSettingFilePath( fileInfo.absoluteFilePath( ) );
+					break;
+				}
+			}
+		} while( true );
 	} );
 	requestMenu->addAction( requestSettingFilePath );
 
-	Action *requestWeb = new Action;
-	requestWeb->setText( tr( u8"start request novel web page" ) );
-	connect( requestWeb, &Action::triggered, [=]( ) {
-		DEBUG_RUN( qDebug() << tr(u8"requestWeb, &Action::trigger slots") );
-		//// todo: 请求测试
-		requestConnect->setNetworkAccessManager( requestNetWrok->getNetworkAccessManager( ) );
-		QString urlText = QInputDialog::getText( this, tr( u8"please input request url" ), tr( u8"input url" ) );
-		if( urlText.isEmpty( ) )
-			return;
-		requestNetWrok->netGetWork( urlText, requestConnect );
-	} );
-	requestMenu->addAction( requestWeb );
+	Action *requestWebWidgetShow = new Action;
+	requestWebWidgetShow->setText( tr( u8"start request novel web page" ) );
+	connect( requestWebWidgetShow, &Action::triggered, this, &MainWidget::webWidgetOnShow );
+	requestMenu->addAction( requestWebWidgetShow );
 
 	toolsMenu->addMenu( requestMenu );
 	//// 线程开始
 	dateTimeThread->start( );
 
+	//// 子窗口
+	subWidgetNovelInfoWidget = new NovelInfoWidget( );
 }
 MainWidget::~MainWidget( ) {
-	progressSetting->sync( );
 	dateTimeThread->requestInterruption( );
 	rwFileThread->requestInterruption( );
-
+	progressSetting->sync( );
+	if( subWidgetNovelInfoWidget )
+		delete subWidgetNovelInfoWidget;
 	delete progressSetting;
 	delete translator;
 
@@ -308,6 +258,11 @@ void MainWidget::mousePressEvent( QMouseEvent *event ) {
 void MainWidget::resizeEvent( QResizeEvent *event ) {
 	titleHeight = frameSize( ).height( ) - event->size( ).height( );
 }
+void MainWidget::closeEvent( QCloseEvent *event ) {
+	subWidgetNovelInfoWidget->hide( );
+	delete subWidgetNovelInfoWidget;
+	subWidgetNovelInfoWidget = nullptr;
+}
 void MainWidget::updateDateTimeStrFunction( const QString &currentDateTimeStr ) {
 	DEBUG_RUN(
 		static bool isOutDbug = true;
@@ -346,6 +301,37 @@ void MainWidget::error( int errorType, QFileDevice::FileError fileErrorCode, QFi
 		DEBUG_RUN( qDebug() << fileErrorCode ) ;
 	if( errorType | 2 )
 		DEBUG_RUN( qDebug() << dirError ) ;
+}
+void MainWidget::webWidgetOnShow( ) {
+	DEBUG_RUN( qDebug() << tr(u8"call in MainWidget::webWidgetOnShow") );
+	QVariant value = progressSetting->value( selectWebSettingPath );
+	bool isNull = value.isNull( );
+	if( isNull ) {
+		QFileInfo fileInfo( value.toString( ) );
+		if( !fileInfo.exists( ) ) {
+			auto defaultPath = progressSetting->value( selectReadFileWorkPath, qApp->applicationFilePath( ) ).toString( );
+			do {
+				auto fileName = QFileDialog::getOpenFileName( this, tr( u8"select singleton setting file" ), defaultPath );
+				if( fileName.isEmpty( ) ) {
+					QMessageBox::StandardButton standardButton = QMessageBox::question( this, tr( u8"please select option" ), tr( u8"file path is error! now repetition select file ?" ) );
+					if( standardButton == QMessageBox::Yes )
+						continue;
+					return;
+				}
+				progressSetting->setValue( selectWebSettingPath, fileName );
+				progressSetting->sync( );
+				subWidgetNovelInfoWidget->setAbsoluteFilePath( fileName );
+				break;
+			} while( true );
+		} else
+			subWidgetNovelInfoWidget->setAbsoluteFilePath( fileInfo.absoluteFilePath( ) );
+	} else
+		subWidgetNovelInfoWidget->setAbsoluteFilePath( value.toString( ) );
+	subWidgetNovelInfoWidget->show( );
+	QRect rect = geometry( );
+	int x = rect.width( ) / 2 + rect.x( ) - subWidgetNovelInfoWidget->width( ) / 2;
+	int y = rect.height( ) / 2 + rect.y( ) - subWidgetNovelInfoWidget->height( ) / 2;
+	subWidgetNovelInfoWidget->move( x, y );
 }
 void MainWidget::updateWidgetWidth( const QList< QString > &list ) {
 	int width = 0;

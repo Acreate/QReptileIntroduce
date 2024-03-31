@@ -17,6 +17,7 @@ private:
 	QIODeviceBase::OpenMode runOpenMode;
 public:
 	FileThread( const QString &filePath, QIODeviceBase::OpenMode openMode, FileResult *fileThreadResult );
+	~FileThread() override;
 public:
 	QIODeviceBase::OpenMode resetOpenMode( const QIODeviceBase::OpenMode &newOpenMode );
 	FileResult *readFile( );

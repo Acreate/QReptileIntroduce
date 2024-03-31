@@ -11,6 +11,9 @@ openMode( openMode ) {
 	runOpenMode = openMode;
 	fileThreadResult->setParent( this );
 }
+FileThread::~FileThread( ) {
+
+}
 QIODeviceBase::OpenMode FileThread::resetOpenMode( const QIODeviceBase::OpenMode &newOpenMode ) {
 	auto oldOpenmo = openMode;
 	openMode = newOpenMode;

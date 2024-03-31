@@ -1,7 +1,8 @@
-﻿#include <QWidget>
-#include <QOpenGLWidget>
-#include "../ui/MainWidget.h"
+﻿#include "../ui/MainWidget.h"
+#include "../ui/NovelInfoWidget.h"
 #include "../core/Appliction.h"
+
+#include "../file/FileResult.h"
 
 int main( int argc, char *argv[ ] ) {
 	Appliction appliction( argc, argv );

@@ -2,6 +2,9 @@
 #include "Request.h"
 #include "../userHread/DebugInfo.h"
 #include "../userHread/QtMorc.h"
+RequestConnect::~RequestConnect( ) {
+	
+}
 void RequestConnect::setNetworkAccessManager( QNetworkAccessManager *const networkAccessManager ) {
 	this->networkAccessManager = networkAccessManager;
 	QT_CONNECT_AUTO_THIS( networkAccessManager, QNetworkAccessManager, authenticationRequired, RequestConnect, networkAccessManagerAuthenticationRequired );

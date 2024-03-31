@@ -44,7 +44,7 @@ public:
 	QByteArray &getData( ) {
 		return data;
 	}
-	bool await( );
+	void await( );
 Q_SIGNALS:
 	void finish( );
 	void interruptionRequested( );

@@ -4,6 +4,6 @@
 FileResult::~FileResult( ) {
 	DEBUG_RUN( qDebug( ) << "~FileResult( ) : " << this );
 }
-bool FileResult::await( ) {
-	return fileThread->await( );
+void FileResult::await( ) {
+	fileThread->await( );
 }
