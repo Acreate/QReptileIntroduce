@@ -4,6 +4,7 @@
 #include <QWidget>
 #include <QFontMetrics>
 #include <QFont>
+#include <QVector>
 #include <qtextedit.h>
 #include <QLineEdit>
 #include <QPushButton>
@@ -17,7 +18,8 @@
 #include <QTimer>
 
 
-#include "../layout/HLyaoutBox.h"
+#include "../layout/HLayoutBox.h"
+class VLayoutBox;
 class QFile;
 class Request;
 class FileResult;
@@ -56,8 +58,8 @@ private: // 组件
 	QLineEdit *textLine; // 显示时间
 	QPushButton *converTransparentForMouseEventsBtn; // 切换与鼠标点击事件
 private: // 布局
-	QVBoxLayout *mainLayout;
-	HLyaoutBox *topLayout;
+	VLayoutBox *mainLayout;
+	HLayoutBox *topLayout;
 private: // 菜单
 	Menu *toolsMenu;
 private: // 程序配置-读写
@@ -89,17 +91,7 @@ private:
 private: // 子窗口-非组合
 	NovelInfoWidget* subWidgetNovelInfoWidget;
 public:
-	// 事件测试
-	QVector< QObject * > getCompoents( ) {
-		return {
-				mainLayout,
-				topLayout,
-				textComponent,
-				textLine,
-				converTransparentForMouseEventsBtn,
-				toolsMenu,
-			};
-	}
+
 };
 
 #endif // MAINWIDGET_H_H_HEAD__FILE__

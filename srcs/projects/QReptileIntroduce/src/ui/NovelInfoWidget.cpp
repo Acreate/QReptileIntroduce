@@ -7,6 +7,8 @@
 #include <QMouseEvent>
 #include <QLabel>
 #include <QLineEdit>
+#include <QScrollBar>
+#include <QScrollArea>
 #include <QPushButton>
 #include <qdir.h>
 #include <qguiapplication.h>
@@ -16,11 +18,12 @@
 #include "../file/RWFileThread.h"
 #include "../file/FileResult.h"
 
-#include "../layout/HLyaoutBox.h"
+#include "../layout/HLayoutBox.h"
 #include "../layout/VLayoutBox.h"
 
 #include "components/Button.h"
 #include "components/EditLine.h"
+#include "components/WebUrlInfoWidget.h"
 
 NovelInfoWidget::NovelInfoWidget( QWidget *parent, Qt::WindowFlags flag ) : QWidget( parent, flag ) {
 	rwFileThread = new RWFileThread( this );
@@ -33,13 +36,13 @@ NovelInfoWidget::NovelInfoWidget( QWidget *parent, Qt::WindowFlags flag ) : QWid
 	resize( 500, 500 );
 	// 子组件
 	mainLayout = new VLayoutBox;
-	settingInfoLayoutBox = new HLyaoutBox;
-	msgLayoutBox = new HLyaoutBox;
-	runInfoLayoutBox = new HLyaoutBox;
+	settingInfoLayoutBox = new HLayoutBox;
+	msgLayoutBox = new HLayoutBox;
+	runInfoLayoutBox = new HLayoutBox;
 	this->setLayout( mainLayout );
 	mainLayout->addLayout( settingInfoLayoutBox, 1 );
-	mainLayout->addLayout( msgLayoutBox, 2 );
-	mainLayout->addLayout( runInfoLayoutBox );
+	mainLayout->addLayout( msgLayoutBox, 9 );
+	mainLayout->addLayout( runInfoLayoutBox, 1 );
 
 	settingPathTitle = new QLabel;
 	settingPathTitle->setText( tr( u8"setting file path:" ) );
@@ -96,6 +99,7 @@ NovelInfoWidget::NovelInfoWidget( QWidget *parent, Qt::WindowFlags flag ) : QWid
 				}
 				)" ) );
 			checkStatus = 3;
+			btn->setText( tr( u8"over locked" ) );
 		} else if( checkStatus > 2 ) {
 			inputSettingPathLine->setReadOnly( false );
 			btn->setStyleSheet( tr( u8R"(
@@ -106,6 +110,57 @@ NovelInfoWidget::NovelInfoWidget( QWidget *parent, Qt::WindowFlags flag ) : QWid
 			checkStatus = 2;
 		}
 	} );
+
+	// 中间的布局
+	listView = new QScrollArea( this );
+	msgLayoutBox->addWidget( listView );
+	auto widget = new QWidget( listView );
+	listView->setWidget( widget );
+	VLayoutBox *vBox = new VLayoutBox( widget );
+
+	QMargins contentsMargins = vBox->contentsMargins( );
+	QScrollBar *horizontalScrollBar = listView->horizontalScrollBar( );
+	auto horizontalScrollBarHint = horizontalScrollBar->size( );
+
+	QScrollBar *verticalScrollBar = listView->verticalScrollBar( );
+	auto verticalScrollBarHint = verticalScrollBar->size( );
+
+	listView->setMinimumSize( horizontalScrollBarHint.width( ) + contentsMargins.left( ) + contentsMargins.right( ), verticalScrollBarHint.height( ) + contentsMargins.top( ) + contentsMargins.bottom( ) );
+	auto callFun = [=]( ) {
+		int maxWidth = 0;
+		int maxHeight = 0;
+		int count = vBox->count( );
+		for( int index = 0 ; index < count ; ++index ) {
+			QLayoutItem *item = vBox->itemAt( index );
+			auto currentWidget = item->widget( );
+			QSize size = currentWidget->minimumSizeHint( );
+			QSize minimumSize = currentWidget->minimumSize( );
+			int height = size.height( );
+			int height1 = minimumSize.height( );
+			maxHeight += height > height1 ? height : height1;
+			if( maxWidth < size.width( ) )
+				maxWidth = size.width( );
+			if( maxWidth < minimumSize.width( ) )
+				maxWidth = minimumSize.width( );
+		}
+		int spacing = vBox->spacing( );
+		QSize reSize( maxWidth + contentsMargins.left( ) + contentsMargins.right( ), maxHeight + spacing * count + contentsMargins.top( ) + contentsMargins.bottom( ) );
+		widget->setMinimumSize( reSize );
+	};
+
+	vBox->addWidget( new WebUrlInfoWidget( this->netSetFileSettings, widget ) );
+	vBox->addWidget( new WebUrlInfoWidget( this->netSetFileSettings, widget ) );
+	vBox->addWidget( new WebUrlInfoWidget( this->netSetFileSettings, widget ) );
+	vBox->addWidget( new WebUrlInfoWidget( this->netSetFileSettings, widget ) );
+	vBox->addWidget( new WebUrlInfoWidget( this->netSetFileSettings, widget ) );
+
+	int count = vBox->count( );
+	for( int index = 0 ; index < count ; ++index ) {
+		auto currentWidget = qobject_cast< WebUrlInfoWidget * >( vBox->itemAt( index )->widget( ) );
+		if( currentWidget )
+			connect( currentWidget, &WebUrlInfoWidget::toggled, callFun );
+	}
+	callFun( );
 }
 NovelInfoWidget::~NovelInfoWidget( ) {
 
@@ -167,7 +222,7 @@ void NovelInfoWidget::networkReplyFinished( ) {
 	QString existingDirectory;
 	if( !netSetFileSettings ) {
 		do {
-			QString filePath = QFileDialog::getOpenFileName( this, tr( u8"selection setting file" ), qApp->applicationDirPath( ), tr( u8"setting file type(*.ini *.setting *.set *.txt);; all type(*)" ) );
+			QString filePath = QFileDialog::getOpenFileName( this, tr( u8"selection setting file" ), qApp->applicationDirPath( ), tr( u8"setting file type(*.ini *.setting *.set);; all type(*)" ) );
 			if( !filePath.isEmpty( ) ) {
 				netSetFileSettings = new QSettings( filePath, QSettings::Format::IniFormat, this );
 				break;

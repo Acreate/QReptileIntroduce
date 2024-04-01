@@ -11,13 +11,14 @@
 #include "components/Button.h"
 #include "components/EditLine.h"
 
-class HLyaoutBox;
+class HLayoutBox;
 class VLayoutBox;
 class RWFileThread;
 class FileResult;
 class QSettings;
 class Request;
 class RequestConnect;
+class QScrollArea;
 class NovelInfoWidget : public QWidget {
 	Q_OBJECT;
 public:
@@ -29,13 +30,21 @@ public: // 配置文件
 	FileResult *fileThreadResult = nullptr; // 文件读取绑定指针
 	QString settingFileAbsoluteFilePath; // setting 的绝对路径
 private: // 组件
+	
+	VLayoutBox *mainLayout;
+	HLayoutBox *settingInfoLayoutBox;
+	HLayoutBox *msgLayoutBox;
+	HLayoutBox *runInfoLayoutBox;
+
+private: // 顶端组件-settingInfoLayoutBox
 	Button *btn;
+	Button* startBtn;
 	EditLine *inputSettingPathLine;
 	QLabel *settingPathTitle;
-	VLayoutBox *mainLayout;
-	HLyaoutBox *settingInfoLayoutBox;
-	HLyaoutBox *msgLayoutBox;
-	HLyaoutBox *runInfoLayoutBox;
+private: // 居中组件-msgLayoutBox
+	QScrollArea* listView;
+private: // 底部组件-runInfoLayoutBox
+	
 private: // 配置文件关键字
 	const QString selectWebBuffWorkPath = tr( u8"work/WebBuff/Path" );
 private:

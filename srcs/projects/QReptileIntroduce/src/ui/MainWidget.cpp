@@ -23,13 +23,13 @@
 MainWidget::MainWidget( QWidget *parent, Qt::WindowFlags fg ) : QWidget( parent, fg ), compoentStrNlen( 0 ), currentFont( "Arial", 10 ), currentFontMetrics( currentFont ), drawColor( 255, 0, 0 ) {
 
 	DEBUG_RUN( qDebug() << tr(u8"MainWidget::MainWidget currentThreadId : ")<< QThread::currentThread( )->currentThreadId( ) );
-
+	
 	///// 窗口信息的初始化
 
 	//connect( this, &QWidget::show, [=]( ) {
 	//
 	//} );
-
+	
 	/////// 线程
 	dateTimeThread = new DateTimeThread;
 	dateTimeThread->setParent( this );
@@ -50,7 +50,7 @@ MainWidget::MainWidget( QWidget *parent, Qt::WindowFlags fg ) : QWidget( parent,
 	QLocale locale = QLocale::system( );
 	QString pmFilename = locale.name( );
 	pmFilename = qApp->applicationName( ).append( "_" ).append( pmFilename );
-
+	
 	translator = new QTranslator( );
 	if( translator->load( pmFilename, directory ) )
 		qApp->installTranslator( translator );
@@ -70,7 +70,7 @@ MainWidget::MainWidget( QWidget *parent, Qt::WindowFlags fg ) : QWidget( parent,
 
 	converTransparentForMouseEventsBtn = new QPushButton( this );
 
-	topLayout = new HLyaoutBox( );
+	topLayout = new HLayoutBox( );
 	topLayout->setSpacing( 0 );
 	topLayout->addWidget( textLine );
 	topLayout->addWidget( converTransparentForMouseEventsBtn );
@@ -175,7 +175,7 @@ MainWidget::MainWidget( QWidget *parent, Qt::WindowFlags fg ) : QWidget( parent,
 		QString caption = tr( u8"select singleton dir save web request buff" );
 		QFileInfo fileInfo;
 		do {
-			settingFilePath = QFileDialog::getOpenFileName( this, caption, qApp->applicationDirPath( ), tr( u8"setting file(*.txt *.ini *.setting *.set) ;; all type file(*)" ) );
+			settingFilePath = QFileDialog::getOpenFileName( this, caption, qApp->applicationDirPath( ), tr( u8"setting file(*.ini *.setting *.set) ;; all type file(*)" ) );
 			if( settingFilePath.isEmpty( ) ) {
 				auto selectOption = QMessageBox::question( this, tr( u8"please select option" ), tr( u8"web request setting file error, alagin select setting file?" ) );
 				if( selectOption == QMessageBox::No )

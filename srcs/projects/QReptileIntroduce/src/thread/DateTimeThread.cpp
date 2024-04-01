@@ -1,6 +1,8 @@
 ﻿#include "DateTimeThread.h"
 
 #include <qdatetime.h>
+#include <qmutex.h>
+
 #include "../userHread/DebugInfo.h"
 DateTimeThread::DateTimeThread( QObject *parent ) : QThread( parent ) {
 	dateTimeStrFormatMutex = new QMutex;
