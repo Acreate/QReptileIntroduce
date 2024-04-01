@@ -65,6 +65,7 @@ WebUrlInfoWidget::WebUrlInfoWidget( QSettings *webPageSetting, QWidget *parent )
 			toggle( Show_Mode::Inster );
 		} );
 		toggle( Show_Mode::Inster );
+		return;
 	}
 
 	QException qException = QException( );

@@ -153,6 +153,16 @@ NovelInfoWidget::NovelInfoWidget( QWidget *parent, Qt::WindowFlags flag ) : QWid
 	vBox->addWidget( new WebUrlInfoWidget( this->netSetFileSettings, widget ) );
 	vBox->addWidget( new WebUrlInfoWidget( this->netSetFileSettings, widget ) );
 	vBox->addWidget( new WebUrlInfoWidget( this->netSetFileSettings, widget ) );
+	vBox->addWidget( new WebUrlInfoWidget( this->netSetFileSettings, widget ) );
+	vBox->addWidget( new WebUrlInfoWidget( this->netSetFileSettings, widget ) );
+	vBox->addWidget( new WebUrlInfoWidget( this->netSetFileSettings, widget ) );
+	vBox->addWidget( new WebUrlInfoWidget( this->netSetFileSettings, widget ) );
+	vBox->addWidget( new WebUrlInfoWidget( this->netSetFileSettings, widget ) );
+	vBox->addWidget( new WebUrlInfoWidget( this->netSetFileSettings, widget ) );
+	vBox->addWidget( new WebUrlInfoWidget( this->netSetFileSettings, widget ) );
+	vBox->addWidget( new WebUrlInfoWidget( this->netSetFileSettings, widget ) );
+	vBox->addWidget( new WebUrlInfoWidget( this->netSetFileSettings, widget ) );
+	vBox->addWidget( new WebUrlInfoWidget( this->netSetFileSettings, widget ) );
 
 	int count = vBox->count( );
 	for( int index = 0 ; index < count ; ++index ) {
