@@ -120,10 +120,6 @@
         <translation>配置文件(*.ini *.setting *.set) ;; 全部类型(*)</translation>
     </message>
     <message>
-        <source>setting file(*.txt *.ini *.setting *.set) ;; all type file(*)</source>
-        <translation type="vanished">配置文件(*.txt *.ini *.setting *.set) ;; 全部类型(*)</translation>
-    </message>
-    <message>
         <location filename="../src/ui/MainWidget.cpp" line="180"/>
         <location filename="../src/ui/MainWidget.cpp" line="316"/>
         <source>please select option</source>
@@ -155,18 +151,6 @@
         <translation>文件路径是错误的！现在重新选择一次文件吗？</translation>
     </message>
     <message>
-        <source>requestWeb, &amp;Action::trigger slots</source>
-        <translation type="vanished">requestWeb, &amp;Action::trigger 信号</translation>
-    </message>
-    <message>
-        <source>please input request url</source>
-        <translation type="vanished">请输入请求的 url</translation>
-    </message>
-    <message>
-        <source>input url</source>
-        <translation type="vanished">输入 url</translation>
-    </message>
-    <message>
         <location filename="../src/ui/MainWidget.cpp" line="270"/>
         <source>MainWidget::updateDateTimeStrFunction( const QString &amp;currentDateTimeStr ) currentThreadId: </source>
         <translation>MainWidget::updateDateTimeStrFunction( const QString &amp;currentDateTimeStr ) 线程id: </translation>
@@ -177,17 +161,9 @@
         <translation></translation>
     </message>
     <message>
-        <source>select buff path</source>
-        <translation type="vanished">选择缓冲路径</translation>
-    </message>
-    <message>
         <location filename="../src/ui/MainWidget.cpp" line="345"/>
         <source>this MainWidget window min width is : </source>
         <translation>当前 MainWidget 窗口的最小宽度是 : </translation>
-    </message>
-    <message>
-        <source>thisWidthMinWidth : </source>
-        <translation type="vanished">当前窗口最小宽度 : </translation>
     </message>
     <message>
         <location filename="../src/ui/MainWidget.h" line="71"/>
@@ -218,22 +194,22 @@
 <context>
     <name>NovelInfoWidget</name>
     <message>
-        <location filename="../src/ui/NovelInfoWidget.cpp" line="48"/>
+        <location filename="../src/ui/NovelInfoWidget.cpp" line="51"/>
         <source>setting file path:</source>
         <translation>配置文件路径：</translation>
     </message>
     <message>
-        <location filename="../src/ui/NovelInfoWidget.cpp" line="52"/>
+        <location filename="../src/ui/NovelInfoWidget.cpp" line="55"/>
         <source>please input setting file path</source>
         <translation>请输入配置文件路径</translation>
     </message>
     <message>
-        <location filename="../src/ui/NovelInfoWidget.cpp" line="64"/>
+        <location filename="../src/ui/NovelInfoWidget.cpp" line="67"/>
         <source>error</source>
         <translation>错误</translation>
     </message>
     <message>
-        <location filename="../src/ui/NovelInfoWidget.cpp" line="65"/>
+        <location filename="../src/ui/NovelInfoWidget.cpp" line="68"/>
         <source>
 	Button{
 		color : red;
@@ -241,12 +217,12 @@
         <translation></translation>
     </message>
     <message>
-        <location filename="../src/ui/NovelInfoWidget.cpp" line="72"/>
+        <location filename="../src/ui/NovelInfoWidget.cpp" line="75"/>
         <source>lock path</source>
         <translation>锁定路径</translation>
     </message>
     <message>
-        <location filename="../src/ui/NovelInfoWidget.cpp" line="75"/>
+        <location filename="../src/ui/NovelInfoWidget.cpp" line="78"/>
         <source>
 	Button{
 		color : black;
@@ -254,24 +230,24 @@
         <translation></translation>
     </message>
     <message>
-        <location filename="../src/ui/NovelInfoWidget.cpp" line="83"/>
+        <location filename="../src/ui/NovelInfoWidget.cpp" line="86"/>
         <source>select singleton setting file</source>
         <translation>选择一个配置文件</translation>
     </message>
     <message>
-        <location filename="../src/ui/NovelInfoWidget.cpp" line="85"/>
-        <location filename="../src/ui/NovelInfoWidget.cpp" line="230"/>
-        <location filename="../src/ui/NovelInfoWidget.cpp" line="245"/>
+        <location filename="../src/ui/NovelInfoWidget.cpp" line="88"/>
+        <location filename="../src/ui/NovelInfoWidget.cpp" line="248"/>
+        <location filename="../src/ui/NovelInfoWidget.cpp" line="263"/>
         <source>please select option</source>
         <translation>请选择</translation>
     </message>
     <message>
-        <location filename="../src/ui/NovelInfoWidget.cpp" line="85"/>
+        <location filename="../src/ui/NovelInfoWidget.cpp" line="88"/>
         <source>file path is error! now repetition select file ?</source>
         <translation>文件路径错误！现在重新选择文件？</translation>
     </message>
     <message>
-        <location filename="../src/ui/NovelInfoWidget.cpp" line="96"/>
+        <location filename="../src/ui/NovelInfoWidget.cpp" line="99"/>
         <source>
 				Button{
 					color : blue;
@@ -280,12 +256,12 @@
         <translation></translation>
     </message>
     <message>
-        <location filename="../src/ui/NovelInfoWidget.cpp" line="102"/>
+        <location filename="../src/ui/NovelInfoWidget.cpp" line="105"/>
         <source>over locked</source>
         <translation>已锁定</translation>
     </message>
     <message>
-        <location filename="../src/ui/NovelInfoWidget.cpp" line="105"/>
+        <location filename="../src/ui/NovelInfoWidget.cpp" line="108"/>
         <source>
 				Button{
 					color : black;
@@ -294,37 +270,33 @@
         <translation></translation>
     </message>
     <message>
-        <location filename="../src/ui/NovelInfoWidget.cpp" line="168"/>
+        <location filename="../src/ui/NovelInfoWidget.cpp" line="186"/>
         <source>NovelInfoWidget::~NovelInfoWidget</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../src/ui/NovelInfoWidget.cpp" line="205"/>
+        <location filename="../src/ui/NovelInfoWidget.cpp" line="223"/>
         <source>====== NovelInfoWidget::showEvent ===========</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../src/ui/NovelInfoWidget.cpp" line="225"/>
+        <location filename="../src/ui/NovelInfoWidget.cpp" line="243"/>
         <source>selection setting file</source>
         <translation>选择配置文件</translation>
     </message>
     <message>
-        <location filename="../src/ui/NovelInfoWidget.cpp" line="225"/>
+        <location filename="../src/ui/NovelInfoWidget.cpp" line="243"/>
         <source>setting file type(*.ini *.setting *.set);; all type(*)</source>
         <translation>配置文件类型(*.ini *.setting *.set);;全部类型(*)</translation>
     </message>
     <message>
-        <source>setting file type(*.ini *.setting *.set *.txt);; all type(*)</source>
-        <translation type="vanished">配置文件类型(*.ini *.setting *.set *.txt);; 全部类型(*)</translation>
-    </message>
-    <message>
-        <location filename="../src/ui/NovelInfoWidget.cpp" line="230"/>
-        <location filename="../src/ui/NovelInfoWidget.cpp" line="245"/>
+        <location filename="../src/ui/NovelInfoWidget.cpp" line="248"/>
+        <location filename="../src/ui/NovelInfoWidget.cpp" line="263"/>
         <source>path dir can not wirte file. now again select dir path ?</source>
         <translation>路径无法写入文件，现在重新选择一次路径吗？</translation>
     </message>
     <message>
-        <location filename="../src/ui/NovelInfoWidget.cpp" line="239"/>
+        <location filename="../src/ui/NovelInfoWidget.cpp" line="257"/>
         <source>select singleton dir save web request buff</source>
         <translation>选择一个用于保存 web 缓冲的路径</translation>
     </message>
@@ -356,11 +328,28 @@
     </message>
     <message>
         <location filename="../src/ui/components/WebUrlInfoWidget.cpp" line="71"/>
-        <source>error ! please set valid value( --parent )</source>
-        <translation>错误！请设置有效的 parent 参数</translation>
+        <source>===========
+file: 
+	%1
+call name: 
+	WebUrlInfoWidget::WebUrlInfoWidget
+line: 
+	%2 row
+error ! please set valid value( --parent )
+===========
+</source>
+        <translation>===========
+文件: 
+	%1
+调用名称: 
+	WebUrlInfoWidget::WebUrlInfoWidget
+行数: 
+	第 %2 行
+错误 ! 请为 parent 参数设置一个有效的值
+===========</translation>
     </message>
     <message>
-        <location filename="../src/ui/components/WebUrlInfoWidget.cpp" line="76"/>
+        <location filename="../src/ui/components/WebUrlInfoWidget.cpp" line="86"/>
         <source>WebUrlInfoWidget::~WebUrlInfoWidget : </source>
         <translation></translation>
     </message>

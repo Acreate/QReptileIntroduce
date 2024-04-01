@@ -12,6 +12,9 @@
 #include <QPushButton>
 #include <qdir.h>
 #include <qguiapplication.h>
+
+#include "../exception/Exception.h"
+
 #include "../netWork/Request.h"
 #include "../netWork/RequestConnect.h"
 #include "../userHread/DebugInfo.h"
@@ -148,7 +151,12 @@ NovelInfoWidget::NovelInfoWidget( QWidget *parent, Qt::WindowFlags flag ) : QWid
 		widget->setMinimumSize( reSize );
 	};
 
-	vBox->addWidget( new WebUrlInfoWidget( this->netSetFileSettings, widget ) );
+	try {
+	vBox->addWidget( new WebUrlInfoWidget( this->netSetFileSettings, nullptr ) );	
+	}catch( Exception& exception ) {
+		qDebug() << exception.getMsg(  ).toStdString(  ).c_str(  );
+	}
+	
 	vBox->addWidget( new WebUrlInfoWidget( this->netSetFileSettings, widget ) );
 	vBox->addWidget( new WebUrlInfoWidget( this->netSetFileSettings, widget ) );
 	vBox->addWidget( new WebUrlInfoWidget( this->netSetFileSettings, widget ) );

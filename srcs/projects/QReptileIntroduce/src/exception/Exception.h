@@ -11,6 +11,9 @@ public:
 	}
 	void raise( ) const override;
 	QException * clone( ) const override;
+	const QString& getMsg() const {
+		return msg;
+	}
 };
 
 

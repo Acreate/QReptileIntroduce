@@ -68,8 +68,17 @@ WebUrlInfoWidget::WebUrlInfoWidget( QSettings *webPageSetting, QWidget *parent )
 		return;
 	}
 
-	QException qException = QException( );
-	throw Exception( tr( u8"error ! please set valid value( --parent )" ) );
+	throw Exception( tr(
+		u8R"(===========
+file: 
+	%1
+call name: 
+	WebUrlInfoWidget::WebUrlInfoWidget
+line: 
+	%2 row
+error ! please set valid value( --parent )
+===========
+)" ).arg( __FILE__ ).arg( __LINE__ ) );
 
 }
 WebUrlInfoWidget::~WebUrlInfoWidget( ) {
