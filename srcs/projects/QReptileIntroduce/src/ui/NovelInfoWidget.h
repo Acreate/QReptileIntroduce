@@ -10,6 +10,7 @@
 
 #include "components/Button.h"
 #include "components/EditLine.h"
+#include "components/WebUrlInfoWidget.h"
 
 class HLayoutBox;
 class VLayoutBox;
@@ -19,34 +20,51 @@ class QSettings;
 class Request;
 class RequestConnect;
 class QScrollArea;
+class WebUrlInfoWidget;
 class NovelInfoWidget : public QWidget {
 	Q_OBJECT;
+public: // 友元列表
+	//friend WebUrlInfoWidget;
 public:
 	NovelInfoWidget( QWidget *parent = nullptr, Qt::WindowFlags flag = Qt::WindowFlags( ) );
 	~NovelInfoWidget( ) override;
+private: // 配置文件关键字
+	const QString selectWebBuffWorkPath = tr( u8"work/WebBuff/Path" );
 public: // 配置文件
 	QSettings *netSetFileSettings = nullptr;
 	RWFileThread *rwFileThread = nullptr;
 	FileResult *fileThreadResult = nullptr; // 文件读取绑定指针
 	QString settingFileAbsoluteFilePath; // setting 的绝对路径
+public:
+	bool setSettingInstance( WebUrlInfoWidget *webUrlInfoWidget );
+	QVariant getSettingValue( const QAnyStringView &key ) const {
+		return netSetFileSettings->value( key );
+	}
+	QVariant getSettingValue( const QAnyStringView &key, const QVariant &defaultValue ) const {
+		return netSetFileSettings->value( key, defaultValue );
+	}
+	void setSettingValue( const QAnyStringView &key, const QVariant &value ) {
+		netSetFileSettings->setValue( key, value );
+	}
+	const QString &getWebBuffWorkPathKey( ) const {
+		return selectWebBuffWorkPath;
+	}
 private: // 组件
-	
 	VLayoutBox *mainLayout;
 	HLayoutBox *settingInfoLayoutBox;
 	HLayoutBox *msgLayoutBox;
 	HLayoutBox *runInfoLayoutBox;
+protected:
 
 private: // 顶端组件-settingInfoLayoutBox
 	Button *btn;
-	Button* startBtn;
+	Button *startBtn;
 	EditLine *inputSettingPathLine;
 	QLabel *settingPathTitle;
 private: // 居中组件-msgLayoutBox
-	QScrollArea* listView;
+	QScrollArea *listView;
 private: // 底部组件-runInfoLayoutBox
-	
-private: // 配置文件关键字
-	const QString selectWebBuffWorkPath = tr( u8"work/WebBuff/Path" );
+
 private:
 	int checkStatus = 0;
 	int editorStatus = 0;

@@ -11,10 +11,13 @@
 #include "Button.h"
 #include "EditLine.h"
 
-QMap< QObject *, unsigned long long > WebUrlInfoWidget::pathCount = QMap< QObject *, unsigned long long >( );
+#include "../NovelInfoWidget.h"
+#include "../../userHread/QtMorc.h"
 
-WebUrlInfoWidget::WebUrlInfoWidget( QSettings *webPageSetting, QWidget *parent ) {
-	if( parent ) {
+QMap< NovelInfoWidget *, unsigned long long > WebUrlInfoWidget::pathCount = QMap< NovelInfoWidget *, unsigned long long >( );
+
+WebUrlInfoWidget::WebUrlInfoWidget( QSettings *webPageSetting, NovelInfoWidget *parent ) {
+	if( parent && QT_COMPARE_CLASS_METAOBJECT_NAME( parent, NovelInfoWidget ) ) {
 		setParent( parent );
 		setWindowTitle( __func__ );
 		pathCount[ parent ] += 1;
@@ -66,6 +69,7 @@ WebUrlInfoWidget::WebUrlInfoWidget( QSettings *webPageSetting, QWidget *parent )
 		} );
 		toggle( Show_Mode::Inster );
 		return;
+
 	}
 
 	throw Exception( tr(

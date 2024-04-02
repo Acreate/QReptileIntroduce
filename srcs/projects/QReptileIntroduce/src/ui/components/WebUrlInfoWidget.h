@@ -5,6 +5,7 @@
 #include <QWidget>
 
 #include "EditLine.h"
+class NovelInfoWidget;
 class QScrollArea;
 class QComboBox;
 class QSettings;
@@ -21,11 +22,11 @@ public: // 模型切换宏
 		Info
 	};
 private: // 静态成员
-	static QMap< QObject *, unsigned long long > pathCount;
+	static QMap< NovelInfoWidget *, unsigned long long > pathCount;
 private: // 构造类时候必须初始化
 	QSettings *webPageSetting;
 public:
-	WebUrlInfoWidget( QSettings *webPageSetting, QWidget *parent );
+	WebUrlInfoWidget( QSettings *webPageSetting, NovelInfoWidget *parent );
 	~WebUrlInfoWidget( ) override;
 private: // 小说存在的时候显示的组件
 	HLayoutBox *hasNovelInfoLayout;  // 主要布局
@@ -57,9 +58,19 @@ public:
 	/// <returns>个数</returns>
 	unsigned long long getAtPathCount( ) const {
 		QObject *object = parent( );
-		if( pathCount.contains( object ) )
-			return pathCount[ object ];
+		if( object ) {
+			auto novelInfoWidget = qobject_cast< NovelInfoWidget * >( object );
+			if( novelInfoWidget && pathCount.contains( novelInfoWidget ) )
+				return pathCount[ novelInfoWidget ];
+		}
 		return 0;
+	}
+	bool setSettingInstance( NovelInfoWidget *parent, QSettings *settings ) {
+		if( parent && pathCount.contains( parent ) ) {
+			this->webPageSetting = settings;
+			return true;
+		}
+		return false;
 	}
 Q_SIGNALS:
 	/// <summary>

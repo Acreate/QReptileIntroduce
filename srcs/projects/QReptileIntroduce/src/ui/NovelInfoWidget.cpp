@@ -152,25 +152,25 @@ NovelInfoWidget::NovelInfoWidget( QWidget *parent, Qt::WindowFlags flag ) : QWid
 	};
 
 	try {
-	vBox->addWidget( new WebUrlInfoWidget( this->netSetFileSettings, nullptr ) );	
-	}catch( Exception& exception ) {
-		qDebug() << exception.getMsg(  ).toStdString(  ).c_str(  );
+		vBox->addWidget( new WebUrlInfoWidget( this->netSetFileSettings, nullptr ) );
+	} catch( Exception &exception ) {
+		qDebug( ) << exception.getMsg( ).toStdString( ).c_str( );
 	}
-	
-	vBox->addWidget( new WebUrlInfoWidget( this->netSetFileSettings, widget ) );
-	vBox->addWidget( new WebUrlInfoWidget( this->netSetFileSettings, widget ) );
-	vBox->addWidget( new WebUrlInfoWidget( this->netSetFileSettings, widget ) );
-	vBox->addWidget( new WebUrlInfoWidget( this->netSetFileSettings, widget ) );
-	vBox->addWidget( new WebUrlInfoWidget( this->netSetFileSettings, widget ) );
-	vBox->addWidget( new WebUrlInfoWidget( this->netSetFileSettings, widget ) );
-	vBox->addWidget( new WebUrlInfoWidget( this->netSetFileSettings, widget ) );
-	vBox->addWidget( new WebUrlInfoWidget( this->netSetFileSettings, widget ) );
-	vBox->addWidget( new WebUrlInfoWidget( this->netSetFileSettings, widget ) );
-	vBox->addWidget( new WebUrlInfoWidget( this->netSetFileSettings, widget ) );
-	vBox->addWidget( new WebUrlInfoWidget( this->netSetFileSettings, widget ) );
-	vBox->addWidget( new WebUrlInfoWidget( this->netSetFileSettings, widget ) );
-	vBox->addWidget( new WebUrlInfoWidget( this->netSetFileSettings, widget ) );
-	vBox->addWidget( new WebUrlInfoWidget( this->netSetFileSettings, widget ) );
+
+	vBox->addWidget( new WebUrlInfoWidget( this->netSetFileSettings, this ) );
+	vBox->addWidget( new WebUrlInfoWidget( this->netSetFileSettings, this ) );
+	vBox->addWidget( new WebUrlInfoWidget( this->netSetFileSettings, this ) );
+	vBox->addWidget( new WebUrlInfoWidget( this->netSetFileSettings, this ) );
+	vBox->addWidget( new WebUrlInfoWidget( this->netSetFileSettings, this ) );
+	vBox->addWidget( new WebUrlInfoWidget( this->netSetFileSettings, this ) );
+	vBox->addWidget( new WebUrlInfoWidget( this->netSetFileSettings, this ) );
+	vBox->addWidget( new WebUrlInfoWidget( this->netSetFileSettings, this ) );
+	vBox->addWidget( new WebUrlInfoWidget( this->netSetFileSettings, this ) );
+	vBox->addWidget( new WebUrlInfoWidget( this->netSetFileSettings, this ) );
+	vBox->addWidget( new WebUrlInfoWidget( this->netSetFileSettings, this ) );
+	vBox->addWidget( new WebUrlInfoWidget( this->netSetFileSettings, this ) );
+	vBox->addWidget( new WebUrlInfoWidget( this->netSetFileSettings, this ) );
+	vBox->addWidget( new WebUrlInfoWidget( this->netSetFileSettings, this ) );
 
 	int count = vBox->count( );
 	for( int index = 0 ; index < count ; ++index ) {
@@ -194,6 +194,11 @@ NovelInfoWidget::~NovelInfoWidget( ) {
 		rwFileThread->await( );
 		delete rwFileThread;
 	}
+}
+bool NovelInfoWidget::setSettingInstance( WebUrlInfoWidget *webUrlInfoWidget ) {
+	if( webUrlInfoWidget->parent( ) == this )
+		return webUrlInfoWidget->setSettingInstance( this, this->netSetFileSettings );
+	return false;
 }
 void NovelInfoWidget::setNetWorkSettingFilePath( const QString &filePath ) {
 	if( checkStatus > 2 ) // 已经被锁定
