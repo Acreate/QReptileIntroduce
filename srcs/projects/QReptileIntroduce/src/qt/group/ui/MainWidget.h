@@ -70,6 +70,9 @@ private: // 程序配置-名称
 	const QString selectReadFileWorkPath = tr( u8"work/Read/Path" );
 	const QString selectWriteFileWorkPath = tr( u8"work/Write/Path" );// 配置文件关键字
 	const QString selectWebSettingPath = tr( u8"work/web/SettingFile/Path" );
+private: // 文字提示
+	const QString transparentText = tr( u8"当前状态: [%1穿透]" );
+	const QString transparentTextNot = tr( u8"未" );
 private: // 程序配置-变量
 	QStringList downNovelTypes;
 private: // 定时调用

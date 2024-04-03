@@ -5,6 +5,7 @@
 #include <QException>
 #include <QLabel>
 #include <QScrollArea>
+#include <QSettings>
 #include <qscreen.h>
 
 #include "NovelInfoWidget.h"
@@ -51,8 +52,18 @@ void WebUrlInfoWidget::setConverError( Exception *tryResult ) {
 ===========
 )" ).arg( __FILE__ ).arg( __LINE__ ) );
 }
-WebUrlInfoWidget::WebUrlInfoWidget( QSettings *webPageSetting, NovelInfoWidget *parent, const QString &key, Qt::WindowFlags f ) : WebUrlInfoWidget( webPageSetting, parent, f ) {
+WebUrlInfoWidget::WebUrlInfoWidget( QSettings *webPageSetting,
+	NovelInfoWidget *parent,
+	const QString &key,
+	Qt::WindowFlags f ) : QWidget( parent, f ) {
 
+	auto novelInfoWidget = overNovelInfoWidgetPtr( parent );
+	initInstance( webPageSetting, novelInfoWidget );
+	auto variant = webPageSetting->value( key );
+	if( variant.isNull( ) )
+		throw Exception( tr( u8"文件:\n%1\n行号:\n%2\n信息:\nQSettings * 对象指针不存在 [%3] 的值\n" ).arg( __FILE__ ).arg( __LINE__ ).arg( key ) );
+	auto url = variant.toString( );
+	urlInput->setText( url );
 	toggle( Show_Mode::Info );
 }
 
@@ -64,22 +75,11 @@ void WebUrlInfoWidget::initComponentConnect( ) {
 		toggle( Show_Mode::Inster );
 	} );
 }
-WebUrlInfoWidget::WebUrlInfoWidget( QSettings *webPageSetting, NovelInfoWidget *parent, Qt::WindowFlags f )
-: QWidget( parent, f ) {
-	auto novelInfoWidget = overNovelInfoWidgetPtr( parent );
-	setWindowTitle( __func__ );
-	pathCount[ novelInfoWidget ] += 1;
-	this->webPageSetting = webPageSetting;
-	initComponentInstance( );
-
-	initComponentPropertys( );
-	initComponentText( );
-	initComponentConnect( );
-
-	insterComponent = new QList<QWidget *>;
+void WebUrlInfoWidget::insterCompoentToLists( ) {
+	insterComponent = new QList< QWidget * >;
 	insterComponent->append( insertlNovelInfoBtn );
-	
-	infoComponent = new QList<QWidget *>;
+
+	infoComponent = new QList< QWidget * >;
 	infoComponent->append( urlSortIndex );
 	infoComponent->append( optionBoxWidget );
 	infoComponent->append( urlInput );
@@ -88,6 +88,21 @@ WebUrlInfoWidget::WebUrlInfoWidget( QSettings *webPageSetting, NovelInfoWidget *
 	infoComponent->append( addNovelTypeInCountBtn );
 	infoComponent->append( subNovelTypeInCountBtn );
 	infoComponent->append( saveBtn );
+}
+void WebUrlInfoWidget::initInstance( QSettings *webPageSetting, NovelInfoWidget *novelInfoWidget ) {
+	setWindowTitle( __func__ );
+	pathCount[ novelInfoWidget ] += 1;
+	this->webPageSetting = webPageSetting;
+	initComponentInstance( );
+	initComponentPropertys( );
+	initComponentText( );
+	initComponentConnect( );
+	insterCompoentToLists( );
+}
+WebUrlInfoWidget::WebUrlInfoWidget( QSettings *webPageSetting, NovelInfoWidget *parent, Qt::WindowFlags f )
+: QWidget( parent, f ) {
+	auto novelInfoWidget = overNovelInfoWidgetPtr( parent );
+	initInstance( webPageSetting, novelInfoWidget );
 
 	toggle( Show_Mode::Inster );
 }

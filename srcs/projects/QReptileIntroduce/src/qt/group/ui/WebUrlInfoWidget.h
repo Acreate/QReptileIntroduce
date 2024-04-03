@@ -69,6 +69,16 @@ private: /// 组件初始化
 	/// 初始化槽链接
 	/// </summary>
 	void initComponentConnect( );
+	/// <summary>
+	/// 插入组件到列表当中
+	/// </summary>
+	void insterCompoentToLists( );
+	/// <summary>
+	/// 初始化实例
+	/// </summary>
+	/// <param name="webPageSetting">配置文件对象指针</param>
+	/// <param name="novelInfoWidget">父节点对象指针</param>
+	void initInstance( QSettings *webPageSetting, NovelInfoWidget *novelInfoWidget );
 public:
 	QString getUrl( ) const;
 	QString getHttpType( ) const;

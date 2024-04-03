@@ -53,10 +53,10 @@ MainWidget::MainWidget( QWidget *parent, Qt::WindowFlags fg ) : QWidget( parent,
 	translator = new QTranslator( );
 	if( translator->load( pmFilename, directory ) )
 		qApp->installTranslator( translator );
-	DEBUG_RUN_CODE_FIRST( else, qDebug( ) << tr( u8"load error" ) );
+	DEBUG_RUN_CODE_FIRST( else, qDebug( ) << tr( u8"加载错误" ) );
 
 	progressSetting = new QSettings( progressIniFileName, QSettings::IniFormat ); // 使用路径方式存储
-	setWindowTitle( tr( u8"read novels" ) );
+	setWindowTitle( tr( u8"小说阅读" ) );
 	// 窗口捕获鼠标
 	setMouseTracking( true );
 
@@ -111,7 +111,7 @@ MainWidget::MainWidget( QWidget *parent, Qt::WindowFlags fg ) : QWidget( parent,
 
 	// 请求菜单
 	auto requestMenu = new Menu;
-	requestMenu->setTitle( tr( u8"request novel sub menu" ) );
+	requestMenu->setTitle( tr( u8"小说请求菜单" ) );
 
 	auto requestSettingFilePath = new Action;
 	requestSettingFilePath->setText( tr( u8"设置请求网络的配置文件" ) );
@@ -125,7 +125,7 @@ MainWidget::MainWidget( QWidget *parent, Qt::WindowFlags fg ) : QWidget( parent,
 	dateTimeThread->start( );
 
 	bool flageTransparentForMouseEvents = progressSetting->value( transparentForMouseEvents, true ).toBool( );
-	converTransparentForMouseEventsBtn->setText( QString( tr( u8"current state: [%1 transparent]" ) ).arg( flageTransparentForMouseEvents ? u8"" : tr( u8"not" ) ) );
+	converTransparentForMouseEventsBtn->setText( QString( transparentText ).arg( flageTransparentForMouseEvents ? u8"" : transparentTextNot ) );
 	novelComponent->setAttribute( Qt::WA_TransparentForMouseEvents, flageTransparentForMouseEvents );
 }
 MainWidget::~MainWidget( ) {
@@ -209,7 +209,7 @@ void MainWidget::changeTransparent( bool flage ) {
 	progressSetting->setValue( transparentForMouseEvents, attribute );
 	progressSetting->sync( );
 	novelComponent->setAttribute( Qt::WA_TransparentForMouseEvents, attribute );
-	converTransparentForMouseEventsBtn->setText( QString( tr( u8"当前状态: [%1穿透]" ) ).arg( attribute ? u8"" : tr( u8"未" ) ) );
+	converTransparentForMouseEventsBtn->setText( QString( transparentText ).arg( attribute ? u8"" : transparentTextNot ) );
 }
 
 void MainWidget::error( int errorType, QFileDevice::FileError fileErrorCode, QFileDevice::FileError dirError ) {

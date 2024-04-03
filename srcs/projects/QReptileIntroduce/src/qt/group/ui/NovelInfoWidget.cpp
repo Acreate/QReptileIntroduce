@@ -46,11 +46,11 @@ NovelInfoWidget::NovelInfoWidget( QWidget *parent, Qt::WindowFlags flag ) : QWid
 	mainLayout->addLayout( runInfoLayoutBox, 1 );
 
 	settingPathTitle = new QLabel;
-	settingPathTitle->setText( tr( u8"setting file path:" ) );
+	settingPathTitle->setText( tr( u8"配置文件路径:" ) );
 	settingInfoLayoutBox->addWidget( settingPathTitle );
 
 	inputSettingPathLine = new EditLine;
-	inputSettingPathLine->setPlaceholderText( tr( u8"please input setting file path" ) );
+	inputSettingPathLine->setPlaceholderText( tr( u8"请输入一个配置文件" ) );
 	editorStatus = 0;
 	connect( inputSettingPathLine, &QLineEdit::editingFinished, this, &NovelInfoWidget::settingPathCompoentWriteOver );
 	connect( inputSettingPathLine, &QLineEdit::textEdited, [=]( ) {
@@ -62,7 +62,7 @@ NovelInfoWidget::NovelInfoWidget( QWidget *parent, Qt::WindowFlags flag ) : QWid
 	btn = new Button( this );
 	settingInfoLayoutBox->addWidget( btn );
 	connect( this, &NovelInfoWidget::errorSettingPath, [=]( ) {
-		btn->setText( tr( u8"error" ) );
+		btn->setText( tr( u8"错误" ) );
 		btn->setStyleSheet( tr( u8R"(
 	Button{
 		color : red;
@@ -70,7 +70,7 @@ NovelInfoWidget::NovelInfoWidget( QWidget *parent, Qt::WindowFlags flag ) : QWid
 	} );
 	connect( this, &NovelInfoWidget::overSettingPath, [=]( ) {
 		if( checkStatus == 1 ) {
-			btn->setText( tr( u8"lock path" ) );
+			btn->setText( tr( u8"加载" ) );
 			checkStatus = 2;
 		}
 		btn->setStyleSheet( tr( u8R"(
@@ -81,9 +81,9 @@ NovelInfoWidget::NovelInfoWidget( QWidget *parent, Qt::WindowFlags flag ) : QWid
 	connect( btn, &QPushButton::clicked, [=]( ) {
 		if( checkStatus == -1 ) {
 			do {
-				auto fileName = QFileDialog::getOpenFileName( this, tr( u8"select singleton setting file" ), qApp->applicationFilePath( ), "setting file(*.ini *.txt *.set *.setting);;all type(*)" );
+				auto fileName = QFileDialog::getOpenFileName( this, tr( u8"选择一个设置文件" ), qApp->applicationFilePath( ), "配置文件类型(*.ini *.txt *.set *.setting);;全部类型(*)" );
 				if( fileName.isEmpty( ) ) {
-					QMessageBox::StandardButton standardButton = QMessageBox::question( this, tr( u8"please select option" ), tr( u8"file path is error! now repetition select file ?" ) );
+					QMessageBox::StandardButton standardButton = QMessageBox::question( this, tr( u8"请选择一个选项" ), tr( u8"文件打开错误!现在重新选择吗?" ) );
 					if( standardButton == QMessageBox::Yes )
 						continue;
 					return;
@@ -252,12 +252,12 @@ void NovelInfoWidget::networkReplyFinished( ) {
 	QString existingDirectory;
 	if( !netSetFileSettings ) {
 		do {
-			QString filePath = QFileDialog::getOpenFileName( this, tr( u8"selection setting file" ), qApp->applicationDirPath( ), tr( u8"setting file type(*.ini *.setting *.set);; all type(*)" ) );
+			QString filePath = QFileDialog::getOpenFileName( this, tr( u8"选择配置文件" ), qApp->applicationDirPath( ), tr( u8"配置文件类型(*.ini *.setting *.set);;全部类型(*)" ) );
 			if( !filePath.isEmpty( ) ) {
 				netSetFileSettings = new QSettings( filePath, QSettings::Format::IniFormat, this );
 				break;
 			}
-			if( QMessageBox::No == QMessageBox::question( this, tr( u8"please select option" ), tr( u8"path dir can not wirte file. now again select dir path ?" ) ) )
+			if( QMessageBox::No == QMessageBox::question( this, tr( u8"请选择" ), tr( u8"路径无法写入文件。现在重新选择路径吗？" ) ) )
 				return;
 		} while( true );
 	}
@@ -266,13 +266,13 @@ void NovelInfoWidget::networkReplyFinished( ) {
 		QFileInfo info;
 		bool isUseCanNotWrite = false;
 		do {
-			existingDirectory = QFileDialog::getExistingDirectory( this, tr( u8"select singleton dir save web request buff" ), qApp->applicationDirPath( ) );
+			existingDirectory = QFileDialog::getExistingDirectory( this, tr( u8"选择一个 web 缓冲目录" ), qApp->applicationDirPath( ) );
 			if( existingDirectory.isEmpty( ) )
 				return;
 			info.setFile( existingDirectory );
 			isUseCanNotWrite = !info.isWritable( );
 			if( isUseCanNotWrite ) {
-				QMessageBox::StandardButton standardButton = QMessageBox::question( this, tr( u8"please select option" ), tr( u8"path dir can not wirte file. now again select dir path ?" ) );
+				QMessageBox::StandardButton standardButton = QMessageBox::question( this, tr( u8"请选择" ), tr( u8"路径无法写入。现在重新选择路径吗？" ) );
 				if( standardButton | QMessageBox::No )
 					return;
 			}
@@ -284,8 +284,8 @@ void NovelInfoWidget::networkReplyFinished( ) {
 		existingDirectory = variant.toString( ) + QDir::separator( );
 	QUrl url = networkReply->url( );
 	DEBUG_RUN(
-		qDebug() << "default - url.host( FullyDecoded ) : " << url.host( );
-		qDebug() << "default - PrettyDecoded : " << url.toString( );
+		qDebug() << "默认 - url.host( FullyDecoded ) : " << url.host( );
+		qDebug() << "默认 - PrettyDecoded : " << url.toString( );
 	);
 	auto saveTemPath = existingDirectory + url.host( ) + QDir::separator( );
 	rwFileThread->setFilePath( saveTemPath + "index.html" );

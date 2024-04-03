@@ -14,7 +14,7 @@
     <message>
         <location filename="../src/qt/extend/thread/DateTimeThread.cpp" line="15"/>
         <source>%1 年 %2 月 %3 日 %4:%5:%6</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
 </context>
 <context>
@@ -30,7 +30,7 @@
     <message>
         <location filename="../src/qt/group/ui/MainWidget.cpp" line="24"/>
         <source>MainWidget::MainWidget 线程 id : </source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/qt/group/ui/MainWidget.cpp" line="45"/>
@@ -44,48 +44,38 @@
     </message>
     <message>
         <location filename="../src/qt/group/ui/MainWidget.cpp" line="56"/>
-        <source>load error</source>
-        <translation>加载错误</translation>
+        <source>加载错误</source>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/qt/group/ui/MainWidget.cpp" line="59"/>
-        <source>read novels</source>
-        <translation>小说阅读</translation>
+        <source>小说阅读</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../src/qt/group/ui/MainWidget.cpp" line="114"/>
+        <source>小说请求菜单</source>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/qt/group/ui/MainWidget.cpp" line="117"/>
         <source>设置请求网络的配置文件</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
-        <location filename="../src/qt/group/ui/MainWidget.cpp" line="128"/>
-        <source>current state: [%1 transparent]</source>
-        <translation>当前状态: [%1穿透]</translation>
-    </message>
-    <message>
-        <location filename="../src/qt/group/ui/MainWidget.cpp" line="128"/>
-        <source>not</source>
-        <translation>未</translation>
-    </message>
-    <message>
-        <location filename="../src/qt/group/ui/MainWidget.cpp" line="212"/>
+        <location filename="../src/qt/group/ui/MainWidget.h" line="74"/>
         <source>当前状态: [%1穿透]</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
-        <location filename="../src/qt/group/ui/MainWidget.cpp" line="212"/>
+        <location filename="../src/qt/group/ui/MainWidget.h" line="75"/>
         <source>未</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/qt/group/ui/MainWidget.cpp" line="231"/>
         <source>当前 MainWidget 窗口最小的宽度 : </source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/qt/group/ui/MainWidget.cpp" line="114"/>
-        <source>request novel sub menu</source>
-        <translation>网络请求子菜单</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/qt/group/ui/MainWidget.cpp" line="119"/>
@@ -131,32 +121,12 @@
 <context>
     <name>NovelInfoWidget</name>
     <message>
-        <location filename="../src/qt/group/ui/NovelInfoWidget.cpp" line="49"/>
-        <source>setting file path:</source>
-        <translation>配置文件路径：</translation>
-    </message>
-    <message>
-        <location filename="../src/qt/group/ui/NovelInfoWidget.cpp" line="53"/>
-        <source>please input setting file path</source>
-        <translation>请输入配置文件路径</translation>
-    </message>
-    <message>
-        <location filename="../src/qt/group/ui/NovelInfoWidget.cpp" line="65"/>
-        <source>error</source>
-        <translation>错误</translation>
-    </message>
-    <message>
         <location filename="../src/qt/group/ui/NovelInfoWidget.cpp" line="66"/>
         <source>
 	Button{
 		color : red;
 	}</source>
         <translation></translation>
-    </message>
-    <message>
-        <location filename="../src/qt/group/ui/NovelInfoWidget.cpp" line="73"/>
-        <source>lock path</source>
-        <translation>锁定路径</translation>
     </message>
     <message>
         <location filename="../src/qt/group/ui/NovelInfoWidget.cpp" line="76"/>
@@ -167,21 +137,39 @@
         <translation></translation>
     </message>
     <message>
+        <location filename="../src/qt/group/ui/NovelInfoWidget.cpp" line="49"/>
+        <source>配置文件路径:</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../src/qt/group/ui/NovelInfoWidget.cpp" line="53"/>
+        <source>请输入一个配置文件</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../src/qt/group/ui/NovelInfoWidget.cpp" line="65"/>
+        <source>错误</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../src/qt/group/ui/NovelInfoWidget.cpp" line="73"/>
+        <source>加载</source>
+        <translation></translation>
+    </message>
+    <message>
         <location filename="../src/qt/group/ui/NovelInfoWidget.cpp" line="84"/>
-        <source>select singleton setting file</source>
-        <translation>选择一个配置文件</translation>
+        <source>选择一个设置文件</source>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/qt/group/ui/NovelInfoWidget.cpp" line="86"/>
-        <location filename="../src/qt/group/ui/NovelInfoWidget.cpp" line="260"/>
-        <location filename="../src/qt/group/ui/NovelInfoWidget.cpp" line="275"/>
-        <source>please select option</source>
-        <translation>请选择</translation>
+        <source>请选择一个选项</source>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/qt/group/ui/NovelInfoWidget.cpp" line="86"/>
-        <source>file path is error! now repetition select file ?</source>
-        <translation>文件路径错误！现在重新选择文件？</translation>
+        <source>文件打开错误!现在重新选择吗?</source>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/qt/group/ui/NovelInfoWidget.cpp" line="97"/>
@@ -218,24 +206,34 @@
     </message>
     <message>
         <location filename="../src/qt/group/ui/NovelInfoWidget.cpp" line="255"/>
-        <source>selection setting file</source>
-        <translation>选择配置文件</translation>
+        <source>选择配置文件</source>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/qt/group/ui/NovelInfoWidget.cpp" line="255"/>
-        <source>setting file type(*.ini *.setting *.set);; all type(*)</source>
-        <translation>配置文件类型(*.ini *.setting *.set);;全部类型(*)</translation>
+        <source>配置文件类型(*.ini *.setting *.set);;全部类型(*)</source>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/qt/group/ui/NovelInfoWidget.cpp" line="260"/>
         <location filename="../src/qt/group/ui/NovelInfoWidget.cpp" line="275"/>
-        <source>path dir can not wirte file. now again select dir path ?</source>
-        <translation>路径无法写入文件，现在重新选择一次路径吗？</translation>
+        <source>请选择</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../src/qt/group/ui/NovelInfoWidget.cpp" line="260"/>
+        <source>路径无法写入文件。现在重新选择路径吗？</source>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/qt/group/ui/NovelInfoWidget.cpp" line="269"/>
-        <source>select singleton dir save web request buff</source>
-        <translation>选择一个用于保存 web 缓冲的路径</translation>
+        <source>选择一个 web 缓冲目录</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../src/qt/group/ui/NovelInfoWidget.cpp" line="275"/>
+        <source>路径无法写入。现在重新选择路径吗？</source>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/qt/group/ui/NovelInfoWidget.h" line="39"/>
@@ -259,28 +257,64 @@
 <context>
     <name>WebUrlInfoWidget</name>
     <message>
-        <location filename="../src/qt/group/ui/WebUrlInfoWidget.cpp" line="31"/>
-        <source>insert novel url info</source>
-        <translation>插入小说 URL 信息</translation>
-    </message>
-    <message>
-        <location filename="../src/qt/group/ui/WebUrlInfoWidget.cpp" line="80"/>
+        <location filename="../src/qt/group/ui/WebUrlInfoWidget.cpp" line="42"/>
         <source>===========
-file: 
+文件名: 
 	%1
-call name: 
+调用名称: 
 	WebUrlInfoWidget::WebUrlInfoWidget
-line: 
+行号: 
 	%2 row
-error ! please set valid value( --parent )
-	parent is NovelInfoWidget type, for ever
+错误!请为 parent 参数设置一个有效的对象指针
+	parent 总是 NovelInfoWidget* 类型
 ===========
 </source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
-        <location filename="../src/qt/group/ui/WebUrlInfoWidget.cpp" line="96"/>
+        <location filename="../src/qt/group/ui/WebUrlInfoWidget.cpp" line="64"/>
+        <source>文件:
+%1
+行号:
+%2
+信息:
+QSettings * 对象指针不存在 [%3] 的值
+</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../src/qt/group/ui/WebUrlInfoWidget.cpp" line="111"/>
         <source>WebUrlInfoWidget::~WebUrlInfoWidget : </source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../src/qt/group/ui/WebUrlInfoWidget.cpp" line="188"/>
+        <source>插入小说网站信息</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../src/qt/group/ui/WebUrlInfoWidget.cpp" line="192"/>
+        <source>全部加 1</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../src/qt/group/ui/WebUrlInfoWidget.cpp" line="193"/>
+        <source>全部减 1</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../src/qt/group/ui/WebUrlInfoWidget.cpp" line="194"/>
+        <source>单类型加 1</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../src/qt/group/ui/WebUrlInfoWidget.cpp" line="195"/>
+        <source>单类型减 1</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../src/qt/group/ui/WebUrlInfoWidget.cpp" line="196"/>
+        <source>保存</source>
         <translation></translation>
     </message>
 </context>
