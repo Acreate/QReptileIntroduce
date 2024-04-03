@@ -66,10 +66,9 @@ private: // 程序配置-读写
 	FileResult *fileThreadResult = nullptr; // 文件读取绑定指针
 private: // 程序配置-名称
 	const QString transparentForMouseEvents = tr( u8"somponentStyle/TransparentForMouseEvents" );
-	const QString downIniTypes = tr( u8"downIni/Types" );
-	const QString selectReadFileWorkPath = tr( u8"work/Read/Path" );
-	const QString selectWriteFileWorkPath = tr( u8"work/Write/Path" );// 配置文件关键字
-	const QString selectWebSettingPath = tr( u8"work/web/SettingFile/Path" );
+	const QString selectReadFileWorkPath = tr( u8"work/ReadDirPath" );
+	const QString selectWriteFileWorkPath = tr( u8"work/WriteDirPath" );// 配置文件关键字
+	const QString selectWebSettingPath = tr( u8"web/SettingFilePath" );
 private: // 文字提示
 	const QString transparentText = tr( u8"当前状态: [%1穿透]" );
 	const QString transparentTextNot = tr( u8"未" );
@@ -81,13 +80,17 @@ public slots: // 窗口子控件信号响应
 	void updateDateTimeStrFunction( const QString &currentDateTimeStr );
 	void changeTransparent( bool flage );
 	void error( int errorType, QFileDevice::FileError fileErrorCode, QFileDevice::FileError dirError );
+	void changeWebComponents( );
 private:
 	/// <summary>
 	/// 更新窗口宽度
 	/// </summary>
 	void updateWidgetWidth( const QList< QString > &list );
-public:
-
+Q_SIGNALS:
+	/// <summary>
+	/// 当关联的 web 配置文件同步到该实例对象时候会触发该行为
+	/// </summary>
+	void changeOverWebComponentSetting( );
 };
 
 #endif // MAINWIDGET_H_H_HEAD__FILE__

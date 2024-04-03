@@ -77,9 +77,6 @@ qt_add_translations(
 	QM_FILES_OUTPUT_VARIABLE qm_files
 )
 
-
-
-
 install( FILES ${qm_files} DESTINATION "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/ini/progress/translations/" )
 
 call_qt_deploy( ${PROJECT_NAME}
@@ -90,4 +87,4 @@ call_qt_deploy( ${PROJECT_NAME}
 	Qt${QT_VERSION_MAJOR}::Core5Compat
 )
 
-copy_dir_path( "${CMAKE_CURRENT_LIST_DIR}/res" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/" )
+copy_dir_path( ${PROJECT_NAME} "${CMAKE_CURRENT_LIST_DIR}/res" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/" )

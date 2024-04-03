@@ -4,6 +4,7 @@
 #pragma once
 #include <QWidget>
 
+class CountEditWidget;
 class Exception;
 class NovelInfoWidget;
 class QScrollArea;
@@ -33,6 +34,9 @@ private: // 静态成员
 private: // 构造类时候必须初始化
 	QSettings *webPageSetting;
 	Show_Mode currentMode;
+private: // 配置文件当中的关键 key
+	const QString settingHostKey = tr(u8"host");
+	const QString settingUrlKey = tr(u8"url");
 public:
 	WebUrlInfoWidget( QSettings *webPageSetting, NovelInfoWidget *parent , const QString& key, Qt::WindowFlags f = Qt::WindowFlags());
 	WebUrlInfoWidget( QSettings *webPageSetting, NovelInfoWidget *parent , Qt::WindowFlags f = Qt::WindowFlags());
@@ -45,10 +49,8 @@ private: // 小说存在的时候显示的组件
 	QLabel *urlSortIndex; // 排序
 	EditLine *urlInput; // url 地址
 	QComboBox *optionBoxWidget; // url 协议
-	Button *addNovelAllInCountBtn; // 添加重量的计数
-	Button *subNovelAllInCountBtn; // 减去重量的计数
-	Button *addNovelTypeInCountBtn; // 添加类型的计数
-	Button *subNovelTypeInCountBtn; // 减去类型的计数
+	CountEditWidget* allCount; // 总计
+	CountEditWidget* typeCount; // 类型计数
 	Button *saveBtn; // 保存配置
 private: // 小说不存在的时候显示的组件
 	Button *insertlNovelInfoBtn; // 插入小说信息按钮

@@ -29,8 +29,9 @@ endfunction()
 
 
 ## 拷贝目录到指定路径
-function(copy_dir_path copy_dir_target paste_dir_target)
-	execute_process(
+function(copy_dir_path builder_target copy_dir_target paste_dir_target)
+	add_custom_command(
+		TARGET ${builder_target} POST_BUILD
 		COMMAND ${CMAKE_COMMAND} -E copy_directory "${copy_dir_target}/" "${paste_dir_target}"
 	)
 endfunction()

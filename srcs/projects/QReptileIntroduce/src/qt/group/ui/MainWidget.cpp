@@ -19,11 +19,13 @@
 #include <QScrollBar>
 #include <qcoreapplication.h>
 
+#include "WebUrlInfoWidget.h"
+
 MainWidget::MainWidget( QWidget *parent, Qt::WindowFlags fg ) : QWidget( parent, fg ), currentFont( "Arial", 10 ), currentFontMetrics( currentFont ), drawColor( 255, 0, 0 ), compoentStrNlen( 0 ) {
 
 	DEBUG_RUN( qDebug() << tr(u8"MainWidget::MainWidget 线程 id : ")<< QThread::currentThread( )->currentThreadId( ) );
 
-	///// 窗口信息的初始化
+	///// 本实例对象实现槽函数
 
 	//connect( this, &QWidget::show, [=]( ) {
 	//
@@ -109,24 +111,34 @@ MainWidget::MainWidget( QWidget *parent, Qt::WindowFlags fg ) : QWidget( parent,
 		showCount = 0;
 	} );
 
-	// 请求菜单
-	auto requestMenu = new Menu;
-	requestMenu->setTitle( tr( u8"小说请求菜单" ) );
-
-	auto requestSettingFilePath = new Action;
-	requestSettingFilePath->setText( tr( u8"设置请求网络的配置文件" ) );
-	connect( requestSettingFilePath, &Action::triggered, [=]( ) {
+	auto loadSettingFile = new Action;
+	loadSettingFile->setText( tr( u8"加载配置文件" ) );
+	connect( loadSettingFile, &Action::triggered, [=]( ) {
 		DEBUG_RUN( qDebug() << tr(u8"requestSettingFilePath, &Action::trigger slots") );
+		changeWebComponents( );
 	} );
-	requestMenu->addAction( requestSettingFilePath );
+	toolsMenu->addAction( loadSettingFile );
 
-	toolsMenu->addMenu( requestMenu );
 	//// 线程开始
 	dateTimeThread->start( );
 
 	bool flageTransparentForMouseEvents = progressSetting->value( transparentForMouseEvents, true ).toBool( );
 	converTransparentForMouseEventsBtn->setText( QString( transparentText ).arg( flageTransparentForMouseEvents ? u8"" : transparentTextNot ) );
 	novelComponent->setAttribute( Qt::WA_TransparentForMouseEvents, flageTransparentForMouseEvents );
+
+	/// 配置文件设置
+	auto variant = progressSetting->value( selectWebSettingPath );
+	if( !variant.isNull( ) ) {
+		QFileInfo info( variant.toString( ) );
+		if( info.exists( ) )
+			novelComponent->setNetWorkSettingFilePath( info.absoluteFilePath( ) );
+	}
+	variant = progressSetting->value( selectReadFileWorkPath );
+	if( variant.isNull( ) || variant.toString( ).isEmpty( ) )
+		progressSetting->setValue( selectReadFileWorkPath, qApp->applicationDirPath( ) );
+	variant = progressSetting->value( selectWriteFileWorkPath );
+	if( variant.isNull( ) || variant.toString( ).isEmpty( ) )
+		progressSetting->setValue( selectWriteFileWorkPath, qApp->applicationDirPath( ) );
 }
 MainWidget::~MainWidget( ) {
 	dateTimeThread->requestInterruption( );
@@ -217,6 +229,32 @@ void MainWidget::error( int errorType, QFileDevice::FileError fileErrorCode, QFi
 		DEBUG_RUN( qDebug() << fileErrorCode ) ;
 	if( errorType | 2 )
 		DEBUG_RUN( qDebug() << dirError ) ;
+}
+void MainWidget::changeWebComponents( ) {
+	auto variant = progressSetting->value( selectWebSettingPath );
+	QString filePath;
+	if( !variant.isNull( ) )
+		filePath = variant.toString( );
+	QFileInfo info( filePath );
+	if( info.exists( ) )
+		filePath = info.absoluteDir( ).absolutePath(  );
+	else
+		filePath = qApp->applicationDirPath( );
+	do {
+		filePath = QFileDialog::getOpenFileName( this, tr( u8"指定一个 web 配置文件" ), filePath, tr( u8"配置类型(*.set *.ini *.setting );;全部类型(*)" ) );
+		info.setFile( filePath );
+		if( info.exists( ) ) {
+			QString absoluteFilePath = info.absoluteFilePath( );
+			progressSetting->setValue( selectWebSettingPath, absoluteFilePath );
+			novelComponent->setNetWorkSettingFilePath( absoluteFilePath );
+
+			// 触发信号
+			emit changeOverWebComponentSetting( );
+			break;
+		}
+		if( QMessageBox::question( this, tr( u8"请选择" ), tr( u8"文件错误，是否重新选择？" ) ) == QMessageBox::No )
+			break;
+	} while( true );
 }
 
 void MainWidget::updateWidgetWidth( const QList< QString > &list ) {

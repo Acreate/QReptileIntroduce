@@ -155,6 +155,7 @@ NovelInfoWidget::NovelInfoWidget( QWidget *parent, Qt::WindowFlags flag ) : QWid
 		qDebug( ) << exception.getMsg( ).toStdString( ).c_str( );
 		delObj_error->deleteLater( );
 	}
+	
 	vBox->addWidget( new WebUrlInfoWidget( this->netSetFileSettings, this ) );
 	vBox->addWidget( new WebUrlInfoWidget( this->netSetFileSettings, this ) );
 	vBox->addWidget( new WebUrlInfoWidget( this->netSetFileSettings, this ) );
@@ -234,8 +235,6 @@ void NovelInfoWidget::setRequestConnect( RequestConnect *const requestConnect ) 
 void NovelInfoWidget::showEvent( QShowEvent *event ) {
 	DEBUG_RUN( qDebug( ) << tr( u8"====== NovelInfoWidget::showEvent ===========" ) );
 	QWidget::showEvent( event );
-	inputSettingPathLine->setText( settingFileAbsoluteFilePath );
-	settingPathCompoentWriteOver( );
 }
 bool NovelInfoWidget::nativeEvent( const QByteArray &eventType, void *message, qintptr *result ) {
 	return QWidget::nativeEvent( eventType, message, result );
@@ -309,7 +308,18 @@ void NovelInfoWidget::settingPathCompoentWriteOver( ) {
 		}
 	} else
 		netSetFileSettings = new QSettings( newPath, QSettings::Format::IniFormat, this );
+
 	checkStatus = 1;
+	// todo 开始加载组件
+	netSetFileSettings->beginGroup( "url" );
+	QStringList childKeys = netSetFileSettings->childKeys( );
+	for( auto &key : childKeys ) {
+		QVariant value = netSetFileSettings->value( key );
+		DEBUG_RUN( qDebug() << "当前 key 为 : "<< key<< ", 获取到的值为 : " << value.toString( ) );
+		
+	}
+	netSetFileSettings->endGroup( );
+
 	emit overSettingPath( settingFileAbsoluteFilePath, newPath );
 	settingFileAbsoluteFilePath = newPath;
 }

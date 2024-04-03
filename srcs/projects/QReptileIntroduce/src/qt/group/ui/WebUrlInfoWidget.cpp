@@ -19,6 +19,7 @@
 
 #include "../../userHread/DebugInfo.h"
 #include "../../userHread/QtMorc.h"
+#include "CountEditWidget.h"
 
 QMap< NovelInfoWidget *, unsigned long long > WebUrlInfoWidget::pathCount = QMap< NovelInfoWidget *, unsigned long long >( );
 
@@ -72,7 +73,14 @@ void WebUrlInfoWidget::initComponentConnect( ) {
 		toggle( Show_Mode::Info );
 	} );
 	connect( saveBtn, &QPushButton::clicked, [=]( ) {
-		toggle( Show_Mode::Inster );
+
+		QString urlHost = urlInput->text( );
+		if( urlHost.isEmpty( ) )
+			return;
+		webPageSetting->beginGroup( urlHost );
+		webPageSetting->setValue( settingUrlKey, urlHost );
+		webPageSetting->endGroup( );
+
 	} );
 }
 void WebUrlInfoWidget::insterCompoentToLists( ) {
@@ -83,10 +91,8 @@ void WebUrlInfoWidget::insterCompoentToLists( ) {
 	infoComponent->append( urlSortIndex );
 	infoComponent->append( optionBoxWidget );
 	infoComponent->append( urlInput );
-	infoComponent->append( addNovelAllInCountBtn );
-	infoComponent->append( subNovelAllInCountBtn );
-	infoComponent->append( addNovelTypeInCountBtn );
-	infoComponent->append( subNovelTypeInCountBtn );
+	infoComponent->append( allCount );
+	infoComponent->append( typeCount );
 	infoComponent->append( saveBtn );
 }
 void WebUrlInfoWidget::initInstance( QSettings *webPageSetting, NovelInfoWidget *novelInfoWidget ) {
@@ -189,10 +195,6 @@ void WebUrlInfoWidget::initComponentText( ) {
 	urlSortIndex->setText( u8"1" );
 	optionBoxWidget->addItem( "http" );
 	optionBoxWidget->addItem( "https" );
-	addNovelAllInCountBtn->setText( tr( u8"全部加 1" ) );
-	subNovelAllInCountBtn->setText( tr( u8"全部减 1" ) );
-	addNovelTypeInCountBtn->setText( tr( u8"单类型加 1" ) );
-	subNovelTypeInCountBtn->setText( tr( u8"单类型减 1" ) );
 	saveBtn->setText( tr( u8"保存" ) );
 }
 void WebUrlInfoWidget::initComponentInstance( ) {
@@ -202,12 +204,9 @@ void WebUrlInfoWidget::initComponentInstance( ) {
 
 	urlSortIndex = new QLabel( this );
 	optionBoxWidget = new QComboBox( this );
-	optionBoxWidget->setEditable( false );
 	urlInput = new EditLine( this );
 
-	addNovelAllInCountBtn = new Button( this );
-	subNovelAllInCountBtn = new Button( this );
-	addNovelTypeInCountBtn = new Button( this );
-	subNovelTypeInCountBtn = new Button( this );
+	allCount = new CountEditWidget( this );
+	typeCount = new CountEditWidget( this );
 	saveBtn = new Button( this );
 }
