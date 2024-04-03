@@ -58,7 +58,7 @@ endif()
 set( translation_file_list
 
 	# # 美语
-	# "${CMAKE_CURRENT_LIST_DIR}/translations/${PROJECT_NAME}_en.ts"
+	"${CMAKE_CURRENT_LIST_DIR}/translations/${PROJECT_NAME}_en.ts"
 	# # 汉语
 	"${CMAKE_CURRENT_LIST_DIR}/translations/${PROJECT_NAME}_zh_CN.ts"
 )
