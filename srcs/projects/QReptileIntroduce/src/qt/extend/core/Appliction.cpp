@@ -1,5 +1,5 @@
 ﻿#include "Appliction.h"
-#include "../../group/MainWidget.h"
+#include "../../group/ui/MainWidget.h"
 #include <QEvent>
 #include <QMouseEvent>
 Appliction::Appliction( int &argc, char **argv, int i ): QApplication( argc, argv, i ) {

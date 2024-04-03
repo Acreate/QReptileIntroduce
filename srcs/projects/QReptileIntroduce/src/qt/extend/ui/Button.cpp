@@ -1,5 +1,5 @@
 ﻿#include "Button.h"
-#include "../userHread/DebugInfo.h"
+#include "../../userHread/DebugInfo.h"
 #include <QPaintEvent>
 #include <QPainter>
 Button::Button( const QString &text, QWidget *parent ): QPushButton( text, parent ) {

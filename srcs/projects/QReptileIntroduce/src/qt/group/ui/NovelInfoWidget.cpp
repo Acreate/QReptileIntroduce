@@ -13,17 +13,16 @@
 #include <qdir.h>
 #include <qguiapplication.h>
 
-#include "../../qt/extend/exception/Exception.h"
-#include "../../qt/extend/netWork/Request.h"
-#include "../../qt/extend/netWork/RequestConnect.h"
-#include "../../qt/group/file/FileResult.h"
-#include "../../qt/group/file/RWFileThread.h"
-#include "../../qt/userHread/DebugInfo.h"
-#include "../extend/layout/HLayoutBox.h"
-#include "../extend/layout/VLayoutBox.h"
-
-#include "../extend/Button.h"
-#include "../extend/EditLine.h"
+#include "../../../qt/extend/exception/Exception.h"
+#include "../../../qt/extend/netWork/Request.h"
+#include "../../../qt/extend/netWork/RequestConnect.h"
+#include "../../../qt/group/file/FileResult.h"
+#include "../../../qt/group/file/RWFileThread.h"
+#include "../../../qt/userHread/DebugInfo.h"
+#include "../../extend/layout/HLayoutBox.h"
+#include "../../extend/layout/VLayoutBox.h"
+#include "../../extend/ui/Button.h"
+#include "../../extend/ui/EditLine.h"
 
 #include "WebUrlInfoWidget.h"
 

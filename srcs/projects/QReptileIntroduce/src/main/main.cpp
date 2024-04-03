@@ -1,4 +1,4 @@
-﻿#include "../qt/group/MainWidget.h"
+﻿#include "../qt/group/ui/MainWidget.h"
 #include "../qt/extend/core/Appliction.h"
 
 int main( int argc, char *argv[ ] ) {

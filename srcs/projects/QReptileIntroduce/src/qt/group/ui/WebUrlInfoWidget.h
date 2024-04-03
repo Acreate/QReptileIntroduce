@@ -4,6 +4,7 @@
 #pragma once
 #include <QWidget>
 
+class Exception;
 class NovelInfoWidget;
 class QScrollArea;
 class QComboBox;
@@ -12,6 +13,10 @@ class EditLine;
 class QLabel;
 class Button;
 class HLayoutBox;
+
+/// <summary>
+/// 
+/// </summary>
 class WebUrlInfoWidget : public QWidget {
 
 	Q_OBJECT;
@@ -22,11 +27,19 @@ public: // 模型切换宏
 	};
 private: // 静态成员
 	static QMap< NovelInfoWidget *, unsigned long long > pathCount;
+	static NovelInfoWidget * overNovelInfoWidgetPtr(QObject* converPtr);
+	static NovelInfoWidget * overNovelInfoWidgetPtrTry(QObject* converPtr,Exception* tryResult);
+	static void setConverError(Exception* tryResult);
 private: // 构造类时候必须初始化
 	QSettings *webPageSetting;
+	Show_Mode currentMode;
 public:
-	WebUrlInfoWidget( QSettings *webPageSetting, NovelInfoWidget *parent );
+	WebUrlInfoWidget( QSettings *webPageSetting, NovelInfoWidget *parent , const QString& key, Qt::WindowFlags f = Qt::WindowFlags());
+	WebUrlInfoWidget( QSettings *webPageSetting, NovelInfoWidget *parent , Qt::WindowFlags f = Qt::WindowFlags());
 	~WebUrlInfoWidget( ) override;
+private: // 组件容器
+	QList<QWidget*> *insterComponent;
+	QList<QWidget*> *infoComponent;
 private: // 小说存在的时候显示的组件
 	HLayoutBox *hasNovelInfoLayout;  // 主要布局
 	QLabel *urlSortIndex; // 排序
@@ -39,6 +52,23 @@ private: // 小说存在的时候显示的组件
 	Button *saveBtn; // 保存配置
 private: // 小说不存在的时候显示的组件
 	Button *insertlNovelInfoBtn; // 插入小说信息按钮
+private: /// 组件初始化
+	/// <summary>
+	/// 初始化组件属性
+	/// </summary>
+	void initComponentPropertys( );
+	/// <summary>
+	/// 初始化组件文本
+	/// </summary>
+	void initComponentText( );
+	/// <summary>
+	/// 初始化（构建）组件对象
+	/// </summary>
+	void initComponentInstance( );
+	/// <summary>
+	/// 初始化槽链接
+	/// </summary>
+	void initComponentConnect( );
 public:
 	QString getUrl( ) const;
 	QString getHttpType( ) const;

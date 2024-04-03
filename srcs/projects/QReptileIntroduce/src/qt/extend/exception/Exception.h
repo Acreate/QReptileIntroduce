@@ -6,6 +6,8 @@ class Exception : public QException {
 private:
 	QString msg;
 public:
+	Exception( ) {
+	}
 	Exception( const QString &msg ): msg( msg ) {
 
 	}
@@ -13,6 +15,9 @@ public:
 	QException *clone( ) const override;
 	const QString &getMsg( ) const {
 		return msg;
+	}
+	void setMsg(const QString& newMsg) {
+		msg = newMsg;
 	}
 };
 
