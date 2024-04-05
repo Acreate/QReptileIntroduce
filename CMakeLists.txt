@@ -1,5 +1,8 @@
 ﻿CMAKE_MINIMUM_REQUIRED(VERSION 3.19)
 
+
+
+
 SET( PROJECT_BINARY_DIR "${CMAKE_HOME_DIRECTORY}/builder/${CMAKE_BUILD_TYPE}_${CMAKE_CXX_COMPILER_ARCHITECTURE_ID}_${CMAKE_CXX_COMPILER_ID}/" )
 SET( CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/${CMAKE_INSTALL_BINDIR}" )
 SET( CMAKE_LIBRARY_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/${CMAKE_INSTALL_BINDIR}" )
@@ -16,14 +19,18 @@ SET( CMAKE_CXX_STANDARD 17 )
 SET( CMAKE_CXX_STANDARD_REQUIRED ON )
 SET( CMAKE_CXX_VISIBILITY_PRESET hidden )
 
+
 find_package(CmakeFuncs REQUIRED PATHS "${CMAKE_CURRENT_SOURCE_DIR}/srcs/cmake/CmakeFuncs/")
 
 INCLUDE( GenerateExportHeader )
 INCLUDE( GNUInstallDirs )
 
+
+get_path_cmake_dir_path(out_path_list ${CMAKE_CURRENT_SOURCE_DIR}/srcs/libs/ "CMakeLists.txt")
 get_path_cmake_dir_path(out_path_list ${CMAKE_CURRENT_SOURCE_DIR}/srcs/projects/ "CMakeLists.txt")
 foreach(out_dir ${out_path_list})
 	string(REPLACE ${CMAKE_SOURCE_DIR}/ "./" out_path ${out_dir})
-	message(STATUS "正在添加路径 :\t" ${out_path})
-	ADD_SUBDIRECTORY(${out_path})
+	message(STATUS "正在添加路径 :\t" ${out_dir})
+	ADD_SUBDIRECTORY(${out_dir})
 endforeach()
+

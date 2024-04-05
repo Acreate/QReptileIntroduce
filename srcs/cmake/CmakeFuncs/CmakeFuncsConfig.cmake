@@ -13,13 +13,13 @@ function( get_path_cmake_dir_path out_list check_path_dir file_name )
 	set( for_each_list_dirs ${${out_list}} )
 	if( IS_DIRECTORY "${check_path_dir}" )
 		# # 获取所有目录
-		file( GLOB child_dir DIRECTORY "${check_path_dir}" "${check_path_dir}/*" )
+		file( GLOB_RECURSE child_dir RELATIVE "${check_path_dir}" "${check_path_dir}/*"  )
 
 		foreach( current_path_file ${child_dir} )
-			set( check_path_file "${current_path_file}/${file_name}" )
-
-			if( EXISTS "${check_path_file}" )
-				list(APPEND for_each_list_dirs "${current_path_file}" )
+			STRING(REGEX REPLACE ".+/(.*)" "\\1" out_file_name ${current_path_file})
+			if( "${file_name}" STREQUAL  "${out_file_name}" )
+				STRING(REGEX REPLACE "(.+)/.*" "\\1" out_path_file ${current_path_file})
+				list(APPEND for_each_list_dirs "${check_path_dir}/${out_path_file}" )
 			endif()
 		endforeach()
 

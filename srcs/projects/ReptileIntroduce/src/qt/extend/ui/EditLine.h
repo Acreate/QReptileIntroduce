@@ -13,6 +13,8 @@ public:
 	: QLineEdit( chars, parent ) {
 	}
 	~EditLine( ) override;
+protected:
+	void paintEvent( QPaintEvent * ) override;
 };
 
 #endif // EDITLINE_H_H_HEAD__FILE__

@@ -88,7 +88,7 @@ void WebUrlInfoWidget::insterCompoentToLists( ) {
 	insterComponent->append( insertlNovelInfoBtn );
 
 	infoComponent = new QList< QWidget * >;
-	infoComponent->append( urlSortIndex );
+	infoComponent->append( loadDll );
 	infoComponent->append( optionBoxWidget );
 	infoComponent->append( urlInput );
 	infoComponent->append( allCount );
@@ -192,7 +192,7 @@ void WebUrlInfoWidget::initComponentPropertys( ) {
 }
 void WebUrlInfoWidget::initComponentText( ) {
 	insertlNovelInfoBtn->setText( tr( u8"插入小说网站信息" ) );
-	urlSortIndex->setText( u8"1" );
+	loadDll->setText( u8"加载" );
 	optionBoxWidget->addItem( "http" );
 	optionBoxWidget->addItem( "https" );
 	saveBtn->setText( tr( u8"保存" ) );
@@ -202,7 +202,7 @@ void WebUrlInfoWidget::initComponentInstance( ) {
 
 	hasNovelInfoLayout = new HLayoutBox( this );
 
-	urlSortIndex = new QLabel( this );
+	loadDll = new Button( this );
 	optionBoxWidget = new QComboBox( this );
 	urlInput = new EditLine( this );
 

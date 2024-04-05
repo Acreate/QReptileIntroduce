@@ -26,7 +26,7 @@ void DateTimeThread::run( ) {
 		usleep( 500 );
 	}
 }
-const QString &DateTimeThread::getTimeStr( ) const {
+ QString DateTimeThread::getTimeStr( ) const {
 	dateTimeStrFormatMutex->lock( );
 	auto resultStrTime = currentDateTimeStrFormat;
 	dateTimeStrFormatMutex->unlock( );

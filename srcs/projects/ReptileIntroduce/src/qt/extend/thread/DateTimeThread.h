@@ -13,7 +13,7 @@ public:
 protected:
 	void run( ) override;
 public:
-	const QString &getTimeStr( ) const;
+	QString getTimeStr( ) const;
 private:
 	QString currentDateTimeStrFormat;
 	QMutex *dateTimeStrFormatMutex;

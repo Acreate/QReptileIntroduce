@@ -237,7 +237,7 @@ void MainWidget::changeWebComponents( ) {
 		filePath = variant.toString( );
 	QFileInfo info( filePath );
 	if( info.exists( ) )
-		filePath = info.absoluteDir( ).absolutePath(  );
+		filePath = info.absoluteDir( ).absolutePath( );
 	else
 		filePath = qApp->applicationDirPath( );
 	do {

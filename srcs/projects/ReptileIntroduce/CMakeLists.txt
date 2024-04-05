@@ -27,10 +27,11 @@ file( GLOB_RECURSE SRC_LIST
 	"*.cxx"
 	"*.hpp"
 )
-
+include_directories( ${www_121ds_cc_include_dir} )
 file( GLOB_RECURSE SRC_UI
 	"*.ui"
 )
+
 
 # # 旧 无法工作
 # # qt_create_translation( QM_FILES "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/ini/progress/translations/" ${PROJECT_NAME}_en.ts ${PROJECT_NAME}_de.ts )

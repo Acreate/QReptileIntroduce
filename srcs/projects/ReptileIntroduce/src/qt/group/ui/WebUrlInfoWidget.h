@@ -46,7 +46,7 @@ private: // 组件容器
 	QList<QWidget*> *infoComponent;
 private: // 小说存在的时候显示的组件
 	HLayoutBox *hasNovelInfoLayout;  // 主要布局
-	QLabel *urlSortIndex; // 排序
+	Button *loadDll; // 加载 dll 按钮
 	EditLine *urlInput; // url 地址
 	QComboBox *optionBoxWidget; // url 协议
 	CountEditWidget* allCount; // 总计
