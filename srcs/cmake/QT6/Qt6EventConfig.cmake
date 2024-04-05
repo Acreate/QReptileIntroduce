@@ -1,15 +1,14 @@
 CMAKE_MINIMUM_REQUIRED( VERSION 3.19 )
 
-if(NOT DEFINED QT_VERSION_MAJOR)
+if( NOT DEFINED QT_VERSION_MAJOR )
 	SET( QT_VERSION_MAJOR 6 )
 endif()
 
-if(NOT DEFINED QT_VERSION)
+if( NOT DEFINED QT_VERSION )
 	SET( QT_VERSION 6.6.2 )
 endif()
 
-
-if(NOT DEFINED builder_tools)
+if( NOT DEFINED builder_tools )
 	SET( builder_tools msvc2019_64 )
 endif()
 
@@ -19,7 +18,7 @@ SET( CMAKE_PREFIX_PATH "${DEPLOY_QT_HOME}" )
 SET( Qt_DIR "${DEPLOY_QT_HOME}/lib/cmake/Qt${QT_VERSION_MAJOR}" )
 SET( Qt6_DIR "${DEPLOY_QT_HOME}/lib/cmake/Qt${QT_VERSION_MAJOR}" )
 
-SET( Qt${QT_VERSION_MAJOR}CoreTools_DIR "${DEPLOY_QT_HOME}/lib/cmake/Qt${QT_VERSION_MAJOR}CoreTools")
+SET( Qt${QT_VERSION_MAJOR}CoreTools_DIR "${DEPLOY_QT_HOME}/lib/cmake/Qt${QT_VERSION_MAJOR}CoreTools" )
 SET( Qt${QT_VERSION_MAJOR}GuiTools_DIR "${DEPLOY_QT_HOME}/lib/cmake/Qt${QT_VERSION_MAJOR}GuiTools" )
 SET( Qt${QT_VERSION_MAJOR}WidgetsTools_DIR "${DEPLOY_QT_HOME}/lib/cmake/Qt${QT_VERSION_MAJOR}WidgetsTools" )
 SET( Qt${QT_VERSION_MAJOR}Widgets_DIR "${DEPLOY_QT_HOME}/lib/cmake/Qt${QT_VERSION_MAJOR}Widgets" )
@@ -33,8 +32,7 @@ SET( CMAKE_AUTOUIC ON )
 SET( CMAKE_AUTOMOC ON )
 SET( CMAKE_AUTORCC ON )
 
-
-function(call_qt_deploy PROJECT_NAME )
+function( call_qt_deploy PROJECT_NAME )
 	target_link_libraries(
 		${PROJECT_NAME}
 		PRIVATE
@@ -52,22 +50,30 @@ function(call_qt_deploy PROJECT_NAME )
 	if( APPLE )
 		set( executable_path "$<TARGET_FILE_NAME:${PROJECT_NAME}>.app" )
 	else()
-		set( executable_path "\${QT_DEPLOY_BIN_DIR}/$<TARGET_FILE_NAME:${PROJECT_NAME}>" )
+		set( executable_path "$<TARGET_FILE_NAME:${PROJECT_NAME}>" )
 	endif()
+
+	message( "设置路径: " ${executable_path} )
 
 	set( deploy_script "${CMAKE_HOME_DIRECTORY}/builder/install_cmake_file/deploy_${PROJECT_NAME}.cmake" )
 
-	file( GENERATE OUTPUT ${deploy_script} CONTENT "
-	message(\"=================\")
-	message(\"============	> 执行 : ${executable_path}\")
-	message(\"=================\")
-	include(\"${QT_DEPLOY_SUPPORT}\")
-	qt_deploy_runtime_dependencies(
-	    EXECUTABLE \"${executable_path}\"
-	    PLUGINS_DIR \${QT_DEPLOY_BIN_DIR}
-	)
+	qt_generate_deploy_script( TARGET ${PROJECT_NAME}
+		OUTPUT_SCRIPT deploy_script
+		CONTENT "
+message(\"=================\")
+message(\"============	> 程序 : ${executable_path}\")
+message(\"============	> 目录 : ${QT_DEPLOY_BIN_DIR}\")
+message(\"============	> 目录2 : ${CMAKE_INSTALL_PREFIX}\")
+message(\"============	> 包含 : ${QT_DEPLOY_SUPPORT}\")
+message(\"=================\")
+include(\"${QT_DEPLOY_SUPPORT}\")
+qt_deploy_runtime_dependencies(
+    EXECUTABLE \"${CMAKE_CURRENT_BINARY_DIR}/${executable_path}\"
+	PLUGINS_DIR \".\"
+	LIB_DIR \".\"
+	BIN_DIR \".\"
+)
 	" )
-	install( TARGETS ${PROJECT_NAME} DESTINATION "${CMAKE_INSTALL_PREFIX}" )
+	install( TARGETS ${PROJECT_NAME} BUNDLE DESTINATION "${CMAKE_INSTALL_PREFIX}" )
 	install( SCRIPT ${deploy_script} )
 endfunction()
-

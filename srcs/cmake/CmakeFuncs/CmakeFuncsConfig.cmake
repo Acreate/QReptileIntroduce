@@ -74,3 +74,18 @@ function( get_path_sources check_path find_expansion out_file_list )
 	endforeach()
 	set(${out_file_list} ${for_each_file_list} PARENT_SCOPE)
 endfunction()
+
+
+function(set_builder_env_value)
+	SET( PROJECT_BINARY_DIR "${CMAKE_HOME_DIRECTORY}/builder/${CMAKE_BUILD_TYPE}_${CMAKE_CXX_COMPILER_ARCHITECTURE_ID}_${CMAKE_CXX_COMPILER_ID}/" )
+	SET( CMAKE_CACHEFILE_DIR "${PROJECT_BINARY_DIR}/cachefile/" CACHE PATH "Cachefile directory" FORCE  )
+	SET( CMAKE_BINARY_DIR "${PROJECT_BINARY_DIR}/" CACHE PATH "Installation directory" FORCE  )
+	SET( CMAKE_CURRENT_BINARY_DIR "${PROJECT_BINARY_DIR}/" CACHE PATH "Installation directory" FORCE  )
+	SET( CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/" CACHE PATH "Installation directory" FORCE  )
+	SET( CMAKE_LIBRARY_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/" CACHE PATH "Installation directory" FORCE  )
+	SET( CMAKE_INSTALL_BINDIR "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/" CACHE PATH "Installation directory" FORCE  )
+	SET( CMAKE_INSTALL_LIBDIR "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/" CACHE PATH "Installation directory" FORCE  )
+	SET( CMAKE_INSTALL_PREFIX "${PROJECT_BINARY_DIR}/" CACHE PATH "Installation directory" FORCE )
+	SET( EXECUTABLE_OUTPUT_PATH "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/" CACHE PATH "Installation directory" FORCE  )
+endfunction()
+

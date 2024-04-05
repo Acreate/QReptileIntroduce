@@ -5,6 +5,7 @@
 #include <qfileinfo.h>
 #include <qlabel.h>
 
+class IRequestNetInterface;
 class EditLine;
 class Button;
 class HLayoutBox;
@@ -92,6 +93,7 @@ public: // get / set
 		return requestConnect;
 	}
 	void setRequestConnect( RequestConnect *requestConnect );
+	IRequestNetInterface *loadPlug(const QString& plugFilePath );
 protected: // 重载事件
 	void showEvent( QShowEvent *event ) override;
 	bool nativeEvent( const QByteArray &eventType, void *message, qintptr *result ) override;

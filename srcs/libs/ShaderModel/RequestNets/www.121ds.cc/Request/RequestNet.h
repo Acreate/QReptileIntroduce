@@ -4,13 +4,14 @@
 #include <QGenericPlugin>
 
 #include "IRequestNetInterface.h"
-WWW_121DS_CC_EXPORT class RequestNet : public QObject, public IRequestNetInterface {
+class WWW_121DS_CC_EXPORT RequestNet : public QObject, public IRequestNetInterface {
 	Q_OBJECT;
 	Q_INTERFACES( IRequestNetInterface )
 public:
 	RequestNet( QObject *parent = nullptr ): QObject( parent ) {
 	}
-	int add( const int &left, const int &right ) override;
+	QUrl getUrl( ) override;
+	QMap< QString, QUrl > getTypeUrls( ) override;
 };
 
 #endif // REQUESTNET_H_H_HEAD__FILE__

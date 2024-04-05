@@ -25,6 +25,8 @@
 #include "../../extend/ui/EditLine.h"
 
 #include "WebUrlInfoWidget.h"
+#include <Request/RequestNet.h>
+#include <QPluginLoader>
 
 NovelInfoWidget::NovelInfoWidget( QWidget *parent, Qt::WindowFlags flag ) : QWidget( parent, flag ) {
 	rwFileThread = new RWFileThread( this );
@@ -155,27 +157,23 @@ NovelInfoWidget::NovelInfoWidget( QWidget *parent, Qt::WindowFlags flag ) : QWid
 		qDebug( ) << exception.getMsg( ).toStdString( ).c_str( );
 		delObj_error->deleteLater( );
 	}
-	
-	vBox->addWidget( new WebUrlInfoWidget( this->netSetFileSettings, this ) );
-	vBox->addWidget( new WebUrlInfoWidget( this->netSetFileSettings, this ) );
-	vBox->addWidget( new WebUrlInfoWidget( this->netSetFileSettings, this ) );
-	vBox->addWidget( new WebUrlInfoWidget( this->netSetFileSettings, this ) );
-	vBox->addWidget( new WebUrlInfoWidget( this->netSetFileSettings, this ) );
-	vBox->addWidget( new WebUrlInfoWidget( this->netSetFileSettings, this ) );
-	vBox->addWidget( new WebUrlInfoWidget( this->netSetFileSettings, this ) );
-	vBox->addWidget( new WebUrlInfoWidget( this->netSetFileSettings, this ) );
-	vBox->addWidget( new WebUrlInfoWidget( this->netSetFileSettings, this ) );
-	vBox->addWidget( new WebUrlInfoWidget( this->netSetFileSettings, this ) );
-	vBox->addWidget( new WebUrlInfoWidget( this->netSetFileSettings, this ) );
-	vBox->addWidget( new WebUrlInfoWidget( this->netSetFileSettings, this ) );
-	vBox->addWidget( new WebUrlInfoWidget( this->netSetFileSettings, this ) );
-	vBox->addWidget( new WebUrlInfoWidget( this->netSetFileSettings, this ) );
+
+	WebUrlInfoWidget *webUrlInfoWidget = new WebUrlInfoWidget( this->netSetFileSettings, this );
+	vBox->addWidget( webUrlInfoWidget );
+
+	connect( webUrlInfoWidget, &WebUrlInfoWidget::insterNovelInfo, [=] {
+		// todo : 组件按下记载插件功能
+		auto fileName = QFileDialog::getOpenFileName( this, u8"选择一个插件", qApp->applicationDirPath( ), u8"插件(*.dll)" );
+		if( fileName.isEmpty( ) )
+			return;
+		IRequestNetInterface * requestNetInterface = loadPlug( fileName );
+	} );
 
 	int count = vBox->count( );
 	for( int index = 0 ; index < count ; ++index ) {
 		auto currentWidget = qobject_cast< WebUrlInfoWidget * >( vBox->itemAt( index )->widget( ) );
 		if( currentWidget )
-			connect( currentWidget, &WebUrlInfoWidget::toggled, callFun );
+			connect( currentWidget, &WebUrlInfoWidget::start, callFun );
 	}
 	callFun( );
 }
@@ -230,6 +228,17 @@ void NovelInfoWidget::setRequestConnect( RequestConnect *const requestConnect ) 
 		this->requestConnect->deleteLater( );
 	this->requestConnect = requestConnect;
 	connect( requestConnect, &RequestConnect::networkReplyFinished, this, &NovelInfoWidget::networkReplyFinished );
+}
+IRequestNetInterface *NovelInfoWidget::loadPlug( const QString &plugFilePath ) {
+	// todo : 加载插件
+	QPluginLoader pluginLoader( plugFilePath );
+	if( pluginLoader.load( ) ) {
+		QObject *objPtr = pluginLoader.instance( );
+		QGenericPlugin *genericPlugin = qobject_cast< QGenericPlugin * >( objPtr );
+		QObject *instanceObjPtr = genericPlugin->create( "", "" );
+		return qobject_cast< IRequestNetInterface * >( instanceObjPtr );
+	}
+	return nullptr;
 }
 
 void NovelInfoWidget::showEvent( QShowEvent *event ) {
@@ -316,7 +325,7 @@ void NovelInfoWidget::settingPathCompoentWriteOver( ) {
 	for( auto &key : childKeys ) {
 		QVariant value = netSetFileSettings->value( key );
 		DEBUG_RUN( qDebug() << "当前 key 为 : "<< key<< ", 获取到的值为 : " << value.toString( ) );
-		
+
 	}
 	netSetFileSettings->endGroup( );
 

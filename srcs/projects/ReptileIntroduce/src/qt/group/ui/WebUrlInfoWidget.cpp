@@ -70,17 +70,10 @@ WebUrlInfoWidget::WebUrlInfoWidget( QSettings *webPageSetting,
 
 void WebUrlInfoWidget::initComponentConnect( ) {
 	connect( insertlNovelInfoBtn, &QPushButton::clicked, [=]( ) {
-		toggle( Show_Mode::Info );
+		emit insterNovelInfo( );
 	} );
-	connect( saveBtn, &QPushButton::clicked, [=]( ) {
-
-		QString urlHost = urlInput->text( );
-		if( urlHost.isEmpty( ) )
-			return;
-		webPageSetting->beginGroup( urlHost );
-		webPageSetting->setValue( settingUrlKey, urlHost );
-		webPageSetting->endGroup( );
-
+	connect( startBtn, &QPushButton::clicked, [=]( ) {
+		emit start( );
 	} );
 }
 void WebUrlInfoWidget::insterCompoentToLists( ) {
@@ -93,7 +86,7 @@ void WebUrlInfoWidget::insterCompoentToLists( ) {
 	infoComponent->append( urlInput );
 	infoComponent->append( allCount );
 	infoComponent->append( typeCount );
-	infoComponent->append( saveBtn );
+	infoComponent->append( startBtn );
 }
 void WebUrlInfoWidget::initInstance( QSettings *webPageSetting, NovelInfoWidget *novelInfoWidget ) {
 	setWindowTitle( __func__ );
@@ -174,11 +167,11 @@ void WebUrlInfoWidget::toggle( Show_Mode show_mode ) {
 	}
 	QMargins contentsMargins = hasNovelInfoLayout->contentsMargins( );
 	this->setMinimumSize( maxWidth + contentsMargins.left( ) + contentsMargins.right( ), maxHeight + contentsMargins.top( ) + contentsMargins.bottom( ) );
-	emit toggled( show_mode );
 }
 void WebUrlInfoWidget::initComponentPropertys( ) {
 	hasNovelInfoLayout->setContentsMargins( 0, 0, 0, 0 );
 	hasNovelInfoLayout->setSpacing( 0 );
+	urlInput->setReadOnly( true );
 	auto screens = qApp->screens( );
 	uint32_t minWith = 888888888888888;
 	for( auto &screen : screens ) {
@@ -195,7 +188,7 @@ void WebUrlInfoWidget::initComponentText( ) {
 	loadDll->setText( u8"加载" );
 	optionBoxWidget->addItem( "http" );
 	optionBoxWidget->addItem( "https" );
-	saveBtn->setText( tr( u8"保存" ) );
+	startBtn->setText( tr( u8"保存" ) );
 }
 void WebUrlInfoWidget::initComponentInstance( ) {
 	insertlNovelInfoBtn = new Button( this );
@@ -208,5 +201,5 @@ void WebUrlInfoWidget::initComponentInstance( ) {
 
 	allCount = new CountEditWidget( this );
 	typeCount = new CountEditWidget( this );
-	saveBtn = new Button( this );
+	startBtn = new Button( this );
 }

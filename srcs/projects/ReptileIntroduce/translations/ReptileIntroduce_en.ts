@@ -149,22 +149,22 @@
 <context>
     <name>NovelInfoWidget</name>
     <message>
-        <location filename="../src/qt/group/ui/NovelInfoWidget.cpp" line="49"/>
+        <location filename="../src/qt/group/ui/NovelInfoWidget.cpp" line="51"/>
         <source>配置文件路径:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/qt/group/ui/NovelInfoWidget.cpp" line="53"/>
+        <location filename="../src/qt/group/ui/NovelInfoWidget.cpp" line="55"/>
         <source>请输入一个配置文件</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/qt/group/ui/NovelInfoWidget.cpp" line="65"/>
+        <location filename="../src/qt/group/ui/NovelInfoWidget.cpp" line="67"/>
         <source>错误</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/qt/group/ui/NovelInfoWidget.cpp" line="66"/>
+        <location filename="../src/qt/group/ui/NovelInfoWidget.cpp" line="68"/>
         <source>
 	Button{
 		color : red;
@@ -172,12 +172,12 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/qt/group/ui/NovelInfoWidget.cpp" line="73"/>
+        <location filename="../src/qt/group/ui/NovelInfoWidget.cpp" line="75"/>
         <source>加载</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/qt/group/ui/NovelInfoWidget.cpp" line="76"/>
+        <location filename="../src/qt/group/ui/NovelInfoWidget.cpp" line="78"/>
         <source>
 	Button{
 		color : black;
@@ -185,22 +185,22 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/qt/group/ui/NovelInfoWidget.cpp" line="84"/>
+        <location filename="../src/qt/group/ui/NovelInfoWidget.cpp" line="86"/>
         <source>选择一个设置文件</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/qt/group/ui/NovelInfoWidget.cpp" line="86"/>
+        <location filename="../src/qt/group/ui/NovelInfoWidget.cpp" line="88"/>
         <source>请选择一个选项</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/qt/group/ui/NovelInfoWidget.cpp" line="86"/>
+        <location filename="../src/qt/group/ui/NovelInfoWidget.cpp" line="88"/>
         <source>文件打开错误!现在重新选择吗?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/qt/group/ui/NovelInfoWidget.cpp" line="97"/>
+        <location filename="../src/qt/group/ui/NovelInfoWidget.cpp" line="99"/>
         <source>
 				Button{
 					color : blue;
@@ -209,12 +209,12 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/qt/group/ui/NovelInfoWidget.cpp" line="103"/>
+        <location filename="../src/qt/group/ui/NovelInfoWidget.cpp" line="105"/>
         <source>over locked</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/qt/group/ui/NovelInfoWidget.cpp" line="106"/>
+        <location filename="../src/qt/group/ui/NovelInfoWidget.cpp" line="108"/>
         <source>
 				Button{
 					color : black;
@@ -223,48 +223,48 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/qt/group/ui/NovelInfoWidget.cpp" line="185"/>
+        <location filename="../src/qt/group/ui/NovelInfoWidget.cpp" line="183"/>
         <source>NovelInfoWidget::~NovelInfoWidget</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/qt/group/ui/NovelInfoWidget.cpp" line="236"/>
+        <location filename="../src/qt/group/ui/NovelInfoWidget.cpp" line="245"/>
         <source>====== NovelInfoWidget::showEvent ===========</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/qt/group/ui/NovelInfoWidget.cpp" line="254"/>
+        <location filename="../src/qt/group/ui/NovelInfoWidget.cpp" line="263"/>
         <source>选择配置文件</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/qt/group/ui/NovelInfoWidget.cpp" line="254"/>
+        <location filename="../src/qt/group/ui/NovelInfoWidget.cpp" line="263"/>
         <source>配置文件类型(*.ini *.setting *.set);;全部类型(*)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/qt/group/ui/NovelInfoWidget.cpp" line="259"/>
-        <location filename="../src/qt/group/ui/NovelInfoWidget.cpp" line="274"/>
+        <location filename="../src/qt/group/ui/NovelInfoWidget.cpp" line="268"/>
+        <location filename="../src/qt/group/ui/NovelInfoWidget.cpp" line="283"/>
         <source>请选择</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/qt/group/ui/NovelInfoWidget.cpp" line="259"/>
+        <location filename="../src/qt/group/ui/NovelInfoWidget.cpp" line="268"/>
         <source>路径无法写入文件。现在重新选择路径吗？</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/qt/group/ui/NovelInfoWidget.cpp" line="268"/>
+        <location filename="../src/qt/group/ui/NovelInfoWidget.cpp" line="277"/>
         <source>选择一个 web 缓冲目录</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/qt/group/ui/NovelInfoWidget.cpp" line="274"/>
+        <location filename="../src/qt/group/ui/NovelInfoWidget.cpp" line="283"/>
         <source>路径无法写入。现在重新选择路径吗？</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/qt/group/ui/NovelInfoWidget.h" line="39"/>
+        <location filename="../src/qt/group/ui/NovelInfoWidget.h" line="40"/>
         <source>work/WebBuff/Path</source>
         <translation type="unfinished"></translation>
     </message>
@@ -311,17 +311,17 @@ QSettings * 对象指针不存在 [%3] 的值
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/qt/group/ui/WebUrlInfoWidget.cpp" line="117"/>
+        <location filename="../src/qt/group/ui/WebUrlInfoWidget.cpp" line="110"/>
         <source>WebUrlInfoWidget::~WebUrlInfoWidget : </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/qt/group/ui/WebUrlInfoWidget.cpp" line="194"/>
+        <location filename="../src/qt/group/ui/WebUrlInfoWidget.cpp" line="187"/>
         <source>插入小说网站信息</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/qt/group/ui/WebUrlInfoWidget.cpp" line="198"/>
+        <location filename="../src/qt/group/ui/WebUrlInfoWidget.cpp" line="191"/>
         <source>保存</source>
         <translation type="unfinished"></translation>
     </message>

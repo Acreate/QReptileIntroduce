@@ -4,6 +4,17 @@ message( "name =" ${prject_name} )
 project( ${prject_name} VERSION 0.1 LANGUAGES CXX )
 message( "============ ${CURRENT_FOLDER}" )
 
+
+SET( PROJECT_BINARY_DIR "${CMAKE_HOME_DIRECTORY}/builder/${CMAKE_BUILD_TYPE}_${CMAKE_CXX_COMPILER_ARCHITECTURE_ID}_${CMAKE_CXX_COMPILER_ID}/" CACHE STRING "" FORCE )
+SET( CMAKE_CURRENT_BINARY_DIR "${PROJECT_BINARY_DIR}/" CACHE STRING "" FORCE )
+SET( CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/" CACHE STRING "" FORCE )
+SET( CMAKE_LIBRARY_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/" CACHE STRING "" FORCE )
+SET( CMAKE_INSTALL_BINDIR "${PROJECT_BINARY_DIR}" CACHE PATH "" FORCE )
+SET( CMAKE_INSTALL_LIBDIR "${PROJECT_BINARY_DIR}" CACHE PATH "" FORCE )
+SET( CMAKE_INSTALL_PREFIX "${PROJECT_BINARY_DIR}" CACHE PATH "" FORCE )
+SET( EXECUTABLE_OUTPUT_PATH "${PROJECT_BINARY_DIR}" CACHE STRING "" FORCE )
+
+
 # 如果发生错误，请重新配置 qt 6 环境，该文件位于根目录的 /cmake/QT6/Qt6EventConfig.cmake
 find_package( Qt6Event REQUIRED PATHS "${CMAKE_HOME_DIRECTORY}/srcs/cmake/QT6/" )
 
@@ -32,10 +43,6 @@ file( GLOB_RECURSE SRC_UI
 	"*.ui"
 )
 
-
-# # 旧 无法工作
-# # qt_create_translation( QM_FILES "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/ini/progress/translations/" ${PROJECT_NAME}_en.ts ${PROJECT_NAME}_de.ts )
-
 # # 合并源码
 list( APPEND ${SRC_LIST} ${SRC_UI} ${QM_FILES} )
 
@@ -60,15 +67,10 @@ set( translation_file_list
 
 	# # 美语
 	"${CMAKE_CURRENT_LIST_DIR}/translations/${PROJECT_NAME}_en.ts"
+
 	# # 汉语
 	"${CMAKE_CURRENT_LIST_DIR}/translations/${PROJECT_NAME}_zh_CN.ts"
 )
-
-# set_source_files_properties(
-# ${translation_file_list}
-# PROPERTIES
-# COMPILE_FLAGS -no-obsolete
-# )
 
 qt_add_translations(
 	${PROJECT_NAME}

@@ -6,9 +6,9 @@
 #include "Request/RequestNet.h"
 
 #include "export/Www.121ds.cc_export.h"
-WWW_121DS_CC_EXPORT class RequestNetPlugin : public QGenericPlugin{
+class WWW_121DS_CC_EXPORT RequestNetPlugin : public QGenericPlugin {
 	Q_OBJECT;
-	Q_PLUGIN_METADATA( IID QGenericPluginFactoryInterface_iid FILE "www_121ds_cc.json" );
+	Q_PLUGIN_METADATA( IID QGenericPluginFactoryInterface_iid FILE "www.121ds.cc.json" );
 public:
 	explicit RequestNetPlugin( QObject *parent = nullptr );
 	~RequestNetPlugin( ) override;

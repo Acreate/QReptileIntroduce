@@ -16,7 +16,7 @@ class Button;
 class HLayoutBox;
 
 /// <summary>
-/// 
+/// web 请求组件
 /// </summary>
 class WebUrlInfoWidget : public QWidget {
 
@@ -51,7 +51,7 @@ private: // 小说存在的时候显示的组件
 	QComboBox *optionBoxWidget; // url 协议
 	CountEditWidget* allCount; // 总计
 	CountEditWidget* typeCount; // 类型计数
-	Button *saveBtn; // 保存配置
+	Button *startBtn; // 开始获取
 private: // 小说不存在的时候显示的组件
 	Button *insertlNovelInfoBtn; // 插入小说信息按钮
 private: /// 组件初始化
@@ -115,7 +115,7 @@ Q_SIGNALS:
 	/// <summary>
 	/// 切换状态之后信号诞生
 	/// </summary>
-	void toggled( Show_Mode status );
+	void start(  );
 	/// <summary>
 	/// 插入按键
 	/// </summary>
