@@ -72,15 +72,18 @@ set( translation_file_list
 	"${CMAKE_CURRENT_LIST_DIR}/translations/${PROJECT_NAME}_zh_CN.ts"
 )
 
+set_source_files_properties(${translation_file_list}
+     PROPERTIES OUTPUT_LOCATION "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/progress/translations")
 qt_add_translations(
 	${PROJECT_NAME}
 	TS_FILES
 	${translation_file_list}
+	SOURCES ${SRC_LIST}
 	LUPDATE_OPTIONS -no-obsolete
 	QM_FILES_OUTPUT_VARIABLE qm_files
 )
 
-install( FILES ${qm_files} DESTINATION "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/ini/progress/translations/" )
+# install( FILES ${qm_files} DESTINATION "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/ini/progress/translations/" )
 
 call_qt_deploy( ${PROJECT_NAME}
 	Qt${QT_VERSION_MAJOR}::Widgets
