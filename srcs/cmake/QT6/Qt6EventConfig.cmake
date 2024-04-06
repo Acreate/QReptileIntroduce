@@ -1,4 +1,4 @@
-CMAKE_MINIMUM_REQUIRED( VERSION 3.19 )
+﻿CMAKE_MINIMUM_REQUIRED( VERSION 3.19 )
 
 if( NOT DEFINED QT_VERSION_MAJOR )
 	SET( QT_VERSION_MAJOR 6 )
@@ -60,12 +60,6 @@ function( call_qt_deploy PROJECT_NAME )
 	qt_generate_deploy_script( TARGET ${PROJECT_NAME}
 		OUTPUT_SCRIPT deploy_script
 		CONTENT "
-message(\"=================\")
-message(\"============	> 程序 : ${executable_path}\")
-message(\"============	> 目录 : ${QT_DEPLOY_BIN_DIR}\")
-message(\"============	> 目录2 : ${CMAKE_INSTALL_PREFIX}\")
-message(\"============	> 包含 : ${QT_DEPLOY_SUPPORT}\")
-message(\"=================\")
 include(\"${QT_DEPLOY_SUPPORT}\")
 qt_deploy_runtime_dependencies(
     EXECUTABLE \"${CMAKE_CURRENT_BINARY_DIR}/${executable_path}\"

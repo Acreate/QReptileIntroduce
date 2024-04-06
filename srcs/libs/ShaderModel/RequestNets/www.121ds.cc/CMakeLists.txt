@@ -35,7 +35,7 @@ file( GLOB_RECURSE SRC_DATA
 
 string( REPLACE "." "_" project_name_include_dir ${PROJECT_NAME} )
 include_directories( ../../NoveInfo )
-set( ${project_name_include_dir}_include_dir ${CMAKE_CURRENT_LIST_DIR} ${CMAKE_CURRENT_LIST_DIR}/.. PARENT_SCOPE )
+set( ${project_name_include_dir}_include_dir ${CMAKE_CURRENT_LIST_DIR} ${CMAKE_CURRENT_LIST_DIR}/ PARENT_SCOPE )
 
 # # 合并源码
 list( APPEND ${SRC_LIST} ${SRC_UI} ${QM_FILES} ${SRC_DATA} )

@@ -8,19 +8,21 @@
 #include <QSettings>
 #include <qscreen.h>
 
-#include "NovelInfoWidget.h"
+#include "../NovelInfoWidget.h"
 
-#include "../../../qt/extend/exception/Exception.h"
+#include "../../../../../qt/extend/exception/Exception.h"
 
-#include "../../extend/ui/Button.h"
-#include "../../extend/ui/EditLine.h"
-#include "../../extend/ui/EditLine.h"
-#include "../../extend/layout/HLayoutBox.h"
+#include "../../../../extend/ui/Button.h"
+#include "../../../../extend/ui/EditLine.h"
+#include "../../../../extend/ui/EditLine.h"
+#include "../../../../extend/layout/HLayoutBox.h"
 
-#include "../../userHread/DebugInfo.h"
-#include "../../userHread/QtMorc.h"
-#include "CountEditWidget.h"
+#include <DebugInfo.h>
+#include <QtMorc.h>
+#include "./WebUrlInfoWidget/CountEditWidget.h"
 
+const QString WebUrlInfoWidget::settingHostKey = tr( u8"host" );
+const QString WebUrlInfoWidget::settingUrlKey = tr( u8"url" );
 QMap< NovelInfoWidget *, unsigned long long > WebUrlInfoWidget::pathCount = QMap< NovelInfoWidget *, unsigned long long >( );
 
 NovelInfoWidget *WebUrlInfoWidget::overNovelInfoWidgetPtr( QObject *converPtr ) {
@@ -173,7 +175,7 @@ void WebUrlInfoWidget::initComponentPropertys( ) {
 	hasNovelInfoLayout->setSpacing( 0 );
 	urlInput->setReadOnly( true );
 	auto screens = qApp->screens( );
-	uint32_t minWith = 888888888888888;
+	uint32_t minWith = 888888888;
 	for( auto &screen : screens ) {
 		auto screenSize = screen->size( );
 		DEBUG_RUN( qDebug() << screenSize ) ;

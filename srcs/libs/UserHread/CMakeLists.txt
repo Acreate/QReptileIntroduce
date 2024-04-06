@@ -4,6 +4,7 @@ message( "name =" ${prject_name} )
 project( ${prject_name} VERSION 0.1 LANGUAGES CXX )
 message( "============ ${CURRENT_FOLDER}" )
 
+
 SET( PROJECT_BINARY_DIR "${CMAKE_HOME_DIRECTORY}/builder/${CMAKE_BUILD_TYPE}_${CMAKE_CXX_COMPILER_ARCHITECTURE_ID}_${CMAKE_CXX_COMPILER_ID}/" CACHE STRING "" FORCE )
 SET( CMAKE_CURRENT_BINARY_DIR "${PROJECT_BINARY_DIR}/" CACHE STRING "" FORCE )
 SET( CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/" CACHE STRING "" FORCE )
@@ -42,14 +43,6 @@ qt_add_library( ${PROJECT_NAME} SHARED
 
 string( REPLACE "." "_" project_name_include_dir ${PROJECT_NAME} )
 set( ${project_name_include_dir}_include_dir ${CMAKE_CURRENT_LIST_DIR} ${CMAKE_CURRENT_LIST_DIR}/ PARENT_SCOPE )
-
-target_link_libraries( ${PROJECT_NAME}
-	PRIVATE
-	Qt${QT_VERSION_MAJOR}::Gui
-	Qt${QT_VERSION_MAJOR}::Core
-	Qt${QT_VERSION_MAJOR}::Network
-	Qt${QT_VERSION_MAJOR}::Core5Compat
-)
 
 STRING( SUBSTRING "${PROJECT_NAME}" 0 1 exportFileStartName )
 STRING( SUBSTRING "${PROJECT_NAME}" 1 -1 exportFileName )

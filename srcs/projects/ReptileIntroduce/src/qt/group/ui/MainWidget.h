@@ -38,7 +38,7 @@ protected: // 事件
 	void mousePressEvent( QMouseEvent *event ) override;
 	void resizeEvent( QResizeEvent *event ) override;
 private: // 参考变量 - 只读
-	QString qstrPoint = u8"坐标:( %1 , %2 )"; // 格式化字符串
+	static const QString qstrPoint; // 格式化字符串
 private: // 计算变量
 	QPoint mousePoint; // 当前鼠标位置
 	QFont currentFont; // 当前字体
@@ -65,13 +65,13 @@ private: // 程序配置-读写
 	RWFileThread *rwFileThread;
 	FileResult *fileThreadResult = nullptr; // 文件读取绑定指针
 private: // 程序配置-名称
-	const QString transparentForMouseEvents = tr( u8"somponentStyle/TransparentForMouseEvents" );
-	const QString selectReadFileWorkPath = tr( u8"work/ReadDirPath" );
-	const QString selectWriteFileWorkPath = tr( u8"work/WriteDirPath" );// 配置文件关键字
-	const QString selectWebSettingPath = tr( u8"web/SettingFilePath" );
+	static const QString transparentForMouseEvents;
+	static const QString selectReadFileWorkPath;
+	static const QString selectWriteFileWorkPath;
+	static const QString selectWebSettingPath;// 配置文件关键字
 private: // 文字提示
-	const QString transparentText = tr( u8"当前状态: [%1穿透]" );
-	const QString transparentTextNot = tr( u8"未" );
+	static const QString transparentText;
+	static const QString transparentTextNot;
 private: // 程序配置-变量
 	QStringList downNovelTypes;
 private: // 定时调用

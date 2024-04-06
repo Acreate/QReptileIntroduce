@@ -37,17 +37,13 @@ public:
 		return className;
 	}
 private: // 配置文件关键字
-	const QString selectWebBuffWorkPath = tr( u8"work/WebBuff/Path" );
+	static const QString selectWebBuffWorkPath;
 public: // 配置文件
 	QSettings *netSetFileSettings = nullptr;
 	RWFileThread *rwFileThread = nullptr;
 	FileResult *fileThreadResult = nullptr; // 文件读取绑定指针
 	QString settingFileAbsoluteFilePath; // setting 的绝对路径
 public:
-	bool setSettingInstance( WebUrlInfoWidget *webUrlInfoWidget );
-	QVariant getSettingValue( const QAnyStringView &key ) const;
-	QVariant getSettingValue( const QAnyStringView &key, const QVariant &defaultValue ) const;
-	void setSettingValue( const QAnyStringView &key, const QVariant &value );
 	const QString &getWebBuffWorkPathKey( ) const {
 		return selectWebBuffWorkPath;
 	}
@@ -74,26 +70,22 @@ private: // 网络-请求
 	Request *requestNetWrok = nullptr; // web 网络请求对象
 	RequestConnect *requestConnect = nullptr; // web 网络响应槽函数对象
 public: // get / set
-	void setNetWorkSettingFilePath( const QString &filePath );
-	void setRWFileThread( RWFileThread *rwFileThread );
+
 	RWFileThread *getRwFileThread( ) const {
 		return rwFileThread;
 	}
 	QString getAbsoluteFilePath( ) const {
 		return settingFileAbsoluteFilePath;
 	}
-	void setAbsoluteFilePath( const QString &absoluteFilePath ) {
-		setNetWorkSettingFilePath( absoluteFilePath );
-	}
 	Request *getRequestNetWrok( ) const {
 		return requestNetWrok;
 	}
-	void setRequestNetWrok( Request *requestNetWrok );
+
 	RequestConnect *getRequestConnect( ) const {
 		return requestConnect;
 	}
-	void setRequestConnect( RequestConnect *requestConnect );
-	IRequestNetInterface *loadPlug(const QString& plugFilePath );
+
+	IRequestNetInterface *loadPlug( const QString &plugFilePath );
 protected: // 重载事件
 	void showEvent( QShowEvent *event ) override;
 	bool nativeEvent( const QByteArray &eventType, void *message, qintptr *result ) override;
@@ -102,8 +94,41 @@ private slots: // slots
 	void networkReplyFinished( );
 	void settingPathCompoentWriteOver( );
 Q_SIGNALS :
-	void errorSettingPath( const QString &oldPath, const QString &errorPath );
+	/// <summary>
+	/// 路径错误发生消息
+	/// </summary>
+	/// <param name="currentPath">当前路径</param>
+	/// <param name="errorPath">错误路径</param>
+	void errorSettingPath( const QString &currentPath, const QString &errorPath );
+	/// <summary>
+	/// 路径设置完毕事件
+	/// </summary>
+	/// <param name="oldPath">旧路径</param>
+	/// <param name="errorPath">新路径</param>
 	void overSettingPath( const QString &oldPath, const QString &errorPath );
+	/// <summary>
+	/// 设置 setting 路径的消息
+	/// </summary>
+	/// <param name="filePath">路径</param>
+	void setNetWorkSettingFilePath( const QString &filePath );
+
+	/// <summary>
+	/// 设置请求对象
+	/// </summary>
+	/// <param name="requestNetWrok">请求对象指针</param>
+	void setRequestNetWrok( Request *requestNetWrok );
+
+	/// <summary>
+	/// 设置读写对象
+	/// </summary>
+	/// <param name="rwFileThread">读写对象指针</param>
+	void setRWFileThread( RWFileThread *rwFileThread );
+
+	/// <summary>
+	/// 设置请求信号绑定对象
+	/// </summary>
+	/// <param name="requestConnect">信号绑定对象指针</param>
+	void setRequestConnect( RequestConnect *requestConnect );
 };
 
 #endif // NOVELINFO_H_H_HEAD__FILE__

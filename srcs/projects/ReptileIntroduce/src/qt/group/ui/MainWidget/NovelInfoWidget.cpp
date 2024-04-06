@@ -13,21 +13,22 @@
 #include <qdir.h>
 #include <qguiapplication.h>
 
-#include "../../../qt/extend/exception/Exception.h"
-#include "../../../qt/extend/netWork/Request.h"
-#include "../../../qt/extend/netWork/RequestConnect.h"
-#include "../../../qt/group/file/FileResult.h"
-#include "../../../qt/group/file/RWFileThread.h"
-#include "../../../qt/userHread/DebugInfo.h"
-#include "../../extend/layout/HLayoutBox.h"
-#include "../../extend/layout/VLayoutBox.h"
-#include "../../extend/ui/Button.h"
-#include "../../extend/ui/EditLine.h"
+#include "../../../../qt/extend/exception/Exception.h"
+#include "../../../../qt/extend/netWork/Request.h"
+#include "../../../../qt/extend/netWork/RequestConnect.h"
+#include "../../../../qt/group/file/FileResult.h"
+#include "../../../../qt/group/file/RWFileThread.h"
+#include <DebugInfo.h>
+#include "../../../extend/layout/HLayoutBox.h"
+#include "../../../extend/layout/VLayoutBox.h"
+#include "../../../extend/ui/Button.h"
+#include "../../../extend/ui/EditLine.h"
 
-#include "WebUrlInfoWidget.h"
+#include "NovelInfoWidget/WebUrlInfoWidget.h"
 #include <Request/RequestNet.h>
 #include <QPluginLoader>
 
+const QString NovelInfoWidget::selectWebBuffWorkPath = tr( u8"work/WebBuff/Path" );
 NovelInfoWidget::NovelInfoWidget( QWidget *parent, Qt::WindowFlags flag ) : QWidget( parent, flag ) {
 	rwFileThread = new RWFileThread( this );
 	this->fileThreadResult = rwFileThread->getFileResult( );
@@ -193,43 +194,7 @@ NovelInfoWidget::~NovelInfoWidget( ) {
 		delete rwFileThread;
 	}
 }
-bool NovelInfoWidget::setSettingInstance( WebUrlInfoWidget *webUrlInfoWidget ) {
-	if( webUrlInfoWidget->parent( ) == this )
-		return webUrlInfoWidget->setSettingInstance( this, this->netSetFileSettings );
-	return false;
-}
-QVariant NovelInfoWidget::getSettingValue( const QAnyStringView &key ) const {
-	return netSetFileSettings->value( key );
-}
-QVariant NovelInfoWidget::getSettingValue( const QAnyStringView &key, const QVariant &defaultValue ) const {
-	return netSetFileSettings->value( key, defaultValue );
-}
-void NovelInfoWidget::setSettingValue( const QAnyStringView &key, const QVariant &value ) {
-	netSetFileSettings->setValue( key, value );
-}
-void NovelInfoWidget::setNetWorkSettingFilePath( const QString &filePath ) {
-	if( checkStatus > 2 ) // 已经被锁定
-		return;
-	inputSettingPathLine->setText( filePath );
-	settingPathCompoentWriteOver( );
-}
-void NovelInfoWidget::setRWFileThread( RWFileThread *rwFileThread ) {
-	if( this->rwFileThread )
-		this->rwFileThread->deleteLater( );
-	this->rwFileThread = rwFileThread;
-	this->fileThreadResult = rwFileThread->getFileResult( );
-}
-void NovelInfoWidget::setRequestNetWrok( Request *const requestNetWrok ) {
-	if( this->requestNetWrok )
-		this->requestNetWrok->deleteLater( );
-	this->requestNetWrok = requestNetWrok;
-}
-void NovelInfoWidget::setRequestConnect( RequestConnect *const requestConnect ) {
-	if( this->requestConnect )
-		this->requestConnect->deleteLater( );
-	this->requestConnect = requestConnect;
-	connect( requestConnect, &RequestConnect::networkReplyFinished, this, &NovelInfoWidget::networkReplyFinished );
-}
+
 IRequestNetInterface *NovelInfoWidget::loadPlug( const QString &plugFilePath ) {
 	// todo : 加载插件
 	QPluginLoader pluginLoader( plugFilePath );

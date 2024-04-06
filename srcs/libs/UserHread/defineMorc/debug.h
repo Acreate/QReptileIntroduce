@@ -35,11 +35,11 @@
 
 // else 尾端结束
 #define DEBUG_RUN_CODE_ELSE_END(  else_code ) \
-	else { else_code; }
+	else { else_code; }do{}while(false)
 
 // else if 尾端结束
 #define DEBUG_RUN_CODE_ELSE_IF_END( condition_code, else_code ) \
-	else if(condition_code){ else_code; }
+	else if(condition_code){ else_code; }do{}while(false)
 
 // 优先运行部分
 #define DEBUG_RUN_CODE_FIRST( first_code, run_code ) \

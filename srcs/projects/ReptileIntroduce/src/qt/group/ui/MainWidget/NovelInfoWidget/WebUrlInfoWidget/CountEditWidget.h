@@ -25,7 +25,6 @@ private: // 组件
 	Button *addBtn; // 添加计数
 	Button *subBtn; // 减去计数
 private: // 正则匹配
-
 	QRegularExpression *exp;
 private:
 	static const QString defaultCount; // 默认的值

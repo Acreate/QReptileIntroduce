@@ -6,9 +6,10 @@
 #include "../../extend/netWork/RequestConnect.h"
 #include "../../group/file/FileResult.h"
 #include "../../group/file/RWFileThread.h"
-#include "../../userHread/DebugInfo.h"
+#include <DebugInfo.h>
 #include "MainWidget.h"
-#include "NovelInfoWidget.h"
+#include "MainWidget/NovelInfoWidget.h"
+#include "MainWidget/NovelInfoWidget/WebUrlInfoWidget.h"
 #include <QFileDialog>
 #include <QInputDialog>
 #include <QMenu>
@@ -19,8 +20,15 @@
 #include <QScrollBar>
 #include <qcoreapplication.h>
 
-#include "WebUrlInfoWidget.h"
+const QString MainWidget::qstrPoint = tr( u8"坐标:( %1 , %2 )" );
 
+const QString MainWidget::transparentForMouseEvents = tr( u8"somponentStyle/TransparentForMouseEvents" );
+const QString MainWidget::selectReadFileWorkPath = tr( u8"work/ReadDirPath" );
+const QString MainWidget::selectWriteFileWorkPath = tr( u8"work/WriteDirPath" );
+const QString MainWidget::selectWebSettingPath = tr( u8"web/SettingFilePath" );
+
+const QString MainWidget::transparentText = tr( u8"当前状态: [%1穿透]" );
+const QString MainWidget::transparentTextNot = tr( u8"未" );
 MainWidget::MainWidget( QWidget *parent, Qt::WindowFlags fg ) : QWidget( parent, fg ), currentFont( "Arial", 10 ), currentFontMetrics( currentFont ), drawColor( 255, 0, 0 ), compoentStrNlen( 0 ) {
 
 	DEBUG_RUN( qDebug() << tr(u8"MainWidget::MainWidget 线程 id : ")<< QThread::currentThread( )->currentThreadId( ) );
@@ -44,17 +52,28 @@ MainWidget::MainWidget( QWidget *parent, Qt::WindowFlags fg ) : QWidget( parent,
 	connect( fileThreadResult, &FileResult::error, this, &MainWidget::error, Qt::QueuedConnection );
 
 	/// 配置 路径
-	QString progressIniPath = qApp->applicationDirPath( ).append( QDir::separator( ) ).append( QDir::separator( ) ).append( tr( u8"progress" ) ).append( QDir::separator( ) );
+	QString progressIniPath = qApp->applicationDirPath( ).append( QDir::separator( ) ).append( tr( u8"progress" ) ).append( QDir::separator( ) );
 	QString progressIniFileName = progressIniPath;
 	progressIniFileName.append( "ini" ).append( QDir::separator( ) ).append( qApp->applicationName( ) ).append( ".ini" );
-	QString directory = progressIniPath.append( "translations" );
+	QString directory = progressIniPath;
+	directory.append( "translations" );
 	QLocale locale = QLocale::system( );
 	QString pmFilename = QString( u8"QReptileIntroduce_" ).append( locale.name( ) );
-	
+
 	translator = new QTranslator( );
 	if( translator->load( pmFilename, directory ) )
 		qApp->installTranslator( translator );
 	DEBUG_RUN_CODE_ELSE_END( qDebug( ) << tr( u8"翻译(*.pm)文件加载错误" ) );
+
+	DEBUG_RUN(
+		QFileInfo info(progressIniFileName);
+		auto absPath = info.absoluteFilePath( );
+		if(!info.exists( )) {
+		qDebug() << "path (" << absPath << ") is not exists;";
+		}else {
+		qDebug() << "path (" << absPath<< ") has setting file;";
+		}
+	);
 
 	progressSetting = new QSettings( progressIniFileName, QSettings::IniFormat ); // 使用路径方式存储
 	setWindowTitle( tr( u8"小说阅读" ) );
@@ -131,6 +150,17 @@ MainWidget::MainWidget( QWidget *parent, Qt::WindowFlags fg ) : QWidget( parent,
 		QFileInfo info( variant.toString( ) );
 		if( info.exists( ) )
 			novelComponent->setNetWorkSettingFilePath( info.absoluteFilePath( ) );
+		else {
+			do {
+				QString fileName = QFileDialog::getOpenFileName( this, tr( u8"选择一个配置文件" ), qApp->applicationDirPath( ), tr( u8"配置文件(*.set *.setting *.ini);;文本文件(*.txt);;全部文件(*)" ) );
+				if( fileName.isEmpty( ) && QMessageBox::question( this, tr( u8"重新选择一个有效文件" ), tr( u8"是否重新选择一个有效的文件？" ) ) == QMessageBox::Yes )
+					continue;
+				progressSetting->setValue( selectWebSettingPath, fileName );
+				progressSetting->sync( );
+				novelComponent->setNetWorkSettingFilePath( fileName );
+				break;
+			} while( true );
+		}
 	}
 	variant = progressSetting->value( selectReadFileWorkPath );
 	if( variant.isNull( ) || variant.toString( ).isEmpty( ) )
@@ -162,6 +192,7 @@ QFont MainWidget::setFont( QFont &font ) {
 }
 
 void MainWidget::mouseMoveEvent( QMouseEvent *event ) {
+	QWidget::mouseMoveEvent( event );
 }
 void MainWidget::mouseReleaseEvent( QMouseEvent *event ) {
 	Qt::MouseButton mouseButton = event->button( );
@@ -174,6 +205,7 @@ void MainWidget::mouseReleaseEvent( QMouseEvent *event ) {
 			}
 			break;
 		}
+	QWidget::mouseReleaseEvent( event );
 }
 void MainWidget::mousePressEvent( QMouseEvent *event ) {
 	Qt::MouseButton mouseButton = event->button( );
@@ -187,9 +219,14 @@ void MainWidget::mousePressEvent( QMouseEvent *event ) {
 					showCount = 0;
 				break;
 		}
+
+	QWidget::mousePressEvent( event );
 }
 void MainWidget::resizeEvent( QResizeEvent *event ) {
 	titleHeight = frameSize( ).height( ) - event->size( ).height( );
+
+	// raise(  );
+	QWidget::resizeEvent( event );
 }
 
 void MainWidget::updateDateTimeStrFunction( const QString &currentDateTimeStr ) {

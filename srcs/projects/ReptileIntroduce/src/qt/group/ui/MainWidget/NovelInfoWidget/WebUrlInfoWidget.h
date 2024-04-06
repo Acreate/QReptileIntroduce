@@ -28,29 +28,29 @@ public: // 模型切换宏
 	};
 private: // 静态成员
 	static QMap< NovelInfoWidget *, unsigned long long > pathCount;
-	static NovelInfoWidget * overNovelInfoWidgetPtr(QObject* converPtr);
-	static NovelInfoWidget * overNovelInfoWidgetPtrTry(QObject* converPtr,Exception* tryResult);
-	static void setConverError(Exception* tryResult);
+	static NovelInfoWidget *overNovelInfoWidgetPtr( QObject *converPtr );
+	static NovelInfoWidget *overNovelInfoWidgetPtrTry( QObject *converPtr, Exception *tryResult );
+	static void setConverError( Exception *tryResult );
 private: // 构造类时候必须初始化
 	QSettings *webPageSetting;
 	Show_Mode currentMode;
 private: // 配置文件当中的关键 key
-	const QString settingHostKey = tr(u8"host");
-	const QString settingUrlKey = tr(u8"url");
+	static const QString settingHostKey;
+	static const QString settingUrlKey;
 public:
-	WebUrlInfoWidget( QSettings *webPageSetting, NovelInfoWidget *parent , const QString& key, Qt::WindowFlags f = Qt::WindowFlags());
-	WebUrlInfoWidget( QSettings *webPageSetting, NovelInfoWidget *parent , Qt::WindowFlags f = Qt::WindowFlags());
+	WebUrlInfoWidget( QSettings *webPageSetting, NovelInfoWidget *parent, const QString &key, Qt::WindowFlags f = Qt::WindowFlags( ) );
+	WebUrlInfoWidget( QSettings *webPageSetting, NovelInfoWidget *parent, Qt::WindowFlags f = Qt::WindowFlags( ) );
 	~WebUrlInfoWidget( ) override;
 private: // 组件容器
-	QList<QWidget*> *insterComponent;
-	QList<QWidget*> *infoComponent;
+	QList< QWidget * > *insterComponent;
+	QList< QWidget * > *infoComponent;
 private: // 小说存在的时候显示的组件
 	HLayoutBox *hasNovelInfoLayout;  // 主要布局
 	Button *loadDll; // 加载 dll 按钮
 	EditLine *urlInput; // url 地址
 	QComboBox *optionBoxWidget; // url 协议
-	CountEditWidget* allCount; // 总计
-	CountEditWidget* typeCount; // 类型计数
+	CountEditWidget *allCount; // 总计
+	CountEditWidget *typeCount; // 类型计数
 	Button *startBtn; // 开始获取
 private: // 小说不存在的时候显示的组件
 	Button *insertlNovelInfoBtn; // 插入小说信息按钮
@@ -115,7 +115,7 @@ Q_SIGNALS:
 	/// <summary>
 	/// 切换状态之后信号诞生
 	/// </summary>
-	void start(  );
+	void start( );
 	/// <summary>
 	/// 插入按键
 	/// </summary>

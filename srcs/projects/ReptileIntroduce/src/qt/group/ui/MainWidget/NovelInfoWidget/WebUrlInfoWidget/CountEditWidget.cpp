@@ -4,11 +4,11 @@
 #include <qregularexpression.h>
 #include <qvalidator.h>
 
-#include "../../extend/layout/HLayoutBox.h"
-#include "../../extend/layout/VLayoutBox.h"
-#include "../../extend/ui/Button.h"
-#include "../../extend/ui/EditLine.h"
-#include "../../userHread/DebugInfo.h"
+#include "../../../../../extend/layout/HLayoutBox.h"
+#include "../../../../../extend/layout/VLayoutBox.h"
+#include "../../../../../extend/ui/Button.h"
+#include "../../../../../extend/ui/EditLine.h"
+#include <DebugInfo.h>
 
 const QString CountEditWidget::defaultCount = tr( u8"20000" );
 const QString CountEditWidget::addBtnText = tr( u8"加" );

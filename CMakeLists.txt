@@ -25,13 +25,11 @@ FIND_PACKAGE( Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS
 	Core
 	Widgets
 	Gui
-	LinguistTools
 	Network
 	openglwidgets
 	Core5Compat
 	LinguistTools
 )
-
 get_current_dir_name( current_dir_name ${CMAKE_CURRENT_SOURCE_DIR} )
 
 SET( translation_file_list
@@ -48,6 +46,7 @@ FILE(GLOB_RECURSE SRC_LIST
 	${CMAKE_HOME_DIRECTORY}/srcs/*.h
 	${CMAKE_HOME_DIRECTORY}/srcs/*.hpp
 	${CMAKE_HOME_DIRECTORY}/srcs/*.hxx
+	${CMAKE_HOME_DIRECTORY}/srcs/*.ui
 )
 
 ADD_CUSTOM_TARGET(${current_dir_name})
@@ -55,11 +54,9 @@ SET_SOURCE_FILES_PROPERTIES(${translation_file_list}
      PROPERTIES OUTPUT_LOCATION "${CMAKE_HOME_DIRECTORY}/builder/${CMAKE_BUILD_TYPE}_${CMAKE_CXX_COMPILER_ARCHITECTURE_ID}_${CMAKE_CXX_COMPILER_ID}/progress/translations")
 qt_add_translations(
 	${current_dir_name}
-	TS_FILES
-	${translation_file_list}
+	TS_FILES ${translation_file_list}
 	SOURCES ${SRC_LIST}
 	LUPDATE_OPTIONS -no-obsolete
-	QM_FILES_OUTPUT_VARIABLE qm_files
 )
 
 

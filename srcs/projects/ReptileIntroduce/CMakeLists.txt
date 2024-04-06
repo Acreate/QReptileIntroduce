@@ -23,11 +23,13 @@ file( GLOB_RECURSE SRC_LIST
 	"*.cxx"
 	"*.hpp"
 )
-include_directories( ${www_121ds_cc_include_dir} )
 file( GLOB_RECURSE SRC_UI
 	"*.ui"
 )
 
+include_directories( ${www_121ds_cc_include_dir} )
+include_directories( ${NoveInfo_include_dir} )
+include_directories( ${UserHread_include_dir} )
 # # 合并源码
 list( APPEND ${SRC_LIST} ${SRC_UI} ${QM_FILES} )
 
@@ -54,6 +56,8 @@ call_qt_deploy( ${PROJECT_NAME}
 	Qt${QT_VERSION_MAJOR}::Network
 	Qt${QT_VERSION_MAJOR}::OpenGLWidgets
 	Qt${QT_VERSION_MAJOR}::Core5Compat
+	NoveInfo
 )
 
-copy_dir_path( ${PROJECT_NAME} "${CMAKE_CURRENT_LIST_DIR}/res" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/" )
+copy_dir_path( ${PROJECT_NAME} "${CMAKE_CURRENT_LIST_DIR}/res/ini/progress/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/progress/" )
+copy_dir_path( ${PROJECT_NAME} "${CMAKE_CURRENT_LIST_DIR}/res/ini/web/ini" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/user_plugs/" )

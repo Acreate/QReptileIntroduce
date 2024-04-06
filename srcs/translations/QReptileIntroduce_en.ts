@@ -56,57 +56,57 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../projects/ReptileIntroduce/src/qt/group/ui/MainWidget.cpp" line="58"/>
+        <location filename="../projects/ReptileIntroduce/src/qt/group/ui/MainWidget.cpp" line="57"/>
         <source>翻译(*.pm)文件加载错误</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../projects/ReptileIntroduce/src/qt/group/ui/MainWidget.cpp" line="61"/>
+        <location filename="../projects/ReptileIntroduce/src/qt/group/ui/MainWidget.cpp" line="60"/>
         <source>小说阅读</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../projects/ReptileIntroduce/src/qt/group/ui/MainWidget.cpp" line="115"/>
+        <location filename="../projects/ReptileIntroduce/src/qt/group/ui/MainWidget.cpp" line="114"/>
         <source>加载配置文件</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../projects/ReptileIntroduce/src/qt/group/ui/MainWidget.cpp" line="117"/>
+        <location filename="../projects/ReptileIntroduce/src/qt/group/ui/MainWidget.cpp" line="116"/>
         <source>requestSettingFilePath, &amp;Action::trigger slots</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../projects/ReptileIntroduce/src/qt/group/ui/MainWidget.cpp" line="200"/>
+        <location filename="../projects/ReptileIntroduce/src/qt/group/ui/MainWidget.cpp" line="199"/>
         <source>MainWidget::updateDateTimeStrFunction( const QString &amp;currentDateTimeStr ) currentThreadId: </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../projects/ReptileIntroduce/src/qt/group/ui/MainWidget.cpp" line="216"/>
+        <location filename="../projects/ReptileIntroduce/src/qt/group/ui/MainWidget.cpp" line="215"/>
         <source>MainWidget::changeTransparent( bool flage ) : </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../projects/ReptileIntroduce/src/qt/group/ui/MainWidget.cpp" line="244"/>
+        <location filename="../projects/ReptileIntroduce/src/qt/group/ui/MainWidget.cpp" line="243"/>
         <source>指定一个 web 配置文件</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../projects/ReptileIntroduce/src/qt/group/ui/MainWidget.cpp" line="244"/>
+        <location filename="../projects/ReptileIntroduce/src/qt/group/ui/MainWidget.cpp" line="243"/>
         <source>配置类型(*.set *.ini *.setting );;全部类型(*)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../projects/ReptileIntroduce/src/qt/group/ui/MainWidget.cpp" line="255"/>
+        <location filename="../projects/ReptileIntroduce/src/qt/group/ui/MainWidget.cpp" line="254"/>
         <source>请选择</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../projects/ReptileIntroduce/src/qt/group/ui/MainWidget.cpp" line="255"/>
+        <location filename="../projects/ReptileIntroduce/src/qt/group/ui/MainWidget.cpp" line="254"/>
         <source>文件错误，是否重新选择？</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../projects/ReptileIntroduce/src/qt/group/ui/MainWidget.cpp" line="269"/>
+        <location filename="../projects/ReptileIntroduce/src/qt/group/ui/MainWidget.cpp" line="268"/>
         <source>当前 MainWidget 窗口最小的宽度 : </source>
         <translation type="unfinished"></translation>
     </message>
