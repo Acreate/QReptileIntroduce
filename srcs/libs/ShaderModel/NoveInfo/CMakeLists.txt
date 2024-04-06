@@ -49,7 +49,7 @@ string(REPLACE "." "_" project_name_include_dir ${PROJECT_NAME})
 set( ${project_name_include_dir}_include_dir ${CMAKE_CURRENT_LIST_DIR} ${CMAKE_CURRENT_LIST_DIR}/.. PARENT_SCOPE)
 # # 合并源码
 list( APPEND ${SRC_LIST} ${SRC_UI} ${QM_FILES} ${SRC_DATA})
-add_library( ${PROJECT_NAME} SHARED
+qt_add_library( ${PROJECT_NAME} SHARED
 	${SRC_LIST}
 )
 set( translation_file_list
