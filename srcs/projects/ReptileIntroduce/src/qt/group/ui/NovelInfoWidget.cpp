@@ -63,6 +63,7 @@ NovelInfoWidget::NovelInfoWidget( QWidget *parent, Qt::WindowFlags flag ) : QWid
 
 	btn = new Button( this );
 	settingInfoLayoutBox->addWidget( btn );
+	btn->setText( tr( u8"设置路径" ) );
 	connect( this, &NovelInfoWidget::errorSettingPath, [=]( ) {
 		btn->setText( tr( u8"错误" ) );
 		btn->setStyleSheet( tr( u8R"(
@@ -166,7 +167,7 @@ NovelInfoWidget::NovelInfoWidget( QWidget *parent, Qt::WindowFlags flag ) : QWid
 		auto fileName = QFileDialog::getOpenFileName( this, u8"选择一个插件", qApp->applicationDirPath( ), u8"插件(*.dll)" );
 		if( fileName.isEmpty( ) )
 			return;
-		IRequestNetInterface * requestNetInterface = loadPlug( fileName );
+		IRequestNetInterface *requestNetInterface = loadPlug( fileName );
 	} );
 
 	int count = vBox->count( );

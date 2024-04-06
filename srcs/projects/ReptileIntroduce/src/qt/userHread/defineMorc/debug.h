@@ -26,6 +26,22 @@
 		run_code; \
 	} while(false)
 
+// if 判断
+#define DEBUG_RUN_CODE_IF_ELSE( condition_code, if_code, else_code ) \
+	do{ \
+		if(condition_code) { if_code; }\
+		else { else_code; }\
+	} while(false)
+
+// else 尾端结束
+#define DEBUG_RUN_CODE_ELSE_END(  else_code ) \
+	else { else_code; }
+
+// else if 尾端结束
+#define DEBUG_RUN_CODE_ELSE_IF_END( condition_code, else_code ) \
+	else if(condition_code){ else_code; }
+
+// 优先运行部分
 #define DEBUG_RUN_CODE_FIRST( first_code, run_code ) \
 	first_code ;\
 	{\

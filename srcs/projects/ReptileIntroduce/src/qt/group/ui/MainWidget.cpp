@@ -44,7 +44,7 @@ MainWidget::MainWidget( QWidget *parent, Qt::WindowFlags fg ) : QWidget( parent,
 	connect( fileThreadResult, &FileResult::error, this, &MainWidget::error, Qt::QueuedConnection );
 
 	/// 配置 路径
-	QString progressIniPath = qApp->applicationDirPath( ).append( QDir::separator( ) ).append( tr( u8"ini" ) ).append( QDir::separator( ) ).append( tr( u8"progress" ) ).append( QDir::separator( ) );
+	QString progressIniPath = qApp->applicationDirPath( ).append( QDir::separator( ) ).append( QDir::separator( ) ).append( tr( u8"progress" ) ).append( QDir::separator( ) );
 	QString progressIniFileName = progressIniPath;
 	progressIniFileName.append( "ini" ).append( QDir::separator( ) ).append( qApp->applicationName( ) ).append( ".ini" );
 	QString directory = progressIniPath.append( "translations" );
@@ -55,7 +55,7 @@ MainWidget::MainWidget( QWidget *parent, Qt::WindowFlags fg ) : QWidget( parent,
 	translator = new QTranslator( );
 	if( translator->load( pmFilename, directory ) )
 		qApp->installTranslator( translator );
-	DEBUG_RUN_CODE_FIRST( else, qDebug( ) << tr( u8"加载错误" ) );
+	DEBUG_RUN_CODE_ELSE_END( qDebug( ) << tr( u8"翻译(*.pm)文件加载错误" ) );
 
 	progressSetting = new QSettings( progressIniFileName, QSettings::IniFormat ); // 使用路径方式存储
 	setWindowTitle( tr( u8"小说阅读" ) );
