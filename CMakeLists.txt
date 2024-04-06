@@ -52,7 +52,7 @@ FILE(GLOB_RECURSE SRC_LIST
 
 ADD_CUSTOM_TARGET(${current_dir_name})
 SET_SOURCE_FILES_PROPERTIES(${translation_file_list}
-     PROPERTIES OUTPUT_LOCATION "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/progress/translations")
+     PROPERTIES OUTPUT_LOCATION "${CMAKE_HOME_DIRECTORY}/builder/${CMAKE_BUILD_TYPE}_${CMAKE_CXX_COMPILER_ARCHITECTURE_ID}_${CMAKE_CXX_COMPILER_ID}/progress/translations")
 qt_add_translations(
 	${current_dir_name}
 	TS_FILES

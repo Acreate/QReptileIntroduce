@@ -49,9 +49,8 @@ MainWidget::MainWidget( QWidget *parent, Qt::WindowFlags fg ) : QWidget( parent,
 	progressIniFileName.append( "ini" ).append( QDir::separator( ) ).append( qApp->applicationName( ) ).append( ".ini" );
 	QString directory = progressIniPath.append( "translations" );
 	QLocale locale = QLocale::system( );
-	QString pmFilename = locale.name( );
-	pmFilename = qApp->applicationName( ).append( "_" ).append( pmFilename );
-
+	QString pmFilename = QString( u8"QReptileIntroduce_" ).append( locale.name( ) );
+	
 	translator = new QTranslator( );
 	if( translator->load( pmFilename, directory ) )
 		qApp->installTranslator( translator );
