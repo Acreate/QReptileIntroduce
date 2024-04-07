@@ -1,6 +1,6 @@
 ﻿#include "FileThread.h"
 #include "../../../qt/group/file/FileResult.h"
-#include  "../../userHread/DebugInfo.h"
+#include <DebugInfo.h>
 #include <QDir>
 FileThread::FileThread( const QString &filePath,
 	QIODeviceBase::OpenMode openMode,

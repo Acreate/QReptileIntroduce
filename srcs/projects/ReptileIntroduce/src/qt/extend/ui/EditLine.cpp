@@ -1,5 +1,5 @@
 ﻿#include "EditLine.h"
-#include "../../userHread/DebugInfo.h"
+#include <DebugInfo.h>
 #include <QPaintEvent>
 EditLine::~EditLine( ) {
 	DEBUG_RUN(

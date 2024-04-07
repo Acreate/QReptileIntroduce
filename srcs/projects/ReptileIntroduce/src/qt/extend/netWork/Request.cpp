@@ -3,8 +3,8 @@
 #include <QFileDialog>
 #include <QNetworkReply>
 
-#include "../../userHread/QtMorc.h"
-#include "../../userHread/DebugInfo.h"
+#include <QtMorc.h>
+#include <DebugInfo.h>
 #include <QNetworkAccessManager>
 #include <qguiapplication.h>
 

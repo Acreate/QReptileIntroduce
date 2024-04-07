@@ -1,6 +1,6 @@
 ﻿#include "FileResult.h"
 #include "RWFileThread.h"
-#include "../../userHread/DebugInfo.h"
+#include <DebugInfo.h>
 FileResult::~FileResult( ) {
 	DEBUG_RUN( qDebug( ) << "~FileResult( ) : " << this );
 }

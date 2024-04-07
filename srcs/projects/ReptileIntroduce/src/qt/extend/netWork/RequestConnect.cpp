@@ -1,7 +1,7 @@
 ﻿#include "RequestConnect.h"
 #include "Request.h"
-#include "../../userHread/DebugInfo.h"
-#include "../../userHread/QtMorc.h"
+#include <DebugInfo.h>
+#include <QtMorc.h>
 RequestConnect::~RequestConnect( ) {
 
 }

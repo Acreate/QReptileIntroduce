@@ -1,9 +1,9 @@
 ﻿#include "RWFileThread.h"
 #include <QFile>
+#include <DebugInfo.h>
 #include "FileResult.h"
 #include "../../extend/thread//FileThread.h"
 #include "../../extend/thread/FileThread.h"
-#include  "../../userHread/DebugInfo.h"
 
 RWFileThread::RWFileThread( QObject *parent ): QObject( parent ), file( new QFileInfo ) {
 }

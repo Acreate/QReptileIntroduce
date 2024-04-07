@@ -34,7 +34,8 @@ file( GLOB_RECURSE SRC_DATA
 )
 
 string( REPLACE "." "_" project_name_include_dir ${PROJECT_NAME} )
-include_directories( ../../NoveInfo )
+include_directories( ../../shaders/NoveInfo )
+include_directories( ../../../shaders/UserHread )
 set( ${project_name_include_dir}_include_dir ${CMAKE_CURRENT_LIST_DIR} ${CMAKE_CURRENT_LIST_DIR}/ PARENT_SCOPE )
 
 # # 合并源码

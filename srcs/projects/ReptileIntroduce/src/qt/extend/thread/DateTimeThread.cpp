@@ -3,7 +3,7 @@
 #include <qdatetime.h>
 #include <qmutex.h>
 
-#include "../../userHread/DebugInfo.h"
+#include <DebugInfo.h>
 DateTimeThread::DateTimeThread( QObject *parent ) : QThread( parent ) {
 	dateTimeStrFormatMutex = new QMutex;
 }
