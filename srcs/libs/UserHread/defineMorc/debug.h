@@ -13,16 +13,16 @@
 	} while(false)
 
 // 不相等则运行该规则代码
-#define DEBUG_RUN_IF_NOT_EQU_PTR( ptr, not_pur ,run_code ) \
+#define DEBUG_RUN_IF_NOT_EQU_PTR( ptr, not_ptr ,run_code ) \
 	do{ \
-	if((ptr) != (not_pur))\
+	if((ptr) != (not_ptr))\
 		run_code; \
 	} while(false)
 
 // 相等则运行该规则代码
-#define DEBUG_RUN_IF_IS_EQU_PTR( ptr, not_pur ,run_code ) \
+#define DEBUG_RUN_IF_IS_EQU_PTR( ptr, equ_ptr ,run_code ) \
 	do{ \
-	if((ptr) == (not_pur))\
+	if((ptr) == (equ_ptr))\
 		run_code; \
 	} while(false)
 

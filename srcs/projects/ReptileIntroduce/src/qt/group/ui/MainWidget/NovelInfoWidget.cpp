@@ -28,8 +28,72 @@
 #include <Request/RequestNet.h>
 #include <QPluginLoader>
 
+#include "path/Path.h"
+
 const QString NovelInfoWidget::selectWebBuffWorkPath = tr( u8"work/WebBuff/Path" );
+IRequestNetInterface *NovelInfoWidget::getIRequestNetInterface( const QString &plugFilePath, const QString &name, const QString &spec ) {
+	QPluginLoader loader( plugFilePath );
+	if( loader.load( ) ) {
+		QGenericPlugin *genericPlugin = qobject_cast< QGenericPlugin * >( loader.instance( ) );
+		if( genericPlugin ) {
+			IRequestNetInterface *result = qobject_cast< IRequestNetInterface * >( genericPlugin->create( name, spec ) );
+			if( result ) {
+				result->setParent( nullptr );
+				return result;
+			}
+		}
+	}
+	return nullptr;
+}
 NovelInfoWidget::NovelInfoWidget( QWidget *parent, Qt::WindowFlags flag ) : QWidget( parent, flag ) {
+	/////// 链接信号槽
+	connect( this, &NovelInfoWidget::setNetWorkSettingFilePath, [=]( const QString &filePath ) {
+		QFileInfo fileInfo( filePath );
+		auto absoluteFilePath = fileInfo.absoluteFilePath( );
+		if( fileInfo.exists( ) ) {
+			if( netSetFileSettings ) {
+				netSetFileSettings->setPath( QSettings::IniFormat, QSettings::UserScope, absoluteFilePath );
+				netSetFileSettings->sync( );
+			} else
+				netSetFileSettings = new QSettings( absoluteFilePath, QSettings::IniFormat );
+
+			auto temp = settingFileAbsoluteFilePath;
+			settingFileAbsoluteFilePath = absoluteFilePath;
+			inputSettingPathLine->setText( settingFileAbsoluteFilePath );
+			emit overSettingPath( temp, settingFileAbsoluteFilePath );
+			return;
+		}
+		emit errorSettingPath( getAbsoluteFilePath( ), absoluteFilePath );
+	} );
+
+	connect( this, &NovelInfoWidget::overSettingPath, [=]( const QString &oldPath, const QString &newPath ) {
+		netSetFileSettings->beginGroup( u8"host" );
+		auto allKeys = netSetFileSettings->allKeys( );
+		if( allKeys.length( ) != 0 ) {
+			auto layout = listView->widget( )->layout( );
+			for( auto &settingKey : allKeys ) {
+				QVariant variant = netSetFileSettings->value( settingKey );
+				auto value = variant.toString( );
+				if( value.isEmpty( ) )
+					continue;
+				IRequestNetInterface *requestNetInterface = loadPlug( value );
+				if( requestNetInterface ) {
+					auto webUrlWidget = WebUrlInfoWidget::generateWebUrlInfoWidget( netSetFileSettings, this, requestNetInterface );
+					if( webUrlWidget ) {
+						int count = layout->count( );
+						int index = 0;
+						for( ; index < count ; ++index )
+							if( layout->itemAt( index )->widget( ) == webUrlWidget )
+								break;
+						if( index == count )
+							layout->addWidget( webUrlWidget );
+					}
+				}
+			}
+		}
+		netSetFileSettings->endGroup( );
+	} );
+
 	rwFileThread = new RWFileThread( this );
 	this->fileThreadResult = rwFileThread->getFileResult( );
 	////// 网络请求
@@ -64,7 +128,7 @@ NovelInfoWidget::NovelInfoWidget( QWidget *parent, Qt::WindowFlags flag ) : QWid
 
 	btn = new Button( this );
 	settingInfoLayoutBox->addWidget( btn );
-	btn->setText( tr( u8"设置路径" ) );
+	btn->setText( tr( u8"添加插件到配置文件" ) );
 	connect( this, &NovelInfoWidget::errorSettingPath, [=]( ) {
 		btn->setText( tr( u8"错误" ) );
 		btn->setStyleSheet( tr( u8R"(
@@ -72,48 +136,68 @@ NovelInfoWidget::NovelInfoWidget( QWidget *parent, Qt::WindowFlags flag ) : QWid
 		color : red;
 	})" ) );
 	} );
-	connect( this, &NovelInfoWidget::overSettingPath, [=]( ) {
-		if( checkStatus == 1 ) {
-			btn->setText( tr( u8"加载" ) );
-			checkStatus = 2;
-		}
-		btn->setStyleSheet( tr( u8R"(
-	Button{
-		color : black;
-	})" ) );
+	connect( this, &NovelInfoWidget::overSettingPath, [=]( const QString &oldPath, const QString &newPath ) {
+		DEBUG_RUN( qDebug() << "添加插件 : " << newPath );
 	} );
 	connect( btn, &QPushButton::clicked, [=]( ) {
-		if( checkStatus == -1 ) {
-			do {
-				auto fileName = QFileDialog::getOpenFileName( this, tr( u8"选择一个设置文件" ), qApp->applicationFilePath( ), "配置文件类型(*.ini *.txt *.set *.setting);;全部类型(*)" );
-				if( fileName.isEmpty( ) ) {
-					QMessageBox::StandardButton standardButton = QMessageBox::question( this, tr( u8"请选择一个选项" ), tr( u8"文件打开错误!现在重新选择吗?" ) );
-					if( standardButton == QMessageBox::Yes )
-						continue;
-					return;
-				}
-				inputSettingPathLine->setText( fileName );
-				settingPathCompoentWriteOver( );
+		QFileInfo settingFileInfo( netSetFileSettings->fileName( ) );
+		QString caption = tr( u8"选择一个 qt 插件路径" );
+		QString title = tr( u8"插件错误" );
+		QString questionMsg = tr( u8"文件打开错误!现在重新选择吗?" );
+		auto prefix = "host";
+		auto key = "root";
+		do {
+			auto fileName = QFileDialog::getExistingDirectory( this, caption, settingFileInfo.absoluteDir( ).absolutePath( ) );
+			if( fileName.isEmpty( ) ) {
+				QMessageBox::StandardButton standardButton = QMessageBox::question( this, title, questionMsg );
+				if( standardButton == QMessageBox::Yes )
+					continue;
 				break;
-			} while( true );
-		} else if( checkStatus == 2 ) {
-			inputSettingPathLine->setReadOnly( true );
-			btn->setStyleSheet( tr( u8R"(
-				Button{
-					color : blue;
+			}
+			auto dirInfo = Path::getDirInfo( fileName );
+			for( auto &dir : dirInfo.first ) {
+				qDebug( ) << u8"发现文件夹 : " << dir.getCurrentPath( );
+			}
+			size_t loadPlugCount = 0;
+			QDir current( qApp->applicationDirPath( ) );
+			for( auto &file : dirInfo.second ) {
+				QString currentFilePtah = file.getCurrentFilePtah( );
+				qDebug( ) << u8"发现文件 : " << currentFilePtah;
+				auto ire = loadPlug( currentFilePtah );
+				if( ire ) {
+					++loadPlugCount;
+					QUrl url = ire->getUrl( );
+					QString host = url.host( );
+					netSetFileSettings->beginGroup( prefix );
+					currentFilePtah = current.relativeFilePath( currentFilePtah );
+					netSetFileSettings->setValue( host, currentFilePtah );
+					netSetFileSettings->endGroup( );
+					netSetFileSettings->beginGroup( host );
+					netSetFileSettings->setValue( key, url.url( ) );
+					netSetFileSettings->endGroup( );
+					auto webUrlInfoWidget = WebUrlInfoWidget::generateWebUrlInfoWidget( netSetFileSettings, this, ire );
+
+					if( webUrlInfoWidget ) {
+						auto layout = listView->widget( )->layout( );
+						int count = layout->count( );
+						int index = 0;
+						for( ; index < count ; ++index )
+							if( layout->itemAt( index )->widget( ) == webUrlInfoWidget )
+								break;
+						if( index == count )
+							layout->addWidget( webUrlInfoWidget );
+					}
 				}
-				)" ) );
-			checkStatus = 3;
-			btn->setText( tr( u8"over locked" ) );
-		} else if( checkStatus > 2 ) {
-			inputSettingPathLine->setReadOnly( false );
-			btn->setStyleSheet( tr( u8R"(
-				Button{
-					color : black;
-				}
-				)" ) );
-			checkStatus = 2;
-		}
+			}
+			if( loadPlugCount > 0 ) {
+				netSetFileSettings->sync( );
+				computeListViewWidgetSize( );
+				break;
+			}
+			QMessageBox::StandardButton standardButton = QMessageBox::question( this, title, questionMsg );
+			if( standardButton == QMessageBox::No )
+				break;
+		} while( true );
 	} );
 
 	// 中间的布局
@@ -131,53 +215,6 @@ NovelInfoWidget::NovelInfoWidget( QWidget *parent, Qt::WindowFlags flag ) : QWid
 	auto verticalScrollBarHint = verticalScrollBar->size( );
 
 	listView->setMinimumSize( horizontalScrollBarHint.width( ) + contentsMargins.left( ) + contentsMargins.right( ), verticalScrollBarHint.height( ) + contentsMargins.top( ) + contentsMargins.bottom( ) );
-	auto callFun = [=]( ) {
-		int maxWidth = 0;
-		int maxHeight = 0;
-		int count = vBox->count( );
-		for( int index = 0 ; index < count ; ++index ) {
-			QLayoutItem *item = vBox->itemAt( index );
-			auto currentWidget = item->widget( );
-			QSize size = currentWidget->minimumSizeHint( );
-			QSize minimumSize = currentWidget->minimumSize( );
-			int height = size.height( );
-			int height1 = minimumSize.height( );
-			maxHeight += height > height1 ? height : height1;
-			if( maxWidth < size.width( ) )
-				maxWidth = size.width( );
-			if( maxWidth < minimumSize.width( ) )
-				maxWidth = minimumSize.width( );
-		}
-		int spacing = vBox->spacing( );
-		QSize reSize( maxWidth + contentsMargins.left( ) + contentsMargins.right( ), maxHeight + spacing * count + contentsMargins.top( ) + contentsMargins.bottom( ) );
-		widget->setMinimumSize( reSize );
-	};
-	auto delObj_error = new QWidget( );
-	try {
-		vBox->addWidget( new WebUrlInfoWidget( this->netSetFileSettings, static_cast< NovelInfoWidget * >( delObj_error ) ) );
-	} catch( Exception &exception ) {
-		qDebug( ) << exception.getMsg( ).toStdString( ).c_str( );
-		delObj_error->deleteLater( );
-	}
-
-	WebUrlInfoWidget *webUrlInfoWidget = new WebUrlInfoWidget( this->netSetFileSettings, this );
-	vBox->addWidget( webUrlInfoWidget );
-
-	connect( webUrlInfoWidget, &WebUrlInfoWidget::insterNovelInfo, [=] {
-		// todo : 组件按下记载插件功能
-		auto fileName = QFileDialog::getOpenFileName( this, u8"选择一个插件", qApp->applicationDirPath( ), u8"插件(*.dll)" );
-		if( fileName.isEmpty( ) )
-			return;
-		IRequestNetInterface *requestNetInterface = loadPlug( fileName );
-	} );
-
-	int count = vBox->count( );
-	for( int index = 0 ; index < count ; ++index ) {
-		auto currentWidget = qobject_cast< WebUrlInfoWidget * >( vBox->itemAt( index )->widget( ) );
-		if( currentWidget )
-			connect( currentWidget, &WebUrlInfoWidget::start, callFun );
-	}
-	callFun( );
 }
 NovelInfoWidget::~NovelInfoWidget( ) {
 
@@ -197,19 +234,38 @@ NovelInfoWidget::~NovelInfoWidget( ) {
 
 IRequestNetInterface *NovelInfoWidget::loadPlug( const QString &plugFilePath ) {
 	// todo : 加载插件
-	QPluginLoader pluginLoader( plugFilePath );
-	if( pluginLoader.load( ) ) {
-		QObject *objPtr = pluginLoader.instance( );
-		QGenericPlugin *genericPlugin = qobject_cast< QGenericPlugin * >( objPtr );
-		QObject *instanceObjPtr = genericPlugin->create( "", "" );
-		return qobject_cast< IRequestNetInterface * >( instanceObjPtr );
-	}
-	return nullptr;
+	return getIRequestNetInterface( plugFilePath, "", "" );
 }
 
+void NovelInfoWidget::computeListViewWidgetSize( ) {
+	auto widget = listView->widget( );
+	auto vBox = widget->layout( );
+	QMargins contentsMargins = vBox->contentsMargins( );
+	int maxWidth = 0;
+	int maxHeight = 0;
+	int count = vBox->count( );
+	for( int index = 0 ; index < count ; ++index ) {
+		QLayoutItem *item = vBox->itemAt( index );
+		auto currentWidget = item->widget( );
+		QSize size = currentWidget->minimumSizeHint( );
+		QSize minimumSize = currentWidget->minimumSize( );
+		int height = size.height( );
+		int height1 = minimumSize.height( );
+		maxHeight += height > height1 ? height : height1;
+		if( maxWidth < size.width( ) )
+			maxWidth = size.width( );
+		if( maxWidth < minimumSize.width( ) )
+			maxWidth = minimumSize.width( );
+	}
+	int spacing = vBox->spacing( );
+	QSize reSize( maxWidth + contentsMargins.left( ) + contentsMargins.right( ), maxHeight + spacing * count + contentsMargins.top( ) + contentsMargins.bottom( ) );
+	widget->setMinimumSize( reSize );
+}
 void NovelInfoWidget::showEvent( QShowEvent *event ) {
 	DEBUG_RUN( qDebug( ) << tr( u8"====== NovelInfoWidget::showEvent ===========" ) );
 	QWidget::showEvent( event );
+
+	computeListViewWidgetSize( );
 }
 bool NovelInfoWidget::nativeEvent( const QByteArray &eventType, void *message, qintptr *result ) {
 	return QWidget::nativeEvent( eventType, message, result );

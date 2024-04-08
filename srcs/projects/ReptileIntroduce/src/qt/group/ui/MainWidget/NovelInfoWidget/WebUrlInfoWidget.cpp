@@ -21,9 +21,12 @@
 #include <QtMorc.h>
 #include "./WebUrlInfoWidget/CountEditWidget.h"
 
+#include "interface/IRequestNetInterface.h"
+
 const QString WebUrlInfoWidget::settingHostKey = tr( u8"host" );
 const QString WebUrlInfoWidget::settingUrlKey = tr( u8"url" );
-QMap< NovelInfoWidget *, unsigned long long > WebUrlInfoWidget::pathCount = QMap< NovelInfoWidget *, unsigned long long >( );
+QMap< NovelInfoWidget *, QVector< WebUrlInfoWidget * > > WebUrlInfoWidget::pathCount;
+QMap< WebUrlInfoWidget *, QString > WebUrlInfoWidget::webHost;
 
 NovelInfoWidget *WebUrlInfoWidget::overNovelInfoWidgetPtr( QObject *converPtr ) {
 	auto novelInfoWidget = qobject_cast< NovelInfoWidget * >( converPtr );
@@ -55,19 +58,33 @@ void WebUrlInfoWidget::setConverError( Exception *tryResult ) {
 ===========
 )" ).arg( __FILE__ ).arg( __LINE__ ) );
 }
-WebUrlInfoWidget::WebUrlInfoWidget( QSettings *webPageSetting,
-	NovelInfoWidget *parent,
-	const QString &key,
+WebUrlInfoWidget::WebUrlInfoWidget( QSettings *webPageSetting, NovelInfoWidget *parent, IRequestNetInterface *requestNetInterface,
 	Qt::WindowFlags f ) : QWidget( parent, f ) {
 
 	auto novelInfoWidget = overNovelInfoWidgetPtr( parent );
-	initInstance( webPageSetting, novelInfoWidget );
-	auto variant = webPageSetting->value( key );
-	if( variant.isNull( ) )
-		throw Exception( tr( u8"文件:\n%1\n行号:\n%2\n信息:\nQSettings * 对象指针不存在 [%3] 的值\n" ).arg( __FILE__ ).arg( __LINE__ ).arg( key ) );
-	auto url = variant.toString( );
-	urlInput->setText( url );
+	initInstance( webPageSetting, novelInfoWidget, requestNetInterface );
+
 	toggle( Show_Mode::Info );
+}
+WebUrlInfoWidget *WebUrlInfoWidget::generateWebUrlInfoWidget( QSettings *webPageSetting, NovelInfoWidget *parent, IRequestNetInterface *requestNetInterface, Qt::WindowFlags f ) {
+	QUrl url = requestNetInterface->getUrl( );
+	QString host = url.host( );
+	if( webHost.count( ) != 0 ) {
+		auto iterator = webHost.begin( );
+		auto end = webHost.end( );
+		for( ; iterator != end ; ++iterator ) {
+			auto hostName = iterator.value( );
+			if( hostName == host ) {
+				auto webUrlInfoWidget = iterator.key( );
+				webUrlInfoWidget->setWindowFlags( f );
+				return webUrlInfoWidget;
+			}
+		}
+	}
+	auto result = new WebUrlInfoWidget( webPageSetting, parent, requestNetInterface, f );
+	pathCount[ parent ].emplace_back( result );
+	webHost[ result ] = host;
+	return result;
 }
 
 void WebUrlInfoWidget::initComponentConnect( ) {
@@ -90,23 +107,15 @@ void WebUrlInfoWidget::insterCompoentToLists( ) {
 	infoComponent->append( typeCount );
 	infoComponent->append( startBtn );
 }
-void WebUrlInfoWidget::initInstance( QSettings *webPageSetting, NovelInfoWidget *novelInfoWidget ) {
+void WebUrlInfoWidget::initInstance( QSettings *webPageSetting, NovelInfoWidget *novelInfoWidget, IRequestNetInterface *requestNetInterface ) {
 	setWindowTitle( __func__ );
-	pathCount[ novelInfoWidget ] += 1;
-	this->webPageSetting = webPageSetting;
 	initComponentInstance( );
-	initComponentPropertys( );
+	initComponentPropertys( webPageSetting, novelInfoWidget, requestNetInterface );
 	initComponentText( );
 	initComponentConnect( );
 	insterCompoentToLists( );
 }
-WebUrlInfoWidget::WebUrlInfoWidget( QSettings *webPageSetting, NovelInfoWidget *parent, Qt::WindowFlags f )
-: QWidget( parent, f ) {
-	auto novelInfoWidget = overNovelInfoWidgetPtr( parent );
-	initInstance( webPageSetting, novelInfoWidget );
 
-	toggle( Show_Mode::Inster );
-}
 WebUrlInfoWidget::~WebUrlInfoWidget( ) {
 	DEBUG_RUN(
 		qDebug() << tr(u8"WebUrlInfoWidget::~WebUrlInfoWidget : ") << windowTitle();
@@ -168,9 +177,24 @@ void WebUrlInfoWidget::toggle( Show_Mode show_mode ) {
 			maxHeight = minimumSize.height( );
 	}
 	QMargins contentsMargins = hasNovelInfoLayout->contentsMargins( );
-	this->setMinimumSize( maxWidth + contentsMargins.left( ) + contentsMargins.right( ), maxHeight + contentsMargins.top( ) + contentsMargins.bottom( ) );
+	int minw = maxWidth + contentsMargins.left( ) + contentsMargins.right( );
+	int minh = maxHeight + contentsMargins.top( ) + contentsMargins.bottom( );
+	this->setMinimumSize( minw, minh );
+	//emit widgetReseize( minw, minh );
 }
-void WebUrlInfoWidget::initComponentPropertys( ) {
+void WebUrlInfoWidget::resizeEvent( QResizeEvent *event ) {
+	QWidget::resizeEvent( event );
+	DEBUG_RUN(
+		qDebug() << tr(u8"WebUrlInfoWidget::resizeEvent : ")
+	);
+	QSize widgetSize = size( );
+	emit widgetReseize( widgetSize.width( ), widgetSize.height( ) );
+}
+void WebUrlInfoWidget::initComponentPropertys( QSettings *webPageSetting, NovelInfoWidget *novelInfoWidget, IRequestNetInterface *requestNetInterface ) {
+
+	this->webPageSetting = webPageSetting;
+	this->requestNetInterface = requestNetInterface;
+	QWidget::setParent( novelInfoWidget );
 	hasNovelInfoLayout->setContentsMargins( 0, 0, 0, 0 );
 	hasNovelInfoLayout->setSpacing( 0 );
 	urlInput->setReadOnly( true );
@@ -184,6 +208,7 @@ void WebUrlInfoWidget::initComponentPropertys( ) {
 			minWith = width;
 	}
 	urlInput->setMinimumWidth( minWith / 24 );
+
 }
 void WebUrlInfoWidget::initComponentText( ) {
 	insertlNovelInfoBtn->setText( tr( u8"插入小说网站信息" ) );
@@ -191,6 +216,17 @@ void WebUrlInfoWidget::initComponentText( ) {
 	optionBoxWidget->addItem( "http" );
 	optionBoxWidget->addItem( "https" );
 	startBtn->setText( tr( u8"保存" ) );
+
+	QUrl url = requestNetInterface->getUrl( );
+	urlInput->setText( url.host( ) );
+	QString scheme = url.scheme( );
+	int maxVisibleItems = optionBoxWidget->count( );
+	for( int index = 0 ; index < maxVisibleItems ; ++index ) {
+		if( optionBoxWidget->itemText( index ) == scheme ) {
+			optionBoxWidget->setCurrentIndex( index );
+			break;
+		}
+	}
 }
 void WebUrlInfoWidget::initComponentInstance( ) {
 	insertlNovelInfoBtn = new Button( this );

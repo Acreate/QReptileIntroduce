@@ -1,5 +1,5 @@
-﻿#ifndef NOVELINFO_H_H_HEAD__FILE__
-#define NOVELINFO_H_H_HEAD__FILE__
+﻿#ifndef NOVELINFOWIDGET_H_H_HEAD__FILE__
+#define NOVELINFOWIDGET_H_H_HEAD__FILE__
 #pragma once
 #include <QWidget>
 #include <qfileinfo.h>
@@ -25,6 +25,8 @@ class NovelInfoWidget final : public QWidget {
 	Q_OBJECT;
 public: // 友元列表
 	//friend WebUrlInfoWidget;
+public: // 静态成员函数列表
+	static IRequestNetInterface *getIRequestNetInterface( const QString &plugFilePath, const QString &name, const QString &spec );
 public:
 	NovelInfoWidget( QWidget *parent = nullptr, Qt::WindowFlags flag = Qt::WindowFlags( ) );
 	~NovelInfoWidget( ) override;
@@ -86,6 +88,7 @@ public: // get / set
 	}
 
 	IRequestNetInterface *loadPlug( const QString &plugFilePath );
+	void computeListViewWidgetSize( );
 protected: // 重载事件
 	void showEvent( QShowEvent *event ) override;
 	bool nativeEvent( const QByteArray &eventType, void *message, qintptr *result ) override;
@@ -104,8 +107,8 @@ Q_SIGNALS :
 	/// 路径设置完毕事件
 	/// </summary>
 	/// <param name="oldPath">旧路径</param>
-	/// <param name="errorPath">新路径</param>
-	void overSettingPath( const QString &oldPath, const QString &errorPath );
+	/// <param name="newPath">新路径</param>
+	void overSettingPath( const QString &oldPath, const QString &newPath );
 	/// <summary>
 	/// 设置 setting 路径的消息
 	/// </summary>
@@ -116,19 +119,19 @@ Q_SIGNALS :
 	/// 设置请求对象
 	/// </summary>
 	/// <param name="requestNetWrok">请求对象指针</param>
-	void setRequestNetWrok( Request *requestNetWrok );
+	void setRequestNetWrok( const Request *requestNetWrok );
 
 	/// <summary>
 	/// 设置读写对象
 	/// </summary>
 	/// <param name="rwFileThread">读写对象指针</param>
-	void setRWFileThread( RWFileThread *rwFileThread );
+	void setRWFileThread( const RWFileThread *rwFileThread );
 
 	/// <summary>
 	/// 设置请求信号绑定对象
 	/// </summary>
 	/// <param name="requestConnect">信号绑定对象指针</param>
-	void setRequestConnect( RequestConnect *requestConnect );
+	void setRequestConnect( const RequestConnect *requestConnect );
 };
 
-#endif // NOVELINFO_H_H_HEAD__FILE__
+#endif // NOVELINFOWIDGET_H_H_HEAD__FILE__

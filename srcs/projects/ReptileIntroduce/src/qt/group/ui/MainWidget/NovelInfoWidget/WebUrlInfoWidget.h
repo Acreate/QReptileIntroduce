@@ -4,6 +4,7 @@
 #pragma once
 #include <QWidget>
 
+class IRequestNetInterface;
 class CountEditWidget;
 class Exception;
 class NovelInfoWidget;
@@ -27,19 +28,23 @@ public: // 模型切换宏
 		Info
 	};
 private: // 静态成员
-	static QMap< NovelInfoWidget *, unsigned long long > pathCount;
+	static QMap< NovelInfoWidget *, QVector< WebUrlInfoWidget * > > pathCount;
+	static QMap< WebUrlInfoWidget *, QString > webHost;
 	static NovelInfoWidget *overNovelInfoWidgetPtr( QObject *converPtr );
 	static NovelInfoWidget *overNovelInfoWidgetPtrTry( QObject *converPtr, Exception *tryResult );
 	static void setConverError( Exception *tryResult );
 private: // 构造类时候必须初始化
 	QSettings *webPageSetting;
+	IRequestNetInterface *requestNetInterface;
+	NovelInfoWidget *parent;
 	Show_Mode currentMode;
 private: // 配置文件当中的关键 key
 	static const QString settingHostKey;
 	static const QString settingUrlKey;
+private:
+	WebUrlInfoWidget( QSettings *webPageSetting, NovelInfoWidget *parent, IRequestNetInterface *requestNetInterface, Qt::WindowFlags f = Qt::WindowFlags( ) );
 public:
-	WebUrlInfoWidget( QSettings *webPageSetting, NovelInfoWidget *parent, const QString &key, Qt::WindowFlags f = Qt::WindowFlags( ) );
-	WebUrlInfoWidget( QSettings *webPageSetting, NovelInfoWidget *parent, Qt::WindowFlags f = Qt::WindowFlags( ) );
+	static WebUrlInfoWidget *generateWebUrlInfoWidget( QSettings *webPageSetting, NovelInfoWidget *parent, IRequestNetInterface *requestNetInterface, Qt::WindowFlags f = Qt::WindowFlags( ) );
 	~WebUrlInfoWidget( ) override;
 private: // 组件容器
 	QList< QWidget * > *insterComponent;
@@ -58,7 +63,7 @@ private: /// 组件初始化
 	/// <summary>
 	/// 初始化组件属性
 	/// </summary>
-	void initComponentPropertys( );
+	void initComponentPropertys( QSettings *webPageSetting, NovelInfoWidget *novelInfoWidget, IRequestNetInterface *requestNetInterface );
 	/// <summary>
 	/// 初始化组件文本
 	/// </summary>
@@ -80,8 +85,19 @@ private: /// 组件初始化
 	/// </summary>
 	/// <param name="webPageSetting">配置文件对象指针</param>
 	/// <param name="novelInfoWidget">父节点对象指针</param>
-	void initInstance( QSettings *webPageSetting, NovelInfoWidget *novelInfoWidget );
-public:
+	/// <param name="requestNetInterface">请求对象接口处理接口</param>
+	void initInstance( QSettings *webPageSetting, NovelInfoWidget *novelInfoWidget, IRequestNetInterface *requestNetInterface );
+public: // 属性
+
+	QSettings *getWebPageSetting( ) const {
+		return webPageSetting;
+	}
+	IRequestNetInterface *getRequestNetInterface( ) const {
+		return requestNetInterface;
+	}
+	NovelInfoWidget *getParent( ) const {
+		return parent;
+	}
 	QString getUrl( ) const;
 	QString getHttpType( ) const;
 	void setUrl( const QString &url );
@@ -96,13 +112,7 @@ public:
 	/// </summary>
 	/// <returns>个数</returns>
 	unsigned long long getAtPathCount( ) const {
-		QObject *object = parent( );
-		if( object ) {
-			auto novelInfoWidget = qobject_cast< NovelInfoWidget * >( object );
-			if( novelInfoWidget && pathCount.contains( novelInfoWidget ) )
-				return pathCount[ novelInfoWidget ];
-		}
-		return 0;
+		return pathCount[ parent ].count( );
 	}
 	bool setSettingInstance( NovelInfoWidget *parent, QSettings *settings ) {
 		if( parent && pathCount.contains( parent ) ) {
@@ -111,7 +121,13 @@ public:
 		}
 		return false;
 	}
+protected:
+	void resizeEvent( QResizeEvent *event ) override;
 Q_SIGNALS:
+	/// <summary>
+	/// 窗口重置大小信号
+	/// </summary>
+	void widgetReseize( int width, int height );
 	/// <summary>
 	/// 切换状态之后信号诞生
 	/// </summary>

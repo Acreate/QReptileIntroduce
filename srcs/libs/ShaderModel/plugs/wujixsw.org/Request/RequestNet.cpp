@@ -12,7 +12,7 @@ std::shared_ptr< void > RequestNet::getData( ) {
 	return result;
 }
 QUrl RequestNet::getUrl( ) {
-	return QUrl( "https://www.121ds.cc/" );
+	return QUrl( "http://wujixsw.org/" );
 }
 QMap< QString, QUrl > RequestNet::getTypeUrls( const QNetworkReply &&networkReply ) {
 	return { };

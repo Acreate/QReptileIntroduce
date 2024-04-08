@@ -283,9 +283,9 @@ void MainWidget::changeWebComponents( ) {
 			QString absoluteFilePath = info.absoluteFilePath( );
 			progressSetting->setValue( selectWebSettingPath, absoluteFilePath );
 			novelComponent->setNetWorkSettingFilePath( absoluteFilePath );
-
 			// 触发信号
 			emit changeOverWebComponentSetting( );
+			progressSetting->sync(  );
 			break;
 		}
 		if( QMessageBox::question( this, tr( u8"请选择" ), tr( u8"文件错误，是否重新选择？" ) ) == QMessageBox::No )

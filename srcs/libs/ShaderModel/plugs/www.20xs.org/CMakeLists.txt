@@ -53,3 +53,4 @@ target_link_libraries(
 	Qt${QT_VERSION_MAJOR}::Core5Compat
 	NoveInfo
 )
+
