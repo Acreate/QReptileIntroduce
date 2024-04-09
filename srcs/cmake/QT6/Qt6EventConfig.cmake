@@ -1,5 +1,6 @@
 ﻿CMAKE_MINIMUM_REQUIRED( VERSION 3.19 )
 
+
 if( NOT DEFINED QT_VERSION_MAJOR )
 	SET( QT_VERSION_MAJOR 6 )
 endif()
@@ -8,25 +9,31 @@ if( NOT DEFINED QT_VERSION )
 	SET( QT_VERSION 6.6.2 )
 endif()
 
-if( NOT DEFINED builder_tools )
-	SET( builder_tools msvc2019_64 )
+if( NOT DEFINED	QT_QMAKE_EXECUTABLE)
+        
+    if( NOT DEFINED builder_tools )
+	    SET( builder_tools msvc2019_64 )
+    endif()
+    
+    SET( DEPLOY_QT_HOME "C:/Qt/${QT_VERSION}/${builder_tools}/" )
+    SET( CMAKE_PREFIX_PATH "${DEPLOY_QT_HOME}" )
+    
+    SET( Qt_DIR "${DEPLOY_QT_HOME}/lib/cmake/Qt${QT_VERSION_MAJOR}" )
+    SET( Qt6_DIR "${DEPLOY_QT_HOME}/lib/cmake/Qt${QT_VERSION_MAJOR}" )
+    
+    SET( Qt${QT_VERSION_MAJOR}CoreTools_DIR "${DEPLOY_QT_HOME}/lib/cmake/Qt${QT_VERSION_MAJOR}CoreTools" )
+    SET( Qt${QT_VERSION_MAJOR}GuiTools_DIR "${DEPLOY_QT_HOME}/lib/cmake/Qt${QT_VERSION_MAJOR}GuiTools" )
+    SET( Qt${QT_VERSION_MAJOR}WidgetsTools_DIR "${DEPLOY_QT_HOME}/lib/cmake/Qt${QT_VERSION_MAJOR}WidgetsTools" )
+    SET( Qt${QT_VERSION_MAJOR}Widgets_DIR "${DEPLOY_QT_HOME}/lib/cmake/Qt${QT_VERSION_MAJOR}Widgets" )
+    SET( Qt${QT_VERSION_MAJOR}ZlibPrivate_DIR "${DEPLOY_QT_HOME}/lib/cmake/Qt${QT_VERSION_MAJOR}ZlibPrivate" )
+    SET( Qt${QT_VERSION_MAJOR}Core_DIR "${DEPLOY_QT_HOME}/lib/cmake/Qt${QT_VERSION_MAJOR}Core" )
+    
+    SET( WINDEPLOYQT_EXECUTABLE "${DEPLOY_QT_HOME}/bin/windeployqt.exe" )
+    SET( QT_QMAKE_EXECUTABLE "${DEPLOY_QT_HOME}/bin/qmake.exe" )
+    
+    
 endif()
 
-SET( DEPLOY_QT_HOME "C:/Qt/${QT_VERSION}/${builder_tools}/" )
-SET( CMAKE_PREFIX_PATH "${DEPLOY_QT_HOME}" )
-
-SET( Qt_DIR "${DEPLOY_QT_HOME}/lib/cmake/Qt${QT_VERSION_MAJOR}" )
-SET( Qt6_DIR "${DEPLOY_QT_HOME}/lib/cmake/Qt${QT_VERSION_MAJOR}" )
-
-SET( Qt${QT_VERSION_MAJOR}CoreTools_DIR "${DEPLOY_QT_HOME}/lib/cmake/Qt${QT_VERSION_MAJOR}CoreTools" )
-SET( Qt${QT_VERSION_MAJOR}GuiTools_DIR "${DEPLOY_QT_HOME}/lib/cmake/Qt${QT_VERSION_MAJOR}GuiTools" )
-SET( Qt${QT_VERSION_MAJOR}WidgetsTools_DIR "${DEPLOY_QT_HOME}/lib/cmake/Qt${QT_VERSION_MAJOR}WidgetsTools" )
-SET( Qt${QT_VERSION_MAJOR}Widgets_DIR "${DEPLOY_QT_HOME}/lib/cmake/Qt${QT_VERSION_MAJOR}Widgets" )
-SET( Qt${QT_VERSION_MAJOR}ZlibPrivate_DIR "${DEPLOY_QT_HOME}/lib/cmake/Qt${QT_VERSION_MAJOR}ZlibPrivate" )
-SET( Qt${QT_VERSION_MAJOR}Core_DIR "${DEPLOY_QT_HOME}/lib/cmake/Qt${QT_VERSION_MAJOR}Core" )
-
-SET( WINDEPLOYQT_EXECUTABLE "${DEPLOY_QT_HOME}/bin/windeployqt.exe" )
-SET( QT_QMAKE_EXECUTABLE "${DEPLOY_QT_HOME}/bin/qmake.exe" )
 
 SET( CMAKE_AUTOUIC ON )
 SET( CMAKE_AUTOMOC ON )

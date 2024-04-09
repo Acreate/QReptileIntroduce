@@ -2,9 +2,6 @@
 
 #include <QApplication>
 #include <QComboBox>
-#include <QException>
-#include <QLabel>
-#include <QScrollArea>
 #include <QSettings>
 #include <qscreen.h>
 
@@ -14,11 +11,9 @@
 
 #include "../../../../extend/ui/Button.h"
 #include "../../../../extend/ui/EditLine.h"
-#include "../../../../extend/ui/EditLine.h"
 #include "../../../../extend/layout/HLayoutBox.h"
 
 #include <DebugInfo.h>
-#include <QtMorc.h>
 #include "./WebUrlInfoWidget/CountEditWidget.h"
 
 #include "interface/IRequestNetInterface.h"
@@ -90,9 +85,15 @@ WebUrlInfoWidget *WebUrlInfoWidget::generateWebUrlInfoWidget( QSettings *webPage
 void WebUrlInfoWidget::initComponentConnect( ) {
 	connect( insertlNovelInfoBtn, &QPushButton::clicked, [=]( ) {
 		emit insterNovelInfo( );
+		DEBUG_RUN( qDebug() << "emit insterNovelInfo( );" );
+	} );
+	connect( saveBtn, &QPushButton::clicked, [=]( ) {
+		emit saveBtnClick( );
+		DEBUG_RUN( qDebug() << "emit saveBtnClick( );" );
 	} );
 	connect( startBtn, &QPushButton::clicked, [=]( ) {
-		emit start( );
+		emit startBtnClick(  );
+		DEBUG_RUN( qDebug() << "emit startBtnClick( );" );
 	} );
 }
 void WebUrlInfoWidget::insterCompoentToLists( ) {
@@ -105,6 +106,7 @@ void WebUrlInfoWidget::insterCompoentToLists( ) {
 	infoComponent->append( urlInput );
 	infoComponent->append( allCount );
 	infoComponent->append( typeCount );
+	infoComponent->append( saveBtn );
 	infoComponent->append( startBtn );
 }
 void WebUrlInfoWidget::initInstance( QSettings *webPageSetting, NovelInfoWidget *novelInfoWidget, IRequestNetInterface *requestNetInterface ) {
@@ -215,7 +217,8 @@ void WebUrlInfoWidget::initComponentText( ) {
 	loadDll->setText( u8"加载" );
 	optionBoxWidget->addItem( "http" );
 	optionBoxWidget->addItem( "https" );
-	startBtn->setText( tr( u8"保存" ) );
+	saveBtn->setText( tr( u8"保存" ) );
+	startBtn->setText( tr( u8"开始" ) );
 
 	QUrl url = requestNetInterface->getUrl( );
 	urlInput->setText( url.host( ) );
@@ -240,4 +243,5 @@ void WebUrlInfoWidget::initComponentInstance( ) {
 	allCount = new CountEditWidget( this );
 	typeCount = new CountEditWidget( this );
 	startBtn = new Button( this );
+	saveBtn = new Button( this );
 }

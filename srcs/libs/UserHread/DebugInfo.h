@@ -4,5 +4,5 @@
 
 #include "UserDefine.h"
 #include "DebuRunCode.h"
-
+#include "QtMorc.h"
 #endif // DEBUGINFO_H_H_HEAD__FILE__

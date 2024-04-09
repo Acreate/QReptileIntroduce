@@ -57,6 +57,7 @@ private: // 小说存在的时候显示的组件
 	CountEditWidget *allCount; // 总计
 	CountEditWidget *typeCount; // 类型计数
 	Button *startBtn; // 开始获取
+	Button *saveBtn; // 开始获取
 private: // 小说不存在的时候显示的组件
 	Button *insertlNovelInfoBtn; // 插入小说信息按钮
 private: /// 组件初始化
@@ -129,9 +130,13 @@ Q_SIGNALS:
 	/// </summary>
 	void widgetReseize( int width, int height );
 	/// <summary>
-	/// 切换状态之后信号诞生
+	/// 保存按钮被点击
 	/// </summary>
-	void start( );
+	void saveBtnClick( );
+	/// <summary>
+	/// 开始按钮被点击
+	/// </summary>
+	void startBtnClick( );
 	/// <summary>
 	/// 插入按键
 	/// </summary>

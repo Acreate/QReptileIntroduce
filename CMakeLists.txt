@@ -11,11 +11,16 @@ SET( CMAKE_CXX_STANDARD 17 )
 SET( CMAKE_CXX_STANDARD_REQUIRED ON )
 SET( CMAKE_CXX_VISIBILITY_PRESET hidden )
 
+if(ANDROID)
+	message(SEND_ERROR "无法编译到 android 平台" )
+endif()
+
 FIND_PACKAGE( CmakeFuncs REQUIRED PATHS "${CMAKE_CURRENT_SOURCE_DIR}/srcs/cmake/CmakeFuncs/" )
 
 INCLUDE( GenerateExportHeader )
 INCLUDE( GNUInstallDirs )
 
+message("QT_VERSION_MAJOR : ${QT_VERSION_MAJOR}")
 
 
 # 如果发生错误，请重新配置 qt 6 环境，该文件位于根目录的 /cmake/QT6/Qt6EventConfig.cmake
@@ -30,6 +35,8 @@ FIND_PACKAGE( Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS
 	Core5Compat
 	LinguistTools
 )
+
+
 get_current_dir_name( current_dir_name ${CMAKE_CURRENT_SOURCE_DIR} )
 
 SET( translation_file_list

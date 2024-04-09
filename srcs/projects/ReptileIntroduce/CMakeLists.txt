@@ -34,23 +34,11 @@ include_directories( ${Tools_include_dir} )
 # # 合并源码
 list( APPEND ${SRC_LIST} ${SRC_UI} ${QM_FILES} )
 
-if( ${QT_VERSION_MAJOR} GREATER_EQUAL 6 )
-	qt_add_executable( ${PROJECT_NAME}
-		MANUAL_FINALIZATION
-		${SRC_LIST}
-	)
-else()
-	if( ANDROID )
-		add_library( ${PROJECT_NAME} SHARED
-			${SRC_LIST}
-		)
-	else()
-		add_executable( ${PROJECT_NAME}
-			${SRC_LIST}
-		)
-	endif()
-endif()
-
+qt_add_executable( ${PROJECT_NAME}
+	MANUAL_FINALIZATION
+	${SRC_LIST}
+)
+    
 call_qt_deploy( ${PROJECT_NAME}
 	Qt${QT_VERSION_MAJOR}::Widgets
 	Qt${QT_VERSION_MAJOR}::Core
@@ -63,3 +51,4 @@ call_qt_deploy( ${PROJECT_NAME}
 
 copy_dir_path( ${PROJECT_NAME} "${CMAKE_CURRENT_LIST_DIR}/res/ini/progress/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/progress/" )
 copy_dir_path( ${PROJECT_NAME} "${CMAKE_CURRENT_LIST_DIR}/res/ini/web/ini" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/user_plugs/" )
+
