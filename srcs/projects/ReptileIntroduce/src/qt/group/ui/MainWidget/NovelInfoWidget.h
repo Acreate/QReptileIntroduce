@@ -93,10 +93,17 @@ protected: // 重载事件
 	void showEvent( QShowEvent *event ) override;
 	bool nativeEvent( const QByteArray &eventType, void *message, qintptr *result ) override;
 	void mousePressEvent( QMouseEvent *event ) override;
-private slots: // slots
+private slots: // 槽函数
 	void networkReplyFinished( );
 	void settingPathCompoentWriteOver( );
+	void loadPathPlugs();
 Q_SIGNALS :
+
+	/// <summary>
+	/// 请求开始信号
+	/// </summary>
+	void clickRequestStart();
+	
 	/// <summary>
 	/// 路径错误发生消息
 	/// </summary>

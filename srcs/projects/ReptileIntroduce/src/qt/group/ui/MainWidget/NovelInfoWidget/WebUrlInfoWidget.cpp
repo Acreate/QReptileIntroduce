@@ -59,7 +59,6 @@ WebUrlInfoWidget::WebUrlInfoWidget( QSettings *webPageSetting, NovelInfoWidget *
 	auto novelInfoWidget = overNovelInfoWidgetPtr( parent );
 	initInstance( webPageSetting, novelInfoWidget, requestNetInterface );
 
-	toggle( Show_Mode::Info );
 }
 WebUrlInfoWidget *WebUrlInfoWidget::generateWebUrlInfoWidget( QSettings *webPageSetting, NovelInfoWidget *parent, IRequestNetInterface *requestNetInterface, Qt::WindowFlags f ) {
 	QUrl url = requestNetInterface->getUrl( );
@@ -83,47 +82,45 @@ WebUrlInfoWidget *WebUrlInfoWidget::generateWebUrlInfoWidget( QSettings *webPage
 }
 
 void WebUrlInfoWidget::initComponentConnect( ) {
-	connect( insertlNovelInfoBtn, &QPushButton::clicked, [=]( ) {
-		emit insterNovelInfo( );
-		DEBUG_RUN( qDebug() << "emit insterNovelInfo( );" );
-	} );
 	connect( saveBtn, &QPushButton::clicked, [=]( ) {
 		emit saveBtnClick( );
 		DEBUG_RUN( qDebug() << "emit saveBtnClick( );" );
 	} );
 	connect( startBtn, &QPushButton::clicked, [=]( ) {
-		emit startBtnClick(  );
+		emit startBtnClick( );
 		DEBUG_RUN( qDebug() << "emit startBtnClick( );" );
 	} );
+	connect( loadDll, &QPushButton::clicked, [=]( ) {
+		emit loadClick( );
+		DEBUG_RUN( qDebug() << "emit loadClick( );" );
+	} );
 }
-void WebUrlInfoWidget::insterCompoentToLists( ) {
-	insterComponent = new QList< QWidget * >;
-	insterComponent->append( insertlNovelInfoBtn );
-
-	infoComponent = new QList< QWidget * >;
-	infoComponent->append( loadDll );
-	infoComponent->append( optionBoxWidget );
-	infoComponent->append( urlInput );
-	infoComponent->append( allCount );
-	infoComponent->append( typeCount );
-	infoComponent->append( saveBtn );
-	infoComponent->append( startBtn );
+void WebUrlInfoWidget::insterCompoentToLayout( ) {
+	hasNovelInfoLayout->addWidget( loadDll );
+	hasNovelInfoLayout->addWidget( optionBoxWidget );
+	hasNovelInfoLayout->addWidget( urlInput );
+	hasNovelInfoLayout->addWidget( allCount );
+	hasNovelInfoLayout->addWidget( typeCount );
+	hasNovelInfoLayout->addWidget( saveBtn );
+	hasNovelInfoLayout->addWidget( startBtn );
 }
 void WebUrlInfoWidget::initInstance( QSettings *webPageSetting, NovelInfoWidget *novelInfoWidget, IRequestNetInterface *requestNetInterface ) {
 	setWindowTitle( __func__ );
+	this->webPageSetting = webPageSetting;
+	this->requestNetInterface = requestNetInterface;
+	QWidget::setParent( novelInfoWidget );
+
 	initComponentInstance( );
-	initComponentPropertys( webPageSetting, novelInfoWidget, requestNetInterface );
+	insterCompoentToLayout( );
 	initComponentText( );
 	initComponentConnect( );
-	insterCompoentToLists( );
+	initComponentPropertys( );
 }
 
 WebUrlInfoWidget::~WebUrlInfoWidget( ) {
 	DEBUG_RUN(
 		qDebug() << tr(u8"WebUrlInfoWidget::~WebUrlInfoWidget : ") << windowTitle();
 	);
-	delete infoComponent;
-	delete insterComponent;
 }
 QString WebUrlInfoWidget::getUrl( ) const {
 	return urlInput->text( );
@@ -131,37 +128,31 @@ QString WebUrlInfoWidget::getUrl( ) const {
 QString WebUrlInfoWidget::getHttpType( ) const {
 	return optionBoxWidget->currentText( );
 }
-void WebUrlInfoWidget::setUrl( const QString &url ) {
-	urlInput->setText( url );
-}
-void WebUrlInfoWidget::toggle( Show_Mode show_mode ) {
-	switch( show_mode ) {
-		case Show_Mode::Info : {
-			for( auto widget : *insterComponent ) {
-				hasNovelInfoLayout->removeWidget( widget );
-				widget->setHidden( true );
-			}
-			for( auto widget : *infoComponent ) {
-				hasNovelInfoLayout->addWidget( widget );
-				widget->setHidden( false );
-			}
 
-			currentMode = Show_Mode::Info;
-		}
-		break;
-		case Show_Mode::Inster : {
-			for( auto widget : *infoComponent ) {
-				hasNovelInfoLayout->removeWidget( widget );
-				widget->setHidden( true );
-			}
-			for( auto widget : *insterComponent ) {
-				hasNovelInfoLayout->addWidget( widget );
-				widget->setHidden( false );
-			}
-			currentMode = Show_Mode::Inster;
-		}
-		break;
+void WebUrlInfoWidget::resizeEvent( QResizeEvent *event ) {
+	QWidget::resizeEvent( event );
+	DEBUG_RUN(
+		qDebug() << tr(u8"WebUrlInfoWidget::resizeEvent : ")
+	);
+	QSize widgetSize = size( );
+	emit widgetReseize( widgetSize.width( ), widgetSize.height( ) );
+}
+void WebUrlInfoWidget::computerSize( ) {
+	QFontMetrics fontMetrics = urlInput->fontMetrics( );
+	int horizontalAdvance = fontMetrics.horizontalAdvance( urlInput->text( ) );
+	urlInput->setMinimumWidth( horizontalAdvance );
+	int optionCount = optionBoxWidget->count( );
+	fontMetrics = optionBoxWidget->fontMetrics( );
+	horizontalAdvance = 0;
+	for( int index = 0 ; index < optionCount ; ++index ) {
+		QString itemText = optionBoxWidget->itemText( index );
+		int advance = fontMetrics.horizontalAdvance( itemText );
+		if( advance > horizontalAdvance )
+			horizontalAdvance = advance;
+		DEBUG_RUN( qDebug() << tr(u8"检查文字 :") << itemText << ", 长度 : " << horizontalAdvance );
 	}
+	optionBoxWidget->setMinimumWidth( horizontalAdvance );
+
 	int maxWidth = 0;
 	int maxHeight = 0;
 	int count = hasNovelInfoLayout->count( );
@@ -182,38 +173,14 @@ void WebUrlInfoWidget::toggle( Show_Mode show_mode ) {
 	int minw = maxWidth + contentsMargins.left( ) + contentsMargins.right( );
 	int minh = maxHeight + contentsMargins.top( ) + contentsMargins.bottom( );
 	this->setMinimumSize( minw, minh );
-	//emit widgetReseize( minw, minh );
 }
-void WebUrlInfoWidget::resizeEvent( QResizeEvent *event ) {
-	QWidget::resizeEvent( event );
-	DEBUG_RUN(
-		qDebug() << tr(u8"WebUrlInfoWidget::resizeEvent : ")
-	);
-	QSize widgetSize = size( );
-	emit widgetReseize( widgetSize.width( ), widgetSize.height( ) );
-}
-void WebUrlInfoWidget::initComponentPropertys( QSettings *webPageSetting, NovelInfoWidget *novelInfoWidget, IRequestNetInterface *requestNetInterface ) {
-
-	this->webPageSetting = webPageSetting;
-	this->requestNetInterface = requestNetInterface;
-	QWidget::setParent( novelInfoWidget );
+void WebUrlInfoWidget::initComponentPropertys( ) {
 	hasNovelInfoLayout->setContentsMargins( 0, 0, 0, 0 );
 	hasNovelInfoLayout->setSpacing( 0 );
 	urlInput->setReadOnly( true );
-	auto screens = qApp->screens( );
-	uint32_t minWith = 888888888;
-	for( auto &screen : screens ) {
-		auto screenSize = screen->size( );
-		DEBUG_RUN( qDebug() << screenSize ) ;
-		int width = screenSize.width( );
-		if( width < minWith )
-			minWith = width;
-	}
-	urlInput->setMinimumWidth( minWith / 24 );
-
+	computerSize( );
 }
 void WebUrlInfoWidget::initComponentText( ) {
-	insertlNovelInfoBtn->setText( tr( u8"插入小说网站信息" ) );
 	loadDll->setText( u8"加载" );
 	optionBoxWidget->addItem( "http" );
 	optionBoxWidget->addItem( "https" );
@@ -232,7 +199,6 @@ void WebUrlInfoWidget::initComponentText( ) {
 	}
 }
 void WebUrlInfoWidget::initComponentInstance( ) {
-	insertlNovelInfoBtn = new Button( this );
 
 	hasNovelInfoLayout = new HLayoutBox( this );
 

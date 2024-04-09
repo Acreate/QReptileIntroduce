@@ -85,8 +85,10 @@ NovelInfoWidget::NovelInfoWidget( QWidget *parent, Qt::WindowFlags flag ) : QWid
 						for( ; index < count ; ++index )
 							if( layout->itemAt( index )->widget( ) == webUrlWidget )
 								break;
-						if( index == count )
+						if( index == count ) {
 							layout->addWidget( webUrlWidget );
+							connect( this, &NovelInfoWidget::clickRequestStart, webUrlWidget, &WebUrlInfoWidget::startBtnClick );
+						}
 					}
 				}
 			}
@@ -121,6 +123,7 @@ NovelInfoWidget::NovelInfoWidget( QWidget *parent, Qt::WindowFlags flag ) : QWid
 	editorStatus = 0;
 	connect( inputSettingPathLine, &QLineEdit::editingFinished, this, &NovelInfoWidget::settingPathCompoentWriteOver );
 	connect( inputSettingPathLine, &QLineEdit::textEdited, [=]( ) {
+		DEBUG_RUN( qDebug() << u8"QLineEdit::textEdited" );
 		editorStatus = 1;
 	} );
 	settingInfoLayoutBox->addWidget( inputSettingPathLine, 1 );
@@ -130,6 +133,7 @@ NovelInfoWidget::NovelInfoWidget( QWidget *parent, Qt::WindowFlags flag ) : QWid
 	settingInfoLayoutBox->addWidget( btn );
 	btn->setText( tr( u8"添加插件到配置文件" ) );
 	connect( this, &NovelInfoWidget::errorSettingPath, [=]( ) {
+		DEBUG_RUN( qDebug() << u8"NovelInfoWidget::errorSettingPath" );
 		btn->setText( tr( u8"错误" ) );
 		btn->setStyleSheet( tr( u8R"(
 	Button{
@@ -137,67 +141,11 @@ NovelInfoWidget::NovelInfoWidget( QWidget *parent, Qt::WindowFlags flag ) : QWid
 	})" ) );
 	} );
 	connect( this, &NovelInfoWidget::overSettingPath, [=]( const QString &oldPath, const QString &newPath ) {
-		DEBUG_RUN( qDebug() << "添加插件 : " << newPath );
+		DEBUG_RUN( qDebug() << u8"NovelInfoWidget::overSettingPath" );
 	} );
 	connect( btn, &QPushButton::clicked, [=]( ) {
-		QFileInfo settingFileInfo( netSetFileSettings->fileName( ) );
-		QString caption = tr( u8"选择一个 qt 插件路径" );
-		QString title = tr( u8"插件错误" );
-		QString questionMsg = tr( u8"文件打开错误!现在重新选择吗?" );
-		auto prefix = "host";
-		auto key = "root";
-		do {
-			auto fileName = QFileDialog::getExistingDirectory( this, caption, settingFileInfo.absoluteDir( ).absolutePath( ) );
-			if( fileName.isEmpty( ) ) {
-				QMessageBox::StandardButton standardButton = QMessageBox::question( this, title, questionMsg );
-				if( standardButton == QMessageBox::Yes )
-					continue;
-				break;
-			}
-			auto dirInfo = Path::getDirInfo( fileName );
-			for( auto &dir : dirInfo.first ) {
-				qDebug( ) << u8"发现文件夹 : " << dir.getCurrentPath( );
-			}
-			size_t loadPlugCount = 0;
-			QDir current( qApp->applicationDirPath( ) );
-			for( auto &file : dirInfo.second ) {
-				QString currentFilePtah = file.getCurrentFilePtah( );
-				qDebug( ) << u8"发现文件 : " << currentFilePtah;
-				auto ire = loadPlug( currentFilePtah );
-				if( ire ) {
-					++loadPlugCount;
-					QUrl url = ire->getUrl( );
-					QString host = url.host( );
-					netSetFileSettings->beginGroup( prefix );
-					currentFilePtah = current.relativeFilePath( currentFilePtah );
-					netSetFileSettings->setValue( host, currentFilePtah );
-					netSetFileSettings->endGroup( );
-					netSetFileSettings->beginGroup( host );
-					netSetFileSettings->setValue( key, url.url( ) );
-					netSetFileSettings->endGroup( );
-					auto webUrlInfoWidget = WebUrlInfoWidget::generateWebUrlInfoWidget( netSetFileSettings, this, ire );
-
-					if( webUrlInfoWidget ) {
-						auto layout = listView->widget( )->layout( );
-						int count = layout->count( );
-						int index = 0;
-						for( ; index < count ; ++index )
-							if( layout->itemAt( index )->widget( ) == webUrlInfoWidget )
-								break;
-						if( index == count )
-							layout->addWidget( webUrlInfoWidget );
-					}
-				}
-			}
-			if( loadPlugCount > 0 ) {
-				netSetFileSettings->sync( );
-				computeListViewWidgetSize( );
-				break;
-			}
-			QMessageBox::StandardButton standardButton = QMessageBox::question( this, title, questionMsg );
-			if( standardButton == QMessageBox::No )
-				break;
-		} while( true );
+		DEBUG_RUN( qDebug() << u8"QPushButton::clicked" );
+		loadPathPlugs( );
 	} );
 
 	// 中间的布局
@@ -353,4 +301,64 @@ void NovelInfoWidget::settingPathCompoentWriteOver( ) {
 
 	emit overSettingPath( settingFileAbsoluteFilePath, newPath );
 	settingFileAbsoluteFilePath = newPath;
+}
+void NovelInfoWidget::loadPathPlugs( ) {
+	QFileInfo settingFileInfo( netSetFileSettings->fileName( ) );
+	QString caption = tr( u8"选择一个 qt 插件路径" );
+	QString title = tr( u8"插件错误" );
+	QString questionMsg = tr( u8"文件打开错误!现在重新选择吗?" );
+	auto prefix = "host";
+	auto key = "root";
+	do {
+		auto fileName = QFileDialog::getExistingDirectory( this, caption, settingFileInfo.absoluteDir( ).absolutePath( ) );
+		if( fileName.isEmpty( ) ) {
+			QMessageBox::StandardButton standardButton = QMessageBox::question( this, title, questionMsg );
+			if( standardButton == QMessageBox::Yes )
+				continue;
+			break;
+		}
+		auto dirInfo = Path::getDirInfo( fileName );
+		for( auto &dir : dirInfo.first ) {
+			qDebug( ) << u8"发现文件夹 : " << dir.getCurrentPath( );
+		}
+		size_t loadPlugCount = 0;
+		QDir current( qApp->applicationDirPath( ) );
+		for( auto &file : dirInfo.second ) {
+			QString currentFilePtah = file.getCurrentFilePtah( );
+			qDebug( ) << u8"发现文件 : " << currentFilePtah;
+			auto ire = loadPlug( currentFilePtah );
+			if( ire ) {
+				++loadPlugCount;
+				QUrl url = ire->getUrl( );
+				QString host = url.host( );
+				netSetFileSettings->beginGroup( prefix );
+				currentFilePtah = current.relativeFilePath( currentFilePtah );
+				netSetFileSettings->setValue( host, currentFilePtah );
+				netSetFileSettings->endGroup( );
+				netSetFileSettings->beginGroup( host );
+				netSetFileSettings->setValue( key, url.url( ) );
+				netSetFileSettings->endGroup( );
+				auto webUrlInfoWidget = WebUrlInfoWidget::generateWebUrlInfoWidget( netSetFileSettings, this, ire );
+
+				if( webUrlInfoWidget ) {
+					auto layout = listView->widget( )->layout( );
+					int count = layout->count( );
+					int index = 0;
+					for( ; index < count ; ++index )
+						if( layout->itemAt( index )->widget( ) == webUrlInfoWidget )
+							break;
+					if( index == count )
+						layout->addWidget( webUrlInfoWidget );
+				}
+			}
+		}
+		if( loadPlugCount > 0 ) {
+			netSetFileSettings->sync( );
+			computeListViewWidgetSize( );
+			break;
+		}
+		QMessageBox::StandardButton standardButton = QMessageBox::question( this, title, questionMsg );
+		if( standardButton == QMessageBox::No )
+			break;
+	} while( true );
 }

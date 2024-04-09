@@ -14,6 +14,7 @@
 #include <QFileDevice>
 #include <QTimer>
 
+class JobWidget;
 class Menu;
 class HLayoutBox;
 class WebUrlInfoWidget;
@@ -52,6 +53,7 @@ private: // 计算变量
 	QPoint winCenterPoint; // 记录窗口中间
 private: // 组件
 	NovelInfoWidget *novelComponent; // 小说组件
+	JobWidget* jobWidget; // 任务组件
 	QLineEdit *textLine; // 显示时间
 	QPushButton *converTransparentForMouseEventsBtn; // 切换与鼠标点击事件
 private: // 布局

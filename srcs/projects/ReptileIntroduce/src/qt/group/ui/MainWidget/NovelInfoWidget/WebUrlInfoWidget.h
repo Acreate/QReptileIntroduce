@@ -4,6 +4,8 @@
 #pragma once
 #include <QWidget>
 
+#include "WebUrlInfoWidget/CountEditWidget.h"
+
 class IRequestNetInterface;
 class CountEditWidget;
 class Exception;
@@ -46,9 +48,6 @@ private:
 public:
 	static WebUrlInfoWidget *generateWebUrlInfoWidget( QSettings *webPageSetting, NovelInfoWidget *parent, IRequestNetInterface *requestNetInterface, Qt::WindowFlags f = Qt::WindowFlags( ) );
 	~WebUrlInfoWidget( ) override;
-private: // 组件容器
-	QList< QWidget * > *insterComponent;
-	QList< QWidget * > *infoComponent;
 private: // 小说存在的时候显示的组件
 	HLayoutBox *hasNovelInfoLayout;  // 主要布局
 	Button *loadDll; // 加载 dll 按钮
@@ -58,13 +57,12 @@ private: // 小说存在的时候显示的组件
 	CountEditWidget *typeCount; // 类型计数
 	Button *startBtn; // 开始获取
 	Button *saveBtn; // 开始获取
-private: // 小说不存在的时候显示的组件
-	Button *insertlNovelInfoBtn; // 插入小说信息按钮
+
 private: /// 组件初始化
 	/// <summary>
 	/// 初始化组件属性
 	/// </summary>
-	void initComponentPropertys( QSettings *webPageSetting, NovelInfoWidget *novelInfoWidget, IRequestNetInterface *requestNetInterface );
+	void initComponentPropertys( );
 	/// <summary>
 	/// 初始化组件文本
 	/// </summary>
@@ -80,7 +78,7 @@ private: /// 组件初始化
 	/// <summary>
 	/// 插入组件到列表当中
 	/// </summary>
-	void insterCompoentToLists( );
+	void insterCompoentToLayout( );
 	/// <summary>
 	/// 初始化实例
 	/// </summary>
@@ -89,7 +87,12 @@ private: /// 组件初始化
 	/// <param name="requestNetInterface">请求对象接口处理接口</param>
 	void initInstance( QSettings *webPageSetting, NovelInfoWidget *novelInfoWidget, IRequestNetInterface *requestNetInterface );
 public: // 属性
-
+	long long getAllCountValue( ) {
+		return allCount->getValue( );
+	};
+	long long getTypeCountValue( ) {
+		return typeCount->getValue( );
+	}
 	QSettings *getWebPageSetting( ) const {
 		return webPageSetting;
 	}
@@ -101,12 +104,6 @@ public: // 属性
 	}
 	QString getUrl( ) const;
 	QString getHttpType( ) const;
-	void setUrl( const QString &url );
-	/// <summary>
-	/// 设置显示模式
-	/// </summary>
-	/// <param name="show_mode">模式</param>
-	void toggle( Show_Mode show_mode );
 
 	/// <summary>
 	/// 返回基于父节点当中的个数，不存在时候，该值为 0
@@ -124,6 +121,7 @@ public: // 属性
 	}
 protected:
 	void resizeEvent( QResizeEvent *event ) override;
+	void computerSize( );
 Q_SIGNALS:
 	/// <summary>
 	/// 窗口重置大小信号
@@ -161,6 +159,11 @@ Q_SIGNALS:
 	/// 保存
 	/// </summary>
 	void save( );
+
+	/// <summary>
+	/// 加载按钮被点击
+	/// </summary>
+	void loadClick();
 };
 
 #endif // WEBURLINFOWIDGET_H_H_HEAD__FILE__

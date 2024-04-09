@@ -9,7 +9,7 @@
 #include <DebugInfo.h>
 #include "MainWidget.h"
 #include "MainWidget/NovelInfoWidget.h"
-#include "MainWidget/NovelInfoWidget/WebUrlInfoWidget.h"
+#include "MainWidget/JobWidget.h"
 #include <QFileDialog>
 #include <QInputDialog>
 #include <QMenu>
@@ -112,6 +112,11 @@ MainWidget::MainWidget( QWidget *parent, Qt::WindowFlags fg ) : QWidget( parent,
 
 	connect( converTransparentForMouseEventsBtn, &QPushButton::clicked, this, &MainWidget::changeTransparent, Qt::QueuedConnection );
 
+	jobWidget = new JobWidget( this );
+	mainLayout->addWidget( jobWidget );
+	connect( jobWidget, &JobWidget::click, [=]( ) {
+		emit jobWidget->setProgressValue( 100 );
+	} );
 	////////////// 菜单
 
 	toolsMenu = new Menu( this );
@@ -285,7 +290,7 @@ void MainWidget::changeWebComponents( ) {
 			novelComponent->setNetWorkSettingFilePath( absoluteFilePath );
 			// 触发信号
 			emit changeOverWebComponentSetting( );
-			progressSetting->sync(  );
+			progressSetting->sync( );
 			break;
 		}
 		if( QMessageBox::question( this, tr( u8"请选择" ), tr( u8"文件错误，是否重新选择？" ) ) == QMessageBox::No )
