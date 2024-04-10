@@ -75,6 +75,8 @@ protected:
 	/// 初始化 widget 大小
 	/// </summary>
 	void initWidgetSize();
+private: // 初始化子组件
+	void initWebUrlInfoWidgetCompoent( WebUrlInfoWidget * webUrlWidget );
 private: // 顶端组件-settingInfoLayoutBox
 	Button *btn;
 	Button *startBtn;
@@ -120,6 +122,7 @@ private slots: // 槽函数
 	void networkReplyFinished( );
 	void settingPathCompoentWriteOver( );
 	void loadPathPlugs();
+	void componentRequestStart();
 Q_SIGNALS :
 
 	/// <summary>

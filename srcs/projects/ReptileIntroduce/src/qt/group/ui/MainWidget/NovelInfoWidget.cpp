@@ -25,7 +25,6 @@
 #include "../../../extend/ui/EditLine.h"
 
 #include "NovelInfoWidget/WebUrlInfoWidget.h"
-#include <Request/RequestNet.h>
 #include <QPluginLoader>
 
 #include "path/Path.h"
@@ -34,16 +33,21 @@ const QString NovelInfoWidget::selectWebBuffWorkPath = tr( u8"work/WebBuff/Path"
 IRequestNetInterfaceExtend *NovelInfoWidget::getIRequestNetInterface( const QString &plugFilePath, const QString &name, const QString &spec ) {
 	QPluginLoader loader( plugFilePath );
 	if( loader.load( ) ) {
-		QGenericPlugin *genericPlugin = qobject_cast< QGenericPlugin * >( loader.instance( ) );
+		QObject *instance = loader.instance( );
+		QGenericPlugin *genericPlugin = qobject_cast< QGenericPlugin * >( instance );
 		if( genericPlugin ) {
-			IRequestNetInterfaceExtend *result = qobject_cast< IRequestNetInterfaceExtend * >( genericPlugin->create( name, spec ) );
-			if( result ) {
-				result->setParent( nullptr );
-				return result;
+			QObject *object = genericPlugin->create( name, spec );
+			auto className = object->metaObject( )->className( );
+			if( strcmp( className, "RequestNet" ) == 0 ) {
+				IRequestNetInterfaceExtend *result = reinterpret_cast< IRequestNetInterfaceExtend * >( object );
+				if( result ) {
+					result->setParent( nullptr );
+					return result;
+				}
 			}
 		}
+		return nullptr;
 	}
-	return nullptr;
 }
 NovelInfoWidget::NovelInfoWidget( QWidget *parent, Qt::WindowFlags flag ) : QWidget( parent, flag ) {
 	/////// 链接信号槽
@@ -91,6 +95,7 @@ void NovelInfoWidget::initComponentLayout( ) {
 	msgLayoutBox->addWidget( listView );
 	listView->setWidget( listViewWidget );
 }
+
 void NovelInfoWidget::initComponentConnect( ) {
 	connect( this, &NovelInfoWidget::setNetWorkSettingFilePath, [=]( const QString &filePath ) {
 		QFileInfo fileInfo( filePath );
@@ -132,7 +137,8 @@ void NovelInfoWidget::initComponentConnect( ) {
 								break;
 						if( index == count ) {
 							layout->addWidget( webUrlWidget );
-							connect( this, &NovelInfoWidget::clickRequestStart, webUrlWidget, &WebUrlInfoWidget::startBtnClick );
+							initWebUrlInfoWidgetCompoent( webUrlWidget );
+
 						}
 					}
 				}
@@ -172,6 +178,10 @@ void NovelInfoWidget::initWidgetSize( ) {
 
 	listView->setMinimumSize( horizontalScrollBarHint.width( ) + contentsMargins.left( ) + contentsMargins.right( ), verticalScrollBarHint.height( ) + contentsMargins.top( ) + contentsMargins.bottom( ) );
 
+}
+void NovelInfoWidget::initWebUrlInfoWidgetCompoent( WebUrlInfoWidget *webUrlWidget ) {
+	connect( this, &NovelInfoWidget::clickRequestStart, webUrlWidget, &WebUrlInfoWidget::startBtnClick );
+	connect( webUrlWidget, &WebUrlInfoWidget::startBtnClick, this, &NovelInfoWidget::componentRequestStart );
 }
 
 NovelInfoWidget::~NovelInfoWidget( ) {
@@ -372,4 +382,13 @@ void NovelInfoWidget::loadPathPlugs( ) {
 		if( standardButton == QMessageBox::No )
 			break;
 	} while( true );
+}
+void NovelInfoWidget::componentRequestStart( ) {
+	QObject *src = sender( );
+	if( src ) {
+		auto webUrlInfoWidget = qobject_cast< WebUrlInfoWidget * >( src );
+		if( webUrlInfoWidget ) {
+			DEBUG_RUN( qDebug() << "qobject_cast<WebUrlInfoWidget*>(src) = " << webUrlInfoWidget->getUrl( ) );
+		}
+	}
 }

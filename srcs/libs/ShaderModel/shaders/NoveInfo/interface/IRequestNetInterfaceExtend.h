@@ -8,7 +8,6 @@
 
 #include "IRequestNetInterface.h"
 
-#include "../export/NoveInfo_export.h"
 class INovelInfo;
 
 /// <summary>

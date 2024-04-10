@@ -4,17 +4,10 @@ IRequestNetInterfaceExtend::IRequestNetInterfaceExtend( QObject *parent ) : QObj
 IRequestNetInterfaceExtend::~IRequestNetInterfaceExtend( ) {
 	qDebug( ) << u8"IRequestNetInterfaceExtend::~IRequestNetInterfaceExtend( )";
 }
-std::shared_ptr< void > IRequestNetInterfaceExtend::getData( ) {
-
-	void *string = new QString( u8"RequestNet::getData" );
-	std::shared_ptr< void > result( string, [=]( void *p ) {
-		QString *msg = ( QString * )p;
-		qDebug( ) << "delete = " << this << ", info(" << msg << "):" << *msg;
-		delete msg;
-	} );
-	return result;
+std::shared_ptr<void> IRequestNetInterfaceExtend::getData( ) {
+	return { };
 }
-QMap< QString, QUrl > IRequestNetInterfaceExtend::getTypeUrls( const QNetworkReply &networkReply ) {
+QMap<QString, QUrl> IRequestNetInterfaceExtend::getTypeUrls( const QNetworkReply &networkReply ) {
 	return { };
 }
 IRequestNetInterface::NovelPtrList IRequestNetInterfaceExtend::getTypePageNovels( const QNetworkReply &networkReply, const NovelPtrList &saveNovelInfos, void *appendDataPtr ) {

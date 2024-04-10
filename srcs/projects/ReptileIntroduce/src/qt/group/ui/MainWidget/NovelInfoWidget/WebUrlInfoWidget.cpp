@@ -79,10 +79,8 @@ void WebUrlInfoWidget::endHost( const NovelPtrList &saveNovelInfos ) {
 }
 WebUrlInfoWidget::WebUrlInfoWidget( QSettings *webPageSetting, NovelInfoWidget *parent, IRequestNetInterfaceExtend *requestNetInterface,
 	Qt::WindowFlags f ) : QWidget( parent, f ) {
-
 	auto novelInfoWidget = overNovelInfoWidgetPtr( parent );
 	initInstance( webPageSetting, novelInfoWidget, requestNetInterface );
-
 }
 WebUrlInfoWidget *WebUrlInfoWidget::generateWebUrlInfoWidget( QSettings *webPageSetting, NovelInfoWidget *parent, IRequestNetInterfaceExtend *requestNetInterface, Qt::WindowFlags f ) {
 	QUrl url = requestNetInterface->getUrl( );

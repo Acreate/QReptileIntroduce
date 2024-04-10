@@ -3,10 +3,8 @@
 #pragma once
 #include <QGenericPlugin>
 #include <interface/IRequestNetInterfaceExtend.h>
-
-#define IRequestNetInterfaceExtend_iid "wujixsw.org.json.IRequestNetInterfaceExtend"
+#include "../macro/cmake_to_c_cpp_header_macro.h"
 Q_DECLARE_INTERFACE( IRequestNetInterfaceExtend, IRequestNetInterfaceExtend_iid );
-
 class RequestNet : public IRequestNetInterfaceExtend {
 	Q_OBJECT;
 	Q_INTERFACES( IRequestNetInterfaceExtend )
@@ -16,7 +14,7 @@ public:
 	~RequestNet( ) override;
 public: // 实现虚函数
 	QUrl getUrl( ) override;
-	
+
 };
 
 #endif // REQUESTNET_H_H_HEAD__FILE__

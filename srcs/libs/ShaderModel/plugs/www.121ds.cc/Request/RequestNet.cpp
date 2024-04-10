@@ -1,8 +1,9 @@
 ﻿#include "RequestNet.h"
 
 RequestNet::~RequestNet( ) {
+	qDebug( ) << "RequestNet::~RequestNet( " << IRequestNetInterfaceExtend_iid << ")";
 }
 
 QUrl RequestNet::getUrl( ) {
-	return QUrl( "https://www.121ds.cc/" );
+	return QUrl( GET_URL );
 }

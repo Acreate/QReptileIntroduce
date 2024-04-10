@@ -27,7 +27,6 @@ file( GLOB_RECURSE SRC_UI
 	"*.ui"
 )
 
-include_directories( ${www_121ds_cc_include_dir} )
 include_directories( ${NoveInfo_include_dir} )
 include_directories( ${UserHread_include_dir} )
 include_directories( ${Tools_include_dir} )

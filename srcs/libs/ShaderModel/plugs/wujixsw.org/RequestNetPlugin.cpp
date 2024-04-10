@@ -8,6 +8,6 @@ RequestNetPlugin::~RequestNetPlugin( ) {
 }
 
 QObject *RequestNetPlugin::create( const QString &name, const QString &spec ) {
-	qDebug( ) << u8"RequestNetPlugin::create( const QString &name, const QString &spec ):\n\tname:\n\t\t" << name << "\nspec:\n\t\t" << spec;
+	qDebug( ) << u8"RequestNetPlugin::create( &" << name << ", &" << spec << ")";
 	return new RequestNet( this );
 }
