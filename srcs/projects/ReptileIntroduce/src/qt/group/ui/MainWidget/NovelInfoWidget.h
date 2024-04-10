@@ -5,7 +5,7 @@
 #include <qfileinfo.h>
 #include <qlabel.h>
 
-class IRequestNetInterface;
+class IRequestNetInterfaceExtend;
 class EditLine;
 class Button;
 class HLayoutBox;
@@ -26,7 +26,7 @@ class NovelInfoWidget final : public QWidget {
 public: // 友元列表
 	//friend WebUrlInfoWidget;
 public: // 静态成员函数列表
-	static IRequestNetInterface *getIRequestNetInterface( const QString &plugFilePath, const QString &name, const QString &spec );
+	static IRequestNetInterfaceExtend *getIRequestNetInterface( const QString &plugFilePath, const QString &name, const QString &spec );
 public:
 	NovelInfoWidget( QWidget *parent = nullptr, Qt::WindowFlags flag = Qt::WindowFlags( ) );
 	~NovelInfoWidget( ) override;
@@ -55,7 +55,26 @@ private: // 组件
 	HLayoutBox *msgLayoutBox;
 	HLayoutBox *runInfoLayoutBox;
 protected:
-
+	/// <summary>
+	/// 实现组件对象创建
+	/// </summary>
+	void initComponentMeoryObj();
+	/// <summary>
+	/// 实现组件对象属性
+	/// </summary>
+	void initComponentPropers();
+	/// <summary>
+	/// 实现组件布局
+	/// </summary>
+	void initComponentLayout();
+	/// <summary>
+	/// 实现组件信号槽内容
+	/// </summary>
+	void initComponentConnect();
+	/// <summary>
+	/// 初始化 widget 大小
+	/// </summary>
+	void initWidgetSize();
 private: // 顶端组件-settingInfoLayoutBox
 	Button *btn;
 	Button *startBtn;
@@ -63,6 +82,9 @@ private: // 顶端组件-settingInfoLayoutBox
 	QLabel *settingPathTitle;
 private: // 居中组件-msgLayoutBox
 	QScrollArea *listView;
+private: // listView 组件中的子组件
+	QWidget * listViewWidget;
+	VLayoutBox * listViewWidgetVBox;
 private: // 底部组件-runInfoLayoutBox
 
 private:
@@ -87,18 +109,23 @@ public: // get / set
 		return requestConnect;
 	}
 
-	IRequestNetInterface *loadPlug( const QString &plugFilePath );
+	IRequestNetInterfaceExtend *loadPlug( const QString &plugFilePath );
 	void computeListViewWidgetSize( );
 protected: // 重载事件
 	void showEvent( QShowEvent *event ) override;
 	bool nativeEvent( const QByteArray &eventType, void *message, qintptr *result ) override;
 	void mousePressEvent( QMouseEvent *event ) override;
+	
 private slots: // 槽函数
 	void networkReplyFinished( );
 	void settingPathCompoentWriteOver( );
 	void loadPathPlugs();
 Q_SIGNALS :
 
+	/// <summary>
+	/// 重置大小信号
+	/// </summary>
+	void resetWidgetSize(const int width, const int height);
 	/// <summary>
 	/// 请求开始信号
 	/// </summary>

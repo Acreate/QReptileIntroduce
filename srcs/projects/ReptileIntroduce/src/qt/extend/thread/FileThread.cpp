@@ -25,7 +25,7 @@ FileResult *FileThread::readFile( ) {
 		return nullptr;
 
 	DEBUG_RUN( qDebug( ) << "FileThread::readFile( " << file.fileName( ) << " ) openMode = " << openMode );
-	if( runOpenMode & openMode && file.open( openMode ) )
+	if( runOpenMode & openMode & file.open( openMode ) )
 		return fileThreadResult;
 	emit fileThreadResult->error( 1, file.error( ), QFileDevice::NoError );
 	return nullptr;

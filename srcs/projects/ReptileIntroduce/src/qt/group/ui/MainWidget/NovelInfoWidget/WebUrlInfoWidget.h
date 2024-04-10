@@ -6,7 +6,9 @@
 
 #include "WebUrlInfoWidget/CountEditWidget.h"
 
-class IRequestNetInterface;
+#include "interface/IRequestNetInterfaceExtend.h"
+
+class IRequestNetInterfaceExtend;
 class CountEditWidget;
 class Exception;
 class NovelInfoWidget;
@@ -20,15 +22,12 @@ class HLayoutBox;
 
 /// <summary>
 /// web 请求组件
+/// IRequestNetInterface 装饰类
 /// </summary>
-class WebUrlInfoWidget : public QWidget {
+class WebUrlInfoWidget : public QWidget, public IRequestNetInterface {
 
 	Q_OBJECT;
-public: // 模型切换宏
-	enum class Show_Mode {
-		Inster,
-		Info
-	};
+
 private: // 静态成员
 	static QMap< NovelInfoWidget *, QVector< WebUrlInfoWidget * > > pathCount;
 	static QMap< WebUrlInfoWidget *, QString > webHost;
@@ -37,16 +36,24 @@ private: // 静态成员
 	static void setConverError( Exception *tryResult );
 private: // 构造类时候必须初始化
 	QSettings *webPageSetting;
-	IRequestNetInterface *requestNetInterface;
+	IRequestNetInterfaceExtend *requestNetInterface;
 	NovelInfoWidget *parent;
-	Show_Mode currentMode;
+public:
+	std::shared_ptr<void> getData( ) override;
+	QUrl getUrl( ) override;
+	QMap<QString, QUrl> getTypeUrls( const QNetworkReply &networkReply ) override;
+	NovelPtrList getTypePageNovels( const QNetworkReply &networkReply, const NovelPtrList &saveNovelInfos, void *appendDataPtr ) override;
+	INovelInfoSharedPtr getUrlNovelInfo( const QNetworkReply &networkReply, const NovelPtrList &saveNovelInfos, const INovelInfoSharedPtr &networkReplayNovel ) override;
+	QUrl getNext( const QNetworkReply &networkReply, const NovelPtrList &saveNovelInfos, const NovelPtrList &lastNovelInfos ) override;
+	void novelTypeEnd( const NovelPtrList &saveNovelInfos ) override;
+	void endHost( const NovelPtrList &saveNovelInfos ) override;
 private: // 配置文件当中的关键 key
 	static const QString settingHostKey;
 	static const QString settingUrlKey;
 private:
-	WebUrlInfoWidget( QSettings *webPageSetting, NovelInfoWidget *parent, IRequestNetInterface *requestNetInterface, Qt::WindowFlags f = Qt::WindowFlags( ) );
+	WebUrlInfoWidget( QSettings *webPageSetting, NovelInfoWidget *parent, IRequestNetInterfaceExtend *requestNetInterface, Qt::WindowFlags f = Qt::WindowFlags( ) );
 public:
-	static WebUrlInfoWidget *generateWebUrlInfoWidget( QSettings *webPageSetting, NovelInfoWidget *parent, IRequestNetInterface *requestNetInterface, Qt::WindowFlags f = Qt::WindowFlags( ) );
+	static WebUrlInfoWidget *generateWebUrlInfoWidget( QSettings *webPageSetting, NovelInfoWidget *parent, IRequestNetInterfaceExtend *requestNetInterface, Qt::WindowFlags f = Qt::WindowFlags( ) );
 	~WebUrlInfoWidget( ) override;
 private: // 小说存在的时候显示的组件
 	HLayoutBox *hasNovelInfoLayout;  // 主要布局
@@ -85,7 +92,7 @@ private: /// 组件初始化
 	/// <param name="webPageSetting">配置文件对象指针</param>
 	/// <param name="novelInfoWidget">父节点对象指针</param>
 	/// <param name="requestNetInterface">请求对象接口处理接口</param>
-	void initInstance( QSettings *webPageSetting, NovelInfoWidget *novelInfoWidget, IRequestNetInterface *requestNetInterface );
+	void initInstance( QSettings *webPageSetting, NovelInfoWidget *novelInfoWidget, IRequestNetInterfaceExtend *requestNetInterface );
 public: // 属性
 	long long getAllCountValue( ) {
 		return allCount->getValue( );
@@ -96,13 +103,12 @@ public: // 属性
 	QSettings *getWebPageSetting( ) const {
 		return webPageSetting;
 	}
-	IRequestNetInterface *getRequestNetInterface( ) const {
+	IRequestNetInterfaceExtend *getRequestNetInterface( ) const {
 		return requestNetInterface;
 	}
 	NovelInfoWidget *getParent( ) const {
 		return parent;
 	}
-	QString getUrl( ) const;
 	QString getHttpType( ) const;
 
 	/// <summary>
@@ -127,10 +133,6 @@ Q_SIGNALS:
 	/// 窗口重置大小信号
 	/// </summary>
 	void widgetReseize( int width, int height );
-	/// <summary>
-	/// 保存按钮被点击
-	/// </summary>
-	void saveBtnClick( );
 	/// <summary>
 	/// 开始按钮被点击
 	/// </summary>
@@ -158,12 +160,12 @@ Q_SIGNALS:
 	/// <summary>
 	/// 保存
 	/// </summary>
-	void save( );
+	void clickSaveBtn( );
 
 	/// <summary>
 	/// 加载按钮被点击
 	/// </summary>
-	void loadClick();
+	void clickLoadBtn( );
 };
 
 #endif // WEBURLINFOWIDGET_H_H_HEAD__FILE__

@@ -16,7 +16,7 @@
 #include <DebugInfo.h>
 #include "./WebUrlInfoWidget/CountEditWidget.h"
 
-#include "interface/IRequestNetInterface.h"
+#include "interface/IRequestNetInterfaceExtend.h"
 
 const QString WebUrlInfoWidget::settingHostKey = tr( u8"host" );
 const QString WebUrlInfoWidget::settingUrlKey = tr( u8"url" );
@@ -53,14 +53,38 @@ void WebUrlInfoWidget::setConverError( Exception *tryResult ) {
 ===========
 )" ).arg( __FILE__ ).arg( __LINE__ ) );
 }
-WebUrlInfoWidget::WebUrlInfoWidget( QSettings *webPageSetting, NovelInfoWidget *parent, IRequestNetInterface *requestNetInterface,
+std::shared_ptr< void > WebUrlInfoWidget::getData( ) {
+	return requestNetInterface->getData( );
+}
+QUrl WebUrlInfoWidget::getUrl( ) {
+	return requestNetInterface->getUrl( );
+}
+QMap< QString, QUrl > WebUrlInfoWidget::getTypeUrls( const QNetworkReply &networkReply ) {
+	return requestNetInterface->getTypeUrls( networkReply );
+}
+IRequestNetInterface::NovelPtrList WebUrlInfoWidget::getTypePageNovels( const QNetworkReply &networkReply, const NovelPtrList &saveNovelInfos, void *appendDataPtr ) {
+	return requestNetInterface->getTypePageNovels( networkReply, saveNovelInfos, appendDataPtr );
+}
+IRequestNetInterface::INovelInfoSharedPtr WebUrlInfoWidget::getUrlNovelInfo( const QNetworkReply &networkReply, const NovelPtrList &saveNovelInfos, const INovelInfoSharedPtr &networkReplayNovel ) {
+	return requestNetInterface->getUrlNovelInfo( networkReply, saveNovelInfos, networkReplayNovel );
+}
+QUrl WebUrlInfoWidget::getNext( const QNetworkReply &networkReply, const NovelPtrList &saveNovelInfos, const NovelPtrList &lastNovelInfos ) {
+	return requestNetInterface->getNext( networkReply, saveNovelInfos, lastNovelInfos );
+}
+void WebUrlInfoWidget::novelTypeEnd( const NovelPtrList &saveNovelInfos ) {
+	requestNetInterface->novelTypeEnd( saveNovelInfos );
+}
+void WebUrlInfoWidget::endHost( const NovelPtrList &saveNovelInfos ) {
+	requestNetInterface->endHost( saveNovelInfos );
+}
+WebUrlInfoWidget::WebUrlInfoWidget( QSettings *webPageSetting, NovelInfoWidget *parent, IRequestNetInterfaceExtend *requestNetInterface,
 	Qt::WindowFlags f ) : QWidget( parent, f ) {
 
 	auto novelInfoWidget = overNovelInfoWidgetPtr( parent );
 	initInstance( webPageSetting, novelInfoWidget, requestNetInterface );
 
 }
-WebUrlInfoWidget *WebUrlInfoWidget::generateWebUrlInfoWidget( QSettings *webPageSetting, NovelInfoWidget *parent, IRequestNetInterface *requestNetInterface, Qt::WindowFlags f ) {
+WebUrlInfoWidget *WebUrlInfoWidget::generateWebUrlInfoWidget( QSettings *webPageSetting, NovelInfoWidget *parent, IRequestNetInterfaceExtend *requestNetInterface, Qt::WindowFlags f ) {
 	QUrl url = requestNetInterface->getUrl( );
 	QString host = url.host( );
 	if( webHost.count( ) != 0 ) {
@@ -83,16 +107,16 @@ WebUrlInfoWidget *WebUrlInfoWidget::generateWebUrlInfoWidget( QSettings *webPage
 
 void WebUrlInfoWidget::initComponentConnect( ) {
 	connect( saveBtn, &QPushButton::clicked, [=]( ) {
-		emit saveBtnClick( );
-		DEBUG_RUN( qDebug() << "emit saveBtnClick( );" );
+		emit clickSaveBtn( );
+		DEBUG_RUN( qDebug() << "emit clickSaveBtn( );" );
 	} );
 	connect( startBtn, &QPushButton::clicked, [=]( ) {
 		emit startBtnClick( );
 		DEBUG_RUN( qDebug() << "emit startBtnClick( );" );
 	} );
 	connect( loadDll, &QPushButton::clicked, [=]( ) {
-		emit loadClick( );
-		DEBUG_RUN( qDebug() << "emit loadClick( );" );
+		emit clickLoadBtn( );
+		DEBUG_RUN( qDebug() << "emit clickLoadBtn( );" );
 	} );
 }
 void WebUrlInfoWidget::insterCompoentToLayout( ) {
@@ -104,7 +128,7 @@ void WebUrlInfoWidget::insterCompoentToLayout( ) {
 	hasNovelInfoLayout->addWidget( saveBtn );
 	hasNovelInfoLayout->addWidget( startBtn );
 }
-void WebUrlInfoWidget::initInstance( QSettings *webPageSetting, NovelInfoWidget *novelInfoWidget, IRequestNetInterface *requestNetInterface ) {
+void WebUrlInfoWidget::initInstance( QSettings *webPageSetting, NovelInfoWidget *novelInfoWidget, IRequestNetInterfaceExtend *requestNetInterface ) {
 	setWindowTitle( __func__ );
 	this->webPageSetting = webPageSetting;
 	this->requestNetInterface = requestNetInterface;
@@ -122,9 +146,7 @@ WebUrlInfoWidget::~WebUrlInfoWidget( ) {
 		qDebug() << tr(u8"WebUrlInfoWidget::~WebUrlInfoWidget : ") << windowTitle();
 	);
 }
-QString WebUrlInfoWidget::getUrl( ) const {
-	return urlInput->text( );
-}
+
 QString WebUrlInfoWidget::getHttpType( ) const {
 	return optionBoxWidget->currentText( );
 }

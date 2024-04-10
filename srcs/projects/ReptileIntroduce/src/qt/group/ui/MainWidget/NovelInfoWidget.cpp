@@ -31,12 +31,12 @@
 #include "path/Path.h"
 
 const QString NovelInfoWidget::selectWebBuffWorkPath = tr( u8"work/WebBuff/Path" );
-IRequestNetInterface *NovelInfoWidget::getIRequestNetInterface( const QString &plugFilePath, const QString &name, const QString &spec ) {
+IRequestNetInterfaceExtend *NovelInfoWidget::getIRequestNetInterface( const QString &plugFilePath, const QString &name, const QString &spec ) {
 	QPluginLoader loader( plugFilePath );
 	if( loader.load( ) ) {
 		QGenericPlugin *genericPlugin = qobject_cast< QGenericPlugin * >( loader.instance( ) );
 		if( genericPlugin ) {
-			IRequestNetInterface *result = qobject_cast< IRequestNetInterface * >( genericPlugin->create( name, spec ) );
+			IRequestNetInterfaceExtend *result = qobject_cast< IRequestNetInterfaceExtend * >( genericPlugin->create( name, spec ) );
 			if( result ) {
 				result->setParent( nullptr );
 				return result;
@@ -47,6 +47,51 @@ IRequestNetInterface *NovelInfoWidget::getIRequestNetInterface( const QString &p
 }
 NovelInfoWidget::NovelInfoWidget( QWidget *parent, Qt::WindowFlags flag ) : QWidget( parent, flag ) {
 	/////// 链接信号槽
+	initComponentMeoryObj( );
+	initComponentPropers( );
+	initComponentLayout( );
+	initComponentConnect( );
+}
+
+void NovelInfoWidget::initComponentMeoryObj( ) {
+	rwFileThread = new RWFileThread( this );
+	requestNetWrok = new Request( this );
+	requestConnect = new RequestConnect( this );
+
+	mainLayout = new VLayoutBox;
+	settingInfoLayoutBox = new HLayoutBox;
+	msgLayoutBox = new HLayoutBox;
+	runInfoLayoutBox = new HLayoutBox;
+	settingPathTitle = new QLabel;
+	inputSettingPathLine = new EditLine;
+	btn = new Button( this );
+	listView = new QScrollArea( this );
+
+	listViewWidget = new QWidget( listView );
+	listViewWidgetVBox = new VLayoutBox( listViewWidget );
+}
+void NovelInfoWidget::initComponentPropers( ) {
+
+	this->fileThreadResult = rwFileThread->getFileResult( );
+	settingPathTitle->setText( tr( u8"配置文件路径:" ) );
+	inputSettingPathLine->setPlaceholderText( tr( u8"请输入一个配置文件" ) );
+	editorStatus = 0;
+	inputSettingPathLine->setParent( this );
+	btn->setText( tr( u8"添加插件到配置文件" ) );
+
+}
+void NovelInfoWidget::initComponentLayout( ) {
+	this->setLayout( mainLayout );
+	mainLayout->addLayout( settingInfoLayoutBox, 1 );
+	mainLayout->addLayout( msgLayoutBox, 9 );
+	mainLayout->addLayout( runInfoLayoutBox, 1 );
+	settingInfoLayoutBox->addWidget( settingPathTitle );
+	settingInfoLayoutBox->addWidget( inputSettingPathLine, 1 );
+	settingInfoLayoutBox->addWidget( btn );
+	msgLayoutBox->addWidget( listView );
+	listView->setWidget( listViewWidget );
+}
+void NovelInfoWidget::initComponentConnect( ) {
 	connect( this, &NovelInfoWidget::setNetWorkSettingFilePath, [=]( const QString &filePath ) {
 		QFileInfo fileInfo( filePath );
 		auto absoluteFilePath = fileInfo.absoluteFilePath( );
@@ -76,7 +121,7 @@ NovelInfoWidget::NovelInfoWidget( QWidget *parent, Qt::WindowFlags flag ) : QWid
 				auto value = variant.toString( );
 				if( value.isEmpty( ) )
 					continue;
-				IRequestNetInterface *requestNetInterface = loadPlug( value );
+				IRequestNetInterfaceExtend *requestNetInterface = loadPlug( value );
 				if( requestNetInterface ) {
 					auto webUrlWidget = WebUrlInfoWidget::generateWebUrlInfoWidget( netSetFileSettings, this, requestNetInterface );
 					if( webUrlWidget ) {
@@ -95,43 +140,7 @@ NovelInfoWidget::NovelInfoWidget( QWidget *parent, Qt::WindowFlags flag ) : QWid
 		}
 		netSetFileSettings->endGroup( );
 	} );
-
-	rwFileThread = new RWFileThread( this );
-	this->fileThreadResult = rwFileThread->getFileResult( );
-	////// 网络请求
-	requestNetWrok = new Request( this );
-	requestConnect = new RequestConnect( this );
 	connect( requestConnect, &RequestConnect::networkReplyFinished, this, &NovelInfoWidget::networkReplyFinished );
-
-	resize( 500, 500 );
-	// 子组件
-	mainLayout = new VLayoutBox;
-	settingInfoLayoutBox = new HLayoutBox;
-	msgLayoutBox = new HLayoutBox;
-	runInfoLayoutBox = new HLayoutBox;
-	this->setLayout( mainLayout );
-	mainLayout->addLayout( settingInfoLayoutBox, 1 );
-	mainLayout->addLayout( msgLayoutBox, 9 );
-	mainLayout->addLayout( runInfoLayoutBox, 1 );
-
-	settingPathTitle = new QLabel;
-	settingPathTitle->setText( tr( u8"配置文件路径:" ) );
-	settingInfoLayoutBox->addWidget( settingPathTitle );
-
-	inputSettingPathLine = new EditLine;
-	inputSettingPathLine->setPlaceholderText( tr( u8"请输入一个配置文件" ) );
-	editorStatus = 0;
-	connect( inputSettingPathLine, &QLineEdit::editingFinished, this, &NovelInfoWidget::settingPathCompoentWriteOver );
-	connect( inputSettingPathLine, &QLineEdit::textEdited, [=]( ) {
-		DEBUG_RUN( qDebug() << u8"QLineEdit::textEdited" );
-		editorStatus = 1;
-	} );
-	settingInfoLayoutBox->addWidget( inputSettingPathLine, 1 );
-	inputSettingPathLine->setParent( this );
-
-	btn = new Button( this );
-	settingInfoLayoutBox->addWidget( btn );
-	btn->setText( tr( u8"添加插件到配置文件" ) );
 	connect( this, &NovelInfoWidget::errorSettingPath, [=]( ) {
 		DEBUG_RUN( qDebug() << u8"NovelInfoWidget::errorSettingPath" );
 		btn->setText( tr( u8"错误" ) );
@@ -147,15 +156,14 @@ NovelInfoWidget::NovelInfoWidget( QWidget *parent, Qt::WindowFlags flag ) : QWid
 		DEBUG_RUN( qDebug() << u8"QPushButton::clicked" );
 		loadPathPlugs( );
 	} );
-
-	// 中间的布局
-	listView = new QScrollArea( this );
-	msgLayoutBox->addWidget( listView );
-	auto widget = new QWidget( listView );
-	listView->setWidget( widget );
-	auto vBox = new VLayoutBox( widget );
-
-	QMargins contentsMargins = vBox->contentsMargins( );
+	connect( inputSettingPathLine, &QLineEdit::editingFinished, this, &NovelInfoWidget::settingPathCompoentWriteOver );
+	connect( inputSettingPathLine, &QLineEdit::textEdited, [=]( ) {
+		DEBUG_RUN( qDebug() << u8"QLineEdit::textEdited" );
+		editorStatus = 1;
+	} );
+}
+void NovelInfoWidget::initWidgetSize( ) {
+	QMargins contentsMargins = listViewWidgetVBox->contentsMargins( );
 	QScrollBar *horizontalScrollBar = listView->horizontalScrollBar( );
 	auto horizontalScrollBarHint = horizontalScrollBar->size( );
 
@@ -163,7 +171,9 @@ NovelInfoWidget::NovelInfoWidget( QWidget *parent, Qt::WindowFlags flag ) : QWid
 	auto verticalScrollBarHint = verticalScrollBar->size( );
 
 	listView->setMinimumSize( horizontalScrollBarHint.width( ) + contentsMargins.left( ) + contentsMargins.right( ), verticalScrollBarHint.height( ) + contentsMargins.top( ) + contentsMargins.bottom( ) );
+
 }
+
 NovelInfoWidget::~NovelInfoWidget( ) {
 
 	DEBUG_RUN(
@@ -172,17 +182,17 @@ NovelInfoWidget::~NovelInfoWidget( ) {
 
 	if( netSetFileSettings ) {
 		netSetFileSettings->sync( );
-		delete netSetFileSettings;
+		rwFileThread->deleteLater( );
 	}
 	if( rwFileThread ) {
 		rwFileThread->await( );
-		delete rwFileThread;
+		rwFileThread->deleteLater( );
 	}
 }
 
-IRequestNetInterface *NovelInfoWidget::loadPlug( const QString &plugFilePath ) {
+IRequestNetInterfaceExtend *NovelInfoWidget::loadPlug( const QString &plugFilePath ) {
 	// todo : 加载插件
-	return getIRequestNetInterface( plugFilePath, "", "" );
+	return getIRequestNetInterface( plugFilePath, plugFilePath, metaObject( )->className( ) );
 }
 
 void NovelInfoWidget::computeListViewWidgetSize( ) {
@@ -211,9 +221,10 @@ void NovelInfoWidget::computeListViewWidgetSize( ) {
 }
 void NovelInfoWidget::showEvent( QShowEvent *event ) {
 	DEBUG_RUN( qDebug( ) << tr( u8"====== NovelInfoWidget::showEvent ===========" ) );
-	QWidget::showEvent( event );
-
 	computeListViewWidgetSize( );
+	auto widgetSize = size( );
+	QWidget::showEvent( event );
+	emit resetWidgetSize( widgetSize.width( ), widgetSize.height( ) );
 }
 bool NovelInfoWidget::nativeEvent( const QByteArray &eventType, void *message, qintptr *result ) {
 	return QWidget::nativeEvent( eventType, message, result );

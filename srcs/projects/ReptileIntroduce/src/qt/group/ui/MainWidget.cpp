@@ -173,6 +173,13 @@ MainWidget::MainWidget( QWidget *parent, Qt::WindowFlags fg ) : QWidget( parent,
 	variant = progressSetting->value( selectWriteFileWorkPath );
 	if( variant.isNull( ) || variant.toString( ).isEmpty( ) )
 		progressSetting->setValue( selectWriteFileWorkPath, qApp->applicationDirPath( ) );
+
+	QDateTime dateTime;
+	QDate date;
+	date.setDate( 2004, 10, 10 );
+	QTime time;
+	time.setHMS( 10, 10, 10, 999 );
+	MainWidget::updateDateTimeStrFunction( QString( "%1 - %2" ).arg( date.toString( u8"yyyy 年 MM 月 dd 日" ) ).arg( time.toString( u8"hh 时 mm 分 ss 秒 zzz" ) ) );
 }
 MainWidget::~MainWidget( ) {
 	dateTimeThread->requestInterruption( );
@@ -242,12 +249,12 @@ void MainWidget::updateDateTimeStrFunction( const QString &currentDateTimeStr ) 
 		isOutDbug = false;
 		}
 	);
-	QString string = converTransparentForMouseEventsBtn->text( );
-	qint64 newStrLen = currentDateTimeStr.length( ) + string.length( );
-	if( compoentStrNlen < newStrLen ) {
-		compoentStrNlen = newStrLen;
-		updateWidgetWidth( { currentDateTimeStr, string } );
-	}
+	//QString string = converTransparentForMouseEventsBtn->text( );
+	//qint64 newStrLen = currentDateTimeStr.length( ) + string.length( );
+	//if( compoentStrNlen < newStrLen ) {
+	//	compoentStrNlen = newStrLen;
+	//	updateWidgetWidth( { currentDateTimeStr, string } );
+	//}
 	textLine->setText( currentDateTimeStr );
 }
 void MainWidget::changeTransparent( bool flage ) {

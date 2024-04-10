@@ -7,7 +7,7 @@
 #include "../qt/extend/layout/HLayoutBox.h"
 #include "../qt/extend/layout/VLayoutBox.h"
 
-#include "interface/IRequestNetInterface.h"
+#include "interface/IRequestNetInterfaceExtend.h"
 
 int main( int argc, char *argv[ ] ) {
 	Appliction appliction( argc, argv );
