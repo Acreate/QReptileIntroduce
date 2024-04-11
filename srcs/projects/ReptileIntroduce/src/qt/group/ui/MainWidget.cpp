@@ -115,6 +115,8 @@ MainWidget::MainWidget( QWidget *parent, Qt::WindowFlags fg ) : QWidget( parent,
 	jobWidget = new JobWidget( this );
 	mainLayout->addWidget( jobWidget );
 	connect( jobWidget, &JobWidget::click, [=]( ) {
+
+		emit novelComponent->clickRequestStart(  );
 		emit jobWidget->setProgressValue( 100 );
 	} );
 	////////////// 菜单

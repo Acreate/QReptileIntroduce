@@ -5,6 +5,7 @@
 #include <qfileinfo.h>
 #include <qlabel.h>
 
+class IRequestNetInterface;
 class IRequestNetInterfaceExtend;
 class EditLine;
 class Button;
@@ -27,6 +28,8 @@ public: // 友元列表
 	//friend WebUrlInfoWidget;
 public: // 静态成员函数列表
 	static IRequestNetInterfaceExtend *getIRequestNetInterface( const QString &plugFilePath, const QString &name, const QString &spec );
+protected:
+	static IRequestNetInterfaceExtend *metaGetResult( QObject *outObj, const char *methodName );
 public:
 	NovelInfoWidget( QWidget *parent = nullptr, Qt::WindowFlags flag = Qt::WindowFlags( ) );
 	~NovelInfoWidget( ) override;
@@ -51,6 +54,10 @@ private: // 配置文件关键字
 	/// 动态加载的类名
 	/// </summary>
 	static const QString loadClassName;
+	/// <summary>
+	/// 
+	/// </summary>
+	static const QString loadClassMethodName;
 	static const QByteArray loadClassNameByteArry;
 protected:
 	static std::unordered_map< QString, IRequestNetInterfaceExtend * > loadPlugs;
@@ -143,6 +150,11 @@ private slots: // 子控件槽函数
 	/// 子控件请求开始时激活
 	/// </summary>
 	void componentRequestStart( );
+	/// <summary>
+	/// 子控件的列表项被改变时激活
+	/// </summary>
+	/// <param name="index">当前选项，-1 表示没有</param>
+	void componentCurrentIndexChanged( int index );
 	/// <summary>
 	/// 在 inputSettingPathLine 设置配置文件路径完成时被激活
 	/// </summary>

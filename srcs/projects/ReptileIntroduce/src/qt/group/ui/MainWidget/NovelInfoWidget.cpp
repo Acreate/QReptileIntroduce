@@ -19,6 +19,8 @@
 #include "../../../../qt/group/file/FileResult.h"
 #include "../../../../qt/group/file/RWFileThread.h"
 #include <DebugInfo.h>
+#include <QGenericPlugin>
+
 #include "../../../extend/layout/HLayoutBox.h"
 #include "../../../extend/layout/VLayoutBox.h"
 #include "../../../extend/ui/Button.h"
@@ -28,12 +30,25 @@
 #include <QPluginLoader>
 
 #include "path/Path.h"
+#include <QMetaEnum>
 
 const QString NovelInfoWidget::settingWebBuffWorkPathKey = tr( u8"work/WebBuff/Path" );
 const QString NovelInfoWidget::settingHostKey = tr( u8"host" );
 const QString NovelInfoWidget::loadClassName = tr( u8"RequestNet" );
+const QString NovelInfoWidget::loadClassMethodName = tr( u8"getRequestNetInterfaceExtendPatr" );
 const QByteArray NovelInfoWidget::loadClassNameByteArry = loadClassName.toLocal8Bit( );
 std::unordered_map< QString, IRequestNetInterfaceExtend * > NovelInfoWidget::loadPlugs;
+
+IRequestNetInterfaceExtend *NovelInfoWidget::metaGetResult( QObject *outObj, const char *methodName ) {
+	const QMetaObject *metaObject = outObj->metaObject( );
+	if( metaObject->className( ) == loadClassName ) {
+		IRequestNetInterfaceExtend *res = nullptr;
+		bool invokeMethod = metaObject->invokeMethod( outObj, methodName, Qt::DirectConnection, Q_RETURN_ARG( IRequestNetInterfaceExtend *, res ) );
+		if( invokeMethod )
+			return res;
+	}
+	return nullptr;
+}
 IRequestNetInterfaceExtend *NovelInfoWidget::getIRequestNetInterface( const QString &plugFilePath, const QString &name, const QString &spec ) {
 	QPluginLoader loader( plugFilePath );
 	if( loader.load( ) ) {
@@ -41,15 +56,16 @@ IRequestNetInterfaceExtend *NovelInfoWidget::getIRequestNetInterface( const QStr
 		QGenericPlugin *genericPlugin = qobject_cast< QGenericPlugin * >( instance );
 		if( genericPlugin ) {
 			QObject *object = genericPlugin->create( name, spec );
-			auto className = object->metaObject( )->className( );
-			if( strcmp( className, loadClassNameByteArry ) == 0 ) {
-				IRequestNetInterfaceExtend *result = reinterpret_cast< IRequestNetInterfaceExtend * >( object );
-				if( result ) {
-					result->setParent( nullptr );
-					QString host = result->getUrl( ).host( );
-					loadPlugs.insert_or_assign( host, result );
-					return result;
-				}
+			IRequestNetInterfaceExtend *requestNetInterface = metaGetResult( object, loadClassMethodName.toLocal8Bit( ) );
+			if( requestNetInterface ) {
+				requestNetInterface->setInterfaceParent( nullptr );
+
+				std::string curlLink;
+				requestNetInterface->getUrl( &curlLink );
+				QUrl url( curlLink.c_str( ) );
+				QString host = url.host( );
+				loadPlugs.insert_or_assign( host, requestNetInterface );
+				return requestNetInterface;
 			}
 		}
 	}
@@ -124,6 +140,7 @@ void NovelInfoWidget::initWidgetSize( ) {
 void NovelInfoWidget::initWebUrlInfoWidgetCompoent( WebUrlInfoWidget *webUrlWidget ) {
 	connect( this, &NovelInfoWidget::clickRequestStart, webUrlWidget, &WebUrlInfoWidget::startBtnClick );
 	connect( webUrlWidget, &WebUrlInfoWidget::startBtnClick, this, &NovelInfoWidget::componentRequestStart );
+	connect( webUrlWidget, &WebUrlInfoWidget::currentIndexChanged, this, &NovelInfoWidget::componentCurrentIndexChanged );
 }
 
 NovelInfoWidget::~NovelInfoWidget( ) {
@@ -267,7 +284,8 @@ void NovelInfoWidget::loadPathPlugs( ) {
 	QString caption = tr( u8"选择一个 qt 插件路径" );
 	QString title = tr( u8"插件错误" );
 	QString questionMsg = tr( u8"文件打开错误!现在重新选择吗?" );
-	auto key = "root";
+	auto rootKey = WebUrlInfoWidget::getRootKey( );
+	auto schemeKey = WebUrlInfoWidget::getSchemeKey( );
 	do {
 		auto fileName = QFileDialog::getExistingDirectory( this, caption, settingFileInfo.absoluteDir( ).absolutePath( ) );
 		if( fileName.isEmpty( ) ) {
@@ -288,14 +306,19 @@ void NovelInfoWidget::loadPathPlugs( ) {
 			auto ire = loadPlug( currentFilePtah );
 			if( ire ) {
 				++loadPlugCount;
-				QUrl url = ire->getUrl( );
+
+				std::string curlLink;
+				ire->getUrl( &curlLink );
+				QUrl url( curlLink.c_str( ) );
 				QString host = url.host( );
 				netSetFileSettings->beginGroup( settingHostKey );
 				currentFilePtah = current.relativeFilePath( currentFilePtah );
 				netSetFileSettings->setValue( host, currentFilePtah );
 				netSetFileSettings->endGroup( );
 				netSetFileSettings->beginGroup( host );
-				netSetFileSettings->setValue( key, url.url( ) );
+				netSetFileSettings->setValue( rootKey, url.url( ) );
+				auto scheme = netSetFileSettings->value( schemeKey, url.scheme( ) );
+				netSetFileSettings->setValue( schemeKey, scheme );
 				netSetFileSettings->endGroup( );
 				auto webUrlInfoWidget = WebUrlInfoWidget::generateWebUrlInfoWidget( netSetFileSettings, this, ire );
 
@@ -326,11 +349,23 @@ void NovelInfoWidget::componentRequestStart( ) {
 	if( src ) {
 		auto webUrlInfoWidget = qobject_cast< WebUrlInfoWidget * >( src );
 		if( webUrlInfoWidget ) {
-			auto url = webUrlInfoWidget->getUrl( );
-			DEBUG_RUN( qDebug() << "qobject_cast<WebUrlInfoWidget*>(src) = " << webUrlInfoWidget->getUrl( ) );
+			std::string curlLink;
+			webUrlInfoWidget->getUrl( &curlLink );
+			QUrl url( curlLink.c_str( ) );
+			DEBUG_RUN( qDebug() << "qobject_cast<WebUrlInfoWidget*>(src) = " << url );
 			requestNetWrok->netGetWork( url, requestConnect );
 		}
 	}
+}
+void NovelInfoWidget::componentCurrentIndexChanged( int index ) {
+	if( index == -1 )
+		return;
+	QObject *object = sender( );
+	auto webUrlInfoWidget = qobject_cast< WebUrlInfoWidget * >( object );
+	if( webUrlInfoWidget ) {
+		//webUrlInfoWidget->setScheme(  )
+	}
+
 }
 void NovelInfoWidget::slotsSetNetWorkSettingFilePath( const QString &filePath ) {
 	QFileInfo fileInfo( filePath );

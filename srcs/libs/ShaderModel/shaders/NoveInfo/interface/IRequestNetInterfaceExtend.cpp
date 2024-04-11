@@ -1,25 +1,37 @@
 ﻿#include "IRequestNetInterfaceExtend.h"
-IRequestNetInterfaceExtend::IRequestNetInterfaceExtend( QObject *parent ) : QObject( parent ) {
+IRequestNetInterfaceExtend::IRequestNetInterfaceExtend( ) {
 }
 IRequestNetInterfaceExtend::~IRequestNetInterfaceExtend( ) {
-	qDebug( ) << u8"IRequestNetInterfaceExtend::~IRequestNetInterfaceExtend( )";
+
 }
-std::shared_ptr<void> IRequestNetInterfaceExtend::getData( ) {
+void *IRequestNetInterfaceExtend::getData( ) {
 	return { };
 }
-QMap<QString, QUrl> IRequestNetInterfaceExtend::getTypeUrls( const QNetworkReply &networkReply ) {
-	return { };
-}
-IRequestNetInterface::NovelPtrList IRequestNetInterfaceExtend::getTypePageNovels( const QNetworkReply &networkReply, const NovelPtrList &saveNovelInfos, void *appendDataPtr ) {
-	return { };
-}
-IRequestNetInterface::INovelInfoSharedPtr IRequestNetInterfaceExtend::getUrlNovelInfo( const QNetworkReply &networkReply, const NovelPtrList &saveNovelInfos, const INovelInfoSharedPtr &networkReplayNovel ) {
-	return { };
-}
-QUrl IRequestNetInterfaceExtend::getNext( const QNetworkReply &networkReply, const NovelPtrList &saveNovelInfos, const NovelPtrList &lastNovelInfos ) {
-	return { };
-}
+
 void IRequestNetInterfaceExtend::novelTypeEnd( const NovelPtrList &saveNovelInfos ) {
 }
 void IRequestNetInterfaceExtend::endHost( const NovelPtrList &saveNovelInfos ) {
+}
+size_t IRequestNetInterfaceExtend::getUrl( std::string *outStr ) {
+	return 0;
+}
+void IRequestNetInterfaceExtend::deleteMember( ) {
+}
+
+void IRequestNetInterfaceExtend::setUrl( const StdString &url ) {
+}
+IRequestNetInterface::un_ordered_map *IRequestNetInterfaceExtend::getTypeUrls( const StdString &htmlText ) {
+	return nullptr;
+}
+IRequestNetInterface::NovelPtrList IRequestNetInterfaceExtend::getTypePageNovels( const StdString &htmlText, const NovelPtrList &saveNovelInfos, void *appendDataPtr ) {
+	return { };
+}
+IRequestNetInterface::INovelInfoSharedPtr IRequestNetInterfaceExtend::getUrlNovelInfo( const StdString &htmlText, const NovelPtrList &saveNovelInfos, const INovelInfoSharedPtr &networkReplayNovel ) {
+	return { };
+}
+IRequestNetInterface::StdString IRequestNetInterfaceExtend::getNext( const StdString &htmlText, const NovelPtrList &saveNovelInfos, const NovelPtrList &lastNovelInfos ) {
+	return nullptr;
+}
+bool IRequestNetInterfaceExtend::setInterfaceParent( void *parent ) {
+	return false;
 }

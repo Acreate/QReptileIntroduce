@@ -2,6 +2,8 @@
 #define WEBURLINFOWIDGET_H_H_HEAD__FILE__
 
 #pragma once
+#include <QComboBox>
+#include <QSettings>
 #include <QWidget>
 
 #include "WebUrlInfoWidget/CountEditWidget.h"
@@ -24,10 +26,14 @@ class HLayoutBox;
 /// web 请求组件
 /// IRequestNetInterface 装饰类
 /// </summary>
-class WebUrlInfoWidget : public QWidget, public IRequestNetInterface {
+class WebUrlInfoWidget : public QWidget, public IRequestNetInterfaceExtend {
 
 	Q_OBJECT;
-
+public:
+	enum Scheme_Type {
+		HttP,
+		HttpS
+	};
 private: // 静态成员
 	static QMap< NovelInfoWidget *, QVector< WebUrlInfoWidget * > > pathCount;
 	static QMap< WebUrlInfoWidget *, QString > webHost;
@@ -39,14 +45,17 @@ private: // 构造类时候必须初始化
 	IRequestNetInterfaceExtend *requestNetInterface;
 	NovelInfoWidget *parent;
 public:
-	std::shared_ptr<void> getData( ) override;
-	QUrl getUrl( ) override;
-	QMap<QString, QUrl> getTypeUrls( const QNetworkReply &networkReply ) override;
-	NovelPtrList getTypePageNovels( const QNetworkReply &networkReply, const NovelPtrList &saveNovelInfos, void *appendDataPtr ) override;
-	INovelInfoSharedPtr getUrlNovelInfo( const QNetworkReply &networkReply, const NovelPtrList &saveNovelInfos, const INovelInfoSharedPtr &networkReplayNovel ) override;
-	QUrl getNext( const QNetworkReply &networkReply, const NovelPtrList &saveNovelInfos, const NovelPtrList &lastNovelInfos ) override;
+	void *getData( ) override;
+	size_t getUrl( std::string *outStr  ) override;
+	void setUrl( const StdString &url ) override;
+	IRequestNetInterface::un_ordered_map *getTypeUrls( const StdString &htmlText ) override;
+	NovelPtrList getTypePageNovels( const StdString &htmlText, const NovelPtrList &saveNovelInfos, void *appendDataPtr ) override;
+	INovelInfoSharedPtr getUrlNovelInfo( const StdString &htmlText, const NovelPtrList &saveNovelInfos, const INovelInfoSharedPtr &networkReplayNovel ) override;
+	StdString getNext( const StdString &htmlText, const NovelPtrList &saveNovelInfos, const NovelPtrList &lastNovelInfos ) override;
+	bool setInterfaceParent( void *parent ) override;
 	void novelTypeEnd( const NovelPtrList &saveNovelInfos ) override;
 	void endHost( const NovelPtrList &saveNovelInfos ) override;
+	void deleteMember( ) override;
 private: // 配置文件当中的关键 key
 	static const QString settingHostKey;
 	static const QString settingUrlKey;
@@ -64,8 +73,18 @@ private: // 小说存在的时候显示的组件
 	CountEditWidget *typeCount; // 类型计数
 	Button *startBtn; // 开始获取
 	Button *saveBtn; // 开始获取
-
+protected: // 配置文件当中的静态 key，可以被返回
+	const static QString rootKey;
+	const static QString schemeKey;
+public:
+	static QString getRootKey( ) {
+		return rootKey;
+	}
+	static QString getSchemeKey( ) {
+		return schemeKey;
+	}
 private: /// 组件初始化
+	void initCompoentOver( );
 	/// <summary>
 	/// 初始化组件属性
 	/// </summary>
@@ -109,8 +128,8 @@ public: // 属性
 	NovelInfoWidget *getParent( ) const {
 		return parent;
 	}
-	QString getHttpType( ) const;
-
+	QString getScheme( ) const;
+	void setScheme( const Scheme_Type schemeType );
 	/// <summary>
 	/// 返回基于父节点当中的个数，不存在时候，该值为 0
 	/// </summary>
@@ -166,6 +185,12 @@ Q_SIGNALS:
 	/// 加载按钮被点击
 	/// </summary>
 	void clickLoadBtn( );
+
+	/// <summary>
+	/// 选项被改变之后触发
+	/// </summary>
+	/// <param name="index">选项</param>
+	void currentIndexChanged( int index );
 };
 
 #endif // WEBURLINFOWIDGET_H_H_HEAD__FILE__

@@ -54,7 +54,7 @@ target_link_libraries(
 
 
 # 设置变量
-set( urlStart "https" )
+set( urlStart "http" )
 set( iid \"${PROJECT_NAME}.json.IRequestNetInterfaceExtend\" )
 set( get_url \"${urlStart}://${PROJECT_NAME}\" )
 
