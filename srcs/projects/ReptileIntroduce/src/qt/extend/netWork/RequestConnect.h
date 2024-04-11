@@ -7,14 +7,14 @@
 class RequestConnect : public QObject {
 	Q_OBJECT;
 private:
-	QNetworkAccessManager *networkAccessManager;
+	QList< QNetworkAccessManager * > networkAccessManager;
 	QNetworkReply *networkReply;
 public:
-	RequestConnect( QObject *parent ) : QObject( parent ), networkAccessManager( nullptr ), networkReply( nullptr ) {
+	RequestConnect( QObject *parent ) : QObject( parent ), networkAccessManager( ), networkReply( nullptr ) {
 	}
 	~RequestConnect( ) override;
 public:
-	QNetworkAccessManager *getNetworkAccessManager( ) const {
+	QList< QNetworkAccessManager * > getNetworkAccessManager( ) const {
 		return networkAccessManager;
 	}
 	QNetworkReply *getNetworkReply( ) const {
@@ -34,7 +34,7 @@ Q_SIGNALS: //  QNetworkReply 转发
 	void networkReplySocketStartedConnecting( );
 	void networkReplyRequestSent( );
 	void networkReplyMetaDataChanged( );
-	void networkReplyFinished( );
+	void networkReplyFinished( RequestConnect *requestConnect );
 	void networkReplyErrorOccurred( QNetworkReply::NetworkError );
 #if QT_CONFIG( ssl )
 	void networkReplyEncrypted( );

@@ -80,9 +80,6 @@ NovelInfoWidget::NovelInfoWidget( QWidget *parent, Qt::WindowFlags flag ) : QWid
 }
 
 void NovelInfoWidget::initComponentMeoryObj( ) {
-	rwFileThread = new RWFileThread( this );
-	requestNetWrok = new Request( this );
-	requestConnect = new RequestConnect( this );
 
 	mainLayout = new VLayoutBox;
 	settingInfoLayoutBox = new HLayoutBox;
@@ -98,7 +95,6 @@ void NovelInfoWidget::initComponentMeoryObj( ) {
 }
 void NovelInfoWidget::initComponentPropers( ) {
 
-	this->fileThreadResult = rwFileThread->getFileResult( );
 	settingPathTitle->setText( tr( u8"配置文件路径:" ) );
 	inputSettingPathLine->setPlaceholderText( tr( u8"请输入一个配置文件" ) );
 	editorStatus = 0;
@@ -121,7 +117,6 @@ void NovelInfoWidget::initComponentLayout( ) {
 void NovelInfoWidget::initComponentConnect( ) {
 	connect( this, &NovelInfoWidget::setNetWorkSettingFilePath, this, &NovelInfoWidget::slotsSetNetWorkSettingFilePath );
 	connect( this, &NovelInfoWidget::overSettingPath, this, &NovelInfoWidget::slotsOverSettingPath );
-	connect( requestConnect, &RequestConnect::networkReplyFinished, this, &NovelInfoWidget::networkReplyFinished );
 	connect( this, &NovelInfoWidget::errorSettingPath, this, &NovelInfoWidget::slotsErrorSettingPath );
 	connect( btn, &QPushButton::clicked, this, &NovelInfoWidget::loadPathPlugs );
 	connect( inputSettingPathLine, &QLineEdit::editingFinished, this, &NovelInfoWidget::inputSettingPathLinePathCompoentEditFinish );
@@ -139,7 +134,6 @@ void NovelInfoWidget::initWidgetSize( ) {
 }
 void NovelInfoWidget::initWebUrlInfoWidgetCompoent( WebUrlInfoWidget *webUrlWidget ) {
 	connect( this, &NovelInfoWidget::clickRequestStart, webUrlWidget, &WebUrlInfoWidget::startBtnClick );
-	connect( webUrlWidget, &WebUrlInfoWidget::startBtnClick, this, &NovelInfoWidget::componentRequestStart );
 	connect( webUrlWidget, &WebUrlInfoWidget::currentIndexChanged, this, &NovelInfoWidget::componentCurrentIndexChanged );
 }
 
@@ -151,11 +145,6 @@ NovelInfoWidget::~NovelInfoWidget( ) {
 
 	if( netSetFileSettings ) {
 		netSetFileSettings->sync( );
-		rwFileThread->deleteLater( );
-	}
-	if( rwFileThread ) {
-		rwFileThread->await( );
-		rwFileThread->deleteLater( );
 	}
 }
 
@@ -202,54 +191,6 @@ void NovelInfoWidget::mousePressEvent( QMouseEvent *event ) {
 	if( editorStatus && !inputSettingPathLine->geometry( ).contains( event->pos( ) ) )
 		inputSettingPathLinePathCompoentEditFinish( );
 }
-void NovelInfoWidget::networkReplyFinished( ) {
-	QNetworkReply *networkReply = requestConnect->getNetworkReply( );
-	auto byteArray = networkReply->readAll( );
-	if( byteArray.isEmpty( ) )
-		return;
-	QString existingDirectory;
-	if( !netSetFileSettings ) {
-		do {
-			QString filePath = QFileDialog::getOpenFileName( this, tr( u8"选择配置文件" ), qApp->applicationDirPath( ), tr( u8"配置文件类型(*.ini *.setting *.set);;全部类型(*)" ) );
-			if( !filePath.isEmpty( ) ) {
-				netSetFileSettings = new QSettings( filePath, QSettings::Format::IniFormat, this );
-				break;
-			}
-			if( QMessageBox::No == QMessageBox::question( this, tr( u8"请选择" ), tr( u8"路径无法写入文件。现在重新选择路径吗？" ) ) )
-				return;
-		} while( true );
-	}
-	auto variant = netSetFileSettings->value( settingWebBuffWorkPathKey );
-	if( variant.isNull( ) ) {
-		QFileInfo info;
-		bool isUseCanNotWrite = false;
-		do {
-			existingDirectory = QFileDialog::getExistingDirectory( this, tr( u8"选择一个 web 缓冲目录" ), qApp->applicationDirPath( ) );
-			if( existingDirectory.isEmpty( ) )
-				return;
-			info.setFile( existingDirectory );
-			isUseCanNotWrite = !info.isWritable( );
-			if( isUseCanNotWrite ) {
-				QMessageBox::StandardButton standardButton = QMessageBox::question( this, tr( u8"请选择" ), tr( u8"路径无法写入。现在重新选择路径吗？" ) );
-				if( standardButton | QMessageBox::No )
-					return;
-			}
-		} while( isUseCanNotWrite ) ;
-		existingDirectory.append( QDir::separator( ) );
-		netSetFileSettings->setValue( settingWebBuffWorkPathKey, existingDirectory );
-		netSetFileSettings->sync( );
-	} else
-		existingDirectory = variant.toString( ) + QDir::separator( );
-	QUrl url = networkReply->url( );
-	DEBUG_RUN(
-		qDebug() << "默认 - url.host( FullyDecoded ) : " << url.host( );
-		qDebug() << "默认 - PrettyDecoded : " << url.toString( );
-	);
-	auto saveTemPath = existingDirectory + url.host( ) + QDir::separator( );
-	rwFileThread->setFilePath( saveTemPath + "index.html" );
-	rwFileThread->writeFile( byteArray );
-	rwFileThread->start( );
-}
 void NovelInfoWidget::inputSettingPathLinePathCompoentEditFinish( ) {
 	QString inputPath = inputSettingPathLine->text( );
 	QFileInfo fileInfo( inputPath );
@@ -261,7 +202,8 @@ void NovelInfoWidget::inputSettingPathLinePathCompoentEditFinish( ) {
 	if( netSetFileSettings ) {
 		if( settingFileAbsoluteFilePath != newPath ) {
 			netSetFileSettings->sync( );
-			netSetFileSettings->setPath( QSettings::IniFormat, QSettings::UserScope, newPath );
+			netSetFileSettings->deleteLater( );
+			netSetFileSettings = new QSettings( newPath, QSettings::IniFormat, this );
 		}
 	} else
 		netSetFileSettings = new QSettings( newPath, QSettings::Format::IniFormat, this );
@@ -344,19 +286,7 @@ void NovelInfoWidget::loadPathPlugs( ) {
 			break;
 	} while( true );
 }
-void NovelInfoWidget::componentRequestStart( ) {
-	QObject *src = sender( );
-	if( src ) {
-		auto webUrlInfoWidget = qobject_cast< WebUrlInfoWidget * >( src );
-		if( webUrlInfoWidget ) {
-			std::string curlLink;
-			webUrlInfoWidget->getUrl( &curlLink );
-			QUrl url( curlLink.c_str( ) );
-			DEBUG_RUN( qDebug() << "qobject_cast<WebUrlInfoWidget*>(src) = " << url );
-			requestNetWrok->netGetWork( url, requestConnect );
-		}
-	}
-}
+
 void NovelInfoWidget::componentCurrentIndexChanged( int index ) {
 	if( index == -1 )
 		return;
@@ -372,8 +302,9 @@ void NovelInfoWidget::slotsSetNetWorkSettingFilePath( const QString &filePath ) 
 	auto absoluteFilePath = fileInfo.absoluteFilePath( );
 	if( fileInfo.exists( ) ) {
 		if( netSetFileSettings ) {
-			netSetFileSettings->setPath( QSettings::IniFormat, QSettings::UserScope, absoluteFilePath );
 			netSetFileSettings->sync( );
+			netSetFileSettings->deleteLater( );
+			netSetFileSettings = new QSettings( absoluteFilePath, QSettings::IniFormat, this );
 		} else
 			netSetFileSettings = new QSettings( absoluteFilePath, QSettings::IniFormat );
 

@@ -63,8 +63,6 @@ protected:
 	static std::unordered_map< QString, IRequestNetInterfaceExtend * > loadPlugs;
 public: // 配置文件
 	QSettings *netSetFileSettings = nullptr;
-	RWFileThread *rwFileThread = nullptr;
-	FileResult *fileThreadResult = nullptr; // 文件读取绑定指针
 	QString settingFileAbsoluteFilePath; // setting 的绝对路径
 public:
 	const QString &getWebBuffWorkPathKey( ) const {
@@ -112,23 +110,10 @@ private: // 底部组件-runInfoLayoutBox
 
 private:
 	int editorStatus = 0;
-private: // 网络-请求
-	Request *requestNetWrok = nullptr; // web 网络请求对象
-	RequestConnect *requestConnect = nullptr; // web 网络响应槽函数对象
 public: // get / set
 
-	RWFileThread *getRwFileThread( ) const {
-		return rwFileThread;
-	}
 	QString getAbsoluteFilePath( ) const {
 		return settingFileAbsoluteFilePath;
-	}
-	Request *getRequestNetWrok( ) const {
-		return requestNetWrok;
-	}
-
-	RequestConnect *getRequestConnect( ) const {
-		return requestConnect;
 	}
 
 	IRequestNetInterfaceExtend *loadPlug( const QString &plugFilePath );
@@ -138,18 +123,11 @@ protected: // 重载事件
 	bool nativeEvent( const QByteArray &eventType, void *message, qintptr *result ) override;
 	void mousePressEvent( QMouseEvent *event ) override;
 private slots: // 子控件槽函数
-	/// <summary>
-	/// 使用子控件请求完成被激活
-	/// </summary>
-	void networkReplyFinished( );
+
 	/// <summary>
 	/// 加载子控件时激活
 	/// </summary>
 	void loadPathPlugs( );
-	/// <summary>
-	/// 子控件请求开始时激活
-	/// </summary>
-	void componentRequestStart( );
 	/// <summary>
 	/// 子控件的列表项被改变时激活
 	/// </summary>
@@ -201,22 +179,11 @@ Q_SIGNALS :
 	void setNetWorkSettingFilePath( const QString &filePath );
 
 	/// <summary>
-	/// 设置请求对象
-	/// </summary>
-	/// <param name="requestNetWrok">请求对象指针</param>
-	void setRequestNetWrok( const Request *requestNetWrok );
-
-	/// <summary>
 	/// 设置读写对象
 	/// </summary>
 	/// <param name="rwFileThread">读写对象指针</param>
 	void setRWFileThread( const RWFileThread *rwFileThread );
 
-	/// <summary>
-	/// 设置请求信号绑定对象
-	/// </summary>
-	/// <param name="requestConnect">信号绑定对象指针</param>
-	void setRequestConnect( const RequestConnect *requestConnect );
 };
 
 #endif // NOVELINFOWIDGET_H_H_HEAD__FILE__

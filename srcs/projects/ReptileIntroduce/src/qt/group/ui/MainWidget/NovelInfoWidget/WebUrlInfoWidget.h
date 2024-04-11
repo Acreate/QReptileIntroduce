@@ -10,6 +10,8 @@
 
 #include "interface/IRequestNetInterfaceExtend.h"
 
+class Request;
+class RequestConnect;
 class IRequestNetInterfaceExtend;
 class CountEditWidget;
 class Exception;
@@ -44,9 +46,18 @@ private: // 构造类时候必须初始化
 	QSettings *webPageSetting;
 	IRequestNetInterfaceExtend *requestNetInterface;
 	NovelInfoWidget *parent;
+private: // 网络-请求
+	Request *requestNetWrok = nullptr; // web 网络请求对象
+	RequestConnect *requestConnect = nullptr; // web 网络响应槽函数对象
 public:
+	Request *getRequestNetWrok( ) const {
+		return requestNetWrok;
+	}
+	RequestConnect *getRequestConnect( ) const {
+		return requestConnect;
+	}
 	void *getData( ) override;
-	size_t getUrl( std::string *outStr  ) override;
+	size_t getUrl( std::string *outStr ) override;
 	void setUrl( const StdString &url ) override;
 	IRequestNetInterface::un_ordered_map *getTypeUrls( const StdString &htmlText ) override;
 	NovelPtrList getTypePageNovels( const StdString &htmlText, const NovelPtrList &saveNovelInfos, void *appendDataPtr ) override;
@@ -147,6 +158,8 @@ public: // 属性
 protected:
 	void resizeEvent( QResizeEvent *event ) override;
 	void computerSize( );
+protected slots:
+	void webNetRequest();
 Q_SIGNALS:
 	/// <summary>
 	/// 窗口重置大小信号

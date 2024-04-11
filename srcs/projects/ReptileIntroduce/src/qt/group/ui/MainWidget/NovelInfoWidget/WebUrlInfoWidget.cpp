@@ -17,6 +17,8 @@
 #include "./WebUrlInfoWidget/CountEditWidget.h"
 
 #include "interface/IRequestNetInterfaceExtend.h"
+#include "../../../../extend/netWork/Request.h"
+#include "../../../../extend/netWork/RequestConnect.h"
 
 const QString WebUrlInfoWidget::settingHostKey = tr( u8"host" );
 const QString WebUrlInfoWidget::settingUrlKey = tr( u8"url" );
@@ -136,6 +138,7 @@ void WebUrlInfoWidget::initComponentConnect( ) {
 		emit currentIndexChanged( index );
 		DEBUG_RUN( qDebug() << "emit currentIndexChanged( );" );
 	} );
+	connect( this, &WebUrlInfoWidget::startBtnClick, this, &WebUrlInfoWidget::webNetRequest );
 }
 void WebUrlInfoWidget::insterCompoentToLayout( ) {
 	hasNovelInfoLayout->addWidget( loadDll );
@@ -235,6 +238,13 @@ void WebUrlInfoWidget::computerSize( ) {
 	int minh = maxHeight + contentsMargins.top( ) + contentsMargins.bottom( );
 	this->setMinimumSize( minw, minh );
 }
+void WebUrlInfoWidget::webNetRequest( ) {
+	std::string curlLink;
+	getUrl( &curlLink );
+	QUrl url( curlLink.c_str( ) );
+	DEBUG_RUN( qDebug() << "WebUrlInfoWidget::webNetRequest( " << url.host( ) << ") " );
+	requestNetWrok->netGetWork( url, requestConnect );
+}
 void WebUrlInfoWidget::initCompoentOver( ) {
 	computerSize( );
 
@@ -266,6 +276,8 @@ void WebUrlInfoWidget::initComponentText( ) {
 }
 void WebUrlInfoWidget::initComponentInstance( ) {
 
+	requestNetWrok = new Request( this );
+	requestConnect = new RequestConnect( this );
 	hasNovelInfoLayout = new HLayoutBox( this );
 
 	loadDll = new Button( this );

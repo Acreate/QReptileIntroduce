@@ -13,3 +13,4 @@ _deps
 /builder
 /.vs
 cmake_to_c_cpp_header_macro.h
+/_ReSharper.Caches

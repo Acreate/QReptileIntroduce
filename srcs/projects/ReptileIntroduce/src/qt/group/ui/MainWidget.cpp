@@ -29,27 +29,29 @@ const QString MainWidget::selectWebSettingPath = tr( u8"web/SettingFilePath" );
 
 const QString MainWidget::transparentText = tr( u8"当前状态: [%1穿透]" );
 const QString MainWidget::transparentTextNot = tr( u8"未" );
-MainWidget::MainWidget( QWidget *parent, Qt::WindowFlags fg ) : QWidget( parent, fg ), currentFont( "Arial", 10 ), currentFontMetrics( currentFont ), drawColor( 255, 0, 0 ), compoentStrNlen( 0 ) {
-
-	DEBUG_RUN( qDebug() << tr(u8"MainWidget::MainWidget 线程 id : ")<< QThread::currentThread( )->currentThreadId( ) );
-
-	///// 本实例对象实现槽函数
-
-	//connect( this, &QWidget::show, [=]( ) {
-	//
-	//} );
-
-	/////// 线程
+void MainWidget::initMumberPtrMemory( ) {
 	dateTimeThread = new DateTimeThread;
-	dateTimeThread->setParent( this );
-	connect( dateTimeThread, &DateTimeThread::updateDateTimeStr, this, &MainWidget::updateDateTimeStrFunction, Qt::QueuedConnection );
 	rwFileThread = new RWFileThread( );
-	rwFileThread->setParent( this );
+	translator = new QTranslator( );
+	textLine = new QLineEdit( this );
+	converTransparentForMouseEventsBtn = new QPushButton( this );
+	topLayout = new HLayoutBox( );
+	mainLayout = new VLayoutBox( );
 
-	// todo : 每次文件读写操作
+	novelComponent = new NovelInfoWidget( this );
+	jobWidget = new JobWidget( this );
+	toolsMenu = new Menu( this );
+	loadSettingFile = new Action;
+}
+void MainWidget::initComponentPropertys( ) {
+	dateTimeThread->setParent( this );
+	rwFileThread->setParent( this );
 	fileThreadResult = rwFileThread->getFileResult( );
-	//connect( fileThreadResult, &FileResult::finish, this, &MainWidget::changeTextComponentContents, Qt::QueuedConnection );
-	connect( fileThreadResult, &FileResult::error, this, &MainWidget::error, Qt::QueuedConnection );
+
+	// progressIniFileName, QSettings::IniFormat
+	setWindowTitle( tr( u8"小说阅读" ) );
+	// 窗口捕获鼠标
+	setMouseTracking( true );
 
 	/// 配置 路径
 	QString progressIniPath = qApp->applicationDirPath( ).append( QDir::separator( ) ).append( tr( u8"progress" ) ).append( QDir::separator( ) );
@@ -60,7 +62,6 @@ MainWidget::MainWidget( QWidget *parent, Qt::WindowFlags fg ) : QWidget( parent,
 	QLocale locale = QLocale::system( );
 	QString pmFilename = QString( u8"QReptileIntroduce_" ).append( locale.name( ) );
 
-	translator = new QTranslator( );
 	if( translator->load( pmFilename, directory ) )
 		qApp->installTranslator( translator );
 	DEBUG_RUN_CODE_ELSE_END( qDebug( ) << tr( u8"翻译(*.pm)文件加载错误" ) );
@@ -74,55 +75,46 @@ MainWidget::MainWidget( QWidget *parent, Qt::WindowFlags fg ) : QWidget( parent,
 		qDebug() << "path (" << absPath<< ") has setting file;";
 		}
 	);
+	progressSetting = new QSettings( progressIniFileName, QSettings::IniFormat );
+	textLine->setReadOnly( true );
+	converTransparentForMouseEventsBtn->setAttribute( Qt::WA_TransparentForMouseEvents, true );
+	textLine->setAttribute( Qt::WA_TransparentForMouseEvents, true );
 
-	progressSetting = new QSettings( progressIniFileName, QSettings::IniFormat ); // 使用路径方式存储
-	setWindowTitle( tr( u8"小说阅读" ) );
-	// 窗口捕获鼠标
-	setMouseTracking( true );
-
+	loadSettingFile->setText( tr( u8"加载配置文件" ) );
+}
+void MainWidget::initComponentLayout( ) {
 	// ui 组件
 	auto oldLayout = this->layout( );
 	if( oldLayout )
 		delete oldLayout;
 
-	textLine = new QLineEdit( this );
-
-	converTransparentForMouseEventsBtn = new QPushButton( this );
-
-	topLayout = new HLayoutBox( );
 	topLayout->setSpacing( 0 );
 	topLayout->addWidget( textLine );
 	topLayout->addWidget( converTransparentForMouseEventsBtn );
 	topLayout->setContentsMargins( 0, 0, 0, 0 );
 
-	mainLayout = new VLayoutBox( );
 	mainLayout->setSpacing( 0 );
 	this->setLayout( mainLayout );
 	mainLayout->setContentsMargins( 0, 0, 0, 0 );
+	textLine->setFont( currentFont );
 
 	mainLayout->addLayout( topLayout );
 
-	novelComponent = new NovelInfoWidget( this );
 	mainLayout->addWidget( novelComponent );
-	textLine->setFont( currentFont );
-	textLine->setReadOnly( true );
-
-	converTransparentForMouseEventsBtn->setAttribute( Qt::WA_TransparentForMouseEvents, true );
-	textLine->setAttribute( Qt::WA_TransparentForMouseEvents, true );
+	mainLayout->addWidget( jobWidget );
+	toolsMenu->addAction( loadSettingFile );
+}
+void MainWidget::initComponentConnect( ) {
+	connect( dateTimeThread, &DateTimeThread::updateDateTimeStr, this, &MainWidget::updateDateTimeStrFunction, Qt::QueuedConnection );
+	connect( fileThreadResult, &FileResult::error, this, &MainWidget::error, Qt::QueuedConnection );
 
 	connect( converTransparentForMouseEventsBtn, &QPushButton::clicked, this, &MainWidget::changeTransparent, Qt::QueuedConnection );
 
-	jobWidget = new JobWidget( this );
-	mainLayout->addWidget( jobWidget );
 	connect( jobWidget, &JobWidget::click, [=]( ) {
-
-		emit novelComponent->clickRequestStart(  );
+		emit novelComponent->clickRequestStart( );
 		emit jobWidget->setProgressValue( 100 );
 	} );
 	////////////// 菜单
-
-	toolsMenu = new Menu( this );
-
 	connect( toolsMenu, &QMenu::aboutToHide, [=]( ) {
 		auto point = QCursor::pos( );
 		auto pos = this->pos( );
@@ -136,17 +128,14 @@ MainWidget::MainWidget( QWidget *parent, Qt::WindowFlags fg ) : QWidget( parent,
 		showCount = 0;
 	} );
 
-	auto loadSettingFile = new Action;
-	loadSettingFile->setText( tr( u8"加载配置文件" ) );
 	connect( loadSettingFile, &Action::triggered, [=]( ) {
 		DEBUG_RUN( qDebug() << tr(u8"requestSettingFilePath, &Action::trigger slots") );
 		changeWebComponents( );
 	} );
-	toolsMenu->addAction( loadSettingFile );
-
+}
+void MainWidget::initComponentOver( ) {
 	//// 线程开始
 	dateTimeThread->start( );
-
 	bool flageTransparentForMouseEvents = progressSetting->value( transparentForMouseEvents, true ).toBool( );
 	converTransparentForMouseEventsBtn->setText( QString( transparentText ).arg( flageTransparentForMouseEvents ? u8"" : transparentTextNot ) );
 	novelComponent->setAttribute( Qt::WA_TransparentForMouseEvents, flageTransparentForMouseEvents );
@@ -182,6 +171,18 @@ MainWidget::MainWidget( QWidget *parent, Qt::WindowFlags fg ) : QWidget( parent,
 	QTime time;
 	time.setHMS( 10, 10, 10, 999 );
 	MainWidget::updateDateTimeStrFunction( QString( "%1 - %2" ).arg( date.toString( u8"yyyy 年 MM 月 dd 日" ) ).arg( time.toString( u8"hh 时 mm 分 ss 秒 zzz" ) ) );
+}
+MainWidget::MainWidget( QWidget *parent, Qt::WindowFlags fg ) : QWidget( parent, fg ), currentFont( "Arial", 10 ), currentFontMetrics( currentFont ), drawColor( 255, 0, 0 ), compoentStrNlen( 0 ) {
+
+	DEBUG_RUN( qDebug() << tr(u8"MainWidget::MainWidget 线程 id : ")<< QThread::currentThread( )->currentThreadId( ) );
+
+	initMumberPtrMemory( );
+	initComponentPropertys( );
+	initComponentLayout( );
+
+	initComponentConnect( );
+
+	initComponentOver( );
 }
 MainWidget::~MainWidget( ) {
 	dateTimeThread->requestInterruption( );
@@ -251,12 +252,6 @@ void MainWidget::updateDateTimeStrFunction( const QString &currentDateTimeStr ) 
 		isOutDbug = false;
 		}
 	);
-	//QString string = converTransparentForMouseEventsBtn->text( );
-	//qint64 newStrLen = currentDateTimeStr.length( ) + string.length( );
-	//if( compoentStrNlen < newStrLen ) {
-	//	compoentStrNlen = newStrLen;
-	//	updateWidgetWidth( { currentDateTimeStr, string } );
-	//}
 	textLine->setText( currentDateTimeStr );
 }
 void MainWidget::changeTransparent( bool flage ) {

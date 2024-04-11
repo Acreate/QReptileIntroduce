@@ -16,6 +16,7 @@
 
 class JobWidget;
 class Menu;
+class Action;
 class HLayoutBox;
 class WebUrlInfoWidget;
 class VLayoutBox;
@@ -38,6 +39,27 @@ protected: // 事件
 	void mouseReleaseEvent( QMouseEvent *event ) override;
 	void mousePressEvent( QMouseEvent *event ) override;
 	void resizeEvent( QResizeEvent *event ) override;
+protected:
+	/// <summary>
+	/// 初始化组件的指针对象
+	/// </summary>
+	void initMumberPtrMemory( );
+	/// <summary>
+	/// 初始化组件的属性
+	/// </summary>
+	void initComponentPropertys( );
+	/// <summary>
+	/// 初始化组件的布局
+	/// </summary>
+	void initComponentLayout( );
+	/// <summary>
+	/// 初始化组件的信号链接
+	/// </summary>
+	void initComponentConnect( );
+	/// <summary>
+	/// 实现组件的完成结尾
+	/// </summary>
+	void initComponentOver( );
 private: // 参考变量 - 只读
 	static const QString qstrPoint; // 格式化字符串
 private: // 计算变量
@@ -53,7 +75,7 @@ private: // 计算变量
 	QPoint winCenterPoint; // 记录窗口中间
 private: // 组件
 	NovelInfoWidget *novelComponent; // 小说组件
-	JobWidget* jobWidget; // 任务组件
+	JobWidget *jobWidget; // 任务组件
 	QLineEdit *textLine; // 显示时间
 	QPushButton *converTransparentForMouseEventsBtn; // 切换与鼠标点击事件
 private: // 布局
@@ -61,6 +83,7 @@ private: // 布局
 	HLayoutBox *topLayout;
 private: // 菜单
 	Menu *toolsMenu;
+	Action *loadSettingFile;
 private: // 程序配置-读写
 	QSettings *progressSetting;
 	QTranslator *translator;
