@@ -39,7 +39,21 @@ public:
 		return className;
 	}
 private: // 配置文件关键字
-	static const QString selectWebBuffWorkPath;
+	/// <summary>
+	/// web 缓冲写入路径
+	/// </summary>
+	static const QString settingWebBuffWorkPathKey;
+	/// <summary>
+	/// web 子控件路径
+	/// </summary>
+	static const QString settingHostKey;
+	/// <summary>
+	/// 动态加载的类名
+	/// </summary>
+	static const QString loadClassName;
+	static const QByteArray loadClassNameByteArry;
+protected:
+	static std::unordered_map< QString, IRequestNetInterfaceExtend * > loadPlugs;
 public: // 配置文件
 	QSettings *netSetFileSettings = nullptr;
 	RWFileThread *rwFileThread = nullptr;
@@ -47,7 +61,7 @@ public: // 配置文件
 	QString settingFileAbsoluteFilePath; // setting 的绝对路径
 public:
 	const QString &getWebBuffWorkPathKey( ) const {
-		return selectWebBuffWorkPath;
+		return settingWebBuffWorkPathKey;
 	}
 private: // 组件
 	VLayoutBox *mainLayout;
@@ -58,25 +72,25 @@ protected:
 	/// <summary>
 	/// 实现组件对象创建
 	/// </summary>
-	void initComponentMeoryObj();
+	void initComponentMeoryObj( );
 	/// <summary>
 	/// 实现组件对象属性
 	/// </summary>
-	void initComponentPropers();
+	void initComponentPropers( );
 	/// <summary>
 	/// 实现组件布局
 	/// </summary>
-	void initComponentLayout();
+	void initComponentLayout( );
 	/// <summary>
 	/// 实现组件信号槽内容
 	/// </summary>
-	void initComponentConnect();
+	void initComponentConnect( );
 	/// <summary>
 	/// 初始化 widget 大小
 	/// </summary>
-	void initWidgetSize();
+	void initWidgetSize( );
 private: // 初始化子组件
-	void initWebUrlInfoWidgetCompoent( WebUrlInfoWidget * webUrlWidget );
+	void initWebUrlInfoWidgetCompoent( WebUrlInfoWidget *webUrlWidget );
 private: // 顶端组件-settingInfoLayoutBox
 	Button *btn;
 	Button *startBtn;
@@ -85,12 +99,11 @@ private: // 顶端组件-settingInfoLayoutBox
 private: // 居中组件-msgLayoutBox
 	QScrollArea *listView;
 private: // listView 组件中的子组件
-	QWidget * listViewWidget;
-	VLayoutBox * listViewWidgetVBox;
+	QWidget *listViewWidget;
+	VLayoutBox *listViewWidgetVBox;
 private: // 底部组件-runInfoLayoutBox
 
 private:
-	int checkStatus = 0;
 	int editorStatus = 0;
 private: // 网络-请求
 	Request *requestNetWrok = nullptr; // web 网络请求对象
@@ -117,23 +130,46 @@ protected: // 重载事件
 	void showEvent( QShowEvent *event ) override;
 	bool nativeEvent( const QByteArray &eventType, void *message, qintptr *result ) override;
 	void mousePressEvent( QMouseEvent *event ) override;
-	
-private slots: // 槽函数
+private slots: // 子控件槽函数
+	/// <summary>
+	/// 使用子控件请求完成被激活
+	/// </summary>
 	void networkReplyFinished( );
-	void settingPathCompoentWriteOver( );
-	void loadPathPlugs();
-	void componentRequestStart();
+	/// <summary>
+	/// 加载子控件时激活
+	/// </summary>
+	void loadPathPlugs( );
+	/// <summary>
+	/// 子控件请求开始时激活
+	/// </summary>
+	void componentRequestStart( );
+	/// <summary>
+	/// 在 inputSettingPathLine 设置配置文件路径完成时被激活
+	/// </summary>
+	void inputSettingPathLinePathCompoentEditFinish( );
+public slots: // 当前窗口槽函数
+	/// <summary>
+	/// 设置工作路径配置文件
+	/// </summary>
+	/// <param name="filePath"></param>
+	void slotsSetNetWorkSettingFilePath( const QString &filePath );
+	/// <summary>
+	/// 
+	/// </summary>
+	/// <param name="oldPath"></param>
+	/// <param name="newPath"></param>
+	void slotsOverSettingPath( const QString &oldPath, const QString &newPath );
+	void slotsErrorSettingPath( const QString &currentPath, const QString &errorPath );
 Q_SIGNALS :
-
 	/// <summary>
 	/// 重置大小信号
 	/// </summary>
-	void resetWidgetSize(const int width, const int height);
+	void resetWidgetSize( const int width, const int height );
 	/// <summary>
 	/// 请求开始信号
 	/// </summary>
-	void clickRequestStart();
-	
+	void clickRequestStart( );
+
 	/// <summary>
 	/// 路径错误发生消息
 	/// </summary>

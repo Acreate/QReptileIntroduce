@@ -29,7 +29,11 @@
 
 #include "path/Path.h"
 
-const QString NovelInfoWidget::selectWebBuffWorkPath = tr( u8"work/WebBuff/Path" );
+const QString NovelInfoWidget::settingWebBuffWorkPathKey = tr( u8"work/WebBuff/Path" );
+const QString NovelInfoWidget::settingHostKey = tr( u8"host" );
+const QString NovelInfoWidget::loadClassName = tr( u8"RequestNet" );
+const QByteArray NovelInfoWidget::loadClassNameByteArry = loadClassName.toLocal8Bit( );
+std::unordered_map< QString, IRequestNetInterfaceExtend * > NovelInfoWidget::loadPlugs;
 IRequestNetInterfaceExtend *NovelInfoWidget::getIRequestNetInterface( const QString &plugFilePath, const QString &name, const QString &spec ) {
 	QPluginLoader loader( plugFilePath );
 	if( loader.load( ) ) {
@@ -38,16 +42,18 @@ IRequestNetInterfaceExtend *NovelInfoWidget::getIRequestNetInterface( const QStr
 		if( genericPlugin ) {
 			QObject *object = genericPlugin->create( name, spec );
 			auto className = object->metaObject( )->className( );
-			if( strcmp( className, "RequestNet" ) == 0 ) {
+			if( strcmp( className, loadClassNameByteArry ) == 0 ) {
 				IRequestNetInterfaceExtend *result = reinterpret_cast< IRequestNetInterfaceExtend * >( object );
 				if( result ) {
 					result->setParent( nullptr );
+					QString host = result->getUrl( ).host( );
+					loadPlugs.insert_or_assign( host, result );
 					return result;
 				}
 			}
 		}
-		return nullptr;
 	}
+	return nullptr;
 }
 NovelInfoWidget::NovelInfoWidget( QWidget *parent, Qt::WindowFlags flag ) : QWidget( parent, flag ) {
 	/////// 链接信号槽
@@ -97,76 +103,12 @@ void NovelInfoWidget::initComponentLayout( ) {
 }
 
 void NovelInfoWidget::initComponentConnect( ) {
-	connect( this, &NovelInfoWidget::setNetWorkSettingFilePath, [=]( const QString &filePath ) {
-		QFileInfo fileInfo( filePath );
-		auto absoluteFilePath = fileInfo.absoluteFilePath( );
-		if( fileInfo.exists( ) ) {
-			if( netSetFileSettings ) {
-				netSetFileSettings->setPath( QSettings::IniFormat, QSettings::UserScope, absoluteFilePath );
-				netSetFileSettings->sync( );
-			} else
-				netSetFileSettings = new QSettings( absoluteFilePath, QSettings::IniFormat );
-
-			auto temp = settingFileAbsoluteFilePath;
-			settingFileAbsoluteFilePath = absoluteFilePath;
-			inputSettingPathLine->setText( settingFileAbsoluteFilePath );
-			emit overSettingPath( temp, settingFileAbsoluteFilePath );
-			return;
-		}
-		emit errorSettingPath( getAbsoluteFilePath( ), absoluteFilePath );
-	} );
-
-	connect( this, &NovelInfoWidget::overSettingPath, [=]( const QString &oldPath, const QString &newPath ) {
-		netSetFileSettings->beginGroup( u8"host" );
-		auto allKeys = netSetFileSettings->allKeys( );
-		if( allKeys.length( ) != 0 ) {
-			auto layout = listView->widget( )->layout( );
-			for( auto &settingKey : allKeys ) {
-				QVariant variant = netSetFileSettings->value( settingKey );
-				auto value = variant.toString( );
-				if( value.isEmpty( ) )
-					continue;
-				IRequestNetInterfaceExtend *requestNetInterface = loadPlug( value );
-				if( requestNetInterface ) {
-					auto webUrlWidget = WebUrlInfoWidget::generateWebUrlInfoWidget( netSetFileSettings, this, requestNetInterface );
-					if( webUrlWidget ) {
-						int count = layout->count( );
-						int index = 0;
-						for( ; index < count ; ++index )
-							if( layout->itemAt( index )->widget( ) == webUrlWidget )
-								break;
-						if( index == count ) {
-							layout->addWidget( webUrlWidget );
-							initWebUrlInfoWidgetCompoent( webUrlWidget );
-
-						}
-					}
-				}
-			}
-		}
-		netSetFileSettings->endGroup( );
-	} );
+	connect( this, &NovelInfoWidget::setNetWorkSettingFilePath, this, &NovelInfoWidget::slotsSetNetWorkSettingFilePath );
+	connect( this, &NovelInfoWidget::overSettingPath, this, &NovelInfoWidget::slotsOverSettingPath );
 	connect( requestConnect, &RequestConnect::networkReplyFinished, this, &NovelInfoWidget::networkReplyFinished );
-	connect( this, &NovelInfoWidget::errorSettingPath, [=]( ) {
-		DEBUG_RUN( qDebug() << u8"NovelInfoWidget::errorSettingPath" );
-		btn->setText( tr( u8"错误" ) );
-		btn->setStyleSheet( tr( u8R"(
-	Button{
-		color : red;
-	})" ) );
-	} );
-	connect( this, &NovelInfoWidget::overSettingPath, [=]( const QString &oldPath, const QString &newPath ) {
-		DEBUG_RUN( qDebug() << u8"NovelInfoWidget::overSettingPath" );
-	} );
-	connect( btn, &QPushButton::clicked, [=]( ) {
-		DEBUG_RUN( qDebug() << u8"QPushButton::clicked" );
-		loadPathPlugs( );
-	} );
-	connect( inputSettingPathLine, &QLineEdit::editingFinished, this, &NovelInfoWidget::settingPathCompoentWriteOver );
-	connect( inputSettingPathLine, &QLineEdit::textEdited, [=]( ) {
-		DEBUG_RUN( qDebug() << u8"QLineEdit::textEdited" );
-		editorStatus = 1;
-	} );
+	connect( this, &NovelInfoWidget::errorSettingPath, this, &NovelInfoWidget::slotsErrorSettingPath );
+	connect( btn, &QPushButton::clicked, this, &NovelInfoWidget::loadPathPlugs );
+	connect( inputSettingPathLine, &QLineEdit::editingFinished, this, &NovelInfoWidget::inputSettingPathLinePathCompoentEditFinish );
 }
 void NovelInfoWidget::initWidgetSize( ) {
 	QMargins contentsMargins = listViewWidgetVBox->contentsMargins( );
@@ -241,7 +183,7 @@ bool NovelInfoWidget::nativeEvent( const QByteArray &eventType, void *message, q
 }
 void NovelInfoWidget::mousePressEvent( QMouseEvent *event ) {
 	if( editorStatus && !inputSettingPathLine->geometry( ).contains( event->pos( ) ) )
-		settingPathCompoentWriteOver( );
+		inputSettingPathLinePathCompoentEditFinish( );
 }
 void NovelInfoWidget::networkReplyFinished( ) {
 	QNetworkReply *networkReply = requestConnect->getNetworkReply( );
@@ -260,7 +202,7 @@ void NovelInfoWidget::networkReplyFinished( ) {
 				return;
 		} while( true );
 	}
-	auto variant = netSetFileSettings->value( selectWebBuffWorkPath );
+	auto variant = netSetFileSettings->value( settingWebBuffWorkPathKey );
 	if( variant.isNull( ) ) {
 		QFileInfo info;
 		bool isUseCanNotWrite = false;
@@ -277,7 +219,7 @@ void NovelInfoWidget::networkReplyFinished( ) {
 			}
 		} while( isUseCanNotWrite ) ;
 		existingDirectory.append( QDir::separator( ) );
-		netSetFileSettings->setValue( selectWebBuffWorkPath, existingDirectory );
+		netSetFileSettings->setValue( settingWebBuffWorkPathKey, existingDirectory );
 		netSetFileSettings->sync( );
 	} else
 		existingDirectory = variant.toString( ) + QDir::separator( );
@@ -291,12 +233,10 @@ void NovelInfoWidget::networkReplyFinished( ) {
 	rwFileThread->writeFile( byteArray );
 	rwFileThread->start( );
 }
-void NovelInfoWidget::settingPathCompoentWriteOver( ) {
+void NovelInfoWidget::inputSettingPathLinePathCompoentEditFinish( ) {
 	QString inputPath = inputSettingPathLine->text( );
-	editorStatus = 0;
 	QFileInfo fileInfo( inputPath );
 	if( !fileInfo.exists( ) ) {
-		checkStatus = -1;
 		emit errorSettingPath( settingFileAbsoluteFilePath, fileInfo.absoluteFilePath( ) );
 		return;
 	}
@@ -309,17 +249,16 @@ void NovelInfoWidget::settingPathCompoentWriteOver( ) {
 	} else
 		netSetFileSettings = new QSettings( newPath, QSettings::Format::IniFormat, this );
 
-	checkStatus = 1;
 	// todo 开始加载组件
-	netSetFileSettings->beginGroup( "url" );
-	QStringList childKeys = netSetFileSettings->childKeys( );
-	for( auto &key : childKeys ) {
+	DEBUG_RUN(
+		netSetFileSettings->beginGroup( settingHostKey );
+		QStringList childKeys = netSetFileSettings->childKeys( );
+		for( auto &key : childKeys ) {
 		QVariant value = netSetFileSettings->value( key );
-		DEBUG_RUN( qDebug() << "当前 key 为 : "<< key<< ", 获取到的值为 : " << value.toString( ) );
-
-	}
-	netSetFileSettings->endGroup( );
-
+		qDebug() << "当前 key 为 : "<< key<< ", 获取到的值为 : " << value.toString( );
+		}
+		netSetFileSettings->endGroup( );
+	);
 	emit overSettingPath( settingFileAbsoluteFilePath, newPath );
 	settingFileAbsoluteFilePath = newPath;
 }
@@ -328,7 +267,6 @@ void NovelInfoWidget::loadPathPlugs( ) {
 	QString caption = tr( u8"选择一个 qt 插件路径" );
 	QString title = tr( u8"插件错误" );
 	QString questionMsg = tr( u8"文件打开错误!现在重新选择吗?" );
-	auto prefix = "host";
 	auto key = "root";
 	do {
 		auto fileName = QFileDialog::getExistingDirectory( this, caption, settingFileInfo.absoluteDir( ).absolutePath( ) );
@@ -352,7 +290,7 @@ void NovelInfoWidget::loadPathPlugs( ) {
 				++loadPlugCount;
 				QUrl url = ire->getUrl( );
 				QString host = url.host( );
-				netSetFileSettings->beginGroup( prefix );
+				netSetFileSettings->beginGroup( settingHostKey );
 				currentFilePtah = current.relativeFilePath( currentFilePtah );
 				netSetFileSettings->setValue( host, currentFilePtah );
 				netSetFileSettings->endGroup( );
@@ -388,7 +326,61 @@ void NovelInfoWidget::componentRequestStart( ) {
 	if( src ) {
 		auto webUrlInfoWidget = qobject_cast< WebUrlInfoWidget * >( src );
 		if( webUrlInfoWidget ) {
+			auto url = webUrlInfoWidget->getUrl( );
 			DEBUG_RUN( qDebug() << "qobject_cast<WebUrlInfoWidget*>(src) = " << webUrlInfoWidget->getUrl( ) );
+			requestNetWrok->netGetWork( url, requestConnect );
 		}
 	}
+}
+void NovelInfoWidget::slotsSetNetWorkSettingFilePath( const QString &filePath ) {
+	QFileInfo fileInfo( filePath );
+	auto absoluteFilePath = fileInfo.absoluteFilePath( );
+	if( fileInfo.exists( ) ) {
+		if( netSetFileSettings ) {
+			netSetFileSettings->setPath( QSettings::IniFormat, QSettings::UserScope, absoluteFilePath );
+			netSetFileSettings->sync( );
+		} else
+			netSetFileSettings = new QSettings( absoluteFilePath, QSettings::IniFormat );
+
+		auto temp = settingFileAbsoluteFilePath;
+		settingFileAbsoluteFilePath = absoluteFilePath;
+		inputSettingPathLine->setText( settingFileAbsoluteFilePath );
+		emit overSettingPath( temp, settingFileAbsoluteFilePath );
+		return;
+	}
+	emit errorSettingPath( getAbsoluteFilePath( ), absoluteFilePath );
+}
+void NovelInfoWidget::slotsOverSettingPath( const QString &oldPath, const QString &newPath ) {
+	netSetFileSettings->beginGroup( settingHostKey );
+	auto allKeys = netSetFileSettings->allKeys( );
+	if( allKeys.length( ) != 0 ) {
+		auto layout = listView->widget( )->layout( );
+		for( auto &settingKey : allKeys ) {
+			QVariant variant = netSetFileSettings->value( settingKey );
+			auto value = variant.toString( );
+			if( value.isEmpty( ) )
+				continue;
+			IRequestNetInterfaceExtend *requestNetInterface = loadPlug( value );
+			if( requestNetInterface ) {
+				auto webUrlWidget = WebUrlInfoWidget::generateWebUrlInfoWidget( netSetFileSettings, this, requestNetInterface );
+				if( webUrlWidget ) {
+					int count = layout->count( );
+					int index = 0;
+					for( ; index < count ; ++index )
+						if( layout->itemAt( index )->widget( ) == webUrlWidget )
+							break;
+					if( index == count ) {
+						layout->addWidget( webUrlWidget );
+						initWebUrlInfoWidgetCompoent( webUrlWidget );
+
+					}
+				}
+			}
+		}
+	}
+	netSetFileSettings->endGroup( );
+}
+void NovelInfoWidget::slotsErrorSettingPath( const QString &currentPath, const QString &errorPath ) {
+
+	DEBUG_RUN( qDebug() << u8"NovelInfoWidget::errorSettingPath" );
 }

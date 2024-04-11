@@ -19,6 +19,7 @@ public:
 	}
 	void setRequestSettingFilePath( const QString &filePath );
 	QNetworkReply *netGetWork( const QString &url, RequestConnect *requestConnect );
+	QNetworkReply *netGetWork( const QUrl &url, RequestConnect *requestConnect );
 
 };
 
