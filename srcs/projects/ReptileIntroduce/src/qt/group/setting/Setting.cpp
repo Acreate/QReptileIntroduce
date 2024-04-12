@@ -14,6 +14,104 @@ QVariant Setting::getValue( const QAnyStringView &key ) const {
 	QMutexLocker< QMutex > nstanceLock( instanceMutex );
 	return setting->value( key );
 }
+QVariant Setting::getValue( const QAnyStringView &key, bool isSync ) const {
+	if( isSync ) {
+		QMutexLocker< QMutex > nstanceLock( instanceMutex );
+		setting->sync( );
+	}
+	return getValue( key );
+}
+QVariant Setting::getValue( const QAnyStringView &groupName, const QAnyStringView &key, bool isSync ) const {
+	if( isSync ) {
+		QMutexLocker< QMutex > nstanceLock( instanceMutex );
+		setting->sync( );
+	}
+	return getValue( groupName, key );
+}
+QVariant Setting::getValue( const QAnyStringView &groupName, const QAnyStringView &key, const std::function< QVariant( const QVariant & ) > &ifFunction, bool isSync ) const {
+	if( isSync ) {
+		QMutexLocker< QMutex > nstanceLock( instanceMutex );
+		setting->sync( );
+	}
+	return getValue( groupName, key, ifFunction );
+}
+QVariant Setting::getValue( const QAnyStringView &key, const std::function< QVariant( const QVariant & ) > &ifFunction, bool isSync ) const {
+	if( isSync ) {
+		QMutexLocker< QMutex > nstanceLock( instanceMutex );
+		setting->sync( );
+	}
+	return getValue( key, ifFunction );
+}
+void Setting::setValue( const QAnyStringView &key, const QVariant &value, bool isSync ) {
+	setValue( key, value );
+	if( isSync ) {
+		QMutexLocker< QMutex > nstanceLock( instanceMutex );
+		setting->sync( );
+	}
+}
+void Setting::setValue( const QAnyStringView &groupName, const QAnyStringView &key, const QVariant &value, bool isSync ) {
+	setValue( groupName, key, value );
+	if( isSync ) {
+		QMutexLocker< QMutex > nstanceLock( instanceMutex );
+		setting->sync( );
+	}
+}
+void Setting::setValue( const QMap< QAnyStringView, QVariant > &valuePair, bool isSync ) {
+	setValue( valuePair );
+	if( isSync ) {
+		QMutexLocker< QMutex > nstanceLock( instanceMutex );
+		setting->sync( );
+	}
+}
+void Setting::setValue( const QAnyStringView &groupName, const QMap< QAnyStringView, QVariant > &valuePair, bool isSync ) {
+	setValue( groupName, valuePair );
+	if( isSync ) {
+		QMutexLocker< QMutex > nstanceLock( instanceMutex );
+		setting->sync( );
+	}
+}
+QStringList Setting::getAllKey( bool isSync ) const {
+	if( isSync ) {
+		QMutexLocker< QMutex > nstanceLock( instanceMutex );
+		setting->sync( );
+	}
+	return getAllKey( );
+}
+QStringList Setting::getAllKey( const QAnyStringView &group, bool isSync ) const {
+	if( isSync ) {
+		QMutexLocker< QMutex > nstanceLock( instanceMutex );
+		setting->sync( );
+	}
+	return getAllKey( group );
+}
+QList< QVariant > Setting::getAllValue( bool isSync ) const {
+	if( isSync ) {
+		QMutexLocker< QMutex > nstanceLock( instanceMutex );
+		setting->sync( );
+	}
+	return getAllValue( );
+}
+QList< QVariant > Setting::getAllValue( const QAnyStringView &group, bool isSync ) const {
+	if( isSync ) {
+		QMutexLocker< QMutex > nstanceLock( instanceMutex );
+		setting->sync( );
+	}
+	return getAllValue( group );
+}
+QMap< QAnyStringView, QVariant > Setting::getAllInfo( bool isSync ) const {
+	if( isSync ) {
+		QMutexLocker< QMutex > nstanceLock( instanceMutex );
+		setting->sync( );
+	}
+	return getAllInfo( );
+}
+QMap< QAnyStringView, QVariant > Setting::getAllInfo( const QAnyStringView &group, bool isSync ) const {
+	if( isSync ) {
+		QMutexLocker< QMutex > nstanceLock( instanceMutex );
+		setting->sync( );
+	}
+	return getAllInfo( group );
+}
 QVariant Setting::getValue( const QAnyStringView &groupName, const QAnyStringView &key ) const {
 	QMutexLocker< QMutex > nstanceLock( instanceMutex );
 	setting->beginGroup( groupName );
