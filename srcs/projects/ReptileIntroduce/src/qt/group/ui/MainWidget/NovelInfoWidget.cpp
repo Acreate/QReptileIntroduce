@@ -292,9 +292,8 @@ void NovelInfoWidget::componentCurrentIndexChanged( int index ) {
 		return;
 	QObject *object = sender( );
 	auto webUrlInfoWidget = qobject_cast< WebUrlInfoWidget * >( object );
-	if( webUrlInfoWidget ) {
-		//webUrlInfoWidget->setScheme(  )
-	}
+	if( webUrlInfoWidget )
+		emit changedScheme( webUrlInfoWidget->getScheme( ) );
 
 }
 void NovelInfoWidget::slotsSetNetWorkSettingFilePath( const QString &filePath ) {

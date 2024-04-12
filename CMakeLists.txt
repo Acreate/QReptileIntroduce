@@ -1,8 +1,5 @@
 ﻿CMAKE_MINIMUM_REQUIRED( VERSION 3.19 )
 
-
-
-
 SET( CMAKE_C_STANDARD 99 )
 SET( CMAKE_C_STANDARD_REQUIRED ON )
 SET( CMAKE_C_VISIBILITY_PRESET hidden )
@@ -11,8 +8,8 @@ SET( CMAKE_CXX_STANDARD 17 )
 SET( CMAKE_CXX_STANDARD_REQUIRED ON )
 SET( CMAKE_CXX_VISIBILITY_PRESET hidden )
 
-if(ANDROID)
-	message(SEND_ERROR "无法编译到 android 平台" )
+if( ANDROID )
+	message( SEND_ERROR "无法编译到 android 平台" )
 endif()
 
 FIND_PACKAGE( CmakeFuncs REQUIRED PATHS "${CMAKE_CURRENT_SOURCE_DIR}/srcs/cmake/CmakeFuncs/" )
@@ -20,8 +17,7 @@ FIND_PACKAGE( CmakeFuncs REQUIRED PATHS "${CMAKE_CURRENT_SOURCE_DIR}/srcs/cmake/
 INCLUDE( GenerateExportHeader )
 INCLUDE( GNUInstallDirs )
 
-message("QT_VERSION_MAJOR : ${QT_VERSION_MAJOR}")
-
+message( "QT_VERSION_MAJOR : ${QT_VERSION_MAJOR}" )
 
 # 如果发生错误，请重新配置 qt 6 环境，该文件位于根目录的 /cmake/QT6/Qt6EventConfig.cmake
 FIND_PACKAGE( Qt6Event REQUIRED PATHS "${CMAKE_HOME_DIRECTORY}/srcs/cmake/QT6/" )
@@ -36,17 +32,18 @@ FIND_PACKAGE( Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS
 	LinguistTools
 )
 
-
 get_current_dir_name( current_dir_name ${CMAKE_CURRENT_SOURCE_DIR} )
 
 SET( translation_file_list
+
 	# # 美语
 	"${CMAKE_HOME_DIRECTORY}/srcs/translations/${current_dir_name}_en.ts"
+
 	# # 汉语
 	"${CMAKE_HOME_DIRECTORY}/srcs/translations/${current_dir_name}_zh_CN.ts"
 )
 
-FILE(GLOB_RECURSE SRC_LIST  
+FILE( GLOB_RECURSE SRC_LIST
 	${CMAKE_HOME_DIRECTORY}/srcs/*.cpp
 	${CMAKE_HOME_DIRECTORY}/srcs/*.cxx
 	${CMAKE_HOME_DIRECTORY}/srcs/*.c
@@ -56,16 +53,15 @@ FILE(GLOB_RECURSE SRC_LIST
 	${CMAKE_HOME_DIRECTORY}/srcs/*.ui
 )
 
-ADD_CUSTOM_TARGET(${current_dir_name})
-SET_SOURCE_FILES_PROPERTIES(${translation_file_list}
-     PROPERTIES OUTPUT_LOCATION "${CMAKE_HOME_DIRECTORY}/builder/${CMAKE_BUILD_TYPE}_${CMAKE_CXX_COMPILER_ARCHITECTURE_ID}_${CMAKE_CXX_COMPILER_ID}/progress/translations")
+ADD_CUSTOM_TARGET( ${current_dir_name} )
+SET_SOURCE_FILES_PROPERTIES( ${translation_file_list}
+	PROPERTIES OUTPUT_LOCATION "${CMAKE_HOME_DIRECTORY}/builder/${CMAKE_BUILD_TYPE}_${CMAKE_CXX_COMPILER_ARCHITECTURE_ID}_${CMAKE_CXX_COMPILER_ID}/progress/translations" )
 qt_add_translations(
 	${current_dir_name}
 	TS_FILES ${translation_file_list}
 	SOURCES ${SRC_LIST}
 	LUPDATE_OPTIONS -no-obsolete
 )
-
 
 get_path_cmake_dir_path( out_path_list ${CMAKE_CURRENT_SOURCE_DIR}/srcs/libs/ "CMakeLists.txt" )
 get_path_cmake_dir_path( out_path_list ${CMAKE_CURRENT_SOURCE_DIR}/srcs/projects/ "CMakeLists.txt" )
@@ -74,4 +70,25 @@ foreach( out_dir ${out_path_list} )
 	STRING( REPLACE ${CMAKE_SOURCE_DIR}/ "./" out_path ${out_dir} )
 	MESSAGE( STATUS "正在添加路径 :\t" ${out_dir} )
 	ADD_SUBDIRECTORY( ${out_dir} )
+endforeach()
+
+set( copy_path_src "${CMAKE_HOME_DIRECTORY}/srcs/libs/ShaderModel/plugs/www.121ds.cc" )
+set( copy_path_des "${CMAKE_HOME_DIRECTORY}/srcs/libs/ShaderModel/plugs/" )
+
+file( GLOB out_paths LIST_DIRECTORIES true RELATIVE "${CMAKE_HOME_DIRECTORY}/" "${copy_path_des}*" )
+file( GLOB copy_path_src_files RELATIVE "${CMAKE_HOME_DIRECTORY}/" "${copy_path_src}/Request/*" )
+
+# # target ${current_dir_name}
+foreach( des_out_path ${out_paths} )
+	if( NOT IS_DIRECTORY "${des_out_path}" OR "${des_out_path}" STREQUAL "${copy_path_src}" )
+		message( " >> 跳过路径 " ${des_out_path} )
+		continue()
+	endif()
+
+	message( " !! 路径 " ${des_out_path} )
+
+	foreach( copy_src_file ${copy_path_src_files} )
+		file( COPY "${CMAKE_HOME_DIRECTORY}/${copy_src_file}"
+			DESTINATION "${CMAKE_HOME_DIRECTORY}/${des_out_path}/Request" )
+	endforeach()
 endforeach()

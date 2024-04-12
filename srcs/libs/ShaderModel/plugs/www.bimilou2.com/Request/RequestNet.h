@@ -9,19 +9,26 @@ class RequestNet : public QObject, public IRequestNetInterfaceExtend {
 	Q_OBJECT;
 	Q_INTERFACES( IRequestNetInterfaceExtend )
 private:
-	QString url;
+	QUrl url;
 public:
 	RequestNet( QObject *parent = nullptr );
 	~RequestNet( ) override;
 public: // 实现虚函数
-	size_t getUrl( std::string *outStr ) override;
 
+	void getData( void *resultAnyPtr ) override;
+	size_t getUrl( StdString *outStr ) override;
+	void setUrl( const StdString &url ) override;
+	void setHost( const StdString &host ) override;
+	size_t getHost( StdString *outHost ) override;
+	void setScheme( const StdString &scheme ) override;
+	size_t getScheme( StdString *outScheme ) override;
 	bool setInterfaceParent( void *parent ) override;
 	void deleteMember( ) override;
 public slots:
 	IRequestNetInterfaceExtend *getRequestNetInterfaceExtendPatr( ) {
 		return this;
 	}
+	
 };
 
 #endif // REQUESTNET_H_H_HEAD__FILE__

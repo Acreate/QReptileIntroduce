@@ -20,26 +20,47 @@ public:
 public:
 	using INovelInfoSharedPtr = std::shared_ptr< INovelInfo >;
 	using NovelPtrList = std::vector< INovelInfoSharedPtr >;
-	using StdString = char *;
+	using StdString = std::string;
 	using StdStringPtr = StdString *;
 	using un_ordered_map = std::unordered_map< StdString, StdString >;
 	/// <summary>
 	/// 获取附加数据
 	/// </summary>
 	/// <returns>附加数据</returns>
-	virtual void *getData( ) = 0;
+	virtual void getData( void *resultAnyPtr ) = 0;
 
 	/// <summary>
 	/// 获取 url
 	/// </summary>
 	/// <param name="outStr">输出的 url</param>
 	/// <returns>该对象的 url 长度</returns>
-	virtual size_t getUrl( std::string *outStr ) = 0;
+	virtual size_t getUrl( StdString *outStr ) = 0;
 	/// <summary>
 	/// 设置网站地址
 	/// </summary>
 	/// <param name="url">网站的首地址</param>
 	virtual void setUrl( const StdString &url ) = 0;
+
+	/// <summary>
+	/// 设置域
+	/// </summary>
+	/// <param name="host">域</param>
+	virtual void setHost( const StdString &host ) = 0;
+	/// <summary>
+	/// 获取域
+	/// </summary>
+	/// <returns>域</returns>
+	virtual size_t getHost( StdString *outHost ) = 0;
+	/// <summary>
+	/// 设置协议
+	/// </summary>
+	/// <param name="scheme">协议</param>
+	virtual void setScheme( const StdString &scheme ) = 0;
+	/// <summary>
+	/// 获取协议
+	/// </summary>
+	/// <returns>协议</returns>
+	virtual size_t getScheme( StdString *outScheme ) = 0;
 	/// <summary>
 	/// 获取小说当中的类型与网址映射列表
 	/// </summary>

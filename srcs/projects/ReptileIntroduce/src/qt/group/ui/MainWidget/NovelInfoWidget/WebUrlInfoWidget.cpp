@@ -23,7 +23,7 @@
 const QString WebUrlInfoWidget::settingHostKey = tr( u8"host" );
 const QString WebUrlInfoWidget::settingUrlKey = tr( u8"url" );
 const QString WebUrlInfoWidget::rootKey = tr( u8"root" );
-const QString WebUrlInfoWidget::schemeKey = tr( u8"schemeKey" );
+const QString WebUrlInfoWidget::schemeKey = tr( u8"httpType" );
 
 QMap< NovelInfoWidget *, QVector< WebUrlInfoWidget * > > WebUrlInfoWidget::pathCount;
 QMap< WebUrlInfoWidget *, QString > WebUrlInfoWidget::webHost;
@@ -135,6 +135,15 @@ void WebUrlInfoWidget::initComponentConnect( ) {
 		DEBUG_RUN( qDebug() << "emit clickLoadBtn( );" );
 	} );
 	connect( optionBoxWidget, &QComboBox::currentIndexChanged, [=]( int index ) {
+
+		auto scheme = optionBoxWidget->itemText( index );
+		QString host = urlInput->text( );
+		std::string curlLink = QString( "%1://%2" ).arg( scheme ).arg( host ).toLocal8Bit( ).toStdString( );
+		requestNetInterface->setUrl( curlLink );
+		webPageSetting->beginGroup( host );
+		webPageSetting->setValue( schemeKey, scheme );
+		webPageSetting->endGroup( );
+
 		emit currentIndexChanged( index );
 		DEBUG_RUN( qDebug() << "emit currentIndexChanged( );" );
 	} );
@@ -255,17 +264,25 @@ void WebUrlInfoWidget::initComponentPropertys( ) {
 	urlInput->setReadOnly( true );
 }
 void WebUrlInfoWidget::initComponentText( ) {
-	loadDll->setText( u8"加载" );
-	optionBoxWidget->addItem( "http", Scheme_Type::HttP );
-	optionBoxWidget->addItem( "https", Scheme_Type::HttpS );
+	loadDll->setText( tr( u8"加载" ) );
+	optionBoxWidget->addItem( tr( u8"http" ), Scheme_Type::HttP );
+	optionBoxWidget->addItem( tr( u8"https" ), Scheme_Type::HttpS );
 	saveBtn->setText( tr( u8"保存" ) );
 	startBtn->setText( tr( u8"开始" ) );
 
 	std::string curlLink;
 	requestNetInterface->getUrl( &curlLink );
 	QUrl url( curlLink.c_str( ) );
-	urlInput->setText( url.host( ) );
+	QString host = url.host( );
+	urlInput->setText( host );
+	QString fileName = webPageSetting->fileName( );
+	qDebug( ) << fileName;
+	auto allKeys = webPageSetting->allKeys( );
+	for( auto key : allKeys )
+		qDebug( ) << "\t" << key;
+	webPageSetting->beginGroup( host );
 	QString scheme = webPageSetting->value( schemeKey, url.scheme( ) ).toString( );
+	webPageSetting->endGroup( );
 	int maxVisibleItems = optionBoxWidget->count( );
 	for( int index = 0 ; index < maxVisibleItems ; ++index ) {
 		if( optionBoxWidget->itemText( index ) == scheme ) {

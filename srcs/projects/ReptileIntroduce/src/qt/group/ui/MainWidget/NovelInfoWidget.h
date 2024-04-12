@@ -55,9 +55,12 @@ private: // 配置文件关键字
 	/// </summary>
 	static const QString loadClassName;
 	/// <summary>
-	/// 
+	/// 动态加载槽函数名
 	/// </summary>
 	static const QString loadClassMethodName;
+	/// <summary>
+	/// 动态加载槽函数名-本地字符串
+	/// </summary>
 	static const QByteArray loadClassNameByteArry;
 protected:
 	static std::unordered_map< QString, IRequestNetInterfaceExtend * > loadPlugs;
@@ -184,6 +187,11 @@ Q_SIGNALS :
 	/// <param name="rwFileThread">读写对象指针</param>
 	void setRWFileThread( const RWFileThread *rwFileThread );
 
+	/// <summary>
+	/// 协议被改变时发生
+	/// </summary>
+	/// <param name="scheme">协议名称</param>
+	void changedScheme(const QString& scheme);
 };
 
 #endif // NOVELINFOWIDGET_H_H_HEAD__FILE__

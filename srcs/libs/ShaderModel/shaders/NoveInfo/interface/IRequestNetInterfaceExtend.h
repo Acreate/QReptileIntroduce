@@ -16,17 +16,14 @@ private:
 public:
 	IRequestNetInterfaceExtend( );
 	~IRequestNetInterfaceExtend( ) override;
-	void *getData( ) override;
-	void novelTypeEnd( const NovelPtrList &saveNovelInfos ) override;
-	void endHost( const NovelPtrList &saveNovelInfos ) override;
-	size_t getUrl(  std::string *outStr  ) override;
-	void deleteMember( ) override;
-	void setUrl( const StdString &url ) override;
-	un_ordered_map *getTypeUrls( const StdString &htmlText ) override;
+	un_ordered_map * getTypeUrls( const StdString &htmlText ) override;
 	NovelPtrList getTypePageNovels( const StdString &htmlText, const NovelPtrList &saveNovelInfos, void *appendDataPtr ) override;
 	INovelInfoSharedPtr getUrlNovelInfo( const StdString &htmlText, const NovelPtrList &saveNovelInfos, const INovelInfoSharedPtr &networkReplayNovel ) override;
 	StdString getNext( const StdString &htmlText, const NovelPtrList &saveNovelInfos, const NovelPtrList &lastNovelInfos ) override;
+	void novelTypeEnd( const NovelPtrList &saveNovelInfos ) override;
+	void endHost( const NovelPtrList &saveNovelInfos ) override;
 	bool setInterfaceParent( void *parent ) override;
+	void deleteMember( ) override;
 };
 
 #endif // IREQUESTNETINTERFACEEXTEND_H_H_HEAD__FILE__
