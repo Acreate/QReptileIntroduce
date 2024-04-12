@@ -5,6 +5,7 @@
 #include <qfileinfo.h>
 #include <qlabel.h>
 
+class Setting;
 class IRequestNetInterface;
 class IRequestNetInterfaceExtend;
 class EditLine;
@@ -13,7 +14,6 @@ class HLayoutBox;
 class VLayoutBox;
 class RWFileThread;
 class FileResult;
-class QSettings;
 class Request;
 class RequestConnect;
 class QScrollArea;
@@ -65,7 +65,7 @@ private: // 配置文件关键字
 protected:
 	static std::unordered_map< QString, IRequestNetInterfaceExtend * > loadPlugs;
 public: // 配置文件
-	QSettings *netSetFileSettings = nullptr;
+	Setting *netSetFileSettings = nullptr;
 	QString settingFileAbsoluteFilePath; // setting 的绝对路径
 public:
 	const QString &getWebBuffWorkPathKey( ) const {

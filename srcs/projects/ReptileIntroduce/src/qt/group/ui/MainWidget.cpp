@@ -20,6 +20,8 @@
 #include <QScrollBar>
 #include <qcoreapplication.h>
 
+#include "../setting/Setting.h"
+
 const QString MainWidget::qstrPoint = tr( u8"坐标:( %1 , %2 )" );
 
 const QString MainWidget::transparentForMouseEvents = tr( u8"somponentStyle/TransparentForMouseEvents" );
@@ -75,7 +77,7 @@ void MainWidget::initComponentPropertys( ) {
 		qDebug() << "path (" << absPath<< ") has setting file;";
 		}
 	);
-	progressSetting = new QSettings( progressIniFileName, QSettings::IniFormat );
+	progressSetting = new Setting( progressIniFileName, this );
 	textLine->setReadOnly( true );
 	converTransparentForMouseEventsBtn->setAttribute( Qt::WA_TransparentForMouseEvents, true );
 	textLine->setAttribute( Qt::WA_TransparentForMouseEvents, true );
@@ -136,12 +138,17 @@ void MainWidget::initComponentConnect( ) {
 void MainWidget::initComponentOver( ) {
 	//// 线程开始
 	dateTimeThread->start( );
-	bool flageTransparentForMouseEvents = progressSetting->value( transparentForMouseEvents, true ).toBool( );
+	bool flageTransparentForMouseEvents = progressSetting->getValue( transparentForMouseEvents, []( const QVariant &getValue ) {
+		if( getValue.isNull( ) )
+			return true;
+		return getValue.toBool( );
+	} ).toBool( );
+
 	converTransparentForMouseEventsBtn->setText( QString( transparentText ).arg( flageTransparentForMouseEvents ? u8"" : transparentTextNot ) );
 	novelComponent->setAttribute( Qt::WA_TransparentForMouseEvents, flageTransparentForMouseEvents );
 
 	/// 配置文件设置
-	auto variant = progressSetting->value( selectWebSettingPath );
+	auto variant = progressSetting->getValue( selectWebSettingPath );
 	if( !variant.isNull( ) ) {
 		QFileInfo info( variant.toString( ) );
 		if( info.exists( ) )
@@ -158,10 +165,10 @@ void MainWidget::initComponentOver( ) {
 			} while( true );
 		}
 	}
-	variant = progressSetting->value( selectReadFileWorkPath );
+	variant = progressSetting->getValue( selectReadFileWorkPath );
 	if( variant.isNull( ) || variant.toString( ).isEmpty( ) )
 		progressSetting->setValue( selectReadFileWorkPath, qApp->applicationDirPath( ) );
-	variant = progressSetting->value( selectWriteFileWorkPath );
+	variant = progressSetting->getValue( selectWriteFileWorkPath );
 	if( variant.isNull( ) || variant.toString( ).isEmpty( ) )
 		progressSetting->setValue( selectWriteFileWorkPath, qApp->applicationDirPath( ) );
 
@@ -195,8 +202,9 @@ MainWidget::~MainWidget( ) {
 	while( dateTimeThread->isRunning( ) && !dateTimeThread->isFinished( ) )
 		QThread::usleep( 20 );
 
-	while( !rwFileThread->isFinished( ) )
-		QThread::usleep( 20 );
+	while( dateTimeThread->isRunning( ) && !rwFileThread->isFinished( ) )
+		rwFileThread->await( );
+	QThread::usleep( 20 );
 }
 QFont MainWidget::setFont( QFont &font ) {
 	auto oldFont = currentFont;
@@ -276,7 +284,7 @@ void MainWidget::error( int errorType, QFileDevice::FileError fileErrorCode, QFi
 		DEBUG_RUN( qDebug() << dirError ) ;
 }
 void MainWidget::changeWebComponents( ) {
-	auto variant = progressSetting->value( selectWebSettingPath );
+	auto variant = progressSetting->getValue( selectWebSettingPath );
 	QString filePath;
 	if( !variant.isNull( ) )
 		filePath = variant.toString( );

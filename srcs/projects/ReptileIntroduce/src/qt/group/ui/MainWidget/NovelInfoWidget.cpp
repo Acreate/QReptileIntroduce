@@ -16,6 +16,7 @@
 #include "../../../../qt/extend/exception/Exception.h"
 #include "../../../../qt/extend/netWork/Request.h"
 #include "../../../../qt/extend/netWork/RequestConnect.h"
+#include "../../setting/Setting.h"
 #include "../../../../qt/group/file/FileResult.h"
 #include "../../../../qt/group/file/RWFileThread.h"
 #include <DebugInfo.h>
@@ -203,26 +204,16 @@ void NovelInfoWidget::inputSettingPathLinePathCompoentEditFinish( ) {
 		if( settingFileAbsoluteFilePath != newPath ) {
 			netSetFileSettings->sync( );
 			netSetFileSettings->deleteLater( );
-			netSetFileSettings = new QSettings( newPath, QSettings::IniFormat, this );
+			netSetFileSettings = new Setting( newPath, this );
 		}
 	} else
-		netSetFileSettings = new QSettings( newPath, QSettings::Format::IniFormat, this );
+		netSetFileSettings->setFilePath( newPath );
 
-	// todo 开始加载组件
-	DEBUG_RUN(
-		netSetFileSettings->beginGroup( settingHostKey );
-		QStringList childKeys = netSetFileSettings->childKeys( );
-		for( auto &key : childKeys ) {
-		QVariant value = netSetFileSettings->value( key );
-		qDebug() << "当前 key 为 : "<< key<< ", 获取到的值为 : " << value.toString( );
-		}
-		netSetFileSettings->endGroup( );
-	);
 	emit overSettingPath( settingFileAbsoluteFilePath, newPath );
 	settingFileAbsoluteFilePath = newPath;
 }
 void NovelInfoWidget::loadPathPlugs( ) {
-	QFileInfo settingFileInfo( netSetFileSettings->fileName( ) );
+	QFileInfo settingFileInfo( netSetFileSettings->getFilePath( ) );
 	QString caption = tr( u8"选择一个 qt 插件路径" );
 	QString title = tr( u8"插件错误" );
 	QString questionMsg = tr( u8"文件打开错误!现在重新选择吗?" );
@@ -253,17 +244,9 @@ void NovelInfoWidget::loadPathPlugs( ) {
 				ire->getUrl( &curlLink );
 				QUrl url( curlLink.c_str( ) );
 				QString host = url.host( );
-				netSetFileSettings->beginGroup( settingHostKey );
 				currentFilePtah = current.relativeFilePath( currentFilePtah );
-				netSetFileSettings->setValue( host, currentFilePtah );
-				netSetFileSettings->endGroup( );
-				netSetFileSettings->beginGroup( host );
-				netSetFileSettings->setValue( rootKey, url.url( ) );
-				auto scheme = netSetFileSettings->value( schemeKey, url.scheme( ) );
-				netSetFileSettings->setValue( schemeKey, scheme );
-				netSetFileSettings->endGroup( );
+				netSetFileSettings->setValue( settingHostKey, host, currentFilePtah );
 				auto webUrlInfoWidget = WebUrlInfoWidget::generateWebUrlInfoWidget( netSetFileSettings, this, ire );
-
 				if( webUrlInfoWidget ) {
 					auto layout = listView->widget( )->layout( );
 					int count = layout->count( );
@@ -303,9 +286,9 @@ void NovelInfoWidget::slotsSetNetWorkSettingFilePath( const QString &filePath ) 
 		if( netSetFileSettings ) {
 			netSetFileSettings->sync( );
 			netSetFileSettings->deleteLater( );
-			netSetFileSettings = new QSettings( absoluteFilePath, QSettings::IniFormat, this );
+			netSetFileSettings->setFilePath( absoluteFilePath );
 		} else
-			netSetFileSettings = new QSettings( absoluteFilePath, QSettings::IniFormat );
+			netSetFileSettings = new Setting( absoluteFilePath, this );
 
 		auto temp = settingFileAbsoluteFilePath;
 		settingFileAbsoluteFilePath = absoluteFilePath;
@@ -316,13 +299,14 @@ void NovelInfoWidget::slotsSetNetWorkSettingFilePath( const QString &filePath ) 
 	emit errorSettingPath( getAbsoluteFilePath( ), absoluteFilePath );
 }
 void NovelInfoWidget::slotsOverSettingPath( const QString &oldPath, const QString &newPath ) {
-	netSetFileSettings->beginGroup( settingHostKey );
-	auto allKeys = netSetFileSettings->allKeys( );
-	if( allKeys.length( ) != 0 ) {
+
+	auto map = netSetFileSettings->getAllInfo( );
+	if( map.size( ) != 0 ) {
+		auto iterator = map.begin( );
+		auto end = map.end( );
 		auto layout = listView->widget( )->layout( );
-		for( auto &settingKey : allKeys ) {
-			QVariant variant = netSetFileSettings->value( settingKey );
-			auto value = variant.toString( );
+		for( ; iterator != end ; ++iterator ) {
+			auto value = iterator.value( ).toString( );
 			if( value.isEmpty( ) )
 				continue;
 			IRequestNetInterfaceExtend *requestNetInterface = loadPlug( value );
@@ -343,7 +327,6 @@ void NovelInfoWidget::slotsOverSettingPath( const QString &oldPath, const QStrin
 			}
 		}
 	}
-	netSetFileSettings->endGroup( );
 }
 void NovelInfoWidget::slotsErrorSettingPath( const QString &currentPath, const QString &errorPath ) {
 

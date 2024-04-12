@@ -28,6 +28,7 @@ public: // 线程函数
 	FileResult *writeFile( const QString &content );
 	FileResult *writeFile( const QByteArray &byteData );
 	void await( long usleep = 20 );
+	void stop( long usleep = 20 );
 	FileResult *start( );
 public:
 	void setFilePath( const QString &filePath );

@@ -3,13 +3,13 @@
 
 #pragma once
 #include <QComboBox>
-#include <QSettings>
 #include <QWidget>
 
 #include "WebUrlInfoWidget/CountEditWidget.h"
 
 #include "interface/IRequestNetInterfaceExtend.h"
 
+class Setting;
 class Request;
 class RequestConnect;
 class IRequestNetInterfaceExtend;
@@ -18,7 +18,6 @@ class Exception;
 class NovelInfoWidget;
 class QScrollArea;
 class QComboBox;
-class QSettings;
 class EditLine;
 class QLabel;
 class Button;
@@ -43,20 +42,13 @@ private: // 静态成员
 	static NovelInfoWidget *overNovelInfoWidgetPtrTry( QObject *converPtr, Exception *tryResult );
 	static void setConverError( Exception *tryResult );
 private: // 构造类时候必须初始化
-	QSettings *webPageSetting;
+	Setting *webPageSetting;
 	IRequestNetInterfaceExtend *requestNetInterface;
 	NovelInfoWidget *parent;
 private: // 网络-请求
-	Request *requestNetWrok = nullptr; // web 网络请求对象
-	RequestConnect *requestConnect = nullptr; // web 网络响应槽函数对象
-public:
-	Request *getRequestNetWrok( ) const {
-		return requestNetWrok;
-	}
-	RequestConnect *getRequestConnect( ) const {
-		return requestConnect;
-	}
-	void *getData( ) override;
+	QMap< QSharedPointer< Request >, QSharedPointer< RequestConnect > > requestConnect; // web 网络响应槽函数对象
+
+public: // 接口实现
 	size_t getUrl( std::string *outStr ) override;
 	void setUrl( const StdString &url ) override;
 	IRequestNetInterface::un_ordered_map *getTypeUrls( const StdString &htmlText ) override;
@@ -67,13 +59,18 @@ public:
 	void novelTypeEnd( const NovelPtrList &saveNovelInfos ) override;
 	void endHost( const NovelPtrList &saveNovelInfos ) override;
 	void deleteMember( ) override;
+	void getData( void *resultAnyPtr ) override;
+	void setHost( const StdString &host ) override;
+	size_t getHost( StdString *outHost ) override;
+	void setScheme( const StdString &scheme ) override;
+	size_t getScheme( StdString *outScheme ) override;
 private: // 配置文件当中的关键 key
 	static const QString settingHostKey;
 	static const QString settingUrlKey;
 private:
-	WebUrlInfoWidget( QSettings *webPageSetting, NovelInfoWidget *parent, IRequestNetInterfaceExtend *requestNetInterface, Qt::WindowFlags f = Qt::WindowFlags( ) );
+	WebUrlInfoWidget( Setting *webPageSetting, NovelInfoWidget *parent, IRequestNetInterfaceExtend *requestNetInterface, Qt::WindowFlags f = Qt::WindowFlags( ) );
 public:
-	static WebUrlInfoWidget *generateWebUrlInfoWidget( QSettings *webPageSetting, NovelInfoWidget *parent, IRequestNetInterfaceExtend *requestNetInterface, Qt::WindowFlags f = Qt::WindowFlags( ) );
+	static WebUrlInfoWidget *generateWebUrlInfoWidget( Setting *webPageSetting, NovelInfoWidget *parent, IRequestNetInterfaceExtend *requestNetInterface, Qt::WindowFlags f = Qt::WindowFlags( ) );
 	~WebUrlInfoWidget( ) override;
 private: // 小说存在的时候显示的组件
 	HLayoutBox *hasNovelInfoLayout;  // 主要布局
@@ -122,7 +119,7 @@ private: /// 组件初始化
 	/// <param name="webPageSetting">配置文件对象指针</param>
 	/// <param name="novelInfoWidget">父节点对象指针</param>
 	/// <param name="requestNetInterface">请求对象接口处理接口</param>
-	void initInstance( QSettings *webPageSetting, NovelInfoWidget *novelInfoWidget, IRequestNetInterfaceExtend *requestNetInterface );
+	void initInstance( Setting *webPageSetting, NovelInfoWidget *novelInfoWidget, IRequestNetInterfaceExtend *requestNetInterface );
 public: // 属性
 	long long getAllCountValue( ) {
 		return allCount->getValue( );
@@ -130,7 +127,7 @@ public: // 属性
 	long long getTypeCountValue( ) {
 		return typeCount->getValue( );
 	}
-	QSettings *getWebPageSetting( ) const {
+	Setting *getWebPageSetting( ) const {
 		return webPageSetting;
 	}
 	IRequestNetInterfaceExtend *getRequestNetInterface( ) const {
@@ -148,7 +145,7 @@ public: // 属性
 	unsigned long long getAtPathCount( ) const {
 		return pathCount[ parent ].count( );
 	}
-	bool setSettingInstance( NovelInfoWidget *parent, QSettings *settings ) {
+	bool setSettingInstance( NovelInfoWidget *parent, Setting *settings ) {
 		if( parent && pathCount.contains( parent ) ) {
 			this->webPageSetting = settings;
 			return true;
@@ -159,7 +156,7 @@ protected:
 	void resizeEvent( QResizeEvent *event ) override;
 	void computerSize( );
 protected slots:
-	void webNetRequest();
+	void webNetRequest( );
 Q_SIGNALS:
 	/// <summary>
 	/// 窗口重置大小信号

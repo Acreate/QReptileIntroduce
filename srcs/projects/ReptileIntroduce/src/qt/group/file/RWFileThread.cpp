@@ -71,6 +71,22 @@ void RWFileThread::await( long usleep ) {
 
 	while( this->currentThread && isRunning ) {
 		mutex.lock( );
+		if( this->currentThread->isFinished( ) ) {
+			mutex.unlock( );
+			break;
+		}
+		mutex.unlock( );
+		QThread::currentThread( )->usleep( usleep );
+	}
+
+}
+void RWFileThread::stop( long usleep ) {
+	DEBUG_RUN_IF_NOT_EQU_PTR( this->currentThread, nullptr, qDebug( ) << "stop currentThread id = " << this->currentThread );
+
+	bool isRunning = this->currentThread->isRunning( );
+
+	while( this->currentThread && isRunning ) {
+		mutex.lock( );
 		this->currentThread->requestInterruption( );
 		if( this->currentThread->isFinished( ) ) {
 			mutex.unlock( );

@@ -9,11 +9,11 @@
 #include <QLineEdit>
 #include <QPushButton>
 
-#include <QSettings>
 #include <QTranslator>
 #include <QFileDevice>
 #include <QTimer>
 
+class Setting;
 class JobWidget;
 class Menu;
 class Action;
@@ -85,7 +85,7 @@ private: // 菜单
 	Menu *toolsMenu;
 	Action *loadSettingFile;
 private: // 程序配置-读写
-	QSettings *progressSetting;
+	Setting *progressSetting;
 	QTranslator *translator;
 	RWFileThread *rwFileThread;
 	FileResult *fileThreadResult = nullptr; // 文件读取绑定指针
