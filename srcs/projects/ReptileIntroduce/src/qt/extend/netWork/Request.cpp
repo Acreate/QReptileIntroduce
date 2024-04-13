@@ -11,11 +11,10 @@
 #include "RequestConnect.h"
 
 Request::Request( QObject *parent ) : QObject( parent ) {
-	networkAccessManager = new QNetworkAccessManager;
-	networkAccessManager->setParent( this );
-
+	networkAccessManager = new QNetworkAccessManager( this );
 }
 Request::~Request( ) {
+	networkAccessManager->deleteLater( );
 	if( setting ) {
 		setting->sync( );
 		delete setting;
@@ -39,7 +38,7 @@ QNetworkReply *Request::netGetWork( const QUrl &url, RequestConnect *requestConn
 	QNetworkRequest request;
 	request.setHeader( QNetworkRequest::UserAgentHeader, tr( u8"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.5735.289 Safari/537.36 QIHU 360SE" ) );
 	request.setUrl( url );
-	requestConnect->setNetworkAccessManager( networkAccessManager );
+	requestConnect->setNetworkAccessManager( this );
 	QNetworkReply *networkReply = networkAccessManager->get( request );
 	requestConnect->setNetworkReply( networkReply );
 	return networkReply;

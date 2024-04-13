@@ -63,32 +63,44 @@ qt_add_translations(
 	LUPDATE_OPTIONS -no-obsolete
 )
 
-get_path_cmake_dir_path( out_path_list ${CMAKE_CURRENT_SOURCE_DIR}/srcs/libs/ "CMakeLists.txt" )
+# # 根部定义的模板位置
+set( cmake_definitions_tmp ${CMAKE_HOME_DIRECTORY}/srcs/cmake/temp )
+set( cmake_definitions_in ${cmake_definitions_tmp}/cmake_in/cmake_to_c_cpp_header_macro.h.in )
+
+get_path_cmake_dir_path( out_path_list ${CMAKE_CURRENT_SOURCE_DIR}/srcs/libs/ShaderModel/plugs "CMakeLists.txt" )
+
+# ###################          拷贝模板-覆盖更新
+set( target_update_sub_dir_list )
+list( APPEND target_update_sub_dir_list
+	"Request"
+	"RequestNetPlugin"
+)
+
+foreach( plug_dir ${out_path_list} )
+	foreach( target_update_sub_dir ${target_update_sub_dir_list} )
+		update_path_files( "${cmake_definitions_tmp}/cpp_code/${target_update_sub_dir}" "${plug_dir}/${target_update_sub_dir}" )
+	endforeach()
+endforeach()
+
+# ###################          拷贝模板-不存在则拷贝
+set( target_update_sub_dir_list )
+list( APPEND target_update_sub_dir_list
+	"RequestDefinition"
+)
+
+foreach( plug_dir ${out_path_list} )
+	foreach( target_update_sub_dir ${target_update_sub_dir_list} )
+		update_path_files_if( "${cmake_definitions_tmp}/cpp_code/${target_update_sub_dir}" "${plug_dir}/${target_update_sub_dir}" )
+	endforeach()
+endforeach()
+
+get_path_cmake_dir_path( out_path_list ${CMAKE_CURRENT_SOURCE_DIR}/srcs/libs/UserHread/defineMorc "CMakeLists.txt" )
+get_path_cmake_dir_path( out_path_list ${CMAKE_CURRENT_SOURCE_DIR}/srcs/libs/ShaderModel/shaders/ "CMakeLists.txt" )
+
 get_path_cmake_dir_path( out_path_list ${CMAKE_CURRENT_SOURCE_DIR}/srcs/projects/ "CMakeLists.txt" )
 
 foreach( out_dir ${out_path_list} )
 	STRING( REPLACE ${CMAKE_SOURCE_DIR}/ "./" out_path ${out_dir} )
 	MESSAGE( STATUS "正在添加路径 :\t" ${out_dir} )
 	ADD_SUBDIRECTORY( ${out_dir} )
-endforeach()
-
-set( copy_path_src "${CMAKE_HOME_DIRECTORY}/srcs/libs/ShaderModel/plugs/www.121ds.cc" )
-set( copy_path_des "${CMAKE_HOME_DIRECTORY}/srcs/libs/ShaderModel/plugs/" )
-
-file( GLOB out_paths LIST_DIRECTORIES true RELATIVE "${CMAKE_HOME_DIRECTORY}/" "${copy_path_des}*" )
-file( GLOB copy_path_src_files RELATIVE "${CMAKE_HOME_DIRECTORY}/" "${copy_path_src}/Request/*" )
-
-# # target ${current_dir_name}
-foreach( des_out_path ${out_paths} )
-	if( NOT IS_DIRECTORY "${des_out_path}" OR "${des_out_path}" STREQUAL "${copy_path_src}" )
-		message( " >> 跳过路径 " ${des_out_path} )
-		continue()
-	endif()
-
-	message( " !! 路径 " ${des_out_path} )
-
-	foreach( copy_src_file ${copy_path_src_files} )
-		file( COPY "${CMAKE_HOME_DIRECTORY}/${copy_src_file}"
-			DESTINATION "${CMAKE_HOME_DIRECTORY}/${des_out_path}/Request" )
-	endforeach()
 endforeach()

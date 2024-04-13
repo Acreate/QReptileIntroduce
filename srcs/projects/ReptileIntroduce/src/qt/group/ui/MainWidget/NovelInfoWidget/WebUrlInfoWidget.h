@@ -36,11 +36,15 @@ public:
 		HttpS
 	};
 private: // 静态成员
-	static QMap< NovelInfoWidget *, QVector< WebUrlInfoWidget * > > pathCount;
+	/// <summary>
+	/// 保存在 generateWebUrlInfoWidget 生成的成员
+	/// </summary>
 	static QMap< WebUrlInfoWidget *, QString > webHost;
 	static NovelInfoWidget *overNovelInfoWidgetPtr( QObject *converPtr );
 	static NovelInfoWidget *overNovelInfoWidgetPtrTry( QObject *converPtr, Exception *tryResult );
 	static void setConverError( Exception *tryResult );
+public:
+	static WebUrlInfoWidget *generateWebUrlInfoWidget( Setting *webPageSetting, NovelInfoWidget *parent, IRequestNetInterfaceExtend *requestNetInterface, Qt::WindowFlags f = Qt::WindowFlags( ) );
 private: // 构造类时候必须初始化
 	Setting *webPageSetting;
 	IRequestNetInterfaceExtend *requestNetInterface;
@@ -51,10 +55,10 @@ private: // 网络-请求
 public: // 接口实现
 	size_t getUrl( std::string *outStr ) override;
 	void setUrl( const StdString &url ) override;
-	IRequestNetInterface::un_ordered_map *getTypeUrls( const StdString &htmlText ) override;
-	NovelPtrList getTypePageNovels( const StdString &htmlText, const NovelPtrList &saveNovelInfos, void *appendDataPtr ) override;
-	INovelInfoSharedPtr getUrlNovelInfo( const StdString &htmlText, const NovelPtrList &saveNovelInfos, const INovelInfoSharedPtr &networkReplayNovel ) override;
-	StdString getNext( const StdString &htmlText, const NovelPtrList &saveNovelInfos, const NovelPtrList &lastNovelInfos ) override;
+	IRequestNetInterface::un_ordered_map *formHtmlGetTypeTheUrls( const StdString &htmlText ) override;
+	NovelPtrList formHtmlGetTypePageNovels( const StdString &htmlText, const NovelPtrList &saveNovelInfos, void *appendDataPtr ) override;
+	INovelInfoSharedPtr formHtmlGetUrlNovelInfo( const StdString &htmlText, const NovelPtrList &saveNovelInfos, const INovelInfoSharedPtr &networkReplayNovel ) override;
+	StdString formHtmlGetNext( const StdString &htmlText, const NovelPtrList &saveNovelInfos, const NovelPtrList &lastNovelInfos ) override;
 	bool setInterfaceParent( void *parent ) override;
 	void novelTypeEnd( const NovelPtrList &saveNovelInfos ) override;
 	void endHost( const NovelPtrList &saveNovelInfos ) override;
@@ -70,7 +74,6 @@ private: // 配置文件当中的关键 key
 private:
 	WebUrlInfoWidget( Setting *webPageSetting, NovelInfoWidget *parent, IRequestNetInterfaceExtend *requestNetInterface, Qt::WindowFlags f = Qt::WindowFlags( ) );
 public:
-	static WebUrlInfoWidget *generateWebUrlInfoWidget( Setting *webPageSetting, NovelInfoWidget *parent, IRequestNetInterfaceExtend *requestNetInterface, Qt::WindowFlags f = Qt::WindowFlags( ) );
 	~WebUrlInfoWidget( ) override;
 private: // 小说存在的时候显示的组件
 	HLayoutBox *hasNovelInfoLayout;  // 主要布局
@@ -138,25 +141,12 @@ public: // 属性
 	}
 	QString getScheme( ) const;
 	void setScheme( const Scheme_Type schemeType );
-	/// <summary>
-	/// 返回基于父节点当中的个数，不存在时候，该值为 0
-	/// </summary>
-	/// <returns>个数</returns>
-	unsigned long long getAtPathCount( ) const {
-		return pathCount[ parent ].count( );
-	}
-	bool setSettingInstance( NovelInfoWidget *parent, Setting *settings ) {
-		if( parent && pathCount.contains( parent ) ) {
-			this->webPageSetting = settings;
-			return true;
-		}
-		return false;
-	}
 protected:
 	void resizeEvent( QResizeEvent *event ) override;
 	void computerSize( );
 protected slots:
 	void webNetRequest( );
+	void slot_changeScheme( int index );
 Q_SIGNALS:
 	/// <summary>
 	/// 窗口重置大小信号

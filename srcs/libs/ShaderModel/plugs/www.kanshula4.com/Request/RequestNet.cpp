@@ -50,3 +50,4 @@ bool RequestNet::setInterfaceParent( void *parent ) {
 void RequestNet::deleteMember( ) {
 	deleteLater( );
 }
+

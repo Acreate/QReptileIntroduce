@@ -61,6 +61,6 @@ set( get_url \"${urlStart}://${PROJECT_NAME}\" )
 
 string(TOUPPER ${project_name_include_dir} project_head_start)
 
-set( cmake_definitions_in ${CMAKE_HOME_DIRECTORY}/srcs/cmake/cmake_in/cmake_to_c_cpp_header_macro.h.in )
+
 set( cmake_definitions_out ${CMAKE_CURRENT_LIST_DIR}/macro/cmake_to_c_cpp_header_macro.h )
 configure_file( ${cmake_definitions_in} ${cmake_definitions_out} )

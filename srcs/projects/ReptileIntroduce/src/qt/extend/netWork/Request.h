@@ -11,7 +11,7 @@ private:
 	QSettings *setting = nullptr;
 	QNetworkAccessManager *networkAccessManager;
 public:
-	Request( QObject *parent );
+	Request( QObject *parent = nullptr );
 	~Request( ) override;
 public:
 	QNetworkAccessManager *getNetworkAccessManager( ) const {

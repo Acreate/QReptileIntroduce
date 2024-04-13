@@ -16,10 +16,10 @@ private:
 public:
 	IRequestNetInterfaceExtend( );
 	~IRequestNetInterfaceExtend( ) override;
-	un_ordered_map * getTypeUrls( const StdString &htmlText ) override;
-	NovelPtrList getTypePageNovels( const StdString &htmlText, const NovelPtrList &saveNovelInfos, void *appendDataPtr ) override;
-	INovelInfoSharedPtr getUrlNovelInfo( const StdString &htmlText, const NovelPtrList &saveNovelInfos, const INovelInfoSharedPtr &networkReplayNovel ) override;
-	StdString getNext( const StdString &htmlText, const NovelPtrList &saveNovelInfos, const NovelPtrList &lastNovelInfos ) override;
+	un_ordered_map * formHtmlGetTypeTheUrls( const StdString &htmlText ) override;
+	NovelPtrList formHtmlGetTypePageNovels( const StdString &htmlText, const NovelPtrList &saveNovelInfos, void *appendDataPtr ) override;
+	INovelInfoSharedPtr formHtmlGetUrlNovelInfo( const StdString &htmlText, const NovelPtrList &saveNovelInfos, const INovelInfoSharedPtr &networkReplayNovel ) override;
+	StdString formHtmlGetNext( const StdString &htmlText, const NovelPtrList &saveNovelInfos, const NovelPtrList &lastNovelInfos ) override;
 	void novelTypeEnd( const NovelPtrList &saveNovelInfos ) override;
 	void endHost( const NovelPtrList &saveNovelInfos ) override;
 	bool setInterfaceParent( void *parent ) override;

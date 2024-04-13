@@ -26,7 +26,6 @@ const QString WebUrlInfoWidget::settingUrlKey = tr( u8"url" );
 const QString WebUrlInfoWidget::rootKey = tr( u8"root" );
 const QString WebUrlInfoWidget::schemeKey = tr( u8"scheme" );
 
-QMap< NovelInfoWidget *, QVector< WebUrlInfoWidget * > > WebUrlInfoWidget::pathCount;
 QMap< WebUrlInfoWidget *, QString > WebUrlInfoWidget::webHost;
 
 NovelInfoWidget *WebUrlInfoWidget::overNovelInfoWidgetPtr( QObject *converPtr ) {
@@ -66,17 +65,17 @@ size_t WebUrlInfoWidget::getUrl( std::string *outStr ) {
 void WebUrlInfoWidget::setUrl( const StdString &url ) {
 	requestNetInterface->setUrl( url );
 }
-IRequestNetInterface::un_ordered_map *WebUrlInfoWidget::getTypeUrls( const StdString &htmlText ) {
-	return requestNetInterface->getTypeUrls( htmlText );
+IRequestNetInterface::un_ordered_map *WebUrlInfoWidget::formHtmlGetTypeTheUrls( const StdString &htmlText ) {
+	return requestNetInterface->formHtmlGetTypeTheUrls( htmlText );
 }
-IRequestNetInterface::NovelPtrList WebUrlInfoWidget::getTypePageNovels( const StdString &htmlText, const NovelPtrList &saveNovelInfos, void *appendDataPtr ) {
-	return requestNetInterface->getTypePageNovels( htmlText, saveNovelInfos, appendDataPtr );
+IRequestNetInterface::NovelPtrList WebUrlInfoWidget::formHtmlGetTypePageNovels( const StdString &htmlText, const NovelPtrList &saveNovelInfos, void *appendDataPtr ) {
+	return requestNetInterface->formHtmlGetTypePageNovels( htmlText, saveNovelInfos, appendDataPtr );
 }
-IRequestNetInterface::INovelInfoSharedPtr WebUrlInfoWidget::getUrlNovelInfo( const StdString &htmlText, const NovelPtrList &saveNovelInfos, const INovelInfoSharedPtr &networkReplayNovel ) {
-	return requestNetInterface->getUrlNovelInfo( htmlText, saveNovelInfos, networkReplayNovel );
+IRequestNetInterface::INovelInfoSharedPtr WebUrlInfoWidget::formHtmlGetUrlNovelInfo( const StdString &htmlText, const NovelPtrList &saveNovelInfos, const INovelInfoSharedPtr &networkReplayNovel ) {
+	return requestNetInterface->formHtmlGetUrlNovelInfo( htmlText, saveNovelInfos, networkReplayNovel );
 }
-IRequestNetInterface::StdString WebUrlInfoWidget::getNext( const StdString &htmlText, const NovelPtrList &saveNovelInfos, const NovelPtrList &lastNovelInfos ) {
-	return requestNetInterface->getNext( htmlText, saveNovelInfos, lastNovelInfos );
+IRequestNetInterface::StdString WebUrlInfoWidget::formHtmlGetNext( const StdString &htmlText, const NovelPtrList &saveNovelInfos, const NovelPtrList &lastNovelInfos ) {
+	return requestNetInterface->formHtmlGetNext( htmlText, saveNovelInfos, lastNovelInfos );
 }
 bool WebUrlInfoWidget::setInterfaceParent( void *parent ) {
 	auto widget = static_cast< QWidget * >( parent );
@@ -130,7 +129,6 @@ WebUrlInfoWidget *WebUrlInfoWidget::generateWebUrlInfoWidget( Setting *webPageSe
 		}
 	}
 	auto result = new WebUrlInfoWidget( webPageSetting, parent, requestNetInterface, f );
-	pathCount[ parent ].emplace_back( result );
 	webHost[ result ] = host;
 	return result;
 }
@@ -148,17 +146,7 @@ void WebUrlInfoWidget::initComponentConnect( ) {
 		emit clickLoadBtn( );
 		DEBUG_RUN( qDebug() << "emit clickLoadBtn( );" );
 	} );
-	connect( optionBoxWidget, &QComboBox::currentIndexChanged, [=]( int index ) {
-
-		auto scheme = optionBoxWidget->itemText( index );
-		QString host = urlInput->text( );
-		std::string curlLink = QString( "%1://%2" ).arg( scheme ).arg( host ).toLocal8Bit( ).toStdString( );
-		requestNetInterface->setUrl( curlLink );
-		webPageSetting->setValue( host, schemeKey, scheme );
-
-		emit currentIndexChanged( index );
-		DEBUG_RUN( qDebug() << "emit currentIndexChanged( );" );
-	} );
+	connect( optionBoxWidget, &QComboBox::currentIndexChanged, this, &WebUrlInfoWidget::slot_changeScheme );
 	connect( this, &WebUrlInfoWidget::startBtnClick, this, &WebUrlInfoWidget::webNetRequest );
 }
 void WebUrlInfoWidget::insterCompoentToLayout( ) {
@@ -188,6 +176,7 @@ WebUrlInfoWidget::~WebUrlInfoWidget( ) {
 	DEBUG_RUN(
 		qDebug() << tr(u8"WebUrlInfoWidget::~WebUrlInfoWidget : ") << windowTitle();
 	);
+	webHost.remove( this );
 }
 
 QString WebUrlInfoWidget::getScheme( ) const {
@@ -206,7 +195,6 @@ void WebUrlInfoWidget::setScheme( const Scheme_Type schemeType ) {
 				QUrl url( curlLink.c_str( ) );
 				webPageSetting->setValue( url.host( ), schemeKey, itemText );
 				url.setScheme( itemText );
-				//requestNetInterface.ur
 			}
 			break;
 		}
@@ -261,7 +249,34 @@ void WebUrlInfoWidget::webNetRequest( ) {
 	std::string curlLink;
 	getUrl( &curlLink );
 	QUrl url( curlLink.c_str( ) );
+	Request *request = new Request( this );
+	RequestConnect *requestConnect = new RequestConnect( request );
+	request->netGetWork( url, requestConnect );
+	connect( requestConnect, &RequestConnect::networkAccessManagerFinished, [=]( QNetworkReply *reply ) {
+		QByteArray byteArray = reply->readAll( );
+		auto htmlText = byteArray.toStdString( );
+		qDebug( ) << "getr :\n" << byteArray.toStdString( );
+		auto typeTheUrls = requestNetInterface->formHtmlGetTypeTheUrls( htmlText );
+		auto iterator = typeTheUrls->begin( );
+		auto end = typeTheUrls->end( );
+		for( ; iterator != end ; ++iterator ) {
+
+		}
+
+		// 释放上个请求
+		request->deleteLater( );
+	} );
 	DEBUG_RUN( qDebug() << "WebUrlInfoWidget::webNetRequest( " << url.host( ) << ") " );
+}
+void WebUrlInfoWidget::slot_changeScheme( int index ) {
+	auto scheme = optionBoxWidget->itemText( index );
+	QString host = urlInput->text( );
+	std::string curlLink = QString( "%1://%2" ).arg( scheme ).arg( host ).toLocal8Bit( ).toStdString( );
+	requestNetInterface->setUrl( curlLink );
+	webPageSetting->setValue( host, schemeKey, scheme );
+
+	emit currentIndexChanged( index );
+	DEBUG_RUN( qDebug() << "emit currentIndexChanged( );" );
 }
 void WebUrlInfoWidget::initCompoentOver( ) {
 	computerSize( );

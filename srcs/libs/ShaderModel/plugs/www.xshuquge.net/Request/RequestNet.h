@@ -24,6 +24,11 @@ public: // 实现虚函数
 	size_t getScheme( StdString *outScheme ) override;
 	bool setInterfaceParent( void *parent ) override;
 	void deleteMember( ) override;
+public: // 实现解析
+	un_ordered_map * formHtmlGetTypeTheUrls( const StdString &htmlText ) override;
+	NovelPtrList formHtmlGetTypePageNovels( const StdString &htmlText, const NovelPtrList &saveNovelInfos, void *appendDataPtr ) override;
+	INovelInfoSharedPtr formHtmlGetUrlNovelInfo( const StdString &htmlText, const NovelPtrList &saveNovelInfos, const INovelInfoSharedPtr &networkReplayNovel ) override;
+	StdString formHtmlGetNext( const StdString &htmlText, const NovelPtrList &saveNovelInfos, const NovelPtrList &lastNovelInfos ) override;
 public slots:
 	IRequestNetInterfaceExtend *getRequestNetInterfaceExtendPatr( ) {
 		return this;

@@ -2,26 +2,35 @@
 #define REQUESTCONNECT_H_H_HEAD__FILE__
 #pragma once
 #include <QNetworkReply>
+#include <qmutex.h>
 #include <qtmetamacros.h>
 
+class Request;
 class RequestConnect : public QObject {
 	Q_OBJECT;
 private:
-	QList< QNetworkAccessManager * > networkAccessManager;
-	QNetworkReply *networkReply;
+	QList< QNetworkAccessManager * > networkAccessManagerList;
+	QList< QNetworkReply * > networkReplyList;
+	QList< Request * > requestList;
+private:
+	QMutex mutex;
 public:
-	RequestConnect( QObject *parent ) : QObject( parent ), networkAccessManager( ), networkReply( nullptr ) {
+	RequestConnect( QObject *parent ) : QObject( parent ) {
 	}
 	~RequestConnect( ) override;
 public:
-	QList< QNetworkAccessManager * > getNetworkAccessManager( ) const {
-		return networkAccessManager;
+	QList< QNetworkAccessManager * > getNetworkAccessManagerList( ) const {
+		return networkAccessManagerList;
 	}
-	QNetworkReply *getNetworkReply( ) const {
-		return networkReply;
+	QList< QNetworkReply * > getNetworkReplyList( ) const {
+		return networkReplyList;
 	}
 
-	void setNetworkAccessManager( QNetworkAccessManager *networkAccessManager );
+	QList< Request * > getRequestList( ) const {
+		return requestList;
+	}
+
+	void setNetworkAccessManager( Request *request );
 	void setNetworkReply( QNetworkReply *networkReply );
 Q_SIGNALS: //  QNetworkAccessManager 转发
 	void networkAccessManagerAuthenticationRequired( QNetworkReply *reply, QAuthenticator *authenticator );

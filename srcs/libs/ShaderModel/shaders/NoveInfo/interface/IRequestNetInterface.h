@@ -66,7 +66,7 @@ public:
 	/// </summary>
 	/// <param name="htmlText">解析页面</param>
 	/// <returns>类型与目标地址</returns>
-	virtual un_ordered_map *getTypeUrls( const StdString &htmlText ) = 0;
+	virtual un_ordered_map *formHtmlGetTypeTheUrls( const StdString &htmlText ) = 0;
 
 	/// <summary>
 	/// 从页中返回解析到的小说
@@ -75,16 +75,16 @@ public:
 	/// <param name="saveNovelInfos">已经存储的小说</param>
 	/// <param name="appendDataPtr">附加的数据对象指针</param>
 	/// <returns>解析到的小说列表</returns>
-	virtual NovelPtrList getTypePageNovels( const StdString &htmlText, const NovelPtrList &saveNovelInfos, void *appendDataPtr ) = 0;
+	virtual NovelPtrList formHtmlGetTypePageNovels( const StdString &htmlText, const NovelPtrList &saveNovelInfos, void *appendDataPtr ) = 0;
 
 	/// <summary>
-	/// 从一个链接当中获取单个小说信息，这个行为不建议在 getTypePageNovels 中调用，而是作为被调用者隐式回调使用
+	/// 从一个链接当中获取单个小说信息，这个行为不建议在 formHtmlGetTypePageNovels 中调用，而是作为被调用者隐式回调使用
 	/// </summary>
 	/// <param name="htmlText">小说所在的链接请求返回</param>
 	/// <param name="saveNovelInfos">已经存储的小说列表</param>
 	/// <param name="networkReplayNovel">当前获取的小说页面内容</param>
 	/// <returns>小说信息对象指针</returns>
-	virtual INovelInfoSharedPtr getUrlNovelInfo( const StdString &htmlText, const NovelPtrList &saveNovelInfos, const INovelInfoSharedPtr &networkReplayNovel ) = 0;
+	virtual INovelInfoSharedPtr formHtmlGetUrlNovelInfo( const StdString &htmlText, const NovelPtrList &saveNovelInfos, const INovelInfoSharedPtr &networkReplayNovel ) = 0;
 	/// <summary>
 	/// 基于请求实现后进行下一次请求的判定
 	/// 返回有效的链接对象表示继续请求，无效对象则退出请求
@@ -93,7 +93,7 @@ public:
 	/// <param name="saveNovelInfos">已经保存的小说列表</param>
 	/// <param name="lastNovelInfos">调用该成员函数之前已经存储的对象列表，与 saveNovelInfos 不同的是，它仅仅存储一页</param>
 	/// <returns>下一页的地址</returns>
-	virtual StdString getNext( const StdString &htmlText, const NovelPtrList &saveNovelInfos, const NovelPtrList &lastNovelInfos ) = 0;
+	virtual StdString formHtmlGetNext( const StdString &htmlText, const NovelPtrList &saveNovelInfos, const NovelPtrList &lastNovelInfos ) = 0;
 	/// <summary>
 	/// 类型调用结束时候会被调用
 	/// </summary>
