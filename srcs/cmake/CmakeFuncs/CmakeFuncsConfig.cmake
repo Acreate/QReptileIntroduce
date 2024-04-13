@@ -82,7 +82,7 @@ endfunction()
 # src_path : 源，提供更新的参考文件
 # des_path : 目标，提供有效的目标信息
 function( update_path_files src_path des_path )
-	message( "update_path_files :" "\n\t*\t" ${src_path} "\n\t*\t" ${des_path} )
+	# message( "update_path_files :" "\n\t*\t" ${src_path} "\n\t*\t" ${des_path} )
 	file( GLOB_RECURSE file_get_src_file_paths RELATIVE "${src_path}" "${src_path}/*" )
 
 	foreach( file_path ${file_get_src_file_paths} )
@@ -98,7 +98,7 @@ endfunction()
 # src_path : 源，提供更新的参考文件
 # des_path : 目标，提供有效的目标信息
 function( update_path_files_if src_path des_path )
-	message( "update_path_files :" "\n\t*\t" ${src_path} "\n\t*\t" ${des_path} )
+	# message( "update_path_files :" "\n\t*\t" ${src_path} "\n\t*\t" ${des_path} )
 	file( GLOB_RECURSE file_get_src_file_paths RELATIVE "${src_path}" "${src_path}/*" )
 	file( GLOB_RECURSE file_get_des_file_paths RELATIVE "${des_path}" "${des_path}/*" )
 

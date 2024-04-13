@@ -70,22 +70,24 @@ set( cmake_definitions_in ${cmake_definitions_tmp}/cmake_in/cmake_to_c_cpp_heade
 get_path_cmake_dir_path( out_path_list ${CMAKE_CURRENT_SOURCE_DIR}/srcs/libs/ShaderModel/plugs "CMakeLists.txt" )
 
 # ###################          拷贝模板-覆盖更新
-set( target_update_sub_dir_list )
-list( APPEND target_update_sub_dir_list
-	"Request"
-	"RequestNetPlugin"
-)
-
-foreach( plug_dir ${out_path_list} )
-	foreach( target_update_sub_dir ${target_update_sub_dir_list} )
-		update_path_files( "${cmake_definitions_tmp}/cpp_code/${target_update_sub_dir}" "${plug_dir}/${target_update_sub_dir}" )
-	endforeach()
-endforeach()
+# set( target_update_sub_dir_list )
+# list( APPEND target_update_sub_dir_list
+# 	"Request"
+# 	"RequestNetPlugin"
+# )
+# 
+# foreach( plug_dir ${out_path_list} )
+# 	foreach( target_update_sub_dir ${target_update_sub_dir_list} )
+# 		update_path_files( "${cmake_definitions_tmp}/cpp_code/${target_update_sub_dir}" "${plug_dir}/# ${target_update_sub_dir}" )
+# 	endforeach()
+# endforeach()
 
 # ###################          拷贝模板-不存在则拷贝
 set( target_update_sub_dir_list )
 list( APPEND target_update_sub_dir_list
 	"RequestDefinition"
+	"Request"
+	"RequestNetPlugin"
 )
 
 foreach( plug_dir ${out_path_list} )
@@ -101,6 +103,6 @@ get_path_cmake_dir_path( out_path_list ${CMAKE_CURRENT_SOURCE_DIR}/srcs/projects
 
 foreach( out_dir ${out_path_list} )
 	STRING( REPLACE ${CMAKE_SOURCE_DIR}/ "./" out_path ${out_dir} )
-	MESSAGE( STATUS "正在添加路径 :\t" ${out_dir} )
+	# MESSAGE( STATUS "正在添加路径 :\t" ${out_dir} )
 	ADD_SUBDIRECTORY( ${out_dir} )
 endforeach()
