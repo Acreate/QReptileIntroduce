@@ -15,7 +15,9 @@ std::pair< Path::DirList, Path::FileList > Path::getDirInfo( const QString &path
 	auto dirs = topDir.getDirs( );
 	for( auto &dir : dirs ) {
 		result.first.emplace_back( dir );
-		auto dirInfo = getDirInfo( dir.getCurrentPath( ) );
+		QString currentPath = dir.getCurrentPath( );
+		qDebug( ) << "currentPath : " << currentPath;
+		auto dirInfo = getDirInfo( currentPath );
 		auto subDirs = dirInfo.first;
 		for( auto &subDir : subDirs )
 			result.first.emplace_back( subDir );
@@ -29,5 +31,9 @@ std::pair< Path::DirList, Path::FileList > Path::getDirInfo( const QString &path
 	return result;
 }
 std::pair< Path::DirList, Path::FileList > Path::getFileInfo( const QString &path ) {
-	return std::pair< DirList, FileList >( { }, { File( QFileInfo( path ).absoluteFilePath( ) ) } );
+
+	QFileInfo fileInfo( path );
+	if( fileInfo.isFile( ) )
+		return std::pair< DirList, FileList >( { }, { File( fileInfo.absoluteFilePath( ) ) } );
+	return { };
 }

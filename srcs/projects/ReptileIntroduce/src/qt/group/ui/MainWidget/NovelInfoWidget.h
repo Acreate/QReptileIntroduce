@@ -27,7 +27,7 @@ class NovelInfoWidget final : public QWidget {
 public: // 友元列表
 	//friend WebUrlInfoWidget;
 public: // 静态成员函数列表
-	static IRequestNetInterfaceExtend *getIRequestNetInterface( const QString &plugFilePath, const QString &name, const QString &spec );
+	static std::pair< QObject *, IRequestNetInterfaceExtend * > getIRequestNetInterface( const QString &plugFilePath, const QString &name, const QString &spec );
 protected:
 	static IRequestNetInterfaceExtend *metaGetResult( QObject *outObj, const char *methodName );
 public:
@@ -191,7 +191,7 @@ Q_SIGNALS :
 	/// 协议被改变时发生
 	/// </summary>
 	/// <param name="scheme">协议名称</param>
-	void changedScheme(const QString& scheme);
+	void changedScheme( const QString &scheme );
 };
 
 #endif // NOVELINFOWIDGET_H_H_HEAD__FILE__

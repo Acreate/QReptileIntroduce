@@ -17,6 +17,9 @@ FIND_PACKAGE( CmakeFuncs REQUIRED PATHS "${CMAKE_CURRENT_SOURCE_DIR}/srcs/cmake/
 INCLUDE( GenerateExportHeader )
 INCLUDE( GNUInstallDirs )
 
+SET( Project_Run_bin "${CMAKE_HOME_DIRECTORY}/builder/${CMAKE_BUILD_TYPE}_${CMAKE_CXX_COMPILER_ARCHITECTURE_ID}_${CMAKE_CXX_COMPILER_ID}/" )
+SET( Project_Plug_bin "${CMAKE_HOME_DIRECTORY}/builder/${CMAKE_BUILD_TYPE}_${CMAKE_CXX_COMPILER_ARCHITECTURE_ID}_${CMAKE_CXX_COMPILER_ID}/plugs/" )
+
 message( "QT_VERSION_MAJOR : ${QT_VERSION_MAJOR}" )
 
 # 如果发生错误，请重新配置 qt 6 环境，该文件位于根目录的 /cmake/QT6/Qt6EventConfig.cmake
@@ -68,19 +71,6 @@ set( cmake_definitions_tmp ${CMAKE_HOME_DIRECTORY}/srcs/cmake/temp )
 set( cmake_definitions_in ${cmake_definitions_tmp}/cmake_in/cmake_to_c_cpp_header_macro.h.in )
 
 get_path_cmake_dir_path( out_path_list ${CMAKE_CURRENT_SOURCE_DIR}/srcs/libs/ShaderModel/plugs "CMakeLists.txt" )
-
-# ###################          拷贝模板-覆盖更新
-# set( target_update_sub_dir_list )
-# list( APPEND target_update_sub_dir_list
-# 	"Request"
-# 	"RequestNetPlugin"
-# )
-# 
-# foreach( plug_dir ${out_path_list} )
-# 	foreach( target_update_sub_dir ${target_update_sub_dir_list} )
-# 		update_path_files( "${cmake_definitions_tmp}/cpp_code/${target_update_sub_dir}" "${plug_dir}/# ${target_update_sub_dir}" )
-# 	endforeach()
-# endforeach()
 
 # ###################          拷贝模板-不存在则拷贝
 set( target_update_sub_dir_list )

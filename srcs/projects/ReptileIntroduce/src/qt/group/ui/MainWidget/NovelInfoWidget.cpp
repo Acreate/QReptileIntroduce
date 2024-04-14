@@ -50,7 +50,7 @@ IRequestNetInterfaceExtend *NovelInfoWidget::metaGetResult( QObject *outObj, con
 	}
 	return nullptr;
 }
-IRequestNetInterfaceExtend *NovelInfoWidget::getIRequestNetInterface( const QString &plugFilePath, const QString &name, const QString &spec ) {
+std::pair< QObject *, IRequestNetInterfaceExtend * > NovelInfoWidget::getIRequestNetInterface( const QString &plugFilePath, const QString &name, const QString &spec ) {
 	QPluginLoader loader( plugFilePath );
 	if( loader.load( ) ) {
 		QObject *instance = loader.instance( );
@@ -60,17 +60,25 @@ IRequestNetInterfaceExtend *NovelInfoWidget::getIRequestNetInterface( const QStr
 			IRequestNetInterfaceExtend *requestNetInterface = metaGetResult( object, loadClassMethodName.toLocal8Bit( ) );
 			if( requestNetInterface ) {
 				requestNetInterface->setInterfaceParent( nullptr );
-
+				std::pair< QObject *, IRequestNetInterfaceExtend * > result( object, requestNetInterface );
 				std::string curlLink;
 				requestNetInterface->getUrl( &curlLink );
 				QUrl url( curlLink.c_str( ) );
 				QString host = url.host( );
+				auto pair = loadPlugs.find( host );
+				auto end = loadPlugs.end( );
+				if( pair != end ) {
+					auto interfaceExtend = pair->second;
+					if( interfaceExtend )
+						interfaceExtend->deleteMember( );
+				}
+
 				loadPlugs.insert_or_assign( host, requestNetInterface );
-				return requestNetInterface;
+				return result;
 			}
 		}
 	}
-	return nullptr;
+	return { };
 }
 NovelInfoWidget::NovelInfoWidget( QWidget *parent, Qt::WindowFlags flag ) : QWidget( parent, flag ) {
 	/////// 链接信号槽
@@ -151,7 +159,7 @@ NovelInfoWidget::~NovelInfoWidget( ) {
 
 IRequestNetInterfaceExtend *NovelInfoWidget::loadPlug( const QString &plugFilePath ) {
 	// todo : 加载插件
-	return getIRequestNetInterface( plugFilePath, plugFilePath, metaObject( )->className( ) );
+	return getIRequestNetInterface( plugFilePath, plugFilePath, metaObject( )->className( ) ).second;
 }
 
 void NovelInfoWidget::computeListViewWidgetSize( ) {
