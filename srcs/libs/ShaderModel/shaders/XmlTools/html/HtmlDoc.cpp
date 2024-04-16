@@ -188,7 +188,7 @@ bool HtmlDoc::isJumpSpace( wchar_t currentChar ) {
 	return iswspace( currentChar ) || iswcntrl( currentChar ) || iswcntrl( currentChar );
 }
 int32_t HtmlDoc::init( ) {
-
+	size_t nodeCount = 0;
 	for( size_t index = 0 ; index < this->htmlSize ; ++index ) {
 		wchar_t currentChar = this->html[ index ];
 		if( isJumpSpace( currentChar ) ) {
@@ -208,35 +208,40 @@ int32_t HtmlDoc::init( ) {
 					break;
 			auto nodeStartPtr = this->html + index;
 			auto mixLen = this->htmlSize - index;
-			// todo : 找到 / 之后的 >
-			for( auto orgIndex = 0 ; orgIndex < mixLen ; ++orgIndex ) {
+			for( auto orgIndex = 0 ; orgIndex < mixLen ; ++orgIndex ) { // todo : 找到 / 之后的 >
 				currentChar = nodeStartPtr[ orgIndex ];
-				if( currentChar == L'/' ) { // todo : 找到了 /
+				if( currentChar == L'\'' ) {// todo : 遭遇单引号字符串
+					auto orgSubIndex = orgIndex + 1;
+					for( ; orgSubIndex < mixLen ; ++orgSubIndex ) {
+						currentChar = nodeStartPtr[ orgSubIndex ];
+						if( currentChar == L'\'' )
+							break;
+					}
+					orgIndex = orgSubIndex;
+				} else if( currentChar == L'\"' ) { // todo : 遭遇算引号字符串
+					auto orgSubIndex = orgIndex + 1;
+					for( ; orgSubIndex < mixLen ; ++orgSubIndex ) {
+						currentChar = nodeStartPtr[ orgSubIndex ];
+						if( currentChar == L'\"' )
+							break;
+					}
+					orgIndex = orgSubIndex;
+				} else if( currentChar == L'/' ) { // todo : 找到了 /
 					for( auto orgSubIndex = orgIndex + 1 ; orgSubIndex < mixLen ; ++orgSubIndex ) {
 						currentChar = nodeStartPtr[ orgSubIndex ];
 						if( currentChar == L'>' ) { // todo : 找到了 >
 							index = index + orgSubIndex;
 							RefWStr refWStr = RefWStr( nodeStartPtr, orgSubIndex + 1 );
-							QString filePathName = QString( u8"%1%2%3" ).arg( Project_Run_bin ).arg( QDir::separator( ) ).arg( u8"读取到的节点内容.txt" );
-							QFile file( filePathName );
-							if( Path::creatFilePath( filePathName ) )
-								if( file.open( QIODeviceBase::WriteOnly | QIODeviceBase::Text ) ) {
-									std::wstring outWString;
-									size_t converStdWstring = refWStr.converStdWstring( &outWString );
-									QString fromStdWString = QString::fromStdWString( outWString );
-									file.write( fromStdWString.toLocal8Bit( ) );
-									file.close( );
-								}
+							std::wstring outWString;
+							size_t converStdWstring = refWStr.converStdWstring( &outWString );
+							QString fromStdWString = QString::fromStdWString( outWString );
+							qDebug( ) << "\t""(""\t" << ++nodeCount << "\t"")" "\n" << "------------>" "\n" << fromStdWString.toStdString( ).c_str( ) << "\n" "<==========";
 							break;
 						}
 					}
 					break;
 				}
 			}
-		} else if( currentChar == L'/' ) {
-			qDebug( ) << u8"接触结束标识符 / [" << index << "]";
-		} else if( currentChar == L'>' ) {
-			qDebug( ) << u8"接触结束 > [" << index << "]";
 		}
 	}
 
