@@ -15,7 +15,7 @@
 #include "../qt/extend/netWork/Request.h"
 #include "../qt/extend/netWork/RequestConnect.h"
 
-#include "html/HtmlDoc.h"
+#include <htmls/html/HtmlDoc.h>
 void test( QObject *plugQobjectInstance, IRequestNetInterfaceExtend *requestNetInterfaceExtend ) {
 
 	std::string plugUrl;

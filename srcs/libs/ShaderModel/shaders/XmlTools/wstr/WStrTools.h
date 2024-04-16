@@ -2,7 +2,8 @@
 #define WSTRTOOLS_H_H_HEAD__FILE__
 #pragma once
 
-namespace WStrTools {
+class WStrTools {
+public:
 	/// <summary>
 	/// 是否为一个跳过的空字符 <br/>
 	/// 其中包含控制字符等
