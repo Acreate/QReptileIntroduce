@@ -33,6 +33,7 @@ FIND_PACKAGE( Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS
 	openglwidgets
 	Core5Compat
 	LinguistTools
+	Xml
 )
 
 get_current_dir_name( current_dir_name ${CMAKE_CURRENT_SOURCE_DIR} )

@@ -1,5 +1,7 @@
 ﻿#include "Path.h"
 
+#include <QDir>
+
 #include "../../../../../projects/ReptileIntroduce/src/qt/extend/thread/FileThread.h"
 std::pair< Path::DirList, Path::FileList > Path::getPathInfo( const QString &path ) {
 
@@ -36,4 +38,26 @@ std::pair< Path::DirList, Path::FileList > Path::getFileInfo( const QString &pat
 	if( fileInfo.isFile( ) )
 		return std::pair< DirList, FileList >( { }, { File( fileInfo.absoluteFilePath( ) ) } );
 	return { };
+}
+bool Path::creatFilePath( const QString &path ) {
+	QFileInfo info( path );
+	if( info.exists( ) )
+		return true;
+	auto isCreateDirPath = creatDirPath( info.dir( ).absolutePath( ) );
+	if( isCreateDirPath ) {
+		QFile file( info.absoluteFilePath( ) );
+		if( file.open( QIODeviceBase::NewOnly | QIODevice::WriteOnly ) ) {
+			file.write( "", 0 );
+			file.close( );
+			return true;
+		}
+	}
+	return false;
+}
+bool Path::creatDirPath( const QString &path ) {
+	QFileInfo info( path );
+	if( info.exists( ) )
+		return true;
+
+	return info.dir( ).mkdir( path );
 }

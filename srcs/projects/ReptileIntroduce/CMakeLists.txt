@@ -30,6 +30,7 @@ file( GLOB_RECURSE SRC_UI
 include_directories( ${NoveInfo_include_dir} )
 include_directories( ${UserHread_include_dir} )
 include_directories( ${Tools_include_dir} )
+include_directories( ${XmlTools_include_dir} )
 
 # # 合并源码
 list( APPEND ${SRC_LIST} ${SRC_UI} ${QM_FILES} )
@@ -41,6 +42,7 @@ qt_add_executable( ${PROJECT_NAME}
 
 copy_dir_path( ${PROJECT_NAME} "${CMAKE_CURRENT_LIST_DIR}/res/ini/progress/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/progress/" )
 copy_dir_path( ${PROJECT_NAME} "${CMAKE_CURRENT_LIST_DIR}/res/ini/web/ini" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/user_plugs/" )
+copy_dir_path( ${PROJECT_NAME} "${CMAKE_CURRENT_LIST_DIR}/res/writeFile" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/writeFile/" )
 
 # 设置变量
 set( Cmake_Project_Name "${PROJECT_NAME}" )
@@ -63,4 +65,8 @@ call_qt_deploy( ${PROJECT_NAME}
 	Qt${QT_VERSION_MAJOR}::Core5Compat
 	NoveInfo
 	Tools
+	XmlTools
+)
+set_target_properties( ${PROJECT_NAME} PROPERTIES
+	WIN32_EXECUTABLE FALSE
 )

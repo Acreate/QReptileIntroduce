@@ -13,6 +13,8 @@ public:
 	static std::pair< DirList, FileList > getPathInfo( const QString &path );
 	static std::pair< DirList, FileList > getDirInfo( const QString &path );
 	static std::pair< DirList, FileList > getFileInfo( const QString &path );
+	static bool creatFilePath(const QString &path );
+	static bool creatDirPath(const QString &path );
 };
 
 #endif // PATH_H_H_HEAD__FILE__
