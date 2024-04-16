@@ -7,11 +7,14 @@
 
 #include "../export/XmlTools_export.h"
 
+class HtmlDoc;
 class XMLTOOLS_EXPORT HtmlDoc {
 public:
 	class XMLTOOLS_EXPORT RefWStr {
 		const wchar_t *ptr;
 		size_t len;
+	public:
+		using CheckFunction = std::function< int64_t( const wchar_t &, size_t &, size_t & ) >;
 	public:
 		RefWStr( const wchar_t *ptr = nullptr, const size_t len = 0 );
 		virtual ~RefWStr( );
@@ -28,6 +31,12 @@ public:
 		void setLen( const size_t len ) {
 			this->len = len;
 		}
+		/// <summary>
+		/// 转换到 std::wstring 类型 <br/>
+		/// </summary>
+		/// <param name="outStr">输出的字符串</param>
+		/// <returns>字符串个数</returns>
+		size_t converStdWstring( std::wstring *outStr );
 	public: // 属性 / 行为
 		/// <summary>
 		/// 该对象是否正确被引用 <br/>
@@ -104,24 +113,79 @@ public:
 		static RefWStr generateRefWStr( const RefWStr src, const RefWStr des );
 		/// <summary>
 		/// 根据校验函数返回实现判断返回 <br/>
-		/// 校验函数返回会与当前下标进行一个相加运算 <br/>
+		/// 校验函数返回非0表示找到 <br/>
+		///		大于 0 会与 第三参数相加 <br/>
+		///		小于 0 会与 第三参数相减
 		/// </summary>
 		/// <param name="c_w_str_ptr">源字符串</param>
 		/// <param name="callFunction">校验函数，返回非0表示终结</param>
 		/// <returns>引用的对象</returns>
-		static RefWStr generateRefWStr( const wchar_t *c_w_str_ptr, const std::function< int64_t( const wchar_t &, size_t ) > &callFunction );
+		static RefWStr generateRefWStr( const wchar_t *c_w_str_ptr, const CheckFunction &callFunction );
 		/// <summary>
 		/// 根据校验函数返回实现判断返回 <br/>
-		/// 校验函数返回会与当前下标进行一个相加运算 <br/>
+		/// 校验函数返回非0表示找到 <br/>
+		///		大于 0 会与 第三参数相加 <br/>
+		///		小于 0 会与 第三参数相减
 		/// </summary>
 		/// <param name="src">源字符串</param>
 		/// <param name="callFunction">校验函数，返回非0表示终结</param>
 		/// <returns>引用的对象</returns>
-		static RefWStr generateRefWStr( const RefWStr src, const std::function< int64_t( const wchar_t & ) > &callFunction );
+		static RefWStr generateRefWStr( const RefWStr src, const CheckFunction &callFunction );
+	};
+	class XMLTOOLS_EXPORT HtmlNode {
+	public:
+		friend class HtmlDoc;
+	private: // 核心成员
+		/// <summary>
+		/// 指向开始的地址
+		/// </summary>
+		wchar_t *cWStrPtr;
+		/// <summary>
+		/// 节点结束地址
+		/// </summary>
+		wchar_t *cWStrEndPtr;
+		/// <summary>
+		/// 字符串长度 <br/>
+		/// 表示节点名称需要从 cWStrPtr 获取的长度
+		/// </summary>
+		size_t htmlSize;
+	public:
+		HtmlNode( );
+		HtmlNode( wchar_t *cWStrPtr, wchar_t *cWStrEndPtr, size_t htmlSize );
+		virtual ~HtmlNode( );
+	public:
+		wchar_t *getCWStrPtr( ) const {
+			return cWStrPtr;
+		}
+		void setCWStrPtr( wchar_t *const cWStrPtr ) {
+			this->cWStrPtr = cWStrPtr;
+		}
+		wchar_t *getCWStrEndPtr( ) const {
+			return cWStrEndPtr;
+		}
+		void setCWStrEndPtr( wchar_t *const cWStrEndPtr ) {
+			this->cWStrEndPtr = cWStrEndPtr;
+		}
+		size_t getHtmlSize( ) const {
+			return htmlSize;
+		}
+		void setHtmlSize( const size_t htmlSize ) {
+			this->htmlSize = htmlSize;
+		}
 	};
 private: // 核心成员
 	wchar_t *html;
 	size_t htmlSize;
+private:
+	/// <summary>
+	/// 名称指针与结束点
+	/// </summary>
+	using SubNode = std::vector< HtmlNode >;
+
+	/// <summary>
+	/// 其他的常规节点
+	/// </summary>
+	SubNode *normalNode;
 private: // 无法使用个构造函数
 	HtmlDoc( );
 	/// <summary>
@@ -137,6 +201,7 @@ private: // 无法使用个构造函数
 	/// </summary>
 	/// <returns>执行返回代码标识</returns>
 	int32_t init( );
+	HtmlDoc *newObj( );
 public:
 	virtual ~HtmlDoc( );
 public:

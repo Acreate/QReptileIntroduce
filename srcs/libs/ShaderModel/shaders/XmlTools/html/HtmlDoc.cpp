@@ -2,10 +2,21 @@
 
 #include <QDebug>
 #include <clocale>
+#include <qdir.h>
+
+#include "../macro/cmake_to_c_cpp_header_env.h"
+#include <path/Path.h>
 HtmlDoc::RefWStr::RefWStr( const wchar_t *ptr, const size_t len ): ptr( ptr ), len( len ) {
 }
 HtmlDoc::RefWStr::~RefWStr( ) {
 
+}
+size_t HtmlDoc::RefWStr::converStdWstring( std::wstring *outStr ) {
+	if( isRef( ) ) {
+		*outStr = std::wstring( this->getPtr( ), this->len );
+		return this->len;
+	}
+	return 0;
 }
 bool HtmlDoc::RefWStr::equeWStr( const wchar_t *c_w_str, const size_t c_w_str_len ) {
 	if( c_w_str_len != len )
@@ -126,31 +137,52 @@ HtmlDoc::RefWStr HtmlDoc::RefWStr::generateRefWStr( const RefWStr src, const Ref
 		}
 	return { };
 }
-HtmlDoc::RefWStr HtmlDoc::RefWStr::generateRefWStr( const wchar_t *c_w_str_ptr, const std::function< int64_t( const wchar_t &, size_t ) > &callFunction ) {
+HtmlDoc::RefWStr HtmlDoc::RefWStr::generateRefWStr( const wchar_t *c_w_str_ptr, const CheckFunction &callFunction ) {
 	for( size_t index = 0 ; true ; ++index ) {
 		wchar_t currentChar = c_w_str_ptr[ index ];
-		auto resultCompNumber = callFunction( currentChar, index );
+		size_t outCompNumber;
+		size_t paramIndex = index;
+		auto resultCompNumber = callFunction( currentChar, paramIndex, outCompNumber );
 		if( resultCompNumber != 0 )
-			return { c_w_str_ptr, index + resultCompNumber };
-		if( currentChar == L'\0' )
+			if( resultCompNumber > 0 )
+				return { c_w_str_ptr, index + outCompNumber };
+			else
+				return { c_w_str_ptr, index - outCompNumber };
+		if( ( paramIndex != index && c_w_str_ptr[ paramIndex ] == L'\0' ) || currentChar == L'\0' )
 			break;
+		index = paramIndex;
 	}
 	return { };
 }
-HtmlDoc::RefWStr HtmlDoc::RefWStr::generateRefWStr( const RefWStr src, const std::function< int64_t( const wchar_t & ) > &callFunction ) {
+HtmlDoc::RefWStr HtmlDoc::RefWStr::generateRefWStr( const RefWStr src, const CheckFunction &callFunction ) {
 	if( src.isRef( ) ) {
 		size_t len = src.getLen( );
 		auto src_w_c_str = src.getPtr( );
 		for( size_t index = 0 ; index < len ; ++index ) {
-			auto resultCompNumber = callFunction( src_w_c_str[ index ] );
+			size_t outCompNumber;
+			wchar_t currentChar = src_w_c_str[ index ];
+			size_t resultCompNumber = callFunction( currentChar, index, outCompNumber );
 			if( resultCompNumber != 0 )
-				return { src_w_c_str, index + resultCompNumber };
+				if( resultCompNumber > 0 )
+					return { src_w_c_str, index + outCompNumber };
+				else
+					return { src_w_c_str, index - outCompNumber };
+			if( currentChar == L'\0' )
+				break;
 		}
 	}
 	return { };
 }
-HtmlDoc::HtmlDoc( ): html( nullptr ), htmlSize( 0 ) {
+HtmlDoc::HtmlNode::HtmlNode( ): cWStrPtr( nullptr ), cWStrEndPtr( nullptr ), htmlSize( 0 ) {
+}
+HtmlDoc::HtmlNode::HtmlNode( wchar_t *cWStrPtr, wchar_t *cWStrEndPtr, size_t htmlSize )
+: cWStrPtr( cWStrPtr ), cWStrEndPtr( cWStrEndPtr ), htmlSize( htmlSize ) {
 
+}
+HtmlDoc::HtmlNode::~HtmlNode( ) {
+}
+HtmlDoc::HtmlDoc( ): html( nullptr ), htmlSize( 0 ) {
+	normalNode = new SubNode;
 }
 bool HtmlDoc::isJumpSpace( wchar_t currentChar ) {
 	return iswspace( currentChar ) || iswcntrl( currentChar ) || iswcntrl( currentChar );
@@ -162,27 +194,44 @@ int32_t HtmlDoc::init( ) {
 		if( isJumpSpace( currentChar ) ) {
 			//qDebug( ) << u8"遭遇空格 [" << index << "]";
 		} else if( currentChar == L'<' ) {
-			qDebug( ) << u8"接触开始 < [" << index << "]";
-			// 过滤空格
+			currentChar = this->html[ index + 1 ];
+			if( currentChar == L'!' ) {// 不可解析内容
+				for( index = index + 1 ; index < this->htmlSize ; ++index )
+					if( this->html[ index ] == L'>' )
+						break;
+				continue;
+			}
 			auto spaceJumpIndex = index + 1;
+			// 过滤空格
 			for( ; spaceJumpIndex < this->htmlSize ; ++spaceJumpIndex )
 				if( !isJumpSpace( this->html[ spaceJumpIndex ] ) )
 					break;
-			auto cWStrPtr = this->html + spaceJumpIndex + 1;
-			auto refWStr = RefWStr::generateRefWStr( cWStrPtr, [&]( const wchar_t checkCurrentChar, size_t currentIndex ) {
-				if( isJumpSpace( checkCurrentChar ) || checkCurrentChar == L'/' || checkCurrentChar == L'>' ) {
-					spaceJumpIndex = currentIndex;
-					return -1;
+			auto nodeStartPtr = this->html + index;
+			auto mixLen = this->htmlSize - index;
+			// todo : 找到 / 之后的 >
+			for( auto orgIndex = 0 ; orgIndex < mixLen ; ++orgIndex ) {
+				currentChar = nodeStartPtr[ orgIndex ];
+				if( currentChar == L'/' ) { // todo : 找到了 /
+					for( auto orgSubIndex = orgIndex + 1 ; orgSubIndex < mixLen ; ++orgSubIndex ) {
+						currentChar = nodeStartPtr[ orgSubIndex ];
+						if( currentChar == L'>' ) { // todo : 找到了 >
+							index = index + orgSubIndex;
+							RefWStr refWStr = RefWStr( nodeStartPtr, orgSubIndex + 1 );
+							QString filePathName = QString( u8"%1%2%3" ).arg( Project_Run_bin ).arg( QDir::separator( ) ).arg( u8"读取到的节点内容.txt" );
+							QFile file( filePathName );
+							if( Path::creatFilePath( filePathName ) )
+								if( file.open( QIODeviceBase::WriteOnly | QIODeviceBase::Text ) ) {
+									std::wstring outWString;
+									size_t converStdWstring = refWStr.converStdWstring( &outWString );
+									QString fromStdWString = QString::fromStdWString( outWString );
+									file.write( fromStdWString.toLocal8Bit( ) );
+									file.close( );
+								}
+							break;
+						}
+					}
+					break;
 				}
-				return 0;
-			} );
-			bool isRef = refWStr.isRef( );
-			if( isRef ) {
-				refWStr.setLen( spaceJumpIndex );
-				qDebug( ) << u8"检测字符串为 / (" << ( isRef ? u8"有效" : u8"无效" ) << ")";
-				bool equeWStr = refWStr.equeWStr( L"DOCTYPE" );
-				if( equeWStr )
-					qDebug( ) << u8"节点为 html 标识  DOCTYPE";
 			}
 		} else if( currentChar == L'/' ) {
 			qDebug( ) << u8"接触结束标识符 / [" << index << "]";
@@ -193,9 +242,14 @@ int32_t HtmlDoc::init( ) {
 
 	return 0;
 }
+HtmlDoc *HtmlDoc::newObj( ) {
+	// todo : 使用 new 的方式创建的一个独立的内存。不再发生引用
+	return nullptr;
+}
 HtmlDoc::~HtmlDoc( ) {
 	if( this->html )
 		delete[] this->html;
+	delete normalNode;
 }
 std::shared_ptr< HtmlDoc > HtmlDoc::parse( wchar_t *c_str, const size_t c_str_len ) {
 	auto result = new HtmlDoc( );
