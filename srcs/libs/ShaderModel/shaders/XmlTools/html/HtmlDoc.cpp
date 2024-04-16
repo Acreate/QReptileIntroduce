@@ -188,7 +188,15 @@ bool HtmlDoc::isJumpSpace( wchar_t currentChar ) {
 	return iswspace( currentChar ) || iswcntrl( currentChar ) || iswcntrl( currentChar );
 }
 int32_t HtmlDoc::init( ) {
+	// 写入文件
+	QString writeFilePath( u8"%1%2%3%2%4" );
+	writeFilePath = writeFilePath.arg( Project_Run_bin ).arg( QDir::separator( ) ).arg( u8"write_test_cache" ).arg( u8"www.121ds.cc.txt" );
+	bool isExis = Path::creatFilePath( writeFilePath );
+	QFile file( writeFilePath );
+	bool open = file.open( QIODeviceBase::Text | QIODeviceBase::WriteOnly | QIODeviceBase::Truncate );
+
 	size_t nodeCount = 0;
+
 	for( size_t index = 0 ; index < this->htmlSize ; ++index ) {
 		wchar_t currentChar = this->html[ index ];
 		if( isJumpSpace( currentChar ) ) {
@@ -234,8 +242,20 @@ int32_t HtmlDoc::init( ) {
 							RefWStr refWStr = RefWStr( nodeStartPtr, orgSubIndex + 1 );
 							std::wstring outWString;
 							size_t converStdWstring = refWStr.converStdWstring( &outWString );
-							QString fromStdWString = QString::fromStdWString( outWString );
-							qDebug( ) << "\t""(""\t" << ++nodeCount << "\t"")" "\n" << "------------>" "\n" << fromStdWString.toStdString( ).c_str( ) << "\n" "<==========";
+							QString fromStdWString;
+							fromStdWString.append( u8"\t(\t" );
+							fromStdWString.append( QString::number( ++nodeCount ) );
+							fromStdWString.append( u8"\t)\n" );
+							fromStdWString.append( u8"------------>\n" );
+							fromStdWString.append( QString::fromStdWString( outWString ) );
+							fromStdWString.append( u8"\n<==========" );
+
+							QByteArray local8Bit = fromStdWString.toLocal8Bit( );
+							qDebug( ) << local8Bit;
+							fromStdWString.append( u8"\n" );
+							local8Bit = fromStdWString.toLocal8Bit( );
+							if( open )
+								file.write( local8Bit );
 							break;
 						}
 					}
@@ -245,6 +265,7 @@ int32_t HtmlDoc::init( ) {
 		}
 	}
 
+	file.close( );
 	return 0;
 }
 HtmlDoc *HtmlDoc::newObj( ) {
