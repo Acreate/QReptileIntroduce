@@ -14,11 +14,18 @@ endif()
 
 FIND_PACKAGE( CmakeFuncs REQUIRED PATHS "${CMAKE_CURRENT_SOURCE_DIR}/srcs/cmake/CmakeFuncs/" )
 
+get_current_dir_name( prject_name ${CMAKE_CURRENT_SOURCE_DIR} )
+message( "============ ${prject_name}" )
+message( "name =" ${prject_name} )
+project( ${prject_name} VERSION 0.1 LANGUAGES CXX )
+message( "============ ${CURRENT_FOLDER}" )
+
 INCLUDE( GenerateExportHeader )
 INCLUDE( GNUInstallDirs )
 
 SET( Project_Run_bin "${CMAKE_HOME_DIRECTORY}/builder/${CMAKE_BUILD_TYPE}_${CMAKE_CXX_COMPILER_ARCHITECTURE_ID}_${CMAKE_CXX_COMPILER_ID}/" )
-SET( Project_Plug_bin "${CMAKE_HOME_DIRECTORY}/builder/${CMAKE_BUILD_TYPE}_${CMAKE_CXX_COMPILER_ARCHITECTURE_ID}_${CMAKE_CXX_COMPILER_ID}/plugs/" )
+SET( Project_Install_bin "${Project_Run_bin}" )
+SET( Project_Plug_bin "${CMAKE_HOME_DIRECTORY}/builder/${CMAKE_BUILD_TYPE}_${CMAKE_CXX_COMPILER_ARCHITECTURE_ID}_${CMAKE_CXX_COMPILER_ID}/plugs" )
 
 message( "QT_VERSION_MAJOR : ${QT_VERSION_MAJOR}" )
 
@@ -87,17 +94,19 @@ foreach( plug_dir ${out_path_list} )
 	endforeach()
 endforeach()
 
+SET( PROJECT_BINARY_DIR "${Project_Run_bin}" CACHE STRING "" FORCE )
 
-SET( PROJECT_BINARY_DIR "${CMAKE_HOME_DIRECTORY}/builder/${CMAKE_BUILD_TYPE}_${CMAKE_CXX_COMPILER_ARCHITECTURE_ID}_${CMAKE_CXX_COMPILER_ID}/" CACHE STRING "" FORCE )
-SET( CMAKE_CURRENT_BINARY_DIR "${PROJECT_BINARY_DIR}/" CACHE STRING "" FORCE )
-SET( CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/" CACHE STRING "" FORCE )
-SET( CMAKE_LIBRARY_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/" CACHE STRING "" FORCE )
-SET( CMAKE_INSTALL_BINDIR "${PROJECT_BINARY_DIR}" CACHE PATH "" FORCE )
-SET( CMAKE_INSTALL_LIBDIR "${PROJECT_BINARY_DIR}" CACHE PATH "" FORCE )
-SET( CMAKE_INSTALL_PREFIX "${PROJECT_BINARY_DIR}" CACHE PATH "" FORCE )
-SET( EXECUTABLE_OUTPUT_PATH "${PROJECT_BINARY_DIR}" CACHE STRING "" FORCE )
+SET( CMAKE_CURRENT_BINARY_DIR "${Project_Run_bin}" CACHE STRING "" FORCE )
+SET( EXECUTABLE_OUTPUT_PATH "${Project_Run_bin}" CACHE STRING "" FORCE )
 
+SET( CMAKE_RUNTIME_OUTPUT_DIRECTORY "${Project_Run_bin}" CACHE STRING "" FORCE )
+SET( CMAKE_LIBRARY_OUTPUT_DIRECTORY "${Project_Run_bin}" CACHE STRING "" FORCE )
 
+SET( CMAKE_INSTALL_BINDIR "${Project_Install_bin}" CACHE PATH "" FORCE )
+SET( CMAKE_INSTALL_LIBDIR "${Project_Install_bin}" CACHE PATH "" FORCE )
+SET( CMAKE_INSTALL_PREFIX "${Project_Install_bin}" CACHE PATH "" FORCE )
+
+SET( QT_DEPLOY_BIN_DIR "${Project_Install_bin}" CACHE STRING "" FORCE )
 
 get_path_cmake_dir_path( out_path_list ${CMAKE_CURRENT_SOURCE_DIR}/srcs/libs/UserHread/defineMorc "CMakeLists.txt" )
 get_path_cmake_dir_path( out_path_list ${CMAKE_CURRENT_SOURCE_DIR}/srcs/libs/ShaderModel/shaders/ "CMakeLists.txt" )
@@ -106,6 +115,6 @@ get_path_cmake_dir_path( out_path_list ${CMAKE_CURRENT_SOURCE_DIR}/srcs/projects
 
 foreach( out_dir ${out_path_list} )
 	STRING( REPLACE ${CMAKE_SOURCE_DIR}/ "./" out_path ${out_dir} )
-	# MESSAGE( STATUS "正在添加路径 :\t" ${out_dir} )
+	MESSAGE( STATUS "正在添加路径 :\t" ${out_dir} )
 	ADD_SUBDIRECTORY( ${out_dir} )
 endforeach()

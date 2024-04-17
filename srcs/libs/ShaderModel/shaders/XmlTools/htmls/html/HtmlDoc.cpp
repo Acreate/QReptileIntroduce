@@ -18,7 +18,12 @@ int32_t HtmlDoc::init( ) {
 	bool isExis = Path::creatFilePath( writeFilePath );
 	QFile file( writeFilePath );
 	bool open = file.open( QIODeviceBase::Text | QIODeviceBase::WriteOnly | QIODeviceBase::Truncate );
-
+	// 缓冲字符串引用
+	RefWStr buffRefWStr;
+	// 缓冲字符串
+	std::wstring buffStdWString;
+	// 缓冲输出
+	QString buffQString;
 	size_t nodeCount = 0;
 
 	for( size_t index = 0 ; index < this->htmlSize ; ++index ) {
@@ -39,6 +44,7 @@ int32_t HtmlDoc::init( ) {
 					break;
 			auto nodeStartPtr = this->html + index;
 			auto mixLen = this->htmlSize - index;
+
 			for( auto orgIndex = 0 ; orgIndex < mixLen ; ++orgIndex ) { // todo : 找到 / 之后的 >
 				currentChar = nodeStartPtr[ orgIndex ];
 				if( currentChar == L'\'' ) {// todo : 遭遇单引号字符串
@@ -48,25 +54,38 @@ int32_t HtmlDoc::init( ) {
 					orgIndex = orgIndex + 1;
 					orgIndex = WStrTools::findNextWCharPotion( nodeStartPtr, orgIndex, L'\"', mixLen ) + orgIndex;
 				} else if( currentChar == L'/' ) { // todo : 找到了 /
-					for( auto orgSubIndex = orgIndex + 1 ; orgSubIndex < mixLen ; ++orgSubIndex ) {
+					// todo : 查找 / 前的名称
+					auto orgSubIndex = 0;
+					for( ; orgSubIndex < orgIndex ; ++orgSubIndex ) {
+						if( !WStrTools::isJumpSpace( nodeStartPtr[ orgSubIndex ] ) )
+							break;
+					}
+					RefWStr refWStr( nodeStartPtr, orgSubIndex - 1 );
+					buffRefWStr.setPtr( nodeStartPtr );
+					buffRefWStr.setLen( orgSubIndex - 1 );
+					refWStr.converStdWstring( &buffStdWString );
+					qDebug( ) << "找到名称 : " << QString::fromStdWString( buffStdWString );
+					orgSubIndex = orgIndex + 1;
+					for( ; orgSubIndex < mixLen ; ++orgSubIndex ) {
 						currentChar = nodeStartPtr[ orgSubIndex ];
 						if( currentChar == L'>' ) { // todo : 找到了 >
 							index = index + orgSubIndex;
-							RefWStr refWStr = RefWStr( nodeStartPtr, orgSubIndex + 1 );
-							std::wstring outWString;
-							size_t converStdWstring = refWStr.converStdWstring( &outWString );
-							QString fromStdWString;
-							fromStdWString.append( u8"\t(\t" );
-							fromStdWString.append( QString::number( ++nodeCount ) );
-							fromStdWString.append( u8"\t)\n" );
-							fromStdWString.append( u8"------------>\n" );
-							fromStdWString.append( QString::fromStdWString( outWString ) );
-							fromStdWString.append( u8"\n<==========" );
+							
+							buffRefWStr.setPtr( nodeStartPtr );
+							buffRefWStr.setLen( orgSubIndex - 1 );
+							refWStr.converStdWstring( &buffStdWString );
+							buffQString.clear( );
+							buffQString.append( u8"\t(\t" );
+							buffQString.append( QString::number( ++nodeCount ) );
+							buffQString.append( u8"\t)\n" );
+							buffQString.append( u8"------------>\n" );
+							buffQString.append( QString::fromStdWString( buffStdWString ) );
+							buffQString.append( u8"\n<==========" );
 
-							QByteArray local8Bit = fromStdWString.toLocal8Bit( );
+							QByteArray local8Bit = buffQString.toLocal8Bit( );
 							qDebug( ) << local8Bit;
-							fromStdWString.append( u8"\n" );
-							local8Bit = fromStdWString.toLocal8Bit( );
+							buffQString.append( u8"\n" );
+							local8Bit = buffQString.toLocal8Bit( );
 							if( open )
 								file.write( local8Bit );
 							break;

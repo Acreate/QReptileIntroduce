@@ -4,6 +4,19 @@ message( "name =" ${prject_name} )
 project( ${prject_name} VERSION 0.1 LANGUAGES CXX )
 message( "============ ${CURRENT_FOLDER}" )
 
+SET( PROJECT_BINARY_DIR "${Project_Run_bin}" CACHE STRING "" FORCE )
+
+SET( CMAKE_CURRENT_BINARY_DIR "${Project_Run_bin}" CACHE STRING "" FORCE )
+SET( EXECUTABLE_OUTPUT_PATH "${Project_Run_bin}" CACHE STRING "" FORCE )
+
+SET( CMAKE_RUNTIME_OUTPUT_DIRECTORY "${Project_Run_bin}" CACHE STRING "" FORCE )
+SET( CMAKE_LIBRARY_OUTPUT_DIRECTORY "${Project_Run_bin}" CACHE STRING "" FORCE )
+
+SET( CMAKE_INSTALL_BINDIR "${Project_Install_bin}" CACHE PATH "" FORCE )
+SET( CMAKE_INSTALL_LIBDIR "${Project_Install_bin}" CACHE PATH "" FORCE )
+SET( CMAKE_INSTALL_PREFIX "${Project_Install_bin}" CACHE PATH "" FORCE )
+
+SET( QT_DEPLOY_BIN_DIR "${Project_Install_bin}" CACHE STRING "" FORCE )
 
 
 qt_standard_project_setup()

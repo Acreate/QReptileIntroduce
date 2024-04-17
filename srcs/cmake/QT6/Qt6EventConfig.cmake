@@ -69,7 +69,7 @@ function( call_qt_deploy PROJECT_NAME )
 		CONTENT "
 include(\"${QT_DEPLOY_SUPPORT}\")
 qt_deploy_runtime_dependencies(
-    EXECUTABLE \"${CMAKE_CURRENT_BINARY_DIR}/${executable_path}\"
+    EXECUTABLE \"${PROJECT_BINARY_DIR}/${executable_path}\"
 	PLUGINS_DIR \".\"
 	LIB_DIR \".\"
 	BIN_DIR \".\"
