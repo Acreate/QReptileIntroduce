@@ -94,19 +94,8 @@ foreach( plug_dir ${out_path_list} )
 	endforeach()
 endforeach()
 
-SET( PROJECT_BINARY_DIR "${Project_Run_bin}" CACHE STRING "" FORCE )
+m_set_env("${Project_Run_bin}" "${Project_Install_bin}")
 
-SET( CMAKE_CURRENT_BINARY_DIR "${Project_Run_bin}" CACHE STRING "" FORCE )
-SET( EXECUTABLE_OUTPUT_PATH "${Project_Run_bin}" CACHE STRING "" FORCE )
-
-SET( CMAKE_RUNTIME_OUTPUT_DIRECTORY "${Project_Run_bin}" CACHE STRING "" FORCE )
-SET( CMAKE_LIBRARY_OUTPUT_DIRECTORY "${Project_Run_bin}" CACHE STRING "" FORCE )
-
-SET( CMAKE_INSTALL_BINDIR "${Project_Install_bin}" CACHE PATH "" FORCE )
-SET( CMAKE_INSTALL_LIBDIR "${Project_Install_bin}" CACHE PATH "" FORCE )
-SET( CMAKE_INSTALL_PREFIX "${Project_Install_bin}" CACHE PATH "" FORCE )
-
-SET( QT_DEPLOY_BIN_DIR "${Project_Install_bin}" CACHE STRING "" FORCE )
 
 get_path_cmake_dir_path( out_path_list ${CMAKE_CURRENT_SOURCE_DIR}/srcs/libs/UserHread/defineMorc "CMakeLists.txt" )
 get_path_cmake_dir_path( out_path_list ${CMAKE_CURRENT_SOURCE_DIR}/srcs/libs/ShaderModel/shaders/ "CMakeLists.txt" )

@@ -5,19 +5,8 @@ project( ${prject_name} VERSION 0.1 LANGUAGES CXX )
 message( "============ ${CURRENT_FOLDER}" )
 
 
-SET( PROJECT_BINARY_DIR "${Project_Run_bin}" CACHE STRING "" FORCE )
 
-SET( CMAKE_CURRENT_BINARY_DIR "${Project_Run_bin}" CACHE STRING "" FORCE )
-SET( EXECUTABLE_OUTPUT_PATH "${Project_Run_bin}" CACHE STRING "" FORCE )
-
-SET( CMAKE_RUNTIME_OUTPUT_DIRECTORY "${Project_Run_bin}" CACHE STRING "" FORCE )
-SET( CMAKE_LIBRARY_OUTPUT_DIRECTORY "${Project_Run_bin}" CACHE STRING "" FORCE )
-
-SET( CMAKE_INSTALL_BINDIR "${Project_Install_bin}" CACHE PATH "" FORCE )
-SET( CMAKE_INSTALL_LIBDIR "${Project_Install_bin}" CACHE PATH "" FORCE )
-SET( CMAKE_INSTALL_PREFIX "${Project_Install_bin}" CACHE PATH "" FORCE )
-
-SET( QT_DEPLOY_BIN_DIR "${Project_Install_bin}" CACHE STRING "" FORCE )
+m_set_env("${Project_Run_bin}" "${Project_Install_bin}")
 
 
 
@@ -41,15 +30,31 @@ file( GLOB_RECURSE SRC_DATA
 
 string(REPLACE "." "_" project_name_include_dir ${PROJECT_NAME})
 
-set( ${project_name_include_dir}_include_dir ${CMAKE_CURRENT_LIST_DIR} ${CMAKE_CURRENT_LIST_DIR}/.. PARENT_SCOPE)
+# 设置变量
+set( Cmake_Project_Name "${PROJECT_NAME}" )
+set( Cmake_Project_Binary_Dir "${CMAKE_BINARY_DIR}" )
+set( Cmake_Project_Binary_Dir "${PROJECT_BINARY_DIR}" )
+set( Cmake_Project_Binary_File_Name "$<TARGET_FILE:tgt>" )
+
+set( cmake_definitions_out "${CMAKE_CURRENT_LIST_DIR}/macro/cmake_to_c_cpp_header_env.h" )
+set( cmake_definitions_org "${cmake_definitions_tmp}/cmake_in/cmake_to_c_cpp_header_env.h.in" )
+
+set( ${project_name_include_dir}_include_dir ${CMAKE_CURRENT_LIST_DIR} ${CMAKE_CURRENT_LIST_DIR}/.. PARENT_SCOPE )
+
 # # 合并源码
-list( APPEND ${SRC_LIST} ${SRC_UI} ${QM_FILES} ${SRC_DATA})
+list( APPEND ${SRC_LIST} ${SRC_UI} ${QM_FILES} ${SRC_DATA} ${cmake_definitions_out} )
 qt_add_library( ${PROJECT_NAME} SHARED
 	${SRC_LIST}
 )
+get_target_property( project_type_property  ${PROJECT_NAME} TYPE )
+if( "EXECUTABLE" STREQUAL ${project_type_property} )
+	set( project_type_property_is_exe true )
+else()
+	set( project_type_property_is_exe false )
+endif()
+configure_file( "${cmake_definitions_org}" "${cmake_definitions_out}" )
 
-string( REPLACE "." "_" project_name_include_dir ${PROJECT_NAME} )
-set( ${project_name_include_dir}_include_dir ${CMAKE_CURRENT_LIST_DIR} ${CMAKE_CURRENT_LIST_DIR}/ PARENT_SCOPE )
+
 
 target_link_libraries( ${PROJECT_NAME}
 	PRIVATE

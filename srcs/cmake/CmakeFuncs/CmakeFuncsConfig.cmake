@@ -1,5 +1,25 @@
 CMAKE_MINIMUM_REQUIRED( VERSION 3.19 )
 
+macro( m_set_env bin_ptah install_path )
+	SET( PROJECT_BINARY_DIR "${bin_ptah}" CACHE STRING "" FORCE )
+
+	SET( CMAKE_CURRENT_BINARY_DIR "${bin_ptah}" CACHE STRING "" FORCE )
+	SET( EXECUTABLE_OUTPUT_PATH "${bin_ptah}" CACHE STRING "" FORCE )
+
+	SET( CMAKE_RUNTIME_OUTPUT_DIRECTORY "${bin_ptah}" CACHE STRING "" FORCE )
+	SET( CMAKE_LIBRARY_OUTPUT_DIRECTORY "${bin_ptah}" CACHE STRING "" FORCE )
+
+	SET( CMAKE_INSTALL_BINDIR "${install_path}" CACHE PATH "" FORCE )
+	SET( CMAKE_INSTALL_LIBDIR "${install_path}" CACHE PATH "" FORCE )
+	SET( CMAKE_INSTALL_PREFIX "${install_path}" CACHE PATH "" FORCE )
+
+	SET( QT_DEPLOY_BIN_DIR "${install_path}" CACHE STRING "" FORCE )
+endmacro()
+
+macro( m_all_set_env all_path )
+	m_set_env( ${all_path} ${all_path} )
+endmacro()
+
 # ## 根据目录获取一个文件夹名称
 function( get_current_dir_name out_name in_path )
 	STRING( REGEX REPLACE ".*/(.*)" "\\1" CURRENT_FOLDER ${in_path} )

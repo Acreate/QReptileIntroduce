@@ -4,20 +4,7 @@ message( "name =" ${prject_name} )
 project( ${prject_name} VERSION 0.1 LANGUAGES CXX )
 message( "============ ${CURRENT_FOLDER}" )
 
-SET( PROJECT_BINARY_DIR "${Project_Run_bin}" CACHE STRING "" FORCE )
-
-SET( CMAKE_CURRENT_BINARY_DIR "${Project_Run_bin}" CACHE STRING "" FORCE )
-SET( EXECUTABLE_OUTPUT_PATH "${Project_Run_bin}" CACHE STRING "" FORCE )
-
-SET( CMAKE_RUNTIME_OUTPUT_DIRECTORY "${Project_Run_bin}" CACHE STRING "" FORCE )
-SET( CMAKE_LIBRARY_OUTPUT_DIRECTORY "${Project_Run_bin}" CACHE STRING "" FORCE )
-
-SET( CMAKE_INSTALL_BINDIR "${Project_Install_bin}" CACHE PATH "" FORCE )
-SET( CMAKE_INSTALL_LIBDIR "${Project_Install_bin}" CACHE PATH "" FORCE )
-SET( CMAKE_INSTALL_PREFIX "${Project_Install_bin}" CACHE PATH "" FORCE )
-
-SET( QT_DEPLOY_BIN_DIR "${Project_Install_bin}" CACHE STRING "" FORCE )
-
+m_set_env( "${Project_Run_bin}" "${Project_Install_bin}" )
 
 qt_standard_project_setup()
 
@@ -37,13 +24,23 @@ include_directories( ${UserHread_include_dir} )
 include_directories( ${Tools_include_dir} )
 include_directories( ${XmlTools_include_dir} )
 
+set( cmake_definitions_out "${CMAKE_CURRENT_LIST_DIR}/src/macro/cmake_to_c_cpp_header_env.h" )
+
 # # 合并源码
-list( APPEND ${SRC_LIST} ${SRC_UI} ${QM_FILES} )
+list( APPEND ${SRC_LIST} ${SRC_UI} ${QM_FILES} ${cmake_definitions_out} )
 
 qt_add_executable( ${PROJECT_NAME}
 	MANUAL_FINALIZATION
 	${SRC_LIST}
 )
+
+get_target_property( project_type_property ${PROJECT_NAME} TYPE )
+
+if( "EXECUTABLE" STREQUAL ${project_type_property} )
+	set( project_type_property_is_exe true )
+else()
+	set( project_type_property_is_exe false )
+endif()
 
 copy_dir_path( ${PROJECT_NAME} "${CMAKE_CURRENT_LIST_DIR}/res/ini/progress/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/progress/" )
 copy_dir_path( ${PROJECT_NAME} "${CMAKE_CURRENT_LIST_DIR}/res/ini/web/ini" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/user_plugs/" )
@@ -54,8 +51,8 @@ set( Cmake_Project_Name "${PROJECT_NAME}" )
 set( Cmake_Project_Binary_Dir "${CMAKE_BINARY_DIR}" )
 set( Cmake_Project_Binary_Dir "${PROJECT_BINARY_DIR}" )
 set( Cmake_Project_Binary_File_Name "$<TARGET_FILE:tgt>" )
-### 		CMAKE_EXECUTABLE_SUFFIX	.exe	string
-set( cmake_definitions_out "${CMAKE_CURRENT_LIST_DIR}/src/macro/cmake_to_c_cpp_header_env.h" )
+
+# ## 		CMAKE_EXECUTABLE_SUFFIX	.exe	string
 set( cmake_definitions_org "${cmake_definitions_tmp}/cmake_in/cmake_to_c_cpp_header_env.h.in" )
 configure_file( "${cmake_definitions_org}" "${cmake_definitions_out}" )
 

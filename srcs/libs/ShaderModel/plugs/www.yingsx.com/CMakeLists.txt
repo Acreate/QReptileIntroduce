@@ -4,15 +4,9 @@ message( "name =" ${prject_name} )
 project( ${prject_name} VERSION 0.1 LANGUAGES CXX )
 message( "============ ${CURRENT_FOLDER}" )
 
-SET( PROJECT_BINARY_DIR "${Project_Plug_bin}/${prject_name}/" CACHE STRING "" FORCE )
-SET( CMAKE_CURRENT_BINARY_DIR "${PROJECT_BINARY_DIR}/" CACHE STRING "" FORCE )
-SET( CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/" CACHE STRING "" FORCE )
-SET( CMAKE_LIBRARY_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/" CACHE STRING "" FORCE )
-SET( CMAKE_INSTALL_BINDIR "${PROJECT_BINARY_DIR}" CACHE PATH "" FORCE )
-SET( CMAKE_INSTALL_LIBDIR "${PROJECT_BINARY_DIR}" CACHE PATH "" FORCE )
-SET( CMAKE_INSTALL_PREFIX "${PROJECT_BINARY_DIR}" CACHE PATH "" FORCE )
-SET( EXECUTABLE_OUTPUT_PATH "${PROJECT_BINARY_DIR}" CACHE STRING "" FORCE )
 
+SET( Project_Plug_bin_Path  "${Project_Plug_bin}/${prject_name}/")
+m_set_env( "${Project_Plug_bin_Path}" "${Project_Plug_bin_Path}" )
 qt_standard_project_setup()
 
 file( GLOB_RECURSE SRC_LIST
@@ -52,13 +46,12 @@ target_link_libraries(
 	NoveInfo
 )
 
-
 # 设置变量
 set( urlStart "https" )
 set( iid \"${PROJECT_NAME}.json.IRequestNetInterfaceExtend\" )
 set( get_url \"${urlStart}://${PROJECT_NAME}\" )
 
-string(TOUPPER ${project_name_include_dir} project_head_start)
+string( TOUPPER ${project_name_include_dir} project_head_start )
 
 set( cmake_definitions_out ${CMAKE_CURRENT_LIST_DIR}/macro/cmake_to_c_cpp_header_macro.h )
 configure_file( ${cmake_definitions_in} ${cmake_definitions_out} )
