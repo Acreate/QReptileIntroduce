@@ -17,9 +17,22 @@ public:
 	/// <param name="w_c_ptr">指向字符串检测的开始位置</param>
 	/// <param name="startIndex">字符串开始检查的下标</param>
 	/// <param name="find_w_c_char">查找的字符</param>
-	/// <param name="maxIndex">最大的下标</param>
-	/// <returns>相对于 startIndex 的大小</returns>
-	static size_t findNextWCharPotion( const wchar_t *w_c_ptr, size_t startIndex, const wchar_t find_w_c_char, size_t maxIndex );
+	/// <param name="maxIndex">查找最大的长度(startIndex >= maxIndex 返回)</param>
+	/// <param name="result">相对位置</param>
+	/// <returns>成功返回 true</returns>
+	static bool findNextWCharPotion( const wchar_t *w_c_ptr, size_t startIndex, const wchar_t find_w_c_char, size_t maxIndex, size_t *result );
+	/// <summary>
+	/// 查找匹配的字符串
+	/// </summary>
+	/// <param name="w_c_ptr">源字符串</param>
+	/// <param name="src_w_c_str_len">源字符串的长度</param>
+	/// <param name="startIndex">开始下标</param>
+	/// <param name="find_w_c_string">查找的目标字符串</param>
+	/// <param name="find_w_c_str_len">查找的目标字符串的长度</param>
+	/// <param name="maxIndex">查找最大的长度(startIndex >= maxIndex 返回)</param>
+	/// <param name="result">相对位置</param>
+	/// <returns>成功返回 true</returns>
+	static bool findNextWStringPotion( const wchar_t *w_c_ptr,size_t src_w_c_str_len , size_t startIndex, const wchar_t *find_w_c_string, size_t find_w_c_str_len, size_t maxIndex, size_t *result );
 };
 
 #endif // WSTRTOOLS_H_H_HEAD__FILE__

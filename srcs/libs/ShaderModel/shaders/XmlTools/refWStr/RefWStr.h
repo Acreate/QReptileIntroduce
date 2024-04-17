@@ -31,7 +31,7 @@ public:   /// get / set
 	/// </summary>
 	/// <param name="outStr">输出的字符串</param>
 	/// <returns>字符串个数</returns>
-	size_t converStdWstring( std::wstring *outStr );
+	size_t converStdWstring( std::wstring *outStr ) const;
 public: // 属性 / 行为
 	/// <summary>
 	/// 该对象是否正确被引用 <br/>

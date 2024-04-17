@@ -4,7 +4,7 @@ RefWStr::RefWStr( const wchar_t *ptr, const size_t len ): ptr( ptr ), len( len )
 RefWStr::~RefWStr( ) {
 
 }
-size_t RefWStr::converStdWstring( std::wstring *outStr ) {
+size_t RefWStr::converStdWstring( std::wstring *outStr ) const {
 	if( isRef( ) ) {
 		*outStr = std::wstring( this->getPtr( ), this->len );
 		return this->len;

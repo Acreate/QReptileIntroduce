@@ -39,7 +39,7 @@ SET( CMAKE_AUTOUIC ON )
 SET( CMAKE_AUTOMOC ON )
 SET( CMAKE_AUTORCC ON )
 
-function( call_qt_deploy PROJECT_NAME )
+macro( call_qt_deploy PROJECT_NAME )
 	target_link_libraries(
 		${PROJECT_NAME}
 		PRIVATE
@@ -77,4 +77,4 @@ qt_deploy_runtime_dependencies(
 	" )
 	install( TARGETS ${PROJECT_NAME} BUNDLE DESTINATION "${CMAKE_INSTALL_PREFIX}" )
 	install( SCRIPT ${deploy_script} )
-endfunction()
+endmacro()
