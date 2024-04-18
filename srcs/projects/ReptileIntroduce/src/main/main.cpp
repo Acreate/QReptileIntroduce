@@ -16,6 +16,8 @@
 #include "../qt/extend/netWork/RequestConnect.h"
 
 #include <htmls/html/HtmlDoc.h>
+
+#include <pugixml.hpp>
 void test( QObject *plugQobjectInstance, IRequestNetInterfaceExtend *requestNetInterfaceExtend ) {
 
 	std::string plugUrl;
@@ -59,19 +61,9 @@ int main( int argc, char *argv[ ] ) {
 			auto stdWString = fileContent.toStdWString( );
 			wchar_t *cStr = ( wchar_t * )stdWString.c_str( );
 			size_t cStrLen = stdWString.size( );
-			auto htmlDoc = HtmlDoc::parse( cStr, cStrLen );
+			size_t index = 0;
+			auto htmlDoc = HtmlDoc::parse( cStr, cStrLen, &index );
 			readFile.close( );
-		}
-	}
-	auto fileInfo = Path::getPathInfo( QString( u8"%1%2%3" ).arg( Project_Plug_bin ).arg( QDir::separator( ) ).arg( u8"www.121ds.cc" ) );
-	std::vector< File > files = fileInfo.second;
-	for( auto &file : files ) {
-		QString currentFilePtah = file.getCurrentFilePtah( );
-		auto interface = NovelInfoWidget::getIRequestNetInterface( currentFilePtah, "", "" );
-		if( interface.second ) {
-			auto requestNetInterfaceExtend = interface.second;
-			test( interface.first, requestNetInterfaceExtend );
-			QObject::connect( interface.first, &QObject::destroyed,qApp, &QCoreApplication::quit );
 		}
 	}
 

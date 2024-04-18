@@ -38,7 +38,7 @@ set( Cmake_Project_Binary_File_Name "$<TARGET_FILE:tgt>" )
 set( cmake_definitions_out "${CMAKE_CURRENT_LIST_DIR}/macro/cmake_to_c_cpp_header_env.h" )
 set( cmake_definitions_org "${cmake_definitions_tmp}/cmake_in/cmake_to_c_cpp_header_env.h.in" )
 
-set( ${project_name_include_dir}_include_dir ${CMAKE_CURRENT_LIST_DIR} ${CMAKE_CURRENT_LIST_DIR}/.. PARENT_SCOPE )
+set( ${project_name_include_dir}_include_dir ${CMAKE_CURRENT_LIST_DIR}  PARENT_SCOPE )
 
 # # 合并源码
 list( APPEND ${SRC_LIST} ${SRC_UI} ${QM_FILES} ${SRC_DATA} ${cmake_definitions_out} )

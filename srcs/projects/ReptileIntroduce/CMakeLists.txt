@@ -23,6 +23,7 @@ include_directories( ${NoveInfo_include_dir} )
 include_directories( ${UserHread_include_dir} )
 include_directories( ${Tools_include_dir} )
 include_directories( ${XmlTools_include_dir} )
+include_directories( ${Pugixml_include_dir} )
 
 set( cmake_definitions_out "${CMAKE_CURRENT_LIST_DIR}/src/macro/cmake_to_c_cpp_header_env.h" )
 
@@ -59,6 +60,8 @@ configure_file( "${cmake_definitions_org}" "${cmake_definitions_out}" )
 message( "源 : ${cmake_definitions_org}" )
 message( "目标 : ${cmake_definitions_out}" )
 
+set(pugixml_lib_path "${Pugixml_lib_path}${Pugixml_lib_name}")
+
 call_qt_deploy( ${PROJECT_NAME}
 	Qt${QT_VERSION_MAJOR}::Widgets
 	Qt${QT_VERSION_MAJOR}::Core
@@ -68,6 +71,7 @@ call_qt_deploy( ${PROJECT_NAME}
 	NoveInfo
 	Tools
 	XmlTools
+	${pugixml_lib_path}
 )
 set_target_properties( ${PROJECT_NAME} PROPERTIES
 	WIN32_EXECUTABLE FALSE

@@ -19,202 +19,337 @@ QString conver_console_QString_msg( const RefWStr &msg ) {
 	return QString::fromStdWString( outMsg );
 }
 
-HtmlDoc::HtmlDoc( ): html( nullptr ), htmlSize( 0 ) {
-	normalNode = new SubNode;
+bool HtmlDoc::findNextNodeEndChar( const wchar_t *c_str, const size_t c_str_len, size_t *start_Index ) {
+	constexpr wchar_t singleQuotation = L'\''; // 单引号
+	constexpr wchar_t doubleQuotation = L'\"'; // 双引号
+	constexpr wchar_t exclamation = L'!'; // 感叹号。用于识别 DOCTYPE 节点或注释节点
+	constexpr wchar_t nodeEndChar = L'>'; // 节点结束
+	for( ; *start_Index < c_str_len ; ++*start_Index ) {
+		auto currenChar = c_str[ *start_Index ];
+		if( currenChar == singleQuotation ) {
+			++*start_Index;
+			for( ; *start_Index < c_str_len ; ++*start_Index ) {
+				currenChar = c_str[ *start_Index ];
+				if( currenChar == singleQuotation )
+					break;
+			}
+		} else if( currenChar == doubleQuotation ) {
+			++*start_Index;
+			for( ; *start_Index < c_str_len ; ++*start_Index ) {
+				currenChar = c_str[ *start_Index ];
+				if( currenChar == doubleQuotation )
+					break;
+			}
+		} else if( currenChar == nodeEndChar )
+			return true;
+	}
+	return false;
 }
-int32_t HtmlDoc::init( ) {
-	// 写入文件
-	QString writeFilePath( u8"%1%2%3%2%4" );
-	QString cachePtah = writeFilePath.arg( Project_Run_bin ).arg( QDir::separator( ) ).arg( u8"write_test_cache" );
-	writeFilePath = cachePtah.arg( u8"www.121ds.cc.txt" );
-	bool isExis = Path::creatFilePath( writeFilePath );
-	QFile file( writeFilePath );
-	bool open = file.open( QIODeviceBase::Text | QIODeviceBase::WriteOnly | QIODeviceBase::Truncate );
-	// 缓冲字符串引用
-	RefWStr buffStartRefWStr, buffEndRefWStr;
-	// 缓冲字符串
-	std::wstring buffStdWString;
-	// 缓冲输出
-	QString buffQString;
-	// 节点数量
-	size_t nodeCount = 0;
-	// 用于查找偏移
-	size_t resultWCharPotion;
-	// 当前字符
-	wchar_t currentChar = '\0';
-	// < 开始
-	size_t startIndex,
-		// /> 结束
-		endIndex;
-	constexpr wchar_t singleQuotation = L'\'';
-	constexpr wchar_t doubleQuotation = L'\"';
-	constexpr wchar_t nodeStartChar = L'<';
-	constexpr wchar_t nodeEndChar = L'>';
-	constexpr wchar_t forwardSlash = L'/';
-	constexpr wchar_t backSlash = L'\\';
-	for( size_t index = 0 ; index < this->htmlSize ; ++index ) {
-
-		if( !WStrTools::findNextWCharPotion( this->html, index, nodeStartChar, this->htmlSize, &resultWCharPotion ) ) // 异常
-			return -1; // 找不到 < 的存在
-		startIndex = resultWCharPotion + index;
-		auto newIndex = startIndex + 1; // 放弃 < 的位置，并且检测下一个位置
-		// 跳过空格
-		for( ; newIndex < this->htmlSize ; ++newIndex ) {
-			currentChar = this->html[ newIndex ];
-			if( !WStrTools::isJumpSpace( currentChar ) )
+bool HtmlDoc::findNextNodeStartChar( const wchar_t *c_str, const size_t c_str_len, size_t *start_Index ) {
+	constexpr wchar_t singleQuotation = L'\''; // 单引号
+	constexpr wchar_t doubleQuotation = L'\"'; // 双引号
+	constexpr wchar_t exclamation = L'!'; // 感叹号。用于识别 DOCTYPE 节点或注释节点
+	constexpr wchar_t nodeStartChar = L'<'; // 节点开始
+	for( ; *start_Index < c_str_len ; ++*start_Index ) {
+		auto currenChar = c_str[ *start_Index ];
+		if( currenChar == singleQuotation ) {
+			++*start_Index;
+			for( ; *start_Index < c_str_len ; ++*start_Index ) {
+				currenChar = c_str[ *start_Index ];
+				if( currenChar == singleQuotation )
+					break;
+			}
+		} else if( currenChar == doubleQuotation ) {
+			++*start_Index;
+			for( ; *start_Index < c_str_len ; ++*start_Index ) {
+				currenChar = c_str[ *start_Index ];
+				if( currenChar == doubleQuotation )
+					break;
+			}
+		} else if( currenChar == exclamation ) {
+			++*start_Index;
+			for( ; *start_Index < c_str_len ; ++*start_Index ) {
+				currenChar = c_str[ *start_Index ];
+				if( currenChar == nodeStartChar )
+					break;
+			}
+		} else if( currenChar == nodeStartChar )
+			return true;
+	}
+	return false;
+}
+bool HtmlDoc::findNextNodeForwardSlash( const wchar_t *c_str, const size_t c_str_len, size_t *start_Index ) {
+	constexpr wchar_t singleQuotation = L'\''; // 单引号
+	constexpr wchar_t doubleQuotation = L'\"'; // 双引号
+	constexpr wchar_t exclamation = L'!'; // 感叹号。用于识别 DOCTYPE 节点或注释节点
+	constexpr wchar_t forwardSlash = L'/'; // 斜杠路径符。节点类型判定(单元素节点/双元素节点)
+	constexpr wchar_t nodeEndChar = L'>'; // 节点结束
+	for( ; *start_Index < c_str_len ; ++*start_Index ) {
+		auto currenChar = c_str[ *start_Index ];
+		if( currenChar == singleQuotation ) {
+			++*start_Index;
+			for( ; *start_Index < c_str_len ; ++*start_Index ) {
+				currenChar = c_str[ *start_Index ];
+				if( currenChar == singleQuotation )
+					break;
+			}
+		} else if( currenChar == doubleQuotation ) {
+			++*start_Index;
+			for( ; *start_Index < c_str_len ; ++*start_Index ) {
+				currenChar = c_str[ *start_Index ];
+				if( currenChar == doubleQuotation )
+					break;
+			}
+		} else if( currenChar == exclamation ) {
+			++*start_Index;
+			for( ; *start_Index < c_str_len ; ++*start_Index ) {
+				currenChar = c_str[ *start_Index ];
+				if( currenChar == nodeEndChar )
+					break;
+			}
+		} else if( currenChar == forwardSlash )
+			return true;
+	}
+	return false;
+}
+bool HtmlDoc::isSingelNode( const wchar_t *c_str, size_t *start_Index, size_t *end_Index ) {
+	constexpr wchar_t nodeStartChar = L'<'; // 节点开始
+	constexpr wchar_t nodeEndChar = L'>'; // 节点结束
+	auto currentChar = c_str[ *start_Index ];
+	if( currentChar != nodeStartChar )
+		for( ++*start_Index ; *start_Index < *end_Index ; ++*start_Index ) {
+			currentChar = c_str[ *start_Index ];
+			if( currentChar == nodeStartChar )
 				break;
 		}
-		if( currentChar == L'!' ) {
-			if( !WStrTools::findNextWCharPotion( this->html, newIndex, nodeEndChar, this->htmlSize, &resultWCharPotion ) ) // 异常
-				return -2; // <! 错误
-			index = newIndex + resultWCharPotion;
-			continue;
+	auto forwardSlashIndex = *start_Index + 1;
+	if( findNextNodeForwardSlash( c_str, *end_Index, &forwardSlashIndex ) ) {
+		for( forwardSlashIndex += 1 ; forwardSlashIndex < *end_Index ; ++forwardSlashIndex ) {
+			currentChar = c_str[ forwardSlashIndex ];
+			if( WStrTools::isJumpSpace( currentChar ) )
+				continue;
+			if( currentChar != nodeEndChar )
+				break;
+			*end_Index = forwardSlashIndex;
+			return true;
 		}
-		do { // todo : 获取一个当前正常的节点
-			currentChar = this->html[ index ];
-			if( currentChar == singleQuotation ) { // 单引号字符串
-				if( !WStrTools::findNextWCharPotion( this->html, newIndex, singleQuotation, this->htmlSize, &resultWCharPotion ) ) // 异常
-					return -3; // 没有匹配的 '
-				index = newIndex + resultWCharPotion;
-			} else if( currentChar == doubleQuotation ) {
-				if( !WStrTools::findNextWCharPotion( this->html, newIndex, doubleQuotation, this->htmlSize, &resultWCharPotion ) ) // 异常
-					return -4; // 没有匹配的"
-				index = newIndex + resultWCharPotion;
-			} else if( currentChar == nodeStartChar ) { // 找到开始字符
-				startIndex = index + 1;
-				// 跳过空格
-				for( ; startIndex < this->htmlSize ; ++startIndex ) {
-					currentChar = this->html[ startIndex ];
-					if( !WStrTools::isJumpSpace( currentChar ) )
-						break;
-				}
-				buffStartRefWStr.setPtr( this->html + startIndex );
-				endIndex = startIndex;
-				// 查找空格、 /、或者 >
-				for( ; endIndex < this->htmlSize ; ++endIndex ) {
-					currentChar = this->html[ endIndex ];
-					if( WStrTools::isJumpSpace( currentChar ) || currentChar == nodeEndChar || currentChar == forwardSlash )
-						break;
-				}
-				size_t len = endIndex - startIndex;
-				buffStartRefWStr.setLen( len );
-				buffStartRefWStr.converStdWstring( &buffStdWString );
-				buffQString = QString::fromStdWString( buffStdWString );
-				qDebug( ) << "开始单节点名称 : " << buffQString;
-				// 找到 >
-				for( ; endIndex < this->htmlSize ; ++endIndex ) {
-					currentChar = this->html[ endIndex ];
-					if( currentChar == nodeEndChar ) {
-						// 判断节点类型
-						for( auto subIndex = endIndex ; subIndex > startIndex ; --subIndex ) {
-							currentChar = this->html[ subIndex ];
-							if( currentChar == forwardSlash ) {
-								// 识别为 /
-								// 单节点
-								/* 获取整个节点内容 */
-								auto subNodeEndCharIndex = subIndex + 1;
-								for( ; subNodeEndCharIndex < htmlSize ; ++subNodeEndCharIndex ) {
-									currentChar = this->html[ subNodeEndCharIndex ];
-									if( currentChar == nodeEndChar )
-										break;
-								}
-								auto ref = RefWStr( html + index, subNodeEndCharIndex - index + 1 );
-								ref.converStdWstring( &buffStdWString );
-								buffQString = QString::fromStdWString( buffStdWString );
-								qDebug( ) << "=============" "\n" << "获得节点:""\n" << buffQString.toLocal8Bit( ).toStdString( ).c_str( ) << "\n" "=============" "\n";
-							} else if( !WStrTools::isJumpSpace( currentChar ) ) {
-								// 识别为文字
-								// 双节点
-								auto subNodeEndCharIndex = subIndex + 1;
-								for( ; subNodeEndCharIndex < htmlSize ; ++subNodeEndCharIndex ) { // 找到双节点的结束
-									currentChar = this->html[ subNodeEndCharIndex ];
+	}
+	return false;
+}
+bool HtmlDoc::isStartNode( const wchar_t *c_str, size_t *start_Index, size_t *end_Index ) {
+	constexpr wchar_t singleQuotation = L'\''; // 单引号
+	constexpr wchar_t doubleQuotation = L'\"'; // 双引号
+	constexpr wchar_t nodeStartChar = L'<'; // 节点开始
+	constexpr wchar_t nodeEndChar = L'>'; // 节点结束
+	auto currentChar = c_str[ *start_Index ];
+	if( currentChar != nodeStartChar )
+		for( ++*start_Index ; *start_Index < *end_Index ; ++*start_Index ) {
+			currentChar = c_str[ *start_Index ];
+			if( currentChar == nodeStartChar )
+				break;
+		}
 
-									if( currentChar == singleQuotation ) {
-										// 跳过单引号
-										for( ; subNodeEndCharIndex < htmlSize ; ++subNodeEndCharIndex ) {
-											currentChar = this->html[ subNodeEndCharIndex ];
-											if( currentChar == singleQuotation )
-												break;
-										}
-									} else if( currentChar == doubleQuotation ) {
-										// 跳过双引号
-										for( ; subNodeEndCharIndex < htmlSize ; ++subNodeEndCharIndex ) {
-											currentChar = this->html[ subNodeEndCharIndex ];
-											if( currentChar == doubleQuotation )
-												break;
-										}
-									} else if( currentChar == nodeStartChar ) {// 找到了节点结束的 <
-										++subNodeEndCharIndex;
-										// 跳过空格
-										for( ; subNodeEndCharIndex < htmlSize ; ++subNodeEndCharIndex ) {
-											currentChar = this->html[ subNodeEndCharIndex ];
-											if( !WStrTools::isJumpSpace( currentChar ) )
-												break;
-										}
-										if( currentChar != forwardSlash ) {
-											subIndex = subNodeEndCharIndex;
-											continue;
-										}
-										subNodeEndCharIndex += 1;
-										startIndex = subNodeEndCharIndex;
-										// 去掉空格
-										for( ; subNodeEndCharIndex < htmlSize ; ++subNodeEndCharIndex ) {
-											currentChar = this->html[ subNodeEndCharIndex ];
-											if( WStrTools::isJumpSpace( currentChar ) || currentChar == nodeEndChar )
-												break;
-										}
-
-										auto nodeName = RefWStr( this->html + startIndex, subNodeEndCharIndex - startIndex );
-										if( startIndex > 57500 ) {
-											print_console_msg( nodeName );
-										}
-										if( nodeName.equeWStr( buffStartRefWStr.getPtr( ), buffStartRefWStr.getLen( ) ) ) {
-											QString consoleQStringMsg = conver_console_QString_msg( buffStartRefWStr );
-											std::string stdString = consoleQStringMsg.toLocal8Bit( ).toStdString( );
-											qDebug( ) << "===> @找到 : " << stdString.c_str( );
-											break;
-										}
-										QString consoleQStringMsg = conver_console_QString_msg( nodeName );
-										std::string stdString = consoleQStringMsg.toLocal8Bit( ).toStdString( );
-										qDebug( ) << "---> !跳过 : " << stdString.c_str( );
-										continue;
-									}
-								}
-								endIndex = subNodeEndCharIndex;
-							}
-						}
-						break;
-					}
-				}
-				index = endIndex;
+	// 碰到的第一个必须是 > 而不是 /
+	for( ++*start_Index ; *start_Index <= *end_Index ; ++*start_Index ) {
+		currentChar = c_str[ *start_Index ];
+		if( WStrTools::isJumpSpace( currentChar ) )
+			continue;
+		if( currentChar == doubleQuotation ) {
+			++*start_Index;
+			for( ; *start_Index <= *end_Index ; ++*start_Index ) {
+				currentChar = c_str[ *start_Index ];
+				if( currentChar == doubleQuotation )
+					break;
 			}
-			index++;
-		} while( index < this->htmlSize ); // 递交给上层 for 继续
-
+		} else if( currentChar == singleQuotation ) {
+			++*start_Index;
+			for( ; *start_Index <= *end_Index ; ++*start_Index ) {
+				currentChar = c_str[ *start_Index ];
+				if( currentChar == singleQuotation )
+					break;
+			}
+		} else if( currentChar == L'/' )
+			return false;
+		else {
+			return true;
+		}
 	}
+	return false;
+}
+bool HtmlDoc::isEndNode( const wchar_t *c_str, size_t *start_Index, size_t *end_Index ) {
+	// 碰到的第一个必须是 / 而不是通用字符或者 >
+	for( ; *start_Index <= *end_Index ; ++*start_Index ) {
+		wchar_t currentChar = c_str[ *start_Index ];
+		if( WStrTools::isJumpSpace( currentChar ) || currentChar == L'<' )
+			continue;
+		if( currentChar != L'/' )
+			return true;
+	}
+	return false;
+}
+bool HtmlDoc::isAnnotation( const wchar_t *c_str, size_t *start_Index, size_t *end_Index ) {
+	constexpr wchar_t exclamation = L'!'; // 感叹号。用于识别 DOCTYPE 节点或注释节点
+	constexpr wchar_t nodeStartChar = L'<'; // 节点开始
+	auto currentChar = c_str[ *start_Index ];
+	if( currentChar != nodeStartChar )
+		for( ++*start_Index ; *start_Index < *end_Index ; ++*start_Index ) {
+			currentChar = c_str[ *start_Index ];
+			if( currentChar == nodeStartChar )
+				break;
+		}
+	size_t endIndex = *start_Index + 1;
 
-	file.close( );
-	return 0;
+	for( ; endIndex < *end_Index ; ++endIndex ) {
+		currentChar = c_str[ endIndex ];
+		if( currentChar == exclamation ) {
+			if( findNextNodeEndChar( c_str, *end_Index, &endIndex ) ) {
+				*end_Index = endIndex;
+				return true;
+			}
+			*start_Index = 1;
+			*end_Index = 0;
+			return false;
+		}
+	}
+	return false;
 }
-HtmlDoc *HtmlDoc::newObj( ) {
-	// todo : 使用 new 的方式创建的一个独立的内存。不再发生引用
-	return nullptr;
+HtmlDoc::HtmlDocSharedPtrVectorSharedPtr HtmlDoc::parse( const wchar_t *c_str, const size_t c_str_len, size_t *startIndex ) {
+
+	std::shared_ptr< std::wstring > wstringPtr( new std::wstring( c_str, c_str_len ) );
+	HtmlDocSharedPtrVectorSharedPtr result( new HtmlDocSharedPtrVector );
+
+	constexpr wchar_t singleQuotation = L'\''; // 单引号
+	constexpr wchar_t exclamation = L'!'; // 感叹号。用于识别 DOCTYPE 节点或注释节点
+	constexpr wchar_t doubleQuotation = L'\"'; // 双引号
+	constexpr wchar_t nodeStartChar = L'<'; // 节点开始
+	constexpr wchar_t nodeEndChar = L'>'; // 节点结束
+	constexpr wchar_t forwardSlash = L'/'; // 斜杠路径符。节点类型判定(单元素节点/双元素节点)
+	constexpr wchar_t backSlash = L'\\'; // 反斜杠路径符
+	wchar_t currentWChar; // 存储当前字符
+	size_t notSpaceIndex; // 存储跳过空字符的下标
+	std::wstring buffWString; // 存储从 HtmlDoc 获取的字符串内容
+	auto stdWStr = wstringPtr.get( );
+	auto htmlNodeCharPairs = parseHtmlNodeCharPair( stdWStr, c_str_len );
+	size_t count = 0;
+	QStringList singeNode, annno, start, end, none;
+	for( auto htmlDocCharPair : *htmlNodeCharPairs.get( ) ) {
+		auto left = htmlDocCharPair.get( )->left;
+		auto right = htmlDocCharPair.get( )->len + left;
+		bool nodeType = isAnnotation( stdWStr->c_str( ), &left, &right );
+		if( nodeType && left < right ) {
+			QString arg( u8"======""\n""\t""发现:""\n""\t""%1""\n""注释节点""\n""=======""\n" );
+			annno.append( arg.arg( QString::fromStdWString( *htmlDocCharPair->getWString( ) ) ) );
+		} else {
+			left = htmlDocCharPair.get( )->left;
+			right = htmlDocCharPair.get( )->len + left;
+			nodeType = isSingelNode( stdWStr->c_str( ), &left, &right );
+			if( nodeType ) {
+				QString arg( u8"======""\n""\t""发现:""\n""\t""%1""\n""单节点""\n""=======""\n" );
+				singeNode.append( arg.arg( QString::fromStdWString( *htmlDocCharPair->getWString( ) ) ) );
+			} else {
+				left = htmlDocCharPair.get( )->left;
+				size_t endLeft = left;
+				right = htmlDocCharPair.get( )->len + left;
+				if( isStartNode( stdWStr->c_str( ), &left, &right ) ) {
+					QString arg( u8"======""\n""\t""起始节点:""\n""\t""%1""\n""双节点""\n""=======""\n" );
+					start.append( arg.arg( QString::fromStdWString( *htmlDocCharPair->getWString( ) ) ) );
+				} else if( isEndNode( stdWStr->c_str( ), &endLeft, &right ) ) {
+					QString arg( u8"======""\n""\t""结束节点:""\n""\t""%1""\n""双节点""\n""=======""\n" );
+					end.append( arg.arg( QString::fromStdWString( *htmlDocCharPair->getWString( ) ) ) );
+				} else {
+					QString arg( u8"======""\n""\t""未知节点:""\n""\t""%1""\n""=======""\n" );
+					none.append( arg.arg( QString::fromStdWString( *htmlDocCharPair->getWString( ) ) ) );
+				}
+
+			}
+		}
+		++count;
+	}
+	// singeNode, annno, start, end, none; 写入文件
+
+	QString writeFilePathDir = QString( u8"%1%2%3%2%4" ).arg( Project_Run_bin ).arg( QDir::separator( ) ).arg( u8"write_test_cache" );
+	QFile file( writeFilePathDir.arg( u8"singeNode.txt" ) );
+	if( Path::creatFilePath( file.fileName( ) ) ) {
+		if( file.open( QIODeviceBase::Text | QIODeviceBase::WriteOnly ) ) {
+			QString writeFileCont = singeNode.join( u8'\n' );
+			file.write( writeFileCont.toLocal8Bit( ) );
+			file.close( );
+		}
+	}
+	file.setFileName( writeFilePathDir.arg( u8"annno.txt" ) );
+	if( Path::creatFilePath( file.fileName( ) ) ) {
+		if( file.open( QIODeviceBase::Text | QIODeviceBase::WriteOnly ) ) {
+			QString writeFileCont = annno.join( u8'\n' );
+			file.write( writeFileCont.toLocal8Bit( ) );
+			file.close( );
+		}
+	}
+	file.setFileName( writeFilePathDir.arg( u8"start.txt" ) );
+	if( Path::creatFilePath( file.fileName( ) ) ) {
+		if( file.open( QIODeviceBase::Text | QIODeviceBase::WriteOnly ) ) {
+			QString writeFileCont = start.join( u8'\n' );
+			file.write( writeFileCont.toLocal8Bit( ) );
+			file.close( );
+		}
+	}
+	file.setFileName( writeFilePathDir.arg( u8"end.txt" ) );
+	if( Path::creatFilePath( file.fileName( ) ) ) {
+		if( file.open( QIODeviceBase::Text | QIODeviceBase::WriteOnly ) ) {
+			QString writeFileCont = end.join( u8'\n' );
+			file.write( writeFileCont.toLocal8Bit( ) );
+			file.close( );
+		}
+	}
+	file.setFileName( writeFilePathDir.arg( u8"none.txt" ) );
+	if( Path::creatFilePath( file.fileName( ) ) ) {
+		if( file.open( QIODeviceBase::Text | QIODeviceBase::WriteOnly ) ) {
+			QString writeFileCont = none.join( u8'\n' );
+			file.write( writeFileCont.toLocal8Bit( ) );
+			file.close( );
+		}
+	}
+	return result;
 }
+HtmlDoc::HtmlNodeCharPairSharedPtrVectorSharedPtr HtmlDoc::parseHtmlNodeCharPair( std::wstring *std_w_str, const size_t c_str_len ) {
+	HtmlNodeCharPairSharedPtrVectorSharedPtr result( new HtmlNodeCharPairSharedPtrVector );
+	bool findCharResut = false;
+	auto c_str = std_w_str->c_str( );
+	for( size_t index = 0 ; index < c_str_len ; ++index ) {
+		findCharResut = findNextNodeStartChar( c_str, c_str_len, &index );
+		if( !findCharResut )
+			break;
+		auto ptr = new HtmlNodeCharPair;
+		HtmlNodeCharPairSharedPtr currentHtmlNodeCharPairSharedPtr( ptr );
+		ptr->left = index;
+		findCharResut = findNextNodeEndChar( c_str, c_str_len, &index );
+		if( !findCharResut )
+			break;
+		ptr->len = index + 1 - ptr->left;
+		ptr->html = std_w_str;
+		result->emplace_back( currentHtmlNodeCharPairSharedPtr );
+	}
+	return result;
+}
+size_t HtmlDoc::getString( std::wstring *out_result_w_string ) {
+	const wchar_t *cStr = html->c_str( );
+	if( cStr == nullptr || this->nlen == 0 )
+		return 0;
+	*out_result_w_string = std::wstring( startPtr + cStr, this->nlen );
+	return this->nlen;
+}
+
+HtmlDoc::HtmlDoc( )
+: startPtr( 0 ), nlen( 0 ), parent( nullptr ) {
+	children = new std::list< HtmlDoc * >;
+}
+
+HtmlDoc::HtmlDoc( const std::shared_ptr< std::wstring > &html, size_t startPtr, size_t nlen )
+: html( html ), startPtr( startPtr ), nlen( nlen ), parent( nullptr ) {
+	children = new std::list< HtmlDoc * >;
+}
+
 HtmlDoc::~HtmlDoc( ) {
-	if( this->html )
-		delete[] this->html;
-	delete normalNode;
-}
-std::shared_ptr< HtmlDoc > HtmlDoc::parse( wchar_t *c_str, const size_t c_str_len ) {
-	auto result = new HtmlDoc( );
-	result->html = c_str;
-	result->htmlSize = c_str_len;
-	if( !result->init( ) ) {
-		result->html = new wchar_t [ c_str_len ];
-		for( size_t index = 0 ; index < c_str_len ; ++index )
-			result->html[ index ] = c_str[ index ];
-		return std::shared_ptr< HtmlDoc >( result );
-	}
-	result->html = nullptr;
-	return nullptr;
+	for( auto &child : *children )
+		delete child;
+	delete children;
 }
