@@ -6,9 +6,12 @@
 #include <string>
 
 #include "../../export/XmlTools_export.h"
-#include "../../htmls/HtmlNode/HtmlNode.h"
+
+class HtmlNode;
 
 class XMLTOOLS_EXPORT HtmlDoc {
+public: // 友元
+	friend class HtmlNode;
 public: // 定义
 	using HtmlDocSharedPtr = std::shared_ptr< HtmlDoc >;
 	using HtmlDocSharedPtrVector = std::vector< HtmlDocSharedPtr >;
@@ -22,14 +25,27 @@ public: // 定义
 		left( left ),
 		len( right ) {
 		}
-		std::shared_ptr< std::wstring > getWString( ) {
-			std::shared_ptr< std::wstring > result( new std::wstring( html->c_str( ) + left, len ) );
+		std::shared_ptr< std::wstring > getWSNode( ) {
+			const wchar_t * c_w_str_star_ptr = html->c_str( ) + left;
+			std::shared_ptr< std::wstring > result( new std::wstring( c_w_str_star_ptr, len ) );
 			return result;
 		}
+		std::shared_ptr< std::wstring > getNodeWSName( );
+
 	};
 	using HtmlNodeCharPairSharedPtr = std::shared_ptr< HtmlNodeCharPair >;
 	using HtmlNodeCharPairSharedPtrVector = std::vector< HtmlNodeCharPairSharedPtr >;
 	using HtmlNodeCharPairSharedPtrVectorSharedPtr = std::shared_ptr< HtmlNodeCharPairSharedPtrVector >;
+private:
+	HtmlNodeCharPairSharedPtrVectorSharedPtr html;
+private: // 静态属性
+	static constexpr wchar_t singleQuotation = L'\''; // 单引号
+	static constexpr wchar_t exclamation = L'!'; // 感叹号。用于识别 DOCTYPE 节点或注释节点
+	static constexpr wchar_t doubleQuotation = L'\"'; // 双引号
+	static constexpr wchar_t nodeStartChar = L'<'; // 节点开始
+	static constexpr wchar_t nodeEndChar = L'>'; // 节点结束
+	static constexpr wchar_t forwardSlash = L'/'; // 斜杠路径符。节点类型判定(单元素节点/双元素节点)
+	static constexpr wchar_t backSlash = L'\\'; // 反斜杠路径符
 private:
 	/// <summary>
 	/// 查找下一个节点结束符的位置
@@ -67,7 +83,7 @@ private:
 	/// 判断节点是否为开始节点
 	/// </summary>
 	/// <param name="c_str">查找字符串</param>
-	/// <param name="start_Index">遍历下标，始终指向 '/'，如果不是，那么它将会指向 '>'</param>
+	/// <param name="start_Index">遍历下标，始终指向 '<'</param>
 	/// <param name="end_Index">结束下标，始终指向节点结束字符 '>'</param>
 	/// <returns>true 表示单下标</returns>
 	static bool isStartNode( const wchar_t *c_str, size_t *start_Index, size_t *end_Index );
@@ -75,7 +91,7 @@ private:
 	/// 判断节点是否为结束节点
 	/// </summary>
 	/// <param name="c_str">查找字符串</param>
-	/// <param name="start_Index">遍历下标，始终指向 '/'，如果不是，那么它将会指向其他字符</param>
+	/// <param name="start_Index">遍历下标，始终指向 '<'</param>
 	/// <param name="end_Index">结束下标，始终指向节点结束字符 '>'</param>
 	/// <returns>true 表示单下标</returns>
 	static bool isEndNode( const wchar_t *c_str, size_t *start_Index, size_t *end_Index );
@@ -95,7 +111,7 @@ public: // 静态对象生成器
 	/// <param name="c_str_len">字符串长度</param>
 	/// <param name="startIndex">开始下标，最终下标</param>
 	/// <returns>解析后的列表</returns>
-	static HtmlDocSharedPtrVectorSharedPtr parse( const wchar_t *c_str, const size_t c_str_len, size_t *startIndex );
+	static HtmlDoc parse( const wchar_t *c_str, const size_t c_str_len, size_t *startIndex );
 	/// <summary>
 	/// 生成 < 与 > 的配对
 	/// </summary>
@@ -107,49 +123,11 @@ private: // 核心成员
 	/// <summary>
 	/// 引用的 html 内容
 	/// </summary>
-	std::shared_ptr< std::wstring > html;
-	/// <summary>
-	/// 在引用内容当中的起始偏移指针
-	/// </summary>
-	size_t startPtr;
-	/// <summary>
-	/// 节点占用长度
-	/// </summary>
-	size_t nlen;
-public: // get 或 set
-	size_t getStartPtr( ) const {
-		return startPtr;
-	}
-	void setStartPtr( size_t startPtr ) {
-		this->startPtr = startPtr;
-	}
-	size_t getNen( ) const {
-		return nlen;
-	}
-	void setlen( const size_t nlen ) {
-		this->nlen = nlen;
-	}
-
-	/// <summary>
-	/// 获取字符串
-	/// </summary>
-	/// <param name="out_result_w_string">返回的字符串</param>
-	/// <returns>返回的字符串长度</returns>
-	size_t getString( std::wstring *out_result_w_string );
+	std::shared_ptr< std::wstring > html_W_C_Str;
 private:
-	HtmlDoc *parent;
-	std::list< HtmlDoc * > *children;
-public:
-	void setParent( HtmlDoc *parent ) {
-		this->parent->children->remove( this );
-		if( parent != nullptr )
-			this->parent->children->emplace_back( this );
-		this->parent = parent;
-
-	}
+	std::vector< HtmlNode * > *children;
 private: // 无法使用个构造函数
 	HtmlDoc( );
-	HtmlDoc( const std::shared_ptr< std::wstring > &html, size_t startPtr, size_t nlen );
 public:
 	virtual ~HtmlDoc( );
 

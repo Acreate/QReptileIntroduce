@@ -17,7 +17,6 @@
 
 #include <htmls/html/HtmlDoc.h>
 
-#include <pugixml.hpp>
 void test( QObject *plugQobjectInstance, IRequestNetInterfaceExtend *requestNetInterfaceExtend ) {
 
 	std::string plugUrl;
