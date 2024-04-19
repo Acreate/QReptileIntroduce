@@ -17,27 +17,29 @@ public: // 定义
 	using HtmlDocSharedPtrVector = std::vector< HtmlDocSharedPtr >;
 	using HtmlDocSharedPtrVectorSharedPtr = std::shared_ptr< HtmlDocSharedPtrVector >;
 	struct XMLTOOLS_EXPORT HtmlNodeCharPair {
+		enum Html_Node_Type {
+			None,
+			DoubleNode,
+			SingleNode,
+			AnnotationNode
+		};
 		std::wstring *html;
 		size_t left;
 		size_t len;
+		Html_Node_Type nodeType;
 		HtmlNodeCharPair( std::wstring *html = nullptr, size_t left = 0, size_t right = 0 )
-		: html( html ),
-		left( left ),
-		len( right ) {
+		: html( html ), left( left ), len( right ), nodeType( None ) {
 		}
 		std::shared_ptr< std::wstring > getWSNode( ) {
-			const wchar_t * c_w_str_star_ptr = html->c_str( ) + left;
+			const wchar_t *c_w_str_star_ptr = html->c_str( ) + left;
 			std::shared_ptr< std::wstring > result( new std::wstring( c_w_str_star_ptr, len ) );
 			return result;
 		}
 		std::shared_ptr< std::wstring > getNodeWSName( );
-
 	};
 	using HtmlNodeCharPairSharedPtr = std::shared_ptr< HtmlNodeCharPair >;
 	using HtmlNodeCharPairSharedPtrVector = std::vector< HtmlNodeCharPairSharedPtr >;
 	using HtmlNodeCharPairSharedPtrVectorSharedPtr = std::shared_ptr< HtmlNodeCharPairSharedPtrVector >;
-private:
-	HtmlNodeCharPairSharedPtrVectorSharedPtr html;
 private: // 静态属性
 	static constexpr wchar_t singleQuotation = L'\''; // 单引号
 	static constexpr wchar_t exclamation = L'!'; // 感叹号。用于识别 DOCTYPE 节点或注释节点
@@ -124,8 +126,36 @@ private: // 核心成员
 	/// 引用的 html 内容
 	/// </summary>
 	std::shared_ptr< std::wstring > html_W_C_Str;
-private:
-	std::vector< HtmlNode * > *children;
+	/// <summary>
+	/// 文件的顶级节点
+	/// </summary>
+	HtmlNodeCharPairSharedPtrVectorSharedPtr htmlDocNode;
+public:
+	/// <summary>
+	/// 获取指定名称的节点
+	/// </summary>
+	/// <param name="nodeName">获取的名称</param>
+	/// <returns>节点，失败返回 nullptr</returns>
+	HtmlNodeCharPairSharedPtr getNodeFromName( const std::wstring &nodeName ) const {
+		for( auto node : *htmlDocNode.get( ) ) {
+			if( *node->getNodeWSName( ) == nodeName )
+				return node;
+		}
+		return nullptr;
+	}
+	/// <summary>
+	/// 获取指定的节点<br/>
+	/// 未发生 return true 时，该函数会继续滴啊用 callFun 遍历成员
+	/// </summary>
+	/// <param name="callFun">校验函数</param>
+	/// <returns>节点，失败返回 nullptr</returns>
+	HtmlNodeCharPairSharedPtr getNodeFromName( const std::function< bool( const std::wstring &nodeName, HtmlNodeCharPair::Html_Node_Type htmlNodeType ) > &callFun ) const {
+		for( auto node : *htmlDocNode.get( ) ) {
+			if( callFun( *node->getNodeWSName( ), node->nodeType ) )
+				return node;
+		}
+		return nullptr;
+	}
 private: // 无法使用个构造函数
 	HtmlDoc( );
 public:

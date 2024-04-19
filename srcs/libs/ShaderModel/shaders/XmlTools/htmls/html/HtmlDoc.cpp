@@ -245,14 +245,9 @@ HtmlDoc HtmlDoc::parse( const wchar_t *c_str, const size_t c_str_len, size_t *st
 	HtmlDoc result;
 	result.html_W_C_Str = std::make_shared< std::wstring >( c_str, c_str_len );
 
-	wchar_t currentWChar; // 存储当前字符
-	size_t notSpaceIndex; // 存储跳过空字符的下标
-	std::wstring buffWString; // 存储从 HtmlDoc 获取的字符串内容
 	auto stdWStr = result.html_W_C_Str.get( );
-	result.html = parseHtmlNodeCharPair( stdWStr, c_str_len );
-	size_t count = 0;
-	QStringList singeNode, annno, start, end, none;
-	auto htmlNodeCharPairs = result.html.get( );
+	auto resultHtml = parseHtmlNodeCharPair( stdWStr, c_str_len );
+	auto htmlNodeCharPairs = resultHtml.get( );
 	size_t maxSize = htmlNodeCharPairs->size( );
 	for( size_t index = 0 ; index < maxSize ; ++index ) {
 		auto htmlDocCharPair = htmlNodeCharPairs->at( index );
@@ -260,15 +255,15 @@ HtmlDoc HtmlDoc::parse( const wchar_t *c_str, const size_t c_str_len, size_t *st
 		auto right = htmlDocCharPair.get( )->len + left;
 		bool nodeType = isAnnotation( stdWStr->c_str( ), &left, &right );
 		if( nodeType && left < right ) {
-			QString arg( u8"======""\n""\t""发现:""\n""\t""%1""\n""注释节点""\n""=======""\n" );
-			annno.append( arg.arg( QString::fromStdWString( *htmlDocCharPair->getWSNode( ) ) ) );
+			htmlDocCharPair->nodeType = HtmlNodeCharPair::AnnotationNode;
+			result.htmlDocNode->emplace_back( htmlDocCharPair );
 		} else {
 			left = htmlDocCharPair.get( )->left;
 			right = htmlDocCharPair.get( )->len + left;
 			nodeType = isSingelNode( stdWStr->c_str( ), &left, &right );
 			if( nodeType ) {
-				QString arg( u8"======""\n""\t""发现:""\n""\t""%1""\n""单节点""\n""=======""\n" );
-				singeNode.append( arg.arg( QString::fromStdWString( *htmlDocCharPair->getWSNode( ) ) ) );
+				htmlDocCharPair->nodeType = HtmlNodeCharPair::SingleNode;
+				result.htmlDocNode->emplace_back( htmlDocCharPair );
 			} else {
 				left = htmlDocCharPair.get( )->left;
 				size_t endLeft = left;
@@ -300,76 +295,19 @@ HtmlDoc HtmlDoc::parse( const wchar_t *c_str, const size_t c_str_len, size_t *st
 						auto endNodeName = *endDocNodeCharPairs->getNodeWSName( );
 						if( nodeName == endNodeName ) { // 节点对象相等，则开始输出
 							index = lastNodeIndex;
-							QString arg( u8"======""\n""\t""起始节点:""\n""\t""%1""\n""双节点""\n""=======""\n" );
-							none.append( arg.arg( QString::fromStdWString( endNodeName ) ) );
-							size_t htmlNodeLeft = htmlDocCharPair->left;
-							size_t len = endLeft - htmlNodeLeft + ( right - endLeft );
-							htmlDocCharPair->len = len;
-							std::shared_ptr< std::wstring > wsNode = htmlDocCharPair->getWSNode( );
-							QString fromStdWString = QString::fromStdWString( *wsNode );
-							none.append( fromStdWString );
-							qDebug( ) << fromStdWString.toStdString( ).c_str( );
+							htmlDocCharPair->nodeType = HtmlNodeCharPair::DoubleNode;
+							result.htmlDocNode->emplace_back( htmlDocCharPair );
 							break;
 						}
-
 					}
-					QString arg( u8"======""\n""\t""起始节点:""\n""\t""%1""\n""双节点""\n""=======""\n" );
-					start.append( arg.arg( QString::fromStdWString( nodeName ) ) );
-				} else if( isEndNode( stdWStr->c_str( ), &endLeft, &right ) ) {
-					QString arg( u8"======""\n""\t""结束节点:""\n""\t""%1""\n""双节点""\n""=======""\n" );
-					end.append( arg.arg( QString::fromStdWString( *htmlDocCharPair->getWSNode( ) ) ) );
-				} else {
-					QString arg( u8"======""\n""\t""未知节点:""\n""\t""%1""\n""=======""\n" );
-					none.append( arg.arg( QString::fromStdWString( *htmlDocCharPair->getWSNode( ) ) ) );
-				}
-
+				} else if( isEndNode( stdWStr->c_str( ), &endLeft, &right ) )
+					result.htmlDocNode->emplace_back( htmlDocCharPair );
+				else
+					result.htmlDocNode->emplace_back( htmlDocCharPair );
 			}
 		}
-		++count;
 	}
-	// singeNode, annno, start, end, none; 写入文件
 
-	QString writeFilePathDir = QString( u8"%1%2%3%2%4" ).arg( Project_Run_bin ).arg( QDir::separator( ) ).arg( u8"write_test_cache" );
-	QFile file( writeFilePathDir.arg( u8"singeNode.txt" ) );
-	if( Path::creatFilePath( file.fileName( ) ) ) {
-		if( file.open( QIODeviceBase::Text | QIODeviceBase::WriteOnly ) ) {
-			QString writeFileCont = singeNode.join( u8'\n' );
-			file.write( writeFileCont.toLocal8Bit( ) );
-			file.close( );
-		}
-	}
-	file.setFileName( writeFilePathDir.arg( u8"annno.txt" ) );
-	if( Path::creatFilePath( file.fileName( ) ) ) {
-		if( file.open( QIODeviceBase::Text | QIODeviceBase::WriteOnly ) ) {
-			QString writeFileCont = annno.join( u8'\n' );
-			file.write( writeFileCont.toLocal8Bit( ) );
-			file.close( );
-		}
-	}
-	file.setFileName( writeFilePathDir.arg( u8"start.txt" ) );
-	if( Path::creatFilePath( file.fileName( ) ) ) {
-		if( file.open( QIODeviceBase::Text | QIODeviceBase::WriteOnly ) ) {
-			QString writeFileCont = start.join( u8'\n' );
-			file.write( writeFileCont.toLocal8Bit( ) );
-			file.close( );
-		}
-	}
-	file.setFileName( writeFilePathDir.arg( u8"end.txt" ) );
-	if( Path::creatFilePath( file.fileName( ) ) ) {
-		if( file.open( QIODeviceBase::Text | QIODeviceBase::WriteOnly ) ) {
-			QString writeFileCont = end.join( u8'\n' );
-			file.write( writeFileCont.toLocal8Bit( ) );
-			file.close( );
-		}
-	}
-	file.setFileName( writeFilePathDir.arg( u8"none.txt" ) );
-	if( Path::creatFilePath( file.fileName( ) ) ) {
-		if( file.open( QIODeviceBase::Text | QIODeviceBase::WriteOnly ) ) {
-			QString writeFileCont = none.join( u8'\n' );
-			file.write( writeFileCont.toLocal8Bit( ) );
-			file.close( );
-		}
-	}
 	return result;
 }
 HtmlDoc::HtmlNodeCharPairSharedPtrVectorSharedPtr HtmlDoc::parseHtmlNodeCharPair( std::wstring *std_w_str, const size_t c_str_len ) {
@@ -394,7 +332,8 @@ HtmlDoc::HtmlNodeCharPairSharedPtrVectorSharedPtr HtmlDoc::parseHtmlNodeCharPair
 	return result;
 }
 
-HtmlDoc::HtmlDoc( ): children( nullptr ) {
+HtmlDoc::HtmlDoc( ): htmlDocNode( new HtmlNodeCharPairSharedPtrVector ) {
+
 }
 HtmlDoc::~HtmlDoc( ) {
 }
