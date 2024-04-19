@@ -1,7 +1,7 @@
 ﻿#include "WStrTools.h"
 
 #include <cwctype>
-
+using namespace XmlTools;
 bool WStrTools::isJumpSpace( wchar_t currentChar ) {
 	return iswspace( currentChar ) || iswcntrl( currentChar ) || iswcntrl( currentChar );
 }

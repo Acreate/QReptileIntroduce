@@ -61,8 +61,8 @@ int main( int argc, char *argv[ ] ) {
 			wchar_t *cStr = ( wchar_t * )stdWString.c_str( );
 			size_t cStrLen = stdWString.size( );
 			size_t index = 0;
-			auto htmlDoc = HtmlDoc::parse( cStr, cStrLen, &index );
-			htmlDoc.getNodeFromName( [&]( const std::wstring &name, HtmlDoc::HtmlNodeCharPair::Html_Node_Type type ) {
+			auto htmlDoc = XmlTools::HtmlDoc::parse( cStr, cStrLen, &index );
+			htmlDoc.getNodeFromName( [&]( const std::wstring &name, XmlTools::Html_Node_Type type ) {
 				qDebug( ) << QString::fromStdWString( name ).toLocal8Bit( ).toStdString( ).c_str( );
 				return false;
 			} );

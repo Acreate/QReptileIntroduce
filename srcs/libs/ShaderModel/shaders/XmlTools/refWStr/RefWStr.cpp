@@ -1,4 +1,5 @@
 ﻿#include "RefWStr.h"
+using namespace XmlTools;
 RefWStr::RefWStr( const wchar_t *ptr, const size_t len ): ptr( ptr ), len( len ) {
 }
 RefWStr::~RefWStr( ) {
