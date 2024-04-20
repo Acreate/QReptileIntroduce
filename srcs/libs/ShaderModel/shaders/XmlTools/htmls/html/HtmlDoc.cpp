@@ -1,31 +1,36 @@
 ﻿#include "HtmlDoc.h"
 
+#include "../../macro/cmake_to_c_cpp_header_env.h"
+#include "../../wstr/WStrTools.h"
+#include "../HtmlNode/HtmlNode.h"
+#include "../enum/HtmlNodeType/Html_Node_Type.h"
 #include <QDebug>
 #include <clocale>
-#include <qdir.h>
-#include "../../wstr/WStrTools.h"
-#include "../../refWStr/RefWStr.h"
-#include "../../macro/cmake_to_c_cpp_header_env.h"
-#include "../enum/HtmlNodeType/Html_Node_Type.h"
+#include <memory>
 #include <path/Path.h>
-#include "../HtmlNode/HtmlNode.h"
+#include <qdir.h>
+#include <string>
 using namespace XmlTools;
 
-bool HtmlDoc::findNextNodeEndChar( const wchar_t *c_str, const size_t c_str_len, size_t *start_Index ) {
 
-	for( ; *start_Index < c_str_len ; ++*start_Index ) {
-		auto currenChar = c_str[ *start_Index ];
+bool HtmlDoc::findNextNodeEndChar( const std::shared_ptr< std::wstring > std_c_w_string, size_t &max_index, size_t &start_index ) {
+	auto CWStrLen = std_c_w_string->length( );
+	if( max_index > CWStrLen )
+		max_index = CWStrLen;
+	auto CWStr = std_c_w_string->c_str( );
+	for( ; start_index < max_index; ++start_index ) {
+		auto currenChar = CWStr[ start_index ];
 		if( currenChar == singleQuotation ) {
-			++*start_Index;
-			for( ; *start_Index < c_str_len ; ++*start_Index ) {
-				currenChar = c_str[ *start_Index ];
+			++start_index;
+			for( ; start_index < max_index; ++start_index ) {
+				currenChar = CWStr[ start_index ];
 				if( currenChar == singleQuotation )
 					break;
 			}
 		} else if( currenChar == doubleQuotation ) {
-			++*start_Index;
-			for( ; *start_Index < c_str_len ; ++*start_Index ) {
-				currenChar = c_str[ *start_Index ];
+			++start_index;
+			for( ; start_index < max_index; ++start_index ) {
+				currenChar = CWStr[ start_index ];
 				if( currenChar == doubleQuotation )
 					break;
 			}
@@ -34,28 +39,31 @@ bool HtmlDoc::findNextNodeEndChar( const wchar_t *c_str, const size_t c_str_len,
 	}
 	return false;
 }
-bool HtmlDoc::findNextNodeStartChar( const wchar_t *c_str, const size_t c_str_len, size_t *start_Index ) {
-
-	for( ; *start_Index < c_str_len ; ++*start_Index ) {
-		auto currenChar = c_str[ *start_Index ];
+bool HtmlDoc::findNextNodeStartChar( const std::shared_ptr< std::wstring > std_c_w_string, size_t &max_index, size_t &start_index ) {
+	auto cwStrPtr = std_c_w_string->c_str( );
+	auto cwStrLen = std_c_w_string->length( );
+	if( max_index > cwStrLen )
+		max_index = cwStrLen;
+	for( ; start_index < max_index; ++start_index ) {
+		auto currenChar = cwStrPtr[ start_index ];
 		if( currenChar == singleQuotation ) {
-			++*start_Index;
-			for( ; *start_Index < c_str_len ; ++*start_Index ) {
-				currenChar = c_str[ *start_Index ];
+			++start_index;
+			for( ; start_index < max_index; ++start_index ) {
+				currenChar = cwStrPtr[ start_index ];
 				if( currenChar == singleQuotation )
 					break;
 			}
 		} else if( currenChar == doubleQuotation ) {
-			++*start_Index;
-			for( ; *start_Index < c_str_len ; ++*start_Index ) {
-				currenChar = c_str[ *start_Index ];
+			++start_index;
+			for( ; start_index < max_index; ++start_index ) {
+				currenChar = cwStrPtr[ start_index ];
 				if( currenChar == doubleQuotation )
 					break;
 			}
 		} else if( currenChar == exclamation ) {
-			++*start_Index;
-			for( ; *start_Index < c_str_len ; ++*start_Index ) {
-				currenChar = c_str[ *start_Index ];
+			++start_index;
+			for( ; start_index < max_index; ++start_index ) {
+				currenChar = cwStrPtr[ start_index ];
 				if( currenChar == nodeStartChar )
 					break;
 			}
@@ -64,28 +72,31 @@ bool HtmlDoc::findNextNodeStartChar( const wchar_t *c_str, const size_t c_str_le
 	}
 	return false;
 }
-bool HtmlDoc::findNextNodeForwardSlash( const wchar_t *c_str, const size_t c_str_len, size_t *start_Index ) {
-
-	for( ; *start_Index < c_str_len ; ++*start_Index ) {
-		auto currenChar = c_str[ *start_Index ];
+bool HtmlDoc::findNextNodeForwardSlash( const std::shared_ptr< std::wstring > std_c_w_string, size_t &max_index, size_t &start_index ) {
+	auto cwzStrPtr = std_c_w_string.get( )->c_str( );
+	auto cwzStrLen = std_c_w_string->length( );
+	if( max_index > cwzStrLen )
+		max_index = cwzStrLen;
+	for( ; start_index < max_index; ++start_index ) {
+		auto currenChar = cwzStrPtr[ start_index ];
 		if( currenChar == singleQuotation ) {
-			++*start_Index;
-			for( ; *start_Index < c_str_len ; ++*start_Index ) {
-				currenChar = c_str[ *start_Index ];
+			++start_index;
+			for( ; start_index < max_index; ++start_index ) {
+				currenChar = cwzStrPtr[ start_index ];
 				if( currenChar == singleQuotation )
 					break;
 			}
 		} else if( currenChar == doubleQuotation ) {
-			++*start_Index;
-			for( ; *start_Index < c_str_len ; ++*start_Index ) {
-				currenChar = c_str[ *start_Index ];
+			++start_index;
+			for( ; start_index < max_index; ++start_index ) {
+				currenChar = cwzStrPtr[ start_index ];
 				if( currenChar == doubleQuotation )
 					break;
 			}
 		} else if( currenChar == exclamation ) {
-			++*start_Index;
-			for( ; *start_Index < c_str_len ; ++*start_Index ) {
-				currenChar = c_str[ *start_Index ];
+			++start_index;
+			for( ; start_index < max_index; ++start_index ) {
+				currenChar = cwzStrPtr[ start_index ];
 				if( currenChar == nodeEndChar )
 					break;
 			}
@@ -94,54 +105,54 @@ bool HtmlDoc::findNextNodeForwardSlash( const wchar_t *c_str, const size_t c_str
 	}
 	return false;
 }
-bool HtmlDoc::isSingelNode( const wchar_t *c_str, size_t *start_Index, size_t *end_Index ) {
-
-	auto currentChar = c_str[ *start_Index ];
+bool HtmlDoc::isSingelNode( const std::shared_ptr< std::wstring > std_c_w_string, size_t &start_index, size_t &end_index ) {
+	auto c_str = std_c_w_string->c_str( );
+	auto currentChar = c_str[ start_index ];
 	if( currentChar != nodeStartChar )
-		for( ++*start_Index ; *start_Index < *end_Index ; ++*start_Index ) {
-			currentChar = c_str[ *start_Index ];
+		for( ++start_index; start_index < end_index; ++start_index ) {
+			currentChar = c_str[ start_index ];
 			if( currentChar == nodeStartChar )
 				break;
 		}
-	auto forwardSlashIndex = *start_Index + 1;
-	if( findNextNodeForwardSlash( c_str, *end_Index, &forwardSlashIndex ) ) {
-		for( forwardSlashIndex += 1 ; forwardSlashIndex < *end_Index ; ++forwardSlashIndex ) {
+	auto forwardSlashIndex = start_index + 1;
+	if( findNextNodeForwardSlash( std_c_w_string, end_index, forwardSlashIndex ) ) {
+		for( forwardSlashIndex += 1; forwardSlashIndex < end_index; ++forwardSlashIndex ) {
 			currentChar = c_str[ forwardSlashIndex ];
 			if( WStrTools::isJumpSpace( currentChar ) )
 				continue;
 			if( currentChar != nodeEndChar )
 				break;
-			*end_Index = forwardSlashIndex;
+			end_index = forwardSlashIndex;
 			return true;
 		}
 	}
 	return false;
 }
-bool HtmlDoc::isStartNode( const wchar_t *c_str, size_t *start_Index, size_t *end_Index ) {
-
-	auto currentChar = c_str[ *start_Index ];
+bool HtmlDoc::isStartNode( const std::shared_ptr< std::wstring > std_c_w_string, size_t &start_index, size_t &end_index ) {
+	auto c_str = std_c_w_string->c_str( );
+	auto currentChar = c_str[ start_index ];
 	if( currentChar != nodeStartChar )
-		for( ++*start_Index ; *start_Index < *end_Index ; ++*start_Index ) {
-			currentChar = c_str[ *start_Index ];
+		for( ++start_index; start_index < end_index; ++start_index ) {
+			currentChar = c_str[ start_index ];
 			if( currentChar == nodeStartChar )
 				break;
 		}
 
 	// 碰到的第一个必须是 > 而不是 /
-	for( auto index = *start_Index + 1 ; index <= *end_Index ; ++index ) {
+	for( auto index = start_index + 1; index <= end_index; ++index ) {
 		currentChar = c_str[ index ];
 		if( WStrTools::isJumpSpace( currentChar ) )
 			continue;
 		if( currentChar == doubleQuotation ) {
 			++index;
-			for( ; index <= *end_Index ; ++index ) {
+			for( ; index <= end_index; ++index ) {
 				currentChar = c_str[ index ];
 				if( currentChar == doubleQuotation )
 					break;
 			}
 		} else if( currentChar == singleQuotation ) {
 			++index;
-			for( ; index <= *end_Index ; ++index ) {
+			for( ; index <= end_index; ++index ) {
 				currentChar = c_str[ index ];
 				if( currentChar == singleQuotation )
 					break;
@@ -154,15 +165,16 @@ bool HtmlDoc::isStartNode( const wchar_t *c_str, size_t *start_Index, size_t *en
 	}
 	return false;
 }
-bool HtmlDoc::isEndNode( const wchar_t *c_str, size_t *start_Index, size_t *end_Index ) {
+bool HtmlDoc::isEndNode( const std::shared_ptr< std::wstring > std_c_w_string, size_t &start_index, size_t &end_index ) {
+	auto c_str = std_c_w_string->c_str( );
 	wchar_t currentChar = 0;
 	// 碰到的第一个必须是 / 而不是通用字符或者 >
-	for( ; *start_Index <= *end_Index ; ++*start_Index ) {
-		currentChar = c_str[ *start_Index ];
+	for( ; start_index <= end_index; ++start_index ) {
+		currentChar = c_str[ start_index ];
 		if( currentChar == nodeStartChar )
 			break;
 	}
-	for( auto index = *start_Index + 1 ; index <= *end_Index ; ++index ) {
+	for( auto index = start_index + 1; index <= end_index; ++index ) {
 		currentChar = c_str[ index ];
 		if( WStrTools::isJumpSpace( currentChar ) )
 			continue;
@@ -171,51 +183,53 @@ bool HtmlDoc::isEndNode( const wchar_t *c_str, size_t *start_Index, size_t *end_
 	}
 	return false;
 }
-bool HtmlDoc::isAnnotation( const wchar_t *c_str, size_t *start_Index, size_t *end_Index ) {
-	auto currentChar = c_str[ *start_Index ];
+bool HtmlDoc::isAnnotation( const std::shared_ptr< std::wstring > std_c_w_string, size_t &start_index, size_t &end_index ) {
+	auto c_str = std_c_w_string->c_str( );
+	auto currentChar = c_str[ start_index ];
 	if( currentChar != nodeStartChar )
-		for( ++*start_Index ; *start_Index < *end_Index ; ++*start_Index ) {
-			currentChar = c_str[ *start_Index ];
+		for( ++start_index; start_index < end_index; ++start_index ) {
+			currentChar = c_str[ start_index ];
 			if( currentChar == nodeStartChar )
 				break;
 		}
-	size_t endIndex = *start_Index + 1;
+	size_t endIndex = start_index + 1;
 
-	for( ; endIndex < *end_Index ; ++endIndex ) {
+	for( ; endIndex < end_index; ++endIndex ) {
 		currentChar = c_str[ endIndex ];
 		if( currentChar == exclamation ) {
-			if( findNextNodeEndChar( c_str, *end_Index, &endIndex ) ) {
-				*end_Index = endIndex;
+			if( findNextNodeEndChar( std_c_w_string, end_index, endIndex ) ) {
+				end_index = endIndex;
 				return true;
 			}
-			*start_Index = 1;
-			*end_Index = 0;
+			start_index = 1;
+			end_index = 0;
 			return false;
 		}
 	}
 	return false;
 }
-HtmlDoc HtmlDoc::parse( const wchar_t *c_str, const size_t c_str_len, size_t *startIndex ) {
-
+HtmlDoc HtmlDoc::parse( const std::shared_ptr< std::wstring > std_c_w_string, size_t &end_index, size_t &start_index ) {
 	HtmlDoc result;
-	result.html_W_C_Str = std::make_shared< std::wstring >( c_str, c_str_len );
-
-	auto stdWStr = result.html_W_C_Str.get( );
-	auto resultHtml = parseHtmlNodeCharPair( stdWStr, c_str_len );
+	result.html_W_C_Str = std::make_shared< std::wstring >( std_c_w_string->c_str( ) + start_index, end_index - start_index );
+	auto stdCWString = result.html_W_C_Str;
+	size_t count;
+	auto resultHtml = HtmlNode::parseHtmlNodeCharPair( stdCWString, 0, end_index, count );
 	auto htmlNodeCharPairs = resultHtml.get( );
 	size_t maxSize = htmlNodeCharPairs->size( );
-	for( size_t index = 0 ; index < maxSize ; ++index ) {
+	size_t index = start_index;
+	start_index = 0;
+	for( ; index < maxSize; ++index ) {
 		auto htmlDocCharPair = htmlNodeCharPairs->at( index );
 		auto left = htmlDocCharPair.get( )->ptr_offset;
 		auto right = htmlDocCharPair.get( )->ptr_c_str_len + left;
-		bool nodeType = isAnnotation( stdWStr->c_str( ), &left, &right );
+		bool nodeType = isAnnotation( stdCWString, left, right );
 		if( nodeType && left < right ) {
 			htmlDocCharPair->nodeType = Html_Node_Type::AnnotationNode;
 			result.htmlDocNode->emplace_back( htmlDocCharPair );
 		} else {
 			left = htmlDocCharPair.get( )->ptr_offset;
 			right = htmlDocCharPair.get( )->ptr_c_str_len + left;
-			nodeType = isSingelNode( stdWStr->c_str( ), &left, &right );
+			nodeType = isSingelNode( stdCWString, left, right );
 			if( nodeType ) {
 				htmlDocCharPair->nodeType = Html_Node_Type::SingleNode;
 				result.htmlDocNode->emplace_back( htmlDocCharPair );
@@ -223,28 +237,28 @@ HtmlDoc HtmlDoc::parse( const wchar_t *c_str, const size_t c_str_len, size_t *st
 				left = htmlDocCharPair.get( )->ptr_offset;
 				size_t endLeft = left;
 				right = htmlDocCharPair.get( )->ptr_c_str_len + left;
-				if( isStartNode( stdWStr->c_str( ), &left, &right ) ) {
+				if( isStartNode( stdCWString, left, right ) ) {
 					auto nodeName = *htmlDocCharPair->getNodeWSName( );
 
-					for( size_t lastNodeIndex = index + 1 ; lastNodeIndex < maxSize ; ++lastNodeIndex ) {
+					for( size_t lastNodeIndex = index + 1; lastNodeIndex < maxSize; ++lastNodeIndex ) {
 						auto endDocNodeCharPairs = htmlNodeCharPairs->at( lastNodeIndex );
 						left = endDocNodeCharPairs.get( )->ptr_offset;
 						right = endDocNodeCharPairs.get( )->ptr_c_str_len + left;
-						nodeType = isAnnotation( stdWStr->c_str( ), &left, &right );
+						nodeType = isAnnotation( stdCWString, left, right );
 						if( nodeType ) // 跳过注释节点
 							continue;
 						left = endDocNodeCharPairs.get( )->ptr_offset;
 						right = endDocNodeCharPairs.get( )->ptr_c_str_len + left;
-						nodeType = isSingelNode( stdWStr->c_str( ), &left, &right );
+						nodeType = isSingelNode( stdCWString, left, right );
 						if( nodeType ) // 跳过单节点
 							continue;
 						left = endDocNodeCharPairs.get( )->ptr_offset;
 						endLeft = left;
 						right = endDocNodeCharPairs.get( )->ptr_c_str_len + left;
-						nodeType = isStartNode( stdWStr->c_str( ), &left, &right );
+						nodeType = isStartNode( stdCWString, left, right );
 						if( nodeType ) // 跳过开头节点
 							continue;
-						nodeType = isEndNode( stdWStr->c_str( ), &endLeft, &right );
+						nodeType = isEndNode( stdCWString, endLeft, right );
 						if( !nodeType ) // 不是结束节点则跳过
 							continue;
 						auto endNodeName = *endDocNodeCharPairs->getNodeWSName( );
@@ -255,38 +269,18 @@ HtmlDoc HtmlDoc::parse( const wchar_t *c_str, const size_t c_str_len, size_t *st
 							break;
 						}
 					}
-				} else if( isEndNode( stdWStr->c_str( ), &endLeft, &right ) )
+				} else if( isEndNode( stdCWString, endLeft, right ) )
 					result.htmlDocNode->emplace_back( htmlDocCharPair );
 				else
 					result.htmlDocNode->emplace_back( htmlDocCharPair );
 			}
 		}
+		if( index == 0 )
+			start_index = htmlDocCharPair.get( )->ptr_offset;
 	}
-	size_t size = result.htmlDocNode->size(  );
+	size_t size = result.htmlDocNode->size( );
 	return result;
 }
-Vector_HtmlNodeSPtr_Shared HtmlDoc::parseHtmlNodeCharPair( std::wstring *std_w_str, const size_t c_str_len ) {
-	Vector_HtmlNodeSPtr_Shared result( new Vector_HtmlNodeSPtr );
-	bool findCharResut = false;
-	auto c_str = std_w_str->c_str( );
-	for( size_t index = 0 ; index < c_str_len ; ++index ) {
-		findCharResut = findNextNodeStartChar( c_str, c_str_len, &index );
-		if( !findCharResut )
-			break;
-		auto ptr = new HtmlNode;
-		HtmlNode_Shared currentHtmlNodeCharPairSharedPtr( ptr );
-		ptr->ptr_offset = index;
-		findCharResut = findNextNodeEndChar( c_str, c_str_len, &index );
-		if( !findCharResut )
-			break;
-		ptr->ptr_c_str_len = index + 1 - ptr->ptr_offset;
-		ptr->cppstd_w_str_ptr = std_w_str;
-		result->emplace_back( currentHtmlNodeCharPairSharedPtr );
-	}
-
-	return result;
-}
-
 HtmlNode_Shared HtmlDoc::getNodeFromName( const std::wstring &nodeName ) const {
 	for( auto node : *htmlDocNode.get( ) ) {
 		if( *node->getNodeWSName( ) == nodeName )

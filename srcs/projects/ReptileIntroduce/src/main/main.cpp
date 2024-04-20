@@ -58,10 +58,10 @@ int main( int argc, char *argv[ ] ) {
 		if( readFile.open( QIODeviceBase::ReadOnly | QIODeviceBase::Text ) ) {
 			QString fileContent = readFile.readAll( );
 			auto stdWString = fileContent.toStdWString( );
-			wchar_t *cStr = ( wchar_t * )stdWString.c_str( );
+			std::shared_ptr< std::wstring > stdcwStrshared( new std::wstring( stdWString.c_str( ), stdWString.length( ) ) );
 			size_t cStrLen = stdWString.size( );
 			size_t index = 0;
-			auto htmlDoc = XmlTools::HtmlDoc::parse( cStr, cStrLen, &index );
+			auto htmlDoc = XmlTools::HtmlDoc::parse( stdcwStrshared, cStrLen, index );
 			htmlDoc.getNodeFromName( [&]( const std::wstring &name, XmlTools::Html_Node_Type type ) {
 				qDebug( ) << QString::fromStdWString( name ).toLocal8Bit( ).toStdString( ).c_str( );
 				return false;

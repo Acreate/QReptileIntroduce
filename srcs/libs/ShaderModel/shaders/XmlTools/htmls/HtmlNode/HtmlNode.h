@@ -15,7 +15,7 @@ namespace XmlTools {
 		/// <summary>
 		/// 字符串指针
 		/// </summary>
-		const std::wstring *cppstd_w_str_ptr = nullptr;
+		std::shared_ptr< std::wstring > c_w_z_str = nullptr;
 		/// <summary>
 		/// 字符串偏移量
 		/// </summary>
@@ -31,8 +31,18 @@ namespace XmlTools {
 	public:
 		HtmlNode( );
 		virtual ~HtmlNode( );
-		std::shared_ptr< std::wstring > getWSNode( );
-		std::shared_ptr< std::wstring > getNodeWSName( );
+		std::shared_ptr< std::wstring > getWSNode( ) const;
+		std::shared_ptr< std::wstring > getNodeWSName( ) const;
+	private:
+		/// <summary>
+		/// 生成 < 与 > 的配对
+		/// </summary>
+		/// <param name="std_w_str">检查的字符串</param>
+		/// <param name="start_index">遍历的开始下标</param>
+		/// <param name="max_index">遍历的结束下标</param>
+		/// <param name="index_count">遍历的个数</param>
+		/// <returns>配对列表</returns>
+		static Vector_HtmlNodeSPtr_Shared parseHtmlNodeCharPair( std::shared_ptr< std::wstring > std_w_str, size_t start_index, const size_t max_index, size_t &index_count );
 	};
 
 }
