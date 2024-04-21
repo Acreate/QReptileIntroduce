@@ -4,14 +4,17 @@
 #include "../../wstr/WStrTools.h"
 #include "../HtmlNode/HtmlNode.h"
 #include "../enum/HtmlNodeType/Html_Node_Type.h"
+#include "../htmlXPth/HtmlXPath.h"
 #include <QDebug>
 #include <clocale>
 #include <memory>
-#include <path/Path.h>
 #include <qdir.h>
+#include <stack>
 #include <string>
+
 using namespace XmlTools;
 
+Vector_HtmlXPathSPtr_Shared HtmlDoc::refXmlPath( new Vector_HtmlXPathSPtr );
 
 bool HtmlDoc::findNextNodeEndChar( const std::shared_ptr< std::wstring > std_c_w_string, size_t &max_index, size_t &start_index ) {
 	auto CWStrLen = std_c_w_string->length( );
@@ -208,10 +211,70 @@ bool HtmlDoc::isAnnotation( const std::shared_ptr< std::wstring > std_c_w_string
 	}
 	return false;
 }
+Vector_HtmlNodeSPtr_Shared HtmlDoc::analysisDoubleNode( HtmlNode_Shared html_node, Vector_HtmlNodeSPtr_Shared html_node_char_pairs, size_t &start_index, size_t &end_index ) {
+	Vector_HtmlNodeSPtr_Shared result( new Vector_HtmlNodeSPtr );
+	std::stack< HtmlNode_Shared > htmlNodeSharedTack;
+	size_t left, right, endLeft;
+	htmlNodeSharedTack.push( html_node );
+	auto stdCWString = html_node->czWStr;
+	bool nodeType;
+	for( ; start_index < end_index && htmlNodeSharedTack.size( ) > 0; ++start_index ) {
+		auto htmlNode = html_node_char_pairs->at( start_index );
+		if( htmlNode.get( ) == html_node.get( ) )
+			continue;
+
+		left = htmlNode.get( )->ptrOffset;
+		right = htmlNode.get( )->ptrCWtrLen + left;
+		nodeType = isAnnotation( stdCWString, left, right );
+		if( nodeType ) {
+			// 跳过注释节点
+			result->emplace_back( htmlNode );
+			continue;
+		}
+		left = htmlNode.get( )->ptrOffset;
+		right = htmlNode.get( )->ptrCWtrLen + left;
+		nodeType = isSingelNode( stdCWString, left, right );
+		if( nodeType ) {
+			// 跳过单节点
+			result->emplace_back( htmlNode );
+			continue;
+		}
+		left = htmlNode.get( )->ptrOffset;
+		endLeft = left;
+		right = htmlNode.get( )->ptrCWtrLen + left;
+		nodeType = isStartNode( stdCWString, left, right );
+		if( nodeType ) {
+			// 跳过开头节点
+			htmlNodeSharedTack.push( htmlNode );
+			result->emplace_back( htmlNode );
+			continue;
+		}
+		nodeType = isEndNode( stdCWString, endLeft, right );
+		if( !nodeType ) // 不是结束节点则跳过
+			continue;
+		auto endNodeName = *htmlNode->getNodeWSName( );
+		auto node = htmlNodeSharedTack.top( );
+		auto nodeName = *node->getNodeWSName( );
+		if( nodeName == endNodeName ) { // 节点对象相等，则开始输出
+			node->nodeType = Html_Node_Type::DoubleNode;
+			htmlNode->endNode = htmlNode;
+			node->endNode = htmlNode;
+			htmlNode->startNode = node;
+			node->startNode = node;
+			htmlNodeSharedTack.pop( );
+			qDebug() << "============";
+			qDebug( ) << QString::fromStdWString( *node->getContent( ) ).toStdString( ).c_str( );
+			qDebug() << "============";
+			continue;
+		}
+
+	}
+	return result;
+}
 HtmlDoc HtmlDoc::parse( const std::shared_ptr< std::wstring > std_c_w_string, size_t &end_index, size_t &start_index ) {
 	HtmlDoc result;
-	result.html_W_C_Str = std::make_shared< std::wstring >( std_c_w_string->c_str( ) + start_index, end_index - start_index );
-	auto stdCWString = result.html_W_C_Str;
+	result.htmlWCStr = std::make_shared< std::wstring >( std_c_w_string->c_str( ) + start_index, end_index - start_index );
+	auto stdCWString = result.htmlWCStr;
 	size_t count;
 	auto resultHtml = HtmlNode::parseHtmlNodeCharPair( stdCWString, 0, end_index, count );
 	auto htmlNodeCharPairs = resultHtml.get( );
@@ -220,83 +283,89 @@ HtmlDoc HtmlDoc::parse( const std::shared_ptr< std::wstring > std_c_w_string, si
 	start_index = 0;
 	for( ; index < maxSize; ++index ) {
 		auto htmlDocCharPair = htmlNodeCharPairs->at( index );
-		auto left = htmlDocCharPair.get( )->ptr_offset;
-		auto right = htmlDocCharPair.get( )->ptr_c_str_len + left;
+		auto hasPtr = false;
+		for( auto ptr : *result.htmlDocNode )
+			if( htmlDocCharPair == ptr || ( htmlDocCharPair->nodeType == Html_Node_Type::DoubleNode && htmlDocCharPair->endNode == ptr ) ) {
+				hasPtr = true;
+				break;
+			}
+		if( hasPtr )
+			continue;
+		auto left = htmlDocCharPair.get( )->ptrOffset;
+		auto right = htmlDocCharPair.get( )->ptrCWtrLen + left;
 		bool nodeType = isAnnotation( stdCWString, left, right );
 		if( nodeType && left < right ) {
 			htmlDocCharPair->nodeType = Html_Node_Type::AnnotationNode;
 			result.htmlDocNode->emplace_back( htmlDocCharPair );
 		} else {
-			left = htmlDocCharPair.get( )->ptr_offset;
-			right = htmlDocCharPair.get( )->ptr_c_str_len + left;
+			left = htmlDocCharPair.get( )->ptrOffset;
+			right = htmlDocCharPair.get( )->ptrCWtrLen + left;
 			nodeType = isSingelNode( stdCWString, left, right );
 			if( nodeType ) {
 				htmlDocCharPair->nodeType = Html_Node_Type::SingleNode;
 				result.htmlDocNode->emplace_back( htmlDocCharPair );
 			} else {
-				left = htmlDocCharPair.get( )->ptr_offset;
+				left = htmlDocCharPair.get( )->ptrOffset;
 				size_t endLeft = left;
-				right = htmlDocCharPair.get( )->ptr_c_str_len + left;
+				right = htmlDocCharPair.get( )->ptrCWtrLen + left;
 				if( isStartNode( stdCWString, left, right ) ) {
-					auto nodeName = *htmlDocCharPair->getNodeWSName( );
-
-					for( size_t lastNodeIndex = index + 1; lastNodeIndex < maxSize; ++lastNodeIndex ) {
-						auto endDocNodeCharPairs = htmlNodeCharPairs->at( lastNodeIndex );
-						left = endDocNodeCharPairs.get( )->ptr_offset;
-						right = endDocNodeCharPairs.get( )->ptr_c_str_len + left;
-						nodeType = isAnnotation( stdCWString, left, right );
-						if( nodeType ) // 跳过注释节点
-							continue;
-						left = endDocNodeCharPairs.get( )->ptr_offset;
-						right = endDocNodeCharPairs.get( )->ptr_c_str_len + left;
-						nodeType = isSingelNode( stdCWString, left, right );
-						if( nodeType ) // 跳过单节点
-							continue;
-						left = endDocNodeCharPairs.get( )->ptr_offset;
-						endLeft = left;
-						right = endDocNodeCharPairs.get( )->ptr_c_str_len + left;
-						nodeType = isStartNode( stdCWString, left, right );
-						if( nodeType ) // 跳过开头节点
-							continue;
-						nodeType = isEndNode( stdCWString, endLeft, right );
-						if( !nodeType ) // 不是结束节点则跳过
-							continue;
-						auto endNodeName = *endDocNodeCharPairs->getNodeWSName( );
-						if( nodeName == endNodeName ) { // 节点对象相等，则开始输出
-							index = lastNodeIndex;
-							htmlDocCharPair->nodeType = Html_Node_Type::DoubleNode;
-							result.htmlDocNode->emplace_back( htmlDocCharPair );
-							break;
-						}
-					}
+					size_t lastNodeIndex = index + 1;
+					size_t endNodeIndex = maxSize;
+					auto vectorHtmlXPathSPtrShared = analysisDoubleNode( htmlDocCharPair, resultHtml, lastNodeIndex, endNodeIndex );
+					qDebug( ) << vectorHtmlXPathSPtrShared->size( );
 				} else if( isEndNode( stdCWString, endLeft, right ) )
-					result.htmlDocNode->emplace_back( htmlDocCharPair );
+					continue;
 				else
 					result.htmlDocNode->emplace_back( htmlDocCharPair );
 			}
 		}
 		if( index == 0 )
-			start_index = htmlDocCharPair.get( )->ptr_offset;
+			start_index = htmlDocCharPair.get( )->ptrOffset;
 	}
-	size_t size = result.htmlDocNode->size( );
+	if( index != maxSize ) {
+		qDebug( ) << u8"error";
+		return HtmlDoc( );
+	}
 	return result;
 }
 HtmlNode_Shared HtmlDoc::getNodeFromName( const std::wstring &nodeName ) const {
-	for( auto node : *htmlDocNode.get( ) ) {
+	for( auto node : *htmlDocNode.get( ) )
 		if( *node->getNodeWSName( ) == nodeName )
 			return node;
-	}
+
 	return nullptr;
 }
 HtmlNode_Shared HtmlDoc::getNodeFromName( const std::function< bool( const std::wstring &nodeName, Html_Node_Type htmlNodeType ) > &callFun ) const {
-	for( auto node : *htmlDocNode.get( ) ) {
+	for( auto node : *htmlDocNode.get( ) )
 		if( callFun( *node->getNodeWSName( ), node->nodeType ) )
 			return node;
-	}
+
 	return nullptr;
+}
+Vector_HtmlNodeSPtr_Shared HtmlDoc::getNodes( const std::function< bool( const HtmlNode_Shared &node ) > &callFun ) {
+	Vector_HtmlNodeSPtr_Shared result( new Vector_HtmlNodeSPtr );
+	for( auto node : *htmlDocNode.get( ) )
+		if( callFun( node ) )
+			result->emplace_back( node );
+
+	if( result->size( ) == 0 )
+		return nullptr;
+	return result;
 }
 HtmlDoc::HtmlDoc( ) : htmlDocNode( new Vector_HtmlNodeSPtr ) {
 
 }
 HtmlDoc::~HtmlDoc( ) {
+	/// 需要释放引用吗？
+	//for( auto xpath : *refXmlPath.get( ) )
+	//	if( xpath->htmlDoc->htmlWCStr.get( ) == this->htmlWCStr.get( ) ) {
+	//		xpath->htmlDoc.reset( );
+	//		xpath->htmlDoc = nullptr;
+	//	}
+
+}
+HtmlXPath_Shared HtmlDoc::converToHtmlXPath( ) const {
+	HtmlDoc_Shared param( new HtmlDoc );
+	*param = *this;
+	return HtmlXPath::converXPtah( param );
 }

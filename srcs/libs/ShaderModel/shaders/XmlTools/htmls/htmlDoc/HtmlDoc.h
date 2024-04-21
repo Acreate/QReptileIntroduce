@@ -10,19 +10,11 @@
 #include "../enum/HtmlNodeType/Html_Node_Type.h"
 
 namespace XmlTools {
-	class HtmlNode;
 
 	class XMLTOOLS_EXPORT HtmlDoc {
 	public: // 友元
 		friend class HtmlNode;
-	private: // 静态属性
-		static constexpr wchar_t singleQuotation = L'\''; // 单引号
-		static constexpr wchar_t exclamation = L'!'; // 感叹号。用于识别 DOCTYPE 节点或注释节点
-		static constexpr wchar_t doubleQuotation = L'\"'; // 双引号
-		static constexpr wchar_t nodeStartChar = L'<'; // 节点开始
-		static constexpr wchar_t nodeEndChar = L'>'; // 节点结束
-		static constexpr wchar_t forwardSlash = L'/'; // 斜杠路径符。节点类型判定(单元素节点/双元素节点)
-		static constexpr wchar_t backSlash = L'\\'; // 反斜杠路径符
+		friend class HtmlXPath;
 	private:
 		/// <summary>
 		/// 查找下一个节点结束符的位置
@@ -86,6 +78,16 @@ namespace XmlTools {
 		/// <param name="end_index">结束下标，始终指向节点结束字符 '>'</param>
 		/// <returns>true 表示注释节点</returns>
 		static bool isAnnotation( const std::shared_ptr< std::wstring > std_c_w_string, size_t &start_index, size_t &end_index );
+
+		/// <summary>
+		/// 解析双节点，匹配第一个指向的节点。
+		/// </summary>
+		/// <param name="html_node">匹配的双节点</param>
+		/// <param name="html_node_char_pairs">节点列表</param>
+		/// <param name="start_index">开始的节点列表下标</param>
+		/// <param name="end_index">结束的节点列表下标</param>
+		/// <returns>匹配的节点列表</returns>
+		static Vector_HtmlNodeSPtr_Shared analysisDoubleNode( HtmlNode_Shared html_node, Vector_HtmlNodeSPtr_Shared html_node_char_pairs, size_t &start_index, size_t &end_index );
 	public: // 静态对象生成器
 		/// <summary>
 		/// 根据字符串内容生成节点列表
@@ -99,7 +101,7 @@ namespace XmlTools {
 		/// <summary>
 		/// 引用的 html 内容
 		/// </summary>
-		std::shared_ptr< std::wstring > html_W_C_Str;
+		std::shared_ptr< std::wstring > htmlWCStr;
 
 		/// <summary>
 		/// 文件的顶级节点
@@ -120,10 +122,15 @@ namespace XmlTools {
 		/// <param name="callFun">校验函数</param>
 		/// <returns>节点，失败返回 nullptr</returns>
 		HtmlNode_Shared getNodeFromName( const std::function< bool( const std::wstring &nodeName, Html_Node_Type htmlNodeType ) > &callFun ) const;
+		Vector_HtmlNodeSPtr_Shared getNodes( const std::function< bool( const HtmlNode_Shared &node ) > &callFun );
 	private: // 无法使用个构造函数
 		HtmlDoc( );
 	public:
 		virtual ~HtmlDoc( );
+	private:
+		static Vector_HtmlXPathSPtr_Shared refXmlPath;
+	public: // 功能转换
+		HtmlXPath_Shared converToHtmlXPath( ) const;
 	};
 }
 
