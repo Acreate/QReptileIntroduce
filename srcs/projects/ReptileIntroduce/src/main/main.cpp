@@ -18,8 +18,6 @@
 #include "../qt/extend/netWork/RequestConnect.h"
 
 #include <htmls/htmlDoc/HtmlDoc.h>
-#include <htmls/htmlXPth//HtmlXPath.h>
-
 #include "htmls/HtmlNode/HtmlNode.h"
 
 void test( QObject *plugQobjectInstance, IRequestNetInterfaceExtend *requestNetInterfaceExtend ) {
@@ -68,12 +66,12 @@ int main( int argc, char *argv[ ] ) {
 			std::shared_ptr< std::wstring > stdcwStrshared( new std::wstring( stdWString.c_str( ), stdWString.length( ) ) );
 			size_t cStrLen = stdWString.size( );
 			size_t index = 0;
-			auto htmlDoc = XmlTools::HtmlDoc::parse( stdcwStrshared, cStrLen, index );
+			auto htmlDoc = HtmlTools::HtmlDoc::parse( stdcwStrshared, cStrLen, index );
 			auto vectorHtmlNodeSPtrShared = htmlDoc.analysisBrotherNode( );
 			QString writeCachePath( u8"%1write_cache%2" );
 			writeCachePath = writeCachePath.arg( Project_Run_bin ).arg( QDir::separator( ) );
 			bool isRemovePath = Path::removePath( writeCachePath );
-			htmlDoc.getNodes( [&]( const XmlTools::HtmlNode_Shared &node ) {
+			htmlDoc.getNodes( [&]( const HtmlTools::HtmlNode_Shared &node ) {
 				qDebug( ) << QString::fromStdWString( *node->getNodeWSName( ) ).toLocal8Bit( ).toStdString( ).c_str( );
 				QString writeContent;
 				writeContent
@@ -97,7 +95,7 @@ int main( int argc, char *argv[ ] ) {
 					}
 				return false;
 			} );
-			auto htmlNode = htmlDoc.getNodeFromName( [&]( const std::wstring &name, XmlTools::Html_Node_Type type ) {
+			auto htmlNode = htmlDoc.getNodeFromName( [&]( const std::wstring &name, HtmlTools::Html_Node_Type type ) {
 				qDebug( ) << QString::fromStdWString( name ).toLocal8Bit( ).toStdString( ).c_str( );
 				if( name == L"html" )
 					return true;
@@ -106,21 +104,13 @@ int main( int argc, char *argv[ ] ) {
 
 			if( !htmlNode ) return 1;
 			auto node = htmlNode.get( )->getType( );
-			if( node == XmlTools::Html_Node_Type::DoubleNode ) {
+			if( node == HtmlTools::Html_Node_Type::DoubleNode ) {
 				auto name = htmlNode->getStartNode( )->getNodeWSName( );
 				qDebug( ) << u8"htmlNode->getStartNode( )->getNodeWSName( ):" << QString::fromStdWString( *name ).toLocal8Bit( ).toStdString( ).c_str( );
 				name = htmlNode->getEndNode( )->getNodeWSName( );
 				qDebug( ) << u8"htmlNode->getEndNode( )->getNodeWSName( ):" << QString::fromStdWString( *name ).toLocal8Bit( ).toStdString( ).c_str( );
 
 			}
-			auto htmlXPath = htmlDoc.converToHtmlXPath( );
-			/*auto xPath = htmlXPath->findNodeFromName( L"html" );
-			xPath = xPath->findNodeFromName( L"body" );
-			xPath = xPath->findNodeFromName( L"div" );
-			xPath = xPath->findNodeFromName( L"div" );
-			xPath = xPath->findNodeFromName( L"div" );
-			xPath = xPath->findNodeFromName( L"div" );
-			qDebug( ) << QString::fromStdWString( *xPath->getNode( ) ).toLocal8Bit( ).toStdString( ).c_str( );*/
 			readFile.close( );
 		}
 	}

@@ -94,11 +94,11 @@ foreach( plug_dir ${out_path_list} )
 	endforeach()
 endforeach()
 
-m_set_env("${Project_Run_bin}" "${Project_Install_bin}")
-
+m_set_env( "${Project_Run_bin}" "${Project_Install_bin}" )
 
 get_path_cmake_dir_path( out_path_list ${CMAKE_CURRENT_SOURCE_DIR}/srcs/libs/UserHread/defineMorc "CMakeLists.txt" )
 get_path_cmake_dir_path( out_path_list ${CMAKE_CURRENT_SOURCE_DIR}/srcs/libs/ShaderModel/shaders/ "CMakeLists.txt" )
+get_path_cmake_dir_path( out_path_list ${CMAKE_CURRENT_SOURCE_DIR}/srcs/git/htmlcpp/srcs/HtmlTools/ "CMakeLists.txt" )
 
 get_path_cmake_dir_path( out_path_list ${CMAKE_CURRENT_SOURCE_DIR}/srcs/projects/ "CMakeLists.txt" )
 
