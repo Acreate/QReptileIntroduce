@@ -228,6 +228,7 @@ Vector_HtmlNodeSPtr_Shared HtmlDoc::analysisDoubleNode( HtmlNode_Shared html_nod
 		nodeType = isAnnotation( stdCWString, left, right );
 		if( nodeType ) {
 			// 跳过注释节点
+			htmlNode->setParent( htmlNodeSharedTack.top( ) );
 			result->emplace_back( htmlNode );
 			continue;
 		}
@@ -236,6 +237,7 @@ Vector_HtmlNodeSPtr_Shared HtmlDoc::analysisDoubleNode( HtmlNode_Shared html_nod
 		nodeType = isSingelNode( stdCWString, left, right );
 		if( nodeType ) {
 			// 跳过单节点
+			htmlNode->setParent( htmlNodeSharedTack.top( ) );
 			result->emplace_back( htmlNode );
 			continue;
 		}
@@ -245,6 +247,7 @@ Vector_HtmlNodeSPtr_Shared HtmlDoc::analysisDoubleNode( HtmlNode_Shared html_nod
 		nodeType = isStartNode( stdCWString, left, right );
 		if( nodeType ) {
 			// 跳过开头节点
+			htmlNode->setParent( htmlNodeSharedTack.top( ) );
 			htmlNodeSharedTack.push( htmlNode );
 			result->emplace_back( htmlNode );
 			continue;
@@ -261,16 +264,18 @@ Vector_HtmlNodeSPtr_Shared HtmlDoc::analysisDoubleNode( HtmlNode_Shared html_nod
 			node->endNode = htmlNode;
 			htmlNode->startNode = node;
 			node->startNode = node;
+			htmlNode->setParent( node );
 			htmlNodeSharedTack.pop( );
-			qDebug() << "============";
-			qDebug( ) << QString::fromStdWString( *node->getContent( ) ).toStdString( ).c_str( );
-			qDebug() << "============";
+			/*	qDebug( ) << "============";
+				qDebug( ) << QString::fromStdWString( *node->getContent( ) ).toStdString( ).c_str( );
+				qDebug( ) << "============";*/
 			continue;
 		}
 
 	}
 	return result;
 }
+
 HtmlDoc HtmlDoc::parse( const std::shared_ptr< std::wstring > std_c_w_string, size_t &end_index, size_t &start_index ) {
 	HtmlDoc result;
 	result.htmlWCStr = std::make_shared< std::wstring >( std_c_w_string->c_str( ) + start_index, end_index - start_index );
@@ -312,6 +317,10 @@ HtmlDoc HtmlDoc::parse( const std::shared_ptr< std::wstring > std_c_w_string, si
 					size_t lastNodeIndex = index + 1;
 					size_t endNodeIndex = maxSize;
 					auto vectorHtmlXPathSPtrShared = analysisDoubleNode( htmlDocCharPair, resultHtml, lastNodeIndex, endNodeIndex );
+					auto htmlNode = vectorHtmlXPathSPtrShared->begin( );
+					auto endNode = vectorHtmlXPathSPtrShared->end( );
+					for( ; htmlNode != endNode; ++htmlNode )
+						result.htmlDocNode->emplace_back( *htmlNode );
 					qDebug( ) << vectorHtmlXPathSPtrShared->size( );
 				} else if( isEndNode( stdCWString, endLeft, right ) )
 					continue;
@@ -321,10 +330,6 @@ HtmlDoc HtmlDoc::parse( const std::shared_ptr< std::wstring > std_c_w_string, si
 		}
 		if( index == 0 )
 			start_index = htmlDocCharPair.get( )->ptrOffset;
-	}
-	if( index != maxSize ) {
-		qDebug( ) << u8"error";
-		return HtmlDoc( );
 	}
 	return result;
 }
@@ -368,4 +373,10 @@ HtmlXPath_Shared HtmlDoc::converToHtmlXPath( ) const {
 	HtmlDoc_Shared param( new HtmlDoc );
 	*param = *this;
 	return HtmlXPath::converXPtah( param );
+}
+Vector_HtmlNodeSPtr_Shared HtmlDoc::analysisBrotherNode( ) {
+	Vector_HtmlNodeSPtr_Shared analysisOver( new Vector_HtmlNodeSPtr );
+	auto htmlNodes = htmlDocNode.get( );
+
+	return analysisOver;
 }

@@ -42,6 +42,10 @@ namespace XmlTools {
 	// std::shared_ptr< std::vector< std::shared_ptr< HtmlXPath > > > 封装
 	using Vector_HtmlXPathSPtr_Shared = std::shared_ptr< Vector_HtmlXPathSPtr >;
 	/// <summary>
+	/// 宽字符串共享指针
+	/// </summary>
+	using StdWString_Shared = std::shared_ptr< std::wstring >;
+	/// <summary>
 	/// 字符串配对的列表映射
 	/// </summary>
 	using WStringPairUnorderMap = std::unordered_map< std::wstring, std::wstring >;

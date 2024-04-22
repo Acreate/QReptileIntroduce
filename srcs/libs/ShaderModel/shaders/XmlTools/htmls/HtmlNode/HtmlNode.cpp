@@ -6,7 +6,7 @@
 
 using namespace XmlTools;
 
-HtmlNode::HtmlNode( ) {
+HtmlNode::HtmlNode( ) : parent( nullptr ), subChildren( new Vector_HtmlNodeSPtr ), brother( new Vector_HtmlNodeSPtr ) {
 }
 HtmlNode::~HtmlNode( ) {
 }
@@ -51,8 +51,19 @@ std::shared_ptr< std::wstring > HtmlNode::getNodeWSName( ) const {
 	return result;
 }
 
-std::shared_ptr< std::wstring > HtmlNode::getContent( ) {
+StdWString_Shared HtmlNode::getContent( ) {
 	return std::make_shared< std::wstring >( czWStr->c_str( ), ptrOffset, nodeSize( ) );
+}
+StdWString_Shared HtmlNode::getPath( ) {
+	StdWString_Shared result( new std::wstring( L"/" + *getNodeWSName( ) ) );
+
+	HtmlNode_Shared parent = this->parent;
+	while( parent ) {
+		*result = L"/" + *parent->getNodeWSName( ) + *result;
+		parent = parent->parent;
+	}
+
+	return result;
 }
 WStringPairUnorderMap_Shared HtmlNode::analysisAttribute( ) {
 	WStringPairUnorderMap_Shared result( new WStringPairUnorderMap );
@@ -76,6 +87,7 @@ Vector_HtmlNodeSPtr_Shared HtmlNode::parseHtmlNodeCharPair( std::shared_ptr< std
 			break;
 		ptr->ptrCWtrLen = start_index + 1 - ptr->ptrOffset;
 		ptr->czWStr = std_c_w_str;
+		currentHtmlNodeCharPairSharedPtr->thisSharedPtr = currentHtmlNodeCharPairSharedPtr;
 		result->emplace_back( currentHtmlNodeCharPairSharedPtr );
 	}
 	index_count = start_index - index_count;
@@ -83,7 +95,7 @@ Vector_HtmlNodeSPtr_Shared HtmlNode::parseHtmlNodeCharPair( std::shared_ptr< std
 }
 
 void HtmlNode::setParent( HtmlNode_Shared child, HtmlNode_Shared parent ) {
-	if( child->parent ) {
+	if( child->parent.get( ) ) {
 		auto vectorHtmlXPathSPtrShared = child->parent->subChildren;
 		auto iterator = vectorHtmlXPathSPtrShared->begin( ), end = vectorHtmlXPathSPtrShared->end( );
 		for( ; iterator != end; ++iterator )

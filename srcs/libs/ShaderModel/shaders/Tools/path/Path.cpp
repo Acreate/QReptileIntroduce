@@ -61,3 +61,24 @@ bool Path::creatDirPath( const QString &path ) {
 
 	return info.dir( ).mkdir( path );
 }
+bool Path::removePath( const QString &path ) {
+	QFileInfo fileInfo( path );
+	if( !fileInfo.exists( ) )
+		return true;
+	if( fileInfo.isFile( ) )
+		return removeFilePath( path );
+	return removeDirPath( path );
+}
+bool Path::removeFilePath( const QString &path ) {
+	QFileInfo fileInfo( path );
+	if( !fileInfo.exists( ) )
+		return true;
+	return QFile::remove( path );
+}
+bool Path::removeDirPath( const QString &path ) {
+	QFileInfo fileInfo( path );
+	if( !fileInfo.exists( ) )
+		return true;
+	QDir absoluteDir = fileInfo.absoluteDir( );
+	return absoluteDir.removeRecursively( );
+}

@@ -45,7 +45,7 @@ namespace XmlTools {
 		HtmlNode_Shared thisSharedPtr; // 当前节点
 		WStringPairUnorderMap_Shared refNodeAttributes; // 当前节点的所有属性
 
-		
+
 	private:
 		static void setParent( HtmlNode_Shared child, HtmlNode_Shared parent );
 	public:
@@ -70,7 +70,9 @@ namespace XmlTools {
 		}
 		size_t getPtrOffset( ) const { return ptrOffset; }
 		size_t getPtrCWtrLen( ) const { return ptrCWtrLen; }
-		std::shared_ptr< std::wstring > getContent( );
+		StdWString_Shared getContent( );
+		StdWString_Shared getPath( );
+	private:
 		/// <summary>
 		/// 解析属性<br/>
 		/// 键值对配置的属性列表

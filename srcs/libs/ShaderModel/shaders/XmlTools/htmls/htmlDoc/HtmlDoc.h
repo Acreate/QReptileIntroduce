@@ -131,6 +131,11 @@ namespace XmlTools {
 		static Vector_HtmlXPathSPtr_Shared refXmlPath;
 	public: // 功能转换
 		HtmlXPath_Shared converToHtmlXPath( ) const;
+		/// <summary>
+		/// 本对象关联的节点解析兄弟关系
+		/// </summary>
+		/// <returns>解析完成的节点列表</returns>
+		Vector_HtmlNodeSPtr_Shared analysisBrotherNode( );
 	};
 }
 

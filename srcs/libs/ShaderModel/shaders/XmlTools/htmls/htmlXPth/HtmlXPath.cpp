@@ -195,6 +195,7 @@ HtmlXPath::HtmlXPath( HtmlDoc_Shared clone_objPtr )
 }
 HtmlXPath::~HtmlXPath( ) {
 }
+
 //HtmlXPath_Shared HtmlXPath::findNodeFromName( const std::wstring &name ) {
 //	size_t size = subChildren->size( );
 //	if( size > 0 )
