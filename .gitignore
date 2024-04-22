@@ -12,5 +12,7 @@ _deps
 /out
 /builder
 /.vs
-cmake_to_c_cpp_header_macro.h
 /_ReSharper.Caches
+
+*/cmake_to_c_cpp_header_env.h
+*/*_export.h

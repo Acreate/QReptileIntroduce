@@ -18,6 +18,7 @@
 #include "../qt/extend/netWork/RequestConnect.h"
 
 #include <htmls/htmlDoc/HtmlDoc.h>
+#include <wstr/WStrTools.h>
 #include "htmls/HtmlNode/HtmlNode.h"
 
 void test( QObject *plugQobjectInstance, IRequestNetInterfaceExtend *requestNetInterfaceExtend ) {
@@ -51,9 +52,7 @@ void test( QObject *plugQobjectInstance, IRequestNetInterfaceExtend *requestNetI
 	request->netGetWork( cPlugUrl, connect );
 }
 
-
 int main( int argc, char *argv[ ] ) {
-
 	Appliction appliction( argc, argv );
 
 	QString cecheFilePath = QString( u8"%1%2writeFile%2%3" ).arg( Project_Run_bin ).arg( QDir::separator( ) ).arg( u8"www.121ds.cc.html" );
