@@ -375,8 +375,61 @@ HtmlXPath_Shared HtmlDoc::converToHtmlXPath( ) const {
 	return HtmlXPath::converXPtah( param );
 }
 Vector_HtmlNodeSPtr_Shared HtmlDoc::analysisBrotherNode( ) {
-	Vector_HtmlNodeSPtr_Shared analysisOver( new Vector_HtmlNodeSPtr );
+	Vector_HtmlNodeSPtr_Shared analysisOver( new Vector_HtmlNodeSPtr ); // 有父节点
+	Vector_HtmlNodeSPtr_Shared analysisNone( new Vector_HtmlNodeSPtr ); // 无父节点
 	auto htmlNodes = htmlDocNode.get( );
+	bool isOverAnalysis = false;
+	for( auto htmlNodeSPtr : *htmlNodes ) {
+		// 校验父节点解析
+		for( auto overAnalysis : *analysisOver )
+			if( overAnalysis.get( ) == htmlNodeSPtr.get( ) ) {
+				isOverAnalysis = true;
+				break;
+			}
+		if( isOverAnalysis ) {
+			isOverAnalysis = false;
+			continue;
+		}
+		// 校验无父节点
+		for( auto overAnalysis : *analysisNone )
+			if( overAnalysis.get( ) == htmlNodeSPtr.get( ) ) {
+				isOverAnalysis = true;
+				break;
+			}
+		if( isOverAnalysis ) {
+			isOverAnalysis = false;
+			continue;
+		}
 
+
+		auto parent = htmlNodeSPtr->parent;
+		if( parent ) { // 存在父节点才存在兄弟节点
+			analysisOver->emplace_back( htmlNodeSPtr ); // 保存到父节点列表当中
+			// 遍历父节点引用的子节点，并把该节点引用到兄弟节点当中（跳过自身节点）
+			for( auto parentSubChildren : *parent->subChildren )
+				if( parentSubChildren.get( ) != htmlNodeSPtr.get( ) )
+					htmlNodeSPtr->brother->emplace_back( parentSubChildren );
+			continue;
+		}
+		analysisNone->emplace_back( htmlNodeSPtr ); // 保存到无根节点列表当中
+	}
+	// 遍历无根节点
+	for( auto htmlNodeSPtr : *analysisNone ) {
+		// 校验父节点解析
+		for( auto overAnalysis : *analysisOver )
+			if( overAnalysis.get( ) == htmlNodeSPtr.get( ) ) {
+				isOverAnalysis = true;
+				break;
+			}
+		if( isOverAnalysis ) {
+			isOverAnalysis = false;
+			continue;
+		}
+		analysisOver->emplace_back( htmlNodeSPtr );
+		// 遍历友邻节点
+		for( auto brotherNode : *htmlNodeSPtr->brother )
+			if( htmlNodeSPtr.get( ) != brotherNode.get( ) )
+				htmlNodeSPtr->brother->emplace_back( brotherNode );
+	}
 	return analysisOver;
 }
