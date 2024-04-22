@@ -1,0 +1,16 @@
+﻿#ifndef CMAKE_TO_C_CPP_HEADER_ENV_H_H_HEAD__FILE__
+#define CMAKE_TO_C_CPP_HEADER_ENV_H_H_HEAD__FILE__
+#pragma once
+
+#define is_exe ${project_type_property_is_exe}
+
+#define Cmake_Project_Name u8"${Cmake_Project_Name}"
+#define Project_Run_bin u8"${Project_Run_bin}"
+#define Project_Plug_bin u8"${Project_Plug_bin}"
+#define Cmake_Executable_Suffix u8"${CMAKE_EXECUTABLE_SUFFIX}"
+#define Cmake_Shared_Library_Suffix u8"${CMAKE_SHARED_LIBRARY_SUFFIX}"
+#define project_type u8"${project_type_property}"
+
+#define Cache_Path_Dir u8"${Cache_Path_Dir}"
+
+#endif // CMAKE_TO_C_CPP_HEADER_ENV_H_H_HEAD__FILE__
