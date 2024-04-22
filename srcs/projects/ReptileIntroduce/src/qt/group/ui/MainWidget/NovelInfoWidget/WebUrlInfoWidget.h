@@ -9,6 +9,7 @@
 
 #include "interface/IRequestNetInterfaceExtend.h"
 
+class QNetworkReply;
 class Setting;
 class Request;
 class RequestConnect;
@@ -40,11 +41,11 @@ private: // 静态成员
 	/// 保存在 generateWebUrlInfoWidget 生成的成员
 	/// </summary>
 	static QMap< WebUrlInfoWidget *, QString > webHost;
-	static NovelInfoWidget *overNovelInfoWidgetPtr( QObject *converPtr );
-	static NovelInfoWidget *overNovelInfoWidgetPtrTry( QObject *converPtr, Exception *tryResult );
+	static NovelInfoWidget * overNovelInfoWidgetPtr( QObject *converPtr );
+	static NovelInfoWidget * overNovelInfoWidgetPtrTry( QObject *converPtr, Exception *tryResult );
 	static void setConverError( Exception *tryResult );
 public:
-	static WebUrlInfoWidget *generateWebUrlInfoWidget( Setting *webPageSetting, NovelInfoWidget *parent, IRequestNetInterfaceExtend *requestNetInterface, Qt::WindowFlags f = Qt::WindowFlags( ) );
+	static WebUrlInfoWidget * generateWebUrlInfoWidget( Setting *webPageSetting, NovelInfoWidget *parent, IRequestNetInterfaceExtend *requestNetInterface, Qt::WindowFlags f = Qt::WindowFlags( ) );
 private: // 构造类时候必须初始化
 	Setting *webPageSetting;
 	IRequestNetInterfaceExtend *requestNetInterface;
@@ -55,7 +56,7 @@ private: // 网络-请求
 public: // 接口实现
 	size_t getUrl( std::string *outStr ) override;
 	void setUrl( const StdString &url ) override;
-	IRequestNetInterface::un_ordered_map *formHtmlGetTypeTheUrls( const StdString &htmlText ) override;
+	IRequestNetInterface::un_ordered_map * formHtmlGetTypeTheUrls( const StdString &htmlText ) override;
 	NovelPtrList formHtmlGetTypePageNovels( const StdString &htmlText, const NovelPtrList &saveNovelInfos, void *appendDataPtr ) override;
 	INovelInfoSharedPtr formHtmlGetUrlNovelInfo( const StdString &htmlText, const NovelPtrList &saveNovelInfos, const INovelInfoSharedPtr &networkReplayNovel ) override;
 	StdString formHtmlGetNext( const StdString &htmlText, const NovelPtrList &saveNovelInfos, const NovelPtrList &lastNovelInfos ) override;
@@ -130,13 +131,13 @@ public: // 属性
 	long long getTypeCountValue( ) {
 		return typeCount->getValue( );
 	}
-	Setting *getWebPageSetting( ) const {
+	Setting * getWebPageSetting( ) const {
 		return webPageSetting;
 	}
-	IRequestNetInterfaceExtend *getRequestNetInterface( ) const {
+	IRequestNetInterfaceExtend * getRequestNetInterface( ) const {
 		return requestNetInterface;
 	}
-	NovelInfoWidget *getParent( ) const {
+	NovelInfoWidget * getParent( ) const {
 		return parent;
 	}
 	QString getScheme( ) const;
@@ -147,6 +148,7 @@ protected:
 protected slots:
 	void webNetRequest( );
 	void slot_changeScheme( int index );
+	void webNetRequestOver( QNetworkReply *reply );
 Q_SIGNALS:
 	/// <summary>
 	/// 窗口重置大小信号

@@ -20,6 +20,8 @@
 #include "interface/IRequestNetInterfaceExtend.h"
 #include "../../../../extend/netWork/Request.h"
 #include "../../../../extend/netWork/RequestConnect.h"
+#include "nameSpace/HtmlTools.h"
+#include <htmls/htmlDoc/HtmlDoc.h>
 
 const QString WebUrlInfoWidget::settingHostKey = tr( u8"host" );
 const QString WebUrlInfoWidget::settingUrlKey = tr( u8"url" );
@@ -28,7 +30,7 @@ const QString WebUrlInfoWidget::schemeKey = tr( u8"scheme" );
 
 QMap< WebUrlInfoWidget *, QString > WebUrlInfoWidget::webHost;
 
-NovelInfoWidget *WebUrlInfoWidget::overNovelInfoWidgetPtr( QObject *converPtr ) {
+NovelInfoWidget * WebUrlInfoWidget::overNovelInfoWidgetPtr( QObject *converPtr ) {
 	auto novelInfoWidget = qobject_cast< NovelInfoWidget * >( converPtr );
 	if( novelInfoWidget )
 		return novelInfoWidget;
@@ -36,7 +38,7 @@ NovelInfoWidget *WebUrlInfoWidget::overNovelInfoWidgetPtr( QObject *converPtr ) 
 	setConverError( &msg );
 	throw msg;
 }
-NovelInfoWidget *WebUrlInfoWidget::overNovelInfoWidgetPtrTry( QObject *converPtr, Exception *tryResult ) {
+NovelInfoWidget * WebUrlInfoWidget::overNovelInfoWidgetPtrTry( QObject *converPtr, Exception *tryResult ) {
 	auto novelInfoWidget = qobject_cast< NovelInfoWidget * >( converPtr );
 	if( novelInfoWidget )
 		return novelInfoWidget;
@@ -65,7 +67,7 @@ size_t WebUrlInfoWidget::getUrl( std::string *outStr ) {
 void WebUrlInfoWidget::setUrl( const StdString &url ) {
 	requestNetInterface->setUrl( url );
 }
-IRequestNetInterface::un_ordered_map *WebUrlInfoWidget::formHtmlGetTypeTheUrls( const StdString &htmlText ) {
+IRequestNetInterface::un_ordered_map * WebUrlInfoWidget::formHtmlGetTypeTheUrls( const StdString &htmlText ) {
 	return requestNetInterface->formHtmlGetTypeTheUrls( htmlText );
 }
 IRequestNetInterface::NovelPtrList WebUrlInfoWidget::formHtmlGetTypePageNovels( const StdString &htmlText, const NovelPtrList &saveNovelInfos, void *appendDataPtr ) {
@@ -111,7 +113,7 @@ WebUrlInfoWidget::WebUrlInfoWidget( Setting *webPageSetting, NovelInfoWidget *pa
 	auto novelInfoWidget = overNovelInfoWidgetPtr( parent );
 	initInstance( webPageSetting, novelInfoWidget, requestNetInterface );
 }
-WebUrlInfoWidget *WebUrlInfoWidget::generateWebUrlInfoWidget( Setting *webPageSetting, NovelInfoWidget *parent, IRequestNetInterfaceExtend *requestNetInterface, Qt::WindowFlags f ) {
+WebUrlInfoWidget * WebUrlInfoWidget::generateWebUrlInfoWidget( Setting *webPageSetting, NovelInfoWidget *parent, IRequestNetInterfaceExtend *requestNetInterface, Qt::WindowFlags f ) {
 	std::string curlLink;
 	requestNetInterface->getUrl( &curlLink );
 	QUrl url( curlLink.c_str( ) );
@@ -119,7 +121,7 @@ WebUrlInfoWidget *WebUrlInfoWidget::generateWebUrlInfoWidget( Setting *webPageSe
 	if( webHost.count( ) != 0 ) {
 		auto iterator = webHost.begin( );
 		auto end = webHost.end( );
-		for( ; iterator != end ; ++iterator ) {
+		for( ; iterator != end; ++iterator ) {
 			auto hostName = iterator.value( );
 			if( hostName == host ) {
 				auto webUrlInfoWidget = iterator.key( );
@@ -185,7 +187,7 @@ QString WebUrlInfoWidget::getScheme( ) const {
 void WebUrlInfoWidget::setScheme( const Scheme_Type schemeType ) {
 	int maxCount = optionBoxWidget->maxCount( );
 	int currentIndex = optionBoxWidget->currentIndex( );
-	for( int index = 0 ; index < maxCount ; ++index )
+	for( int index = 0; index < maxCount; ++index )
 		if( optionBoxWidget->itemData( index ) == schemeType ) {
 			if( currentIndex != index ) {
 				optionBoxWidget->setCurrentIndex( index );
@@ -215,7 +217,7 @@ void WebUrlInfoWidget::computerSize( ) {
 	int optionCount = optionBoxWidget->count( );
 	fontMetrics = optionBoxWidget->fontMetrics( );
 	horizontalAdvance = 0;
-	for( int index = 0 ; index < optionCount ; ++index ) {
+	for( int index = 0; index < optionCount; ++index ) {
 		QString itemText = optionBoxWidget->itemText( index );
 		int advance = fontMetrics.horizontalAdvance( itemText );
 		if( advance > horizontalAdvance )
@@ -227,7 +229,7 @@ void WebUrlInfoWidget::computerSize( ) {
 	int maxWidth = 0;
 	int maxHeight = 0;
 	int count = hasNovelInfoLayout->count( );
-	for( int index = 0 ; index < count ; ++index ) {
+	for( int index = 0; index < count; ++index ) {
 		QLayoutItem *layoutItem = hasNovelInfoLayout->itemAt( index );
 		QSize sizeHint = layoutItem->sizeHint( );
 		QSize minimumSize = layoutItem->minimumSize( );
@@ -245,6 +247,7 @@ void WebUrlInfoWidget::computerSize( ) {
 	int minh = maxHeight + contentsMargins.top( ) + contentsMargins.bottom( );
 	this->setMinimumSize( minw, minh );
 }
+
 void WebUrlInfoWidget::webNetRequest( ) {
 	std::string curlLink;
 	getUrl( &curlLink );
@@ -253,16 +256,7 @@ void WebUrlInfoWidget::webNetRequest( ) {
 	RequestConnect *requestConnect = new RequestConnect( request );
 	request->netGetWork( url, requestConnect );
 	connect( requestConnect, &RequestConnect::networkAccessManagerFinished, [=]( QNetworkReply *reply ) {
-		QByteArray byteArray = reply->readAll( );
-		auto htmlText = byteArray.toStdString( );
-		qDebug( ) << "getr :\n" << byteArray.toStdString( );
-		auto typeTheUrls = requestNetInterface->formHtmlGetTypeTheUrls( htmlText );
-		auto iterator = typeTheUrls->begin( );
-		auto end = typeTheUrls->end( );
-		for( ; iterator != end ; ++iterator ) {
-
-		}
-
+		webNetRequestOver( reply );
 		// 释放上个请求
 		request->deleteLater( );
 	} );
@@ -277,6 +271,27 @@ void WebUrlInfoWidget::slot_changeScheme( int index ) {
 
 	emit currentIndexChanged( index );
 	DEBUG_RUN( qDebug() << "emit currentIndexChanged( );" );
+}
+void WebUrlInfoWidget::webNetRequestOver( QNetworkReply *reply ) {
+	QByteArray byteArray = reply->readAll( );
+	QString html( byteArray );
+
+	std::shared_ptr< std::wstring > stdCWString( std::make_shared< std::wstring >( html.toStdWString( ) ) );
+	size_t length = stdCWString->length( ), index = 0;
+	auto htmlDoc = HtmlTools::HtmlDoc::parse( stdCWString, index, length );
+	if( htmlDoc ) {
+		htmlDoc->analysisBrotherNode( );
+		htmlDoc->analysisAttributesNode( );
+	}
+	auto htmlText = byteArray.toStdString( );
+	qDebug( ) << "getr :\n" << byteArray.toStdString( );
+	auto typeTheUrls = requestNetInterface->formHtmlGetTypeTheUrls( htmlText );
+	auto iterator = typeTheUrls->begin( );
+	auto end = typeTheUrls->end( );
+	for( ; iterator != end; ++iterator ) {
+
+	}
+
 }
 void WebUrlInfoWidget::initCompoentOver( ) {
 	computerSize( );
@@ -315,7 +330,7 @@ void WebUrlInfoWidget::initComponentText( ) {
 		return getValue.toString( );
 	} ).toString( );
 	int maxVisibleItems = optionBoxWidget->count( );
-	for( int index = 0 ; index < maxVisibleItems ; ++index ) {
+	for( int index = 0; index < maxVisibleItems; ++index ) {
 		if( optionBoxWidget->itemText( index ) == scheme ) {
 			optionBoxWidget->setCurrentIndex( index );
 			break;
