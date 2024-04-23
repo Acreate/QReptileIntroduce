@@ -148,7 +148,7 @@ protected:
 protected slots:
 	void webNetRequest( );
 	void slot_changeScheme( int index );
-	void webNetRequestOver( QNetworkReply *reply );
+	void webNetRequestOver( QNetworkReply *reply, RequestConnect *sender );
 Q_SIGNALS:
 	/// <summary>
 	/// 窗口重置大小信号

@@ -150,27 +150,43 @@ void MainWidget::initComponentOver( ) {
 	/// 配置文件设置
 	auto variant = progressSetting->getValue( selectWebSettingPath );
 	if( !variant.isNull( ) ) {
+		QDir current( qApp->applicationDirPath( ) );
 		QFileInfo info( variant.toString( ) );
-		if( info.exists( ) )
-			novelComponent->setNetWorkSettingFilePath( info.absoluteFilePath( ) );
-		else {
+		if( info.exists( ) ) {
+			QString absoluteFilePath = info.absoluteFilePath( );
+			auto relativeFilePath = current.relativeFilePath( absoluteFilePath );
+			progressSetting->setValue( selectWebSettingPath, relativeFilePath );
+			novelComponent->setNetWorkSettingFilePath( relativeFilePath );
+		} else {
 			do {
 				QString fileName = QFileDialog::getOpenFileName( this, tr( u8"选择一个配置文件" ), qApp->applicationDirPath( ), tr( u8"配置文件(*.set *.setting *.ini);;文本文件(*.txt);;全部文件(*)" ) );
 				if( fileName.isEmpty( ) && QMessageBox::question( this, tr( u8"重新选择一个有效文件" ), tr( u8"是否重新选择一个有效的文件？" ) ) == QMessageBox::Yes )
 					continue;
-				progressSetting->setValue( selectWebSettingPath, fileName );
+				auto relativeFilePath = current.relativeFilePath( fileName );
+				progressSetting->setValue( selectWebSettingPath, relativeFilePath );
 				progressSetting->sync( );
-				novelComponent->setNetWorkSettingFilePath( fileName );
+				novelComponent->setNetWorkSettingFilePath( relativeFilePath );
 				break;
 			} while( true );
 		}
 	}
 	variant = progressSetting->getValue( selectReadFileWorkPath );
-	if( variant.isNull( ) || variant.toString( ).isEmpty( ) )
-		progressSetting->setValue( selectReadFileWorkPath, qApp->applicationDirPath( ) );
+	QDir dir( qApp->applicationDirPath( ) );
+	if( variant.isNull( ) || variant.toString( ).isEmpty( ) ) {
+		auto defaultPath = dir.relativeFilePath( qApp->applicationDirPath( ) + QDir::separator( ) + "read_dir_path" );
+		progressSetting->setValue( selectReadFileWorkPath, defaultPath );
+	} else {
+		auto defaultPath = dir.relativeFilePath( variant.toString( ) );
+		progressSetting->setValue( selectReadFileWorkPath, defaultPath );
+	}
 	variant = progressSetting->getValue( selectWriteFileWorkPath );
-	if( variant.isNull( ) || variant.toString( ).isEmpty( ) )
-		progressSetting->setValue( selectWriteFileWorkPath, qApp->applicationDirPath( ) );
+	if( variant.isNull( ) || variant.toString( ).isEmpty( ) ) {
+		auto defaultPath = dir.relativeFilePath( qApp->applicationDirPath( ) + QDir::separator( ) + "write_dir_path" );
+		progressSetting->setValue( selectWriteFileWorkPath, defaultPath );
+	} else {
+		auto defaultPath = dir.relativeFilePath( variant.toString( ) );
+		progressSetting->setValue( selectWriteFileWorkPath, defaultPath );
+	}
 
 	QDateTime dateTime;
 	QDate date;
@@ -222,11 +238,11 @@ void MainWidget::mouseReleaseEvent( QMouseEvent *event ) {
 	bool contains = converTransparentForMouseEventsBtn->geometry( ).contains( event->pos( ) );
 	if( contains )
 		switch( mouseButton ) {
-			case Qt::RightButton : {
-				QPointF position = event->globalPosition( );
-				toolsMenu->exec( QPoint( position.x( ), position.y( ) ) );
-			}
-			break;
+		case Qt::RightButton : {
+			QPointF position = event->globalPosition( );
+			toolsMenu->exec( QPoint( position.x( ), position.y( ) ) );
+		}
+		break;
 		}
 	QWidget::mouseReleaseEvent( event );
 }
@@ -235,12 +251,12 @@ void MainWidget::mousePressEvent( QMouseEvent *event ) {
 	bool contains = converTransparentForMouseEventsBtn->geometry( ).contains( event->pos( ) );
 	if( contains )
 		switch( mouseButton ) {
-			case Qt::LeftButton :
-				if( showCount == 0 )
-					emit converTransparentForMouseEventsBtn->clicked( true );
-				else
-					showCount = 0;
-				break;
+		case Qt::LeftButton :
+			if( showCount == 0 )
+				emit converTransparentForMouseEventsBtn->clicked( true );
+			else
+				showCount = 0;
+			break;
 		}
 
 	QWidget::mousePressEvent( event );

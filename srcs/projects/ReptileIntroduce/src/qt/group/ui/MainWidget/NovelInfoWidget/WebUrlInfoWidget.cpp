@@ -256,7 +256,7 @@ void WebUrlInfoWidget::webNetRequest( ) {
 	RequestConnect *requestConnect = new RequestConnect( request );
 	request->netGetWork( url, requestConnect );
 	connect( requestConnect, &RequestConnect::networkAccessManagerFinished, [=]( QNetworkReply *reply ) {
-		webNetRequestOver( reply );
+		webNetRequestOver( reply, requestConnect );
 		// 释放上个请求
 		request->deleteLater( );
 	} );
@@ -272,25 +272,12 @@ void WebUrlInfoWidget::slot_changeScheme( int index ) {
 	emit currentIndexChanged( index );
 	DEBUG_RUN( qDebug() << "emit currentIndexChanged( );" );
 }
-void WebUrlInfoWidget::webNetRequestOver( QNetworkReply *reply ) {
+void WebUrlInfoWidget::webNetRequestOver( QNetworkReply *reply, RequestConnect *sender ) {
 	QByteArray byteArray = reply->readAll( );
 	QString html( byteArray );
 
-	std::shared_ptr< std::wstring > stdCWString( std::make_shared< std::wstring >( html.toStdWString( ) ) );
-	size_t length = stdCWString->length( ), index = 0;
-	auto htmlDoc = HtmlTools::HtmlDoc::parse( stdCWString, index, length );
-	if( htmlDoc ) {
-		htmlDoc->analysisBrotherNode( );
-		htmlDoc->analysisAttributesNode( );
-	}
-	auto htmlText = byteArray.toStdString( );
+	auto typeTheUrls = formHtmlGetTypeTheUrls( html.toStdString( ) );
 	qDebug( ) << "getr :\n" << byteArray.toStdString( );
-	auto typeTheUrls = requestNetInterface->formHtmlGetTypeTheUrls( htmlText );
-	auto iterator = typeTheUrls->begin( );
-	auto end = typeTheUrls->end( );
-	for( ; iterator != end; ++iterator ) {
-
-	}
 
 }
 void WebUrlInfoWidget::initCompoentOver( ) {
