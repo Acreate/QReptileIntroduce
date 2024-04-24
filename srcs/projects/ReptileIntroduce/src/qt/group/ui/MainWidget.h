@@ -74,6 +74,14 @@ private: // 定时调用
 private: // ui 组件
 	FileSelectPathWidget *pathHint; // 提示语
 	DisplayWidget *displayWidget; // 信息显示框
+public:
+	/// <summary>
+	/// 更新配置文件路径，并且应用配置<br/>
+	/// 重复路径返回 false，并且跳过过程
+	/// </summary>
+	/// <param name="filePath">新的路径</param>
+	/// <returns>成功返回 true</returns>
+	bool updateSettingFileInfo(const QString& filePath);
 public slots: // 窗口子控件信号响应
 	/// <summary>
 	/// 时间响应信号

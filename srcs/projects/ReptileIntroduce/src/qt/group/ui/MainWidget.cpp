@@ -65,7 +65,6 @@ void MainWidget::initComponentPropertys( ) {
 		}
 	);
 	progressSetting = new Setting( progressIniFileName, this );
-	emit selectPathWidget->setFilePath( QDir( qApp->applicationDirPath( ) ).relativeFilePath( progressIniFileName ) );
 }
 void MainWidget::initComponentLayout( ) {
 	// ui 组件
@@ -79,11 +78,17 @@ void MainWidget::initComponentLayout( ) {
 }
 void MainWidget::initComponentConnect( ) {
 	connect( dateTimeThread, &DateTimeThread::updateDateTimeStr, this, &MainWidget::updateDateTimeStrFunction, Qt::QueuedConnection );
-
+	connect( selectPathWidget, &FileSelectPathWidget::editorOver, [&]( const QString &newFilePath ) {
+		updateSettingFileInfo( newFilePath );
+	} );
+	connect( selectPathWidget, &FileSelectPathWidget::setFilePathFinish, this, [&]( const QString &filePath ) {
+		updateSettingFileInfo( filePath );
+	} );
 }
 void MainWidget::initComponentOver( ) {
 	//// 线程开始
 	dateTimeThread->start( );
+	emit selectPathWidget->setPath( QDir( qApp->applicationDirPath( ) ).relativeFilePath( progressSetting->getFilePath( ) ) );
 }
 MainWidget::MainWidget( QWidget *parent, Qt::WindowFlags fg ) : QWidget( parent, fg ) {
 
@@ -127,6 +132,12 @@ void MainWidget::resizeEvent( QResizeEvent *event ) {
 	QWidget::resizeEvent( event );
 }
 
+bool MainWidget::updateSettingFileInfo( const QString &filePath ) {
+	if( progressSetting->setFilePath( filePath ) ) {
+
+	}
+	return false;
+}
 void MainWidget::updateDateTimeStrFunction( const QString &currentDateTimeStr ) {
 	DEBUG_RUN(
 		static bool isOutDbug = true;

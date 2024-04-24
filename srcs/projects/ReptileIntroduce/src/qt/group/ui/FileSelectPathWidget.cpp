@@ -1,5 +1,6 @@
 ﻿#include "FileSelectPathWidget.h"
 
+#include <QFileDialog>
 #include <QLabel>
 #include "../../extend/layout/HLayoutBox.h"
 #include "../../extend/ui/EditLine.h"
@@ -19,17 +20,30 @@ void FileSelectPathWidget::initComponent( ) {
 	EditLine *filePathEditLine; // 路径显示框（可编辑）
 	Button *selectFileBtn; // 文件路径选择矿弹出按钮
 	 */
-	hint = new QLabel( u8"路径 : ", this );
+	hint = new QLabel( tr( u8"路径 : " ), this );
 	filePathEditLine = new EditLine( this );
-	selectFileBtn = new Button( u8"选择文件", this );
+	selectFileBtn = new Button( tr( u8"选择文件" ), this );
 	hLayoutBox = new HLayoutBox( this );
+}
+void FileSelectPathWidget::initUI( ) {
 	hLayoutBox->addWidget( hint );
 	hLayoutBox->addWidget( filePathEditLine );
 	hLayoutBox->addWidget( selectFileBtn );
 }
-void FileSelectPathWidget::initUI( ) {
-}
 void FileSelectPathWidget::initConnect( ) {
+	connect( this, &FileSelectPathWidget::showFileSelectDialog, [&]( const QString &caption, const QString &dir, const QString &filter, QString *selectedFilter, QFileDialog::Options options ) {
+		emit selectcSignal( );
+		QString fileName = QFileDialog::getOpenFileName( this, caption, dir, filter, selectedFilter, options );
+		emit selectFileOver( fileName );
+	} );
+	connect( this, &FileSelectPathWidget::setPath, [&]( const QString &filePath ) {
+		filePathEditLine->setText( filePath );
+		emit setFilePathFinish( filePathEditLine->placeholderText( ) );
+	} );
+	connect( filePathEditLine, &QLineEdit::textEdited, this, &FileSelectPathWidget::editored );
+	connect( filePathEditLine, &QLineEdit::editingFinished, [=]( ) {
+		emit setFilePathFinish( filePathEditLine->placeholderText( ) );
+	} );
 }
 void FileSelectPathWidget::initOver( ) {
 }

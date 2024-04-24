@@ -121,19 +121,21 @@ void Setting::sync( ) {
 	QMutexLocker< QMutex > nstanceLock( instanceMutex );
 	setting->sync( );
 }
-void Setting::setFilePath( const QString &filePath ) {
+bool Setting::setFilePath( const QString &filePath ) {
 	QFileInfo fileInfo( filePath );
 	if( fileInfo.exists( ) ) {
 		QString fileName = setting->fileName( );
 		auto absoluteFilePath = fileInfo.absoluteFilePath( );
 		fileInfo.setFile( fileName );
 		if( absoluteFilePath == fileInfo.absoluteFilePath( ) )
-			return;
+			return false;
 		QMutexLocker< QMutex > nstanceLock( instanceMutex );
 		setting->sync( );
 		setting->deleteLater( );
 		setting = new QSettings( absoluteFilePath, QSettings::IniFormat, this );
+		return true;
 	}
+	return false;
 }
 QString Setting::getFilePath( ) const {
 	return QFileInfo( setting->fileName( ) ).absoluteFilePath( );

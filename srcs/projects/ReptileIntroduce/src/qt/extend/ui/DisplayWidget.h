@@ -2,6 +2,7 @@
 #define DISPLAYWIDGET_H_H_HEAD__FILE__
 #pragma once
 #include <QWidget>
+class QMenuBar;
 class MenuBar;
 class Action;
 class Menu;
@@ -34,7 +35,7 @@ private: // 运算参考
 	/// 顶部大小<br/>
 	/// 绘制时，会根据该值来确定开始的 y 轴。
 	/// </summary>
-	size_t topHeight; 
+	size_t topHeight;
 public:
 	DisplayWidget( QWidget *parent, Qt::WindowFlags flags = Qt::WindowFlags( ) );
 	~DisplayWidget( ) override;
@@ -73,6 +74,12 @@ Q_SIGNALS:
 	/// 数据显示之前
 	/// </summary>
 	void displayBefore( );
+	/// <summary>
+	/// 菜单或者选项被点击时发生
+	/// </summary>
+	/// <param name="send">信号发生者</param>
+	/// <param name="menuBar">所在QMenuBar组件</param>
+	void menuActionClick( QAction *send, QMenuBar *menuBar );
 protected slots: // 响应自身信号的槽
 	void native_slots_display( QObject *data );
 	void native_slots_setType( Display_Type type );

@@ -30,8 +30,8 @@ void DisplayWidget::initComponent( ) {
 	startGet = new Action( topMenu );
 }
 void DisplayWidget::initProperty( ) {
-	startGet->setText( u8"打开文件" );
-	topMenu->setTitle( u8"开始" );
+	startGet->setText( tr( u8"打开文件" ) );
+	topMenu->setTitle( tr( u8"开始" ) );
 	backImage->fill( Qt::gray );
 	currentDisplayType = NORMALE;
 	topHeight = topMenuBar->height( );
@@ -45,6 +45,9 @@ void DisplayWidget::initComponentLayout( ) {
 void DisplayWidget::initConnect( ) {
 	connect( this, &DisplayWidget::setType, this, &DisplayWidget::native_slots_setType );
 	connect( this, &DisplayWidget::display, this, &DisplayWidget::native_slots_display );
+	connect( topMenu, &QMenu::triggered, [=]( QAction *action ) {
+		emit menuActionClick( action, topMenuBar );
+	} );
 }
 void DisplayWidget::paintEvent( QPaintEvent *event ) {
 	// 绘制之前调用
