@@ -4,7 +4,6 @@
 
 #include "../../../../../projects/ReptileIntroduce/src/qt/extend/thread/FileThread.h"
 std::pair< Path::DirList, Path::FileList > Path::getPathInfo( const QString &path ) {
-
 	QFileInfo info( path );
 	if( info.isDir( ) )
 		return getDirInfo( path );
@@ -18,7 +17,6 @@ std::pair< Path::DirList, Path::FileList > Path::getDirInfo( const QString &path
 	for( auto &dir : dirs ) {
 		result.first.emplace_back( dir );
 		QString currentPath = dir.getCurrentPath( );
-		qDebug( ) << "currentPath : " << currentPath;
 		auto dirInfo = getDirInfo( currentPath );
 		auto subDirs = dirInfo.first;
 		for( auto &subDir : subDirs )

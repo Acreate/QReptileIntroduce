@@ -11,7 +11,6 @@ class Button;
 class HLayoutBox;
 class VLayoutBox;
 class DisplayWidget : public QWidget {
-
 	Q_OBJECT;
 public:
 	enum Display_Type {
@@ -48,6 +47,16 @@ public:
 	Display_Type getDisplay( ) const {
 		return currentDisplayType;
 	}
+private:
+	QMap< QObject *, Menu * > menuMap;
+public:
+	/// <summary>
+	/// 获取绑定对象的菜单<br/>
+	/// 当绑定对象不存在时，将会重新创建一个菜单
+	/// </summary>
+	/// <param name="object">绑定对象的菜单</param>
+	/// <returns></returns>
+	Menu * getMenu( QObject *object );
 protected:
 	void paintEvent( QPaintEvent *event ) override;
 	void mousePressEvent( QMouseEvent *event ) override;

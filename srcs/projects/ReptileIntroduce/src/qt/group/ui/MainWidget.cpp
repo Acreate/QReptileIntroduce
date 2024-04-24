@@ -28,8 +28,7 @@ const QString MainWidget::selectWebSettingPath = tr( u8"web/SettingFilePath" );
 
 void MainWidget::initMumberPtrMemory( ) {
 	dateTimeThread = new DateTimeThread;
-	// 在 initComponentPropertys( ) 配置申请
-	// progressSetting = new Setting( this );
+	progressSetting = new Setting( this );
 	translator = new QTranslator( this );
 	selectPathWidget = new FileSelectPathWidget( this );
 	display = new DisplayWidget( this );
@@ -55,16 +54,15 @@ void MainWidget::initComponentPropertys( ) {
 		qApp->installTranslator( translator );
 	DEBUG_RUN_CODE_ELSE_END( qDebug( ) << tr( u8"翻译(*.pm)文件加载错误" ) );
 
-	DEBUG_RUN(
-		QFileInfo info(progressIniFileName);
-		auto absPath = info.absoluteFilePath( );
-		if(!info.exists( )) {
-		qDebug() << "path (" << absPath << ") is not exists;";
-		}else {
-		qDebug() << "path (" << absPath<< ") has setting file;";
-		}
-	);
-	progressSetting = new Setting( progressIniFileName, this );
+	QFileInfo info( progressIniFileName );
+	auto absPath = info.absoluteFilePath( );
+	if( !info.exists( ) ) {
+		qDebug( ) << "path (" << absPath << ") is not exists;";
+	} else {
+		qDebug( ) << "path (" << absPath << ") has setting file;";
+	}
+	updateSettingFileInfo( progressIniFileName );
+	emit selectPathWidget->setPath( progressIniFileName );
 }
 void MainWidget::initComponentLayout( ) {
 	// ui 组件
@@ -134,16 +132,10 @@ void MainWidget::resizeEvent( QResizeEvent *event ) {
 
 bool MainWidget::updateSettingFileInfo( const QString &filePath ) {
 	if( progressSetting->setFilePath( filePath ) ) {
-
+		
 	}
 	return false;
 }
 void MainWidget::updateDateTimeStrFunction( const QString &currentDateTimeStr ) {
-	DEBUG_RUN(
-		static bool isOutDbug = true;
-		if( isOutDbug ) {
-		qDebug( ) << tr(u8"MainWidget::updateDateTimeStrFunction( const QString &currentDateTimeStr ) currentThreadId: ") << QThread::currentThread( )->currentThreadId( );
-		isOutDbug = false;
-		}
-	);
+
 }

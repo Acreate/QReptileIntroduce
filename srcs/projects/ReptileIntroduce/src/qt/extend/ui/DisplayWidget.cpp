@@ -3,6 +3,7 @@
 #include <QResizeEvent>
 #include <QMoveEvent>
 #include <QPainter>
+#include <QMap>
 #include <QPushButton>
 
 #include "../layout/HLayoutBox.h"
@@ -20,6 +21,10 @@ DisplayWidget::DisplayWidget( QWidget *parent, Qt::WindowFlags flags ) : QWidget
 DisplayWidget::~DisplayWidget( ) {
 	menuHLayout->deleteLater( );
 	delete backImage;
+	auto menus = menuMap.values( );
+	for( auto menu : menus )
+		if( menu->parent( ) == nullptr )
+			menu->deleteLater( );
 }
 void DisplayWidget::initComponent( ) {
 	backImage = new QImage( size( ), QImage::Format_BGR888 );
@@ -48,6 +53,14 @@ void DisplayWidget::initConnect( ) {
 	connect( topMenu, &QMenu::triggered, [=]( QAction *action ) {
 		emit menuActionClick( action, topMenuBar );
 	} );
+}
+Menu * DisplayWidget::getMenu( QObject *object ) {
+	if( menuMap.contains( object ) )
+		return menuMap[ object ];
+	auto objMenu = new Menu( this );
+	objMenu->setTitle( object->objectName( ) );
+	menuMap.insert( object, objMenu );
+	return objMenu;
 }
 void DisplayWidget::paintEvent( QPaintEvent *event ) {
 	// 绘制之前调用

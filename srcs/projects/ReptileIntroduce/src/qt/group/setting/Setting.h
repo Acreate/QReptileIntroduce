@@ -51,25 +51,25 @@ public: // 配置文件的值操作
 	/// </summary>
 	/// <param name="key">键</param>
 	/// <param name="value">值</param>
-	void setValue( const QAnyStringView &key, const QVariant &value );
+	bool setValue( const QAnyStringView &key, const QVariant &value );
 	/// <summary>
 	/// 设置指定组名下的键值对
 	/// </summary>
 	/// <param name="groupName">组名</param>
 	/// <param name="key">键</param>
 	/// <param name="value">值</param>
-	void setValue( const QAnyStringView &groupName, const QAnyStringView &key, const QVariant &value );
+	bool setValue( const QAnyStringView &groupName, const QAnyStringView &key, const QVariant &value );
 	/// <summary>
 	/// 设置所有键值对
 	/// </summary>
 	/// <param name="valuePair">键值对列表</param>
-	void setValue( const QMap< QAnyStringView, QVariant > &valuePair );
+	bool setValue( const QMap< QAnyStringView, QVariant > &valuePair );
 	/// <summary>
 	/// 设置指定组名下的所有键值对
 	/// </summary>
 	/// <param name="groupName">组名</param>
 	/// <param name="valuePair">键值对列表</param>
-	void setValue( const QAnyStringView &groupName, const QMap< QAnyStringView, QVariant > &valuePair );
+	bool setValue( const QAnyStringView &groupName, const QMap< QAnyStringView, QVariant > &valuePair );
 
 	/// <summary>
 	/// 获取所有键
@@ -107,7 +107,7 @@ public: // 配置文件的值操作
 	/// <summary>
 	/// 同步
 	/// </summary>
-	void sync( );
+	bool sync( );
 public:
 	/// <summary>
 	/// 设置配置文件路径<br/>

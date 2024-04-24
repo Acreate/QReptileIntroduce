@@ -10,8 +10,7 @@ Setting::Setting( const QString &filePath, QObject *parent = nullptr ):
 	instanceMutex = new QMutex;
 }
 Setting::Setting( QObject *parent = nullptr ) : QObject( parent ) {
-	auto filePath = QString( u8"%1%2%3%2%4%2%5%6" ).arg( qApp->applicationDirPath( ) ).arg( QDir::separator( ) ).arg( u8"progress" ).arg( u8"ini" ).arg( qApp->applicationName( ) ).arg( u8"ini" );
-	setting = new QSettings( filePath, QSettings::IniFormat, this );
+	setting = nullptr;
 	instanceMutex = new QMutex;
 }
 Setting::~Setting( ) {
@@ -23,116 +22,166 @@ Setting::~Setting( ) {
 }
 QVariant Setting::getValue( const QAnyStringView &key ) const {
 	QMutexLocker< QMutex > nstanceLock( instanceMutex );
-	return setting->value( key );
+	if( setting )
+		return setting->value( key );
+	return QVariant( );
 }
 QVariant Setting::getValue( const QAnyStringView &groupName, const QAnyStringView &key ) const {
 	QMutexLocker< QMutex > nstanceLock( instanceMutex );
-	setting->beginGroup( groupName );
-	auto result = setting->value( key );
-	setting->endGroup( );
-	return result;
+	if( setting ) {
+		setting->beginGroup( groupName );
+		auto result = setting->value( key );
+		setting->endGroup( );
+		return result;
+	}
+	return QVariant( );
+
 }
 QVariant Setting::getValue( const QAnyStringView &key, const std::function< QVariant( const QVariant & ) > &ifFunction ) const {
 	QMutexLocker< QMutex > nstanceLock( instanceMutex );
-	return ifFunction( setting->value( key ) );
+	if( setting )
+		return ifFunction( setting->value( key ) );
+	return QVariant( );
 }
 QVariant Setting::getValue( const QAnyStringView &groupName, const QAnyStringView &key, const std::function< QVariant( const QVariant & ) > &ifFunction ) const {
 	QMutexLocker< QMutex > nstanceLock( instanceMutex );
-	setting->beginGroup( groupName );
-	auto result = setting->value( key );
-	setting->endGroup( );
-	return ifFunction( result );
+	if( setting ) {
+		setting->beginGroup( groupName );
+		auto result = setting->value( key );
+		setting->endGroup( );
+		return ifFunction( result );
+	}
+	return QVariant( );
+
 }
-void Setting::setValue( const QAnyStringView &key, const QVariant &value ) {
+bool Setting::setValue( const QAnyStringView &key, const QVariant &value ) {
 	QMutexLocker< QMutex > nstanceLock( instanceMutex );
-	setting->setValue( key, value );
+	if( setting ) {
+		setting->setValue( key, value );
+		return true;
+	}
+	return false;
 }
-void Setting::setValue( const QAnyStringView &groupName, const QAnyStringView &key, const QVariant &value ) {
+bool Setting::setValue( const QAnyStringView &groupName, const QAnyStringView &key, const QVariant &value ) {
 	QMutexLocker< QMutex > nstanceLock( instanceMutex );
-	setting->beginGroup( groupName );
-	setting->setValue( key, value );
-	setting->endGroup( );
+	if( setting ) {
+		setting->beginGroup( groupName );
+		setting->setValue( key, value );
+		setting->endGroup( );
+		return true;
+	}
+	return false;
+
 }
-void Setting::setValue( const QMap< QAnyStringView, QVariant > &valuePair ) {
+bool Setting::setValue( const QMap< QAnyStringView, QVariant > &valuePair ) {
 	QMutexLocker< QMutex > nstanceLock( instanceMutex );
-	auto iterator = valuePair.begin( );
-	auto endIterator = valuePair.end( );
-	for( ; iterator != endIterator; ++iterator )
-		setting->setValue( iterator.key( ), iterator.value( ) );
+	if( setting ) {
+		auto iterator = valuePair.begin( );
+		auto endIterator = valuePair.end( );
+		for( ; iterator != endIterator; ++iterator )
+			setting->setValue( iterator.key( ), iterator.value( ) );
+		return true;
+	}
+	return false;
 }
-void Setting::setValue( const QAnyStringView &groupName, const QMap< QAnyStringView, QVariant > &valuePair ) {
+bool Setting::setValue( const QAnyStringView &groupName, const QMap< QAnyStringView, QVariant > &valuePair ) {
 	QMutexLocker< QMutex > nstanceLock( instanceMutex );
-	auto iterator = valuePair.begin( );
-	auto endIterator = valuePair.end( );
-	setting->beginGroup( groupName );
-	for( ; iterator != endIterator; ++iterator )
-		setting->setValue( iterator.key( ), iterator.value( ) );
-	setting->endGroup( );
+	if( setting ) {
+		auto iterator = valuePair.begin( );
+		auto endIterator = valuePair.end( );
+		setting->beginGroup( groupName );
+		for( ; iterator != endIterator; ++iterator )
+			setting->setValue( iterator.key( ), iterator.value( ) );
+		setting->endGroup( );
+		return true;
+	}
+	return false;
 }
 QStringList Setting::getAllKey( ) const {
 	QMutexLocker< QMutex > nstanceLock( instanceMutex );
-	return setting->allKeys( );
+	if( setting )
+		return setting->allKeys( );
+	return QStringList( );
 }
 QStringList Setting::getAllKey( const QAnyStringView &group ) const {
 	QMutexLocker< QMutex > nstanceLock( instanceMutex );
-	setting->beginGroup( group );
-	auto allKey = setting->allKeys( );
-	setting->endGroup( );
-	return allKey;
+	if( setting ) {
+		setting->beginGroup( group );
+		auto allKey = setting->allKeys( );
+		setting->endGroup( );
+		return allKey;
+	}
+	return QStringList( );
+
 }
 QList< QVariant > Setting::getAllValue( ) const {
 	QMutexLocker< QMutex > nstanceLock( instanceMutex );
 	QList< QVariant > result;
-	auto allKey = setting->allKeys( );
-	for( auto &key : allKey )
-		result.append( setting->value( key ) );
+	if( setting ) {
+		auto allKey = setting->allKeys( );
+		for( auto &key : allKey )
+			result.append( setting->value( key ) );
+	}
 	return result;
 }
 QList< QVariant > Setting::getAllValue( const QAnyStringView &group ) const {
 	QMutexLocker< QMutex > nstanceLock( instanceMutex );
 	QList< QVariant > result;
-	setting->beginGroup( group );
-	auto allKey = setting->allKeys( );
-	for( auto &key : allKey )
-		result.append( setting->value( key ) );
-	setting->endGroup( );
+	if( setting ) {
+		setting->beginGroup( group );
+		auto allKey = setting->allKeys( );
+		for( auto &key : allKey )
+			result.append( setting->value( key ) );
+		setting->endGroup( );
+	}
 	return result;
 }
 QMap< QAnyStringView, QVariant > Setting::getAllInfo( ) const {
 	QMutexLocker< QMutex > nstanceLock( instanceMutex );
 	QMap< QAnyStringView, QVariant > result;
-	auto allKey = setting->allKeys( );
-	for( auto &key : allKey )
-		result.insert( key, setting->value( key ) );
+	if( setting ) {
+		auto allKey = setting->allKeys( );
+		for( auto &key : allKey )
+			result.insert( key, setting->value( key ) );
+	}
 	return result;
 }
 QMap< QAnyStringView, QVariant > Setting::getAllInfo( const QAnyStringView &group ) const {
 	QMutexLocker< QMutex > nstanceLock( instanceMutex );
 	QMap< QAnyStringView, QVariant > result;
-	setting->beginGroup( group );
-	auto allKey = setting->allKeys( );
-	for( auto &key : allKey )
-		result.insert( key, setting->value( key ) );
-	setting->endGroup( );
+	if( setting ) {
+		setting->beginGroup( group );
+		auto allKey = setting->allKeys( );
+		for( auto &key : allKey )
+			result.insert( key, setting->value( key ) );
+		setting->endGroup( );
+	}
 	return result;
 
 }
-void Setting::sync( ) {
+bool Setting::sync( ) {
 	QMutexLocker< QMutex > nstanceLock( instanceMutex );
-	setting->sync( );
+	if( setting ) {
+		setting->sync( );
+		return true;
+	}
+	return false;
 }
 bool Setting::setFilePath( const QString &filePath ) {
+	QMutexLocker< QMutex > nstanceLock( instanceMutex );
 	QFileInfo fileInfo( filePath );
 	if( fileInfo.exists( ) ) {
-		QString fileName = setting->fileName( );
-		auto absoluteFilePath = fileInfo.absoluteFilePath( );
-		fileInfo.setFile( fileName );
-		if( absoluteFilePath == fileInfo.absoluteFilePath( ) )
-			return false;
-		QMutexLocker< QMutex > nstanceLock( instanceMutex );
-		setting->sync( );
-		setting->deleteLater( );
-		setting = new QSettings( absoluteFilePath, QSettings::IniFormat, this );
+		if( setting ) {
+			QString fileName = setting->fileName( );
+			auto absoluteFilePath = fileInfo.absoluteFilePath( );
+			fileInfo.setFile( fileName );
+			if( absoluteFilePath == fileInfo.absoluteFilePath( ) )
+				return false;
+			setting->sync( );
+			setting->deleteLater( );
+			setting = new QSettings( absoluteFilePath, QSettings::IniFormat, this );
+		} else
+			setting = new QSettings( filePath, QSettings::IniFormat );
 		return true;
 	}
 	return false;
@@ -147,107 +196,3 @@ void Setting::clearGroup( ) {
 		setting->endGroup( );
 	} while( true );
 }
-
-
-//
-//
-//
-//
-//QVariant Setting::getValue( const QAnyStringView &key, bool isSync ) const {
-//	if( isSync ) {
-//		QMutexLocker< QMutex > nstanceLock( instanceMutex );
-//		setting->sync( );
-//	}
-//	return getValue( key );
-//}
-//QVariant Setting::getValue( const QAnyStringView &groupName, const QAnyStringView &key, bool isSync ) const {
-//	if( isSync ) {
-//		QMutexLocker< QMutex > nstanceLock( instanceMutex );
-//		setting->sync( );
-//	}
-//	return getValue( groupName, key );
-//}
-//QVariant Setting::getValue( const QAnyStringView &groupName, const QAnyStringView &key, const std::function< QVariant( const QVariant & ) > &ifFunction, bool isSync ) const {
-//	if( isSync ) {
-//		QMutexLocker< QMutex > nstanceLock( instanceMutex );
-//		setting->sync( );
-//	}
-//	return getValue( groupName, key, ifFunction );
-//}
-//QVariant Setting::getValue( const QAnyStringView &key, const std::function< QVariant( const QVariant & ) > &ifFunction, bool isSync ) const {
-//	if( isSync ) {
-//		QMutexLocker< QMutex > nstanceLock( instanceMutex );
-//		setting->sync( );
-//	}
-//	return getValue( key, ifFunction );
-//}
-//void Setting::setValue( const QAnyStringView &key, const QVariant &value, bool isSync ) {
-//	setValue( key, value );
-//	if( isSync ) {
-//		QMutexLocker< QMutex > nstanceLock( instanceMutex );
-//		setting->sync( );
-//	}
-//}
-//void Setting::setValue( const QAnyStringView &groupName, const QAnyStringView &key, const QVariant &value, bool isSync ) {
-//	setValue( groupName, key, value );
-//	if( isSync ) {
-//		QMutexLocker< QMutex > nstanceLock( instanceMutex );
-//		setting->sync( );
-//	}
-//}
-//void Setting::setValue( const QMap< QAnyStringView, QVariant > &valuePair, bool isSync ) {
-//	setValue( valuePair );
-//	if( isSync ) {
-//		QMutexLocker< QMutex > nstanceLock( instanceMutex );
-//		setting->sync( );
-//	}
-//}
-//void Setting::setValue( const QAnyStringView &groupName, const QMap< QAnyStringView, QVariant > &valuePair, bool isSync ) {
-//	setValue( groupName, valuePair );
-//	if( isSync ) {
-//		QMutexLocker< QMutex > nstanceLock( instanceMutex );
-//		setting->sync( );
-//	}
-//}
-//QStringList Setting::getAllKey( bool isSync ) const {
-//	if( isSync ) {
-//		QMutexLocker< QMutex > nstanceLock( instanceMutex );
-//		setting->sync( );
-//	}
-//	return getAllKey( );
-//}
-//QStringList Setting::getAllKey( const QAnyStringView &group, bool isSync ) const {
-//	if( isSync ) {
-//		QMutexLocker< QMutex > nstanceLock( instanceMutex );
-//		setting->sync( );
-//	}
-//	return getAllKey( group );
-//}
-//QList< QVariant > Setting::getAllValue( bool isSync ) const {
-//	if( isSync ) {
-//		QMutexLocker< QMutex > nstanceLock( instanceMutex );
-//		setting->sync( );
-//	}
-//	return getAllValue( );
-//}
-//QList< QVariant > Setting::getAllValue( const QAnyStringView &group, bool isSync ) const {
-//	if( isSync ) {
-//		QMutexLocker< QMutex > nstanceLock( instanceMutex );
-//		setting->sync( );
-//	}
-//	return getAllValue( group );
-//}
-//QMap< QAnyStringView, QVariant > Setting::getAllInfo( bool isSync ) const {
-//	if( isSync ) {
-//		QMutexLocker< QMutex > nstanceLock( instanceMutex );
-//		setting->sync( );
-//	}
-//	return getAllInfo( );
-//}
-//QMap< QAnyStringView, QVariant > Setting::getAllInfo( const QAnyStringView &group, bool isSync ) const {
-//	if( isSync ) {
-//		QMutexLocker< QMutex > nstanceLock( instanceMutex );
-//		setting->sync( );
-//	}
-//	return getAllInfo( group );
-//}

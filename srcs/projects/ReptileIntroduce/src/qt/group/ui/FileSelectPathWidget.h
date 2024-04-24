@@ -16,6 +16,7 @@ private:
 	QLabel *hint; // 提示
 	EditLine *filePathEditLine; // 路径显示框（可编辑）
 	Button *selectFileBtn; // 文件路径选择矿弹出按钮
+	QString relativeFilePath; // 保存相对路径
 public:
 	FileSelectPathWidget( QWidget *parent );
 	~FileSelectPathWidget( ) override;
@@ -26,12 +27,18 @@ private:
 	void initOver( ); // 初始化完毕
 public:
 	QString getSelectFilePath( );
+	/// <summary>
+	/// 更新路径。失败返回 false
+	/// </summary>
+	/// <param name="newPath">新的路径</param>
+	/// <returns>成功返回 true</returns>
+	inline bool updatePath( const QString &newPath );
 Q_SIGNALS: // 产生信号-被动触发
 	/// <summary>
 	/// 设置路径
 	/// </summary>
 	/// <param name="filePath">路径</param>
-	void setPath(const QString& filePath);
+	void setPath( const QString &filePath );
 	/// <summary>
 	/// 显示窗口信号
 	/// </summary>
