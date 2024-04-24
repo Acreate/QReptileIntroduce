@@ -1,14 +1,25 @@
 ﻿#include "./Setting.h"
+
+#include <qcoreapplication.h>
+#include <qdir.h>
 #include <QFileInfo>
 
 Setting::Setting( const QString &filePath, QObject *parent = nullptr ):
-QObject( parent ) {
+	QObject( parent ) {
+	setting = new QSettings( filePath, QSettings::IniFormat, this );
+	instanceMutex = new QMutex;
+}
+Setting::Setting( QObject *parent = nullptr ) : QObject( parent ) {
+	auto filePath = QString( u8"%1%2%3%2%4%2%5%6" ).arg( qApp->applicationDirPath( ) ).arg( QDir::separator( ) ).arg( u8"progress" ).arg( u8"ini" ).arg( qApp->applicationName( ) ).arg( u8"ini" );
 	setting = new QSettings( filePath, QSettings::IniFormat, this );
 	instanceMutex = new QMutex;
 }
 Setting::~Setting( ) {
 	delete instanceMutex;
-	setting->deleteLater( );
+	if( setting ) {
+		setting->sync( );
+		setting->deleteLater( );
+	}
 }
 QVariant Setting::getValue( const QAnyStringView &key ) const {
 	QMutexLocker< QMutex > nstanceLock( instanceMutex );
@@ -46,7 +57,7 @@ void Setting::setValue( const QMap< QAnyStringView, QVariant > &valuePair ) {
 	QMutexLocker< QMutex > nstanceLock( instanceMutex );
 	auto iterator = valuePair.begin( );
 	auto endIterator = valuePair.end( );
-	for( ; iterator != endIterator ; ++iterator )
+	for( ; iterator != endIterator; ++iterator )
 		setting->setValue( iterator.key( ), iterator.value( ) );
 }
 void Setting::setValue( const QAnyStringView &groupName, const QMap< QAnyStringView, QVariant > &valuePair ) {
@@ -54,7 +65,7 @@ void Setting::setValue( const QAnyStringView &groupName, const QMap< QAnyStringV
 	auto iterator = valuePair.begin( );
 	auto endIterator = valuePair.end( );
 	setting->beginGroup( groupName );
-	for( ; iterator != endIterator ; ++iterator )
+	for( ; iterator != endIterator; ++iterator )
 		setting->setValue( iterator.key( ), iterator.value( ) );
 	setting->endGroup( );
 }
@@ -134,9 +145,6 @@ void Setting::clearGroup( ) {
 		setting->endGroup( );
 	} while( true );
 }
-
-
-
 
 
 //
