@@ -6,6 +6,7 @@
 #include "../../extend/layout/HLayoutBox.h"
 #include "../../extend/layout/VLayoutBox.h"
 #include "../../extend/ui/DisplayWidget.h"
+#include "../plug/LoadPlug.h"
 #include "FileSelectPathWidget.h"
 #include <DebugInfo.h>
 #include <QFileDialog>
@@ -18,6 +19,7 @@
 #include <QScrollBar>
 #include <qcoreapplication.h>
 
+#include "../plug/LoadPlug.h"
 #include "../setting/Setting.h"
 
 const QString MainWidget::qstrPoint = tr( u8"坐标:( %1 , %2 )" );
@@ -132,7 +134,15 @@ void MainWidget::resizeEvent( QResizeEvent *event ) {
 
 bool MainWidget::updateSettingFileInfo( const QString &filePath ) {
 	if( progressSetting->setFilePath( filePath ) ) {
-		
+		auto allValue = progressSetting->getAllValue( tr( u8"plugs" ) );
+		for( auto &value : allValue ) {
+			auto path = value.toString( );
+			if( path.isEmpty( ) )
+				continue;
+			LoadPlug load( path );
+			load.loadPlugs( );
+			load.findLib( "ab", nullptr );
+		}
 	}
 	return false;
 }

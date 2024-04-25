@@ -25,6 +25,7 @@ private: // 用户界面布局
 private:
 	MenuBar *topMenuBar; // 菜单显示栏
 	Menu *topMenu; // 菜单
+	Menu* plugTopMneu; // 插件的顶级菜单
 	Action *startGet; // 开始请求
 private: // 类成员变量
 	QImage *backImage; // 要绘制的内容
@@ -49,14 +50,22 @@ public:
 	}
 private:
 	QMap< QObject *, Menu * > menuMap;
+	QMap< QObject *, Menu * > menuPlugMap;
 public:
 	/// <summary>
 	/// 获取绑定对象的菜单<br/>
 	/// 当绑定对象不存在时，将会重新创建一个菜单
 	/// </summary>
-	/// <param name="object">绑定对象的菜单</param>
-	/// <returns></returns>
+	/// <param name="object">绑定对象</param>
+	/// <returns>对象的菜单</returns>
 	Menu * getMenu( QObject *object );
+	/// <summary>
+	/// 获取插件绑定对象的菜单<br/>
+	/// 当绑定对象不存在时，将会重新创建一个菜单
+	/// </summary>
+	/// <param name="object">绑定插件对象</param>
+	/// <returns>插件对象的菜单</returns>
+	Menu * getPlugMenu( QObject *object );
 protected:
 	void paintEvent( QPaintEvent *event ) override;
 	void mousePressEvent( QMouseEvent *event ) override;

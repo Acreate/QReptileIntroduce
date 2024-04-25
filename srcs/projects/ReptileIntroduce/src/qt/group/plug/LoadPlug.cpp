@@ -5,6 +5,7 @@
 
 #include "path/Path.h"
 
+
 LoadPlug::LoadPlug( const QString &path, QObject *parent ): QObject( parent ), plugPath( path ) {
 }
 LoadPlug::~LoadPlug( ) {
@@ -25,14 +26,15 @@ QMap< QObject *, IRequestNetInterfaceExtend * > LoadPlug::loadPlugs( ) {
 	if( files.size( ) == 0 )
 		return result;
 	for( auto &filePath : files ) {
-		if( lib.contains( filePath ) ) {
-			auto interface = lib[ filePath ];
-			result.insert( interface.first, interface.second );
+		auto absolutePath = filePath.getCurrentFilePtah( );
+		if( lib.contains( absolutePath ) ) {
+			auto pair = lib[ absolutePath ];
+			result.insert( pair.first, pair.second );
 		} else {
-			auto interface = LoadPlug::getIRequestNetInterface( filePath.getCurrentFilePtah( ), name, spec, loadClassName, methodName );
+			auto interface = LoadPlug::getIRequestNetInterface( absolutePath, name, spec, loadClassName, methodName );
 			if( interface.second != nullptr ) {
 				result.insert( interface.first, interface.second );
-				lib.insert( filePath, interface );
+				lib.insert( absolutePath, interface );
 			}
 		}
 
@@ -47,7 +49,10 @@ IRequestNetInterfaceExtend * LoadPlug::metaGetResult(
 	const QMetaObject *metaObject = outObj->metaObject( );
 	if( metaObject->className( ) == loadClassName ) {
 		IRequestNetInterfaceExtend *res = nullptr;
-		bool invokeMethod = metaObject->invokeMethod( outObj, methodName, Qt::DirectConnection, Q_RETURN_ARG( IRequestNetInterfaceExtend *, res ) );
+		QByteArray local8Bit = methodName.toLocal8Bit( );
+		std::string stdString = local8Bit.toStdString( );
+		const char *cStr = stdString.c_str( );
+		bool invokeMethod = metaObject->invokeMethod( outObj, cStr, Qt::DirectConnection, Q_RETURN_ARG( IRequestNetInterfaceExtend *, res ) );
 		if( invokeMethod )
 			return res;
 	}

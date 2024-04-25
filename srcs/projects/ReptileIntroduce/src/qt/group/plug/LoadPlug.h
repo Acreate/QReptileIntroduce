@@ -34,7 +34,7 @@ private:// 运算参考成员
 	QString name; // 传递到构造器的第一参数
 	QString spec; // 传递到构造器的第二参数
 	QString plugPath; // 目录或者文件
-	QMap< File, std::pair< QObject *, IRequestNetInterfaceExtend * > > lib; // 已经库存的插件
+	QMap< QString, std::pair< QObject *, IRequestNetInterfaceExtend * > > lib; // 已经库存的插件
 public:
 	/// <summary>
 	/// 指定搜索路径<br/>

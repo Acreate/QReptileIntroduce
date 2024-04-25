@@ -32,17 +32,20 @@ void DisplayWidget::initComponent( ) {
 	menuHLayout = new HLayoutBox;
 	topMenuBar = new MenuBar( this );
 	topMenu = new Menu( this );
+	plugTopMneu = new Menu( this );
 	startGet = new Action( topMenu );
 }
 void DisplayWidget::initProperty( ) {
 	startGet->setText( tr( u8"打开文件" ) );
 	topMenu->setTitle( tr( u8"开始" ) );
+	plugTopMneu->setTitle( tr( u8"插件菜单" ) );
 	backImage->fill( Qt::gray );
 	currentDisplayType = NORMALE;
 	topHeight = topMenuBar->height( );
 }
 void DisplayWidget::initComponentLayout( ) {
 	topMenuBar->addMenu( topMenu );
+	topMenuBar->addMenu( plugTopMneu );
 	topMenu->addAction( startGet );
 	menuHLayout->setMenuBar( topMenuBar );
 	mainVLayout->addLayout( menuHLayout );
@@ -59,7 +62,17 @@ Menu * DisplayWidget::getMenu( QObject *object ) {
 		return menuMap[ object ];
 	auto objMenu = new Menu( this );
 	objMenu->setTitle( object->objectName( ) );
+	topMenuBar->addMenu( objMenu );
 	menuMap.insert( object, objMenu );
+	return objMenu;
+}
+Menu * DisplayWidget::getPlugMenu( QObject *object ) {
+	if( menuPlugMap.contains( object ) )
+		return menuPlugMap[ object ];
+	auto objMenu = new Menu( this );
+	objMenu->setTitle( object->objectName( ) );
+	plugTopMneu->addMenu( objMenu );
+	menuPlugMap.insert( object, objMenu );
 	return objMenu;
 }
 void DisplayWidget::paintEvent( QPaintEvent *event ) {
