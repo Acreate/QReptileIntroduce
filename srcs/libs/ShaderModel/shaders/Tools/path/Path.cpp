@@ -1,8 +1,8 @@
 ﻿#include "Path.h"
 
 #include <QDir>
-
-#include "../../../../../projects/ReptileIntroduce/src/qt/extend/thread/FileThread.h"
+#include "Dir.h"
+#include "File.h"
 std::pair< Path::DirList, Path::FileList > Path::getPathInfo( const QString &path ) {
 	QFileInfo info( path );
 	if( info.isDir( ) )
@@ -12,22 +12,44 @@ std::pair< Path::DirList, Path::FileList > Path::getPathInfo( const QString &pat
 std::pair< Path::DirList, Path::FileList > Path::getDirInfo( const QString &path ) {
 	std::pair< DirList, FileList > result;
 	Dir topDir( path );
-	topDir.updateInfo( );
+	Path::updateInfo( topDir );
 	auto dirs = topDir.getDirs( );
+	bool isExis = false; // 防止重复
 	for( auto &dir : dirs ) {
-		result.first.emplace_back( dir );
-		QString currentPath = dir.getCurrentPath( );
-		auto dirInfo = getDirInfo( currentPath );
+		std::vector< Dir > &dirVector = result.first;
+		for( auto &exisDir : dirVector )
+			if( exisDir.currentPath == dir.currentPath ) {
+				isExis = true;
+				break;
+			}
+		if( isExis ) {
+			isExis = false;
+			continue;
+		}
+		dirVector.emplace_back( dir );
+		QString currentPath = dir.currentPath;
+		auto dirInfo = getDirInfo( dir.currentPath );
 		auto subDirs = dirInfo.first;
 		for( auto &subDir : subDirs )
-			result.first.emplace_back( subDir );
+			dirVector.emplace_back( subDir );
 		auto subFiles = dirInfo.second;
 		for( auto &subFile : subFiles )
 			result.second.emplace_back( subFile );
 	}
 	auto files = topDir.getFiles( );
-	for( auto &file : files )
+	for( auto &file : files ) {
+		std::vector< File > &fileVector = result.second;
+		for( auto &exisFile : fileVector )
+			if( exisFile.currentFilePtah == file.currentFilePtah ) {
+				isExis = true;
+				break;
+			}
+		if( isExis ) {
+			isExis = false;
+			continue;
+		}
 		result.second.emplace_back( file );
+	}
 	return result;
 }
 std::pair< Path::DirList, Path::FileList > Path::getFileInfo( const QString &path ) {
@@ -79,4 +101,27 @@ bool Path::removeDirPath( const QString &path ) {
 		return true;
 	QDir absoluteDir = fileInfo.absoluteDir( );
 	return absoluteDir.removeRecursively( );
+}
+
+size_t Path::updateInfo( Dir &dir ) {
+	QDir currentDir( dir.currentPath );
+	auto entryInfoList = currentDir.entryInfoList( QDir::AllEntries | QDir::NoDotAndDotDot );
+	for( auto &info : entryInfoList ) {
+		auto absolutePath = info.absoluteFilePath( );
+		if( info.isDir( ) )
+			dir.dirs.emplace_back( Dir( absolutePath ) );
+		else
+			dir.files.emplace_back( File( absolutePath ) );
+	}
+	return dir.dirs.size( ) + dir.files.size( );
+}
+size_t Path::copyDirInfoToOtherDir( Dir &src, Dir &des ) {
+	size_t orgSize = src.files.size( ) + des.dirs.size( );
+	size_t srcSize = src.dirs.size( );
+	for( size_t index = 0; index < srcSize; ++index )
+		des.dirs.emplace_back( src.dirs[ index ] );
+	srcSize = src.files.size( );
+	for( size_t index = 0; index < srcSize; ++index )
+		des.files.emplace_back( src.files[ index ] );
+	return src.files.size( ) + des.dirs.size( ) - orgSize;
 }

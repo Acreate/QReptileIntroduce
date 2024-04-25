@@ -21,12 +21,12 @@ public:
 		FILE_BIN
 	};
 private: // 用户界面布局
-	HLayoutBox *menuHLayout; // 顶级横向菜单布局
 	VLayoutBox *mainVLayout; // 顶级纵向主要布局
 private:
 	MenuBar *topMenuBar; // 菜单显示栏
 	Menu *topMenu; // 菜单
 	Menu *plugTopMneu; // 插件的顶级菜单
+	Menu *widgetTopMneu; // 窗口的顶级菜单
 	Action *startGet; // 开始请求
 private: // 类成员变量
 	QImage *backImage; // 要绘制的内容
@@ -49,10 +49,12 @@ public:
 	Display_Type getDisplay( ) const {
 		return currentDisplayType;
 	}
+private slots:
+	void slot_click_action( const Action *action );
 private:
 	QMap< QObject *, Menu * > menuMap; // 保存主要菜单
 	QMap< IRequestNetInterfaceExtend *, Menu * > menuPlugMap; // 保存插件菜单
-	QMap< QObject *, QSharedPointer<QString> > actionXpath; // 保存菜单的路径
+	QMap< QObject *, QSharedPointer< QString > > actionXpath; // 保存菜单的路径
 public:
 	/// <summary>
 	/// 获取绑定对象的菜单<br/>
@@ -87,6 +89,21 @@ Q_SIGNALS:
 	/// <param name="data">数据</param>
 	void display( QObject *data );
 	/// <summary>
+	/// 显示字符串
+	/// </summary>
+	/// <param name="data">字符串数据</param>
+	void display( const QString &data );
+	/// <summary>
+	/// 显示数据
+	/// </summary>
+	/// <param name="data">数据</param>
+	void display( const QArrayData &data );
+	/// <summary>
+	/// 显示数据
+	/// </summary>
+	/// <param name="data">数据</param>
+	void display( const QByteArray &data );
+	/// <summary>
 	/// 数据显示完毕
 	/// </summary>
 	void displayLater( );
@@ -98,10 +115,29 @@ Q_SIGNALS:
 	/// 菜单或者选项被点击时发生
 	/// </summary>
 	/// <param name="path">菜单按键的路径</param>
-	void menuActionClick(const QString& path);
+	void menuActionClick( const QString &path );
 protected slots: // 响应自身信号的槽
-	void native_slots_display( QObject *data );
-	void native_slots_setType( Display_Type type );
+	void native_slot_setType( Display_Type type );
+	/// <summary>
+	/// 显示数据
+	/// </summary>
+	/// <param name="data">数据</param>
+	void native_slot_display( QObject *data );
+	/// <summary>
+	/// 显示字符串
+	/// </summary>
+	/// <param name="data">字符串数据</param>
+	void native_slot_display( const QString &data );
+	/// <summary>
+	/// 显示数据
+	/// </summary>
+	/// <param name="data">数据</param>
+	void native_slot_display( const QArrayData &data );
+	/// <summary>
+	/// 显示数据
+	/// </summary>
+	/// <param name="data">数据</param>
+	void native_slot_display( const QByteArray &data );
 };
 
 

@@ -19,14 +19,22 @@
 #include <QScrollBar>
 #include <qcoreapplication.h>
 
+#include "../../extend/menu/Action.h"
+#include "../../extend/menu/Menu.h"
 #include "../plug/LoadPlug.h"
 #include "../setting/Setting.h"
+#include "interface/IRequestNetInterfaceExtend.h"
+#include "path/Path.h"
 
-const QString MainWidget::qstrPoint = tr( u8"坐标:( %1 , %2 )" );
-
-const QString MainWidget::selectReadFileWorkPath = tr( u8"work/ReadDirPath" );
-const QString MainWidget::selectWriteFileWorkPath = tr( u8"work/WriteDirPath" );
-const QString MainWidget::selectWebSettingPath = tr( u8"web/SettingFilePath" );
+const QString MainWidget::settingGroupWork = tr( u8"工作" );
+const QString MainWidget::settingGroupWeb = tr( u8"网络" );
+const QString MainWidget::settingGroupWebKey = tr( u8"配置文件路径" );
+const QString MainWidget::settingGroupWorkKeyReadFileWorkPath = tr( u8"读取路径" );
+const QString MainWidget::settingGroupWorkKeyWriteFileWorkPath = tr( u8"写入路径" );
+const QString MainWidget::settingGroupSelectDefaultPaths = tr( u8"选择窗口默认路径" );
+const QString MainWidget::settingGroupSelectDefaultPathskeyPlugPathKey = tr( u8"插件路径" );
+const QString MainWidget::settingGroupPlugIniPathKeyMerge = tr( u8"插件/配置路径" );
+const QChar MainWidget::settingPathSep = tr( u8";" )[ 0 ];
 
 void MainWidget::initMumberPtrMemory( ) {
 	dateTimeThread = new DateTimeThread;
@@ -38,11 +46,11 @@ void MainWidget::initMumberPtrMemory( ) {
 void MainWidget::initComponentPropertys( ) {
 	dateTimeThread->setParent( this );
 
-	// progressIniFileName, QSettings::IniFormat
+
 	setWindowTitle( tr( u8"小说阅读" ) );
 	// 窗口捕获鼠标
 	setMouseTracking( true );
-
+	setMinimumSize( 800, 500 );
 	/// 配置 路径
 	QString progressIniPath = qApp->applicationDirPath( ).append( QDir::separator( ) ).append( tr( u8"progress" ) ).append( QDir::separator( ) );
 	QString progressIniFileName = progressIniPath;
@@ -59,9 +67,9 @@ void MainWidget::initComponentPropertys( ) {
 	QFileInfo info( progressIniFileName );
 	auto absPath = info.absoluteFilePath( );
 	if( !info.exists( ) ) {
-		qDebug( ) << "path (" << absPath << ") is not exists;";
+		qDebug( ) << "路径 (" << absPath << ") 不存在;";
 	} else {
-		qDebug( ) << "path (" << absPath << ") has setting file;";
+		qDebug( ) << "路径 (" << absPath << ") 有一个配置文件;";
 	}
 	updateSettingFileInfo( progressIniFileName );
 	emit selectPathWidget->setPath( progressIniFileName );
@@ -75,7 +83,7 @@ void MainWidget::initComponentLayout( ) {
 	mainVLayoutBox = new VLayoutBox( this );
 	mainVLayoutBox->addWidget( selectPathWidget, 1 );
 	mainVLayoutBox->addWidget( display, 19 );
-	
+
 }
 void MainWidget::initComponentConnect( ) {
 	connect( dateTimeThread, &DateTimeThread::updateDateTimeStr, this, &MainWidget::updateDateTimeStrFunction, Qt::QueuedConnection );
@@ -93,6 +101,16 @@ void MainWidget::initComponentOver( ) {
 	//// 线程开始
 	dateTimeThread->start( );
 	emit selectPathWidget->setPath( QDir( qApp->applicationDirPath( ) ).relativeFilePath( progressSetting->getFilePath( ) ) );
+	fromDisplayWidgetMenu = display->getMenu( this );
+	fromDisplayWidgetMenu->setTitle( windowTitle( ) );
+	Action *loadPlug = new Action;
+	loadPlug->setText( tr( u8"插件路径..." ) );
+	connect( loadPlug, &QAction::triggered, this, &MainWidget::showSelectPlugPathDialog );
+	fromDisplayWidgetMenu->addAction( loadPlug );
+	loadPlug = new Action;
+	loadPlug->setText( tr( u8"加载插件" ) );
+	fromDisplayWidgetMenu->addAction( loadPlug );
+	connect( loadPlug, &QAction::triggered, this, &MainWidget::loadingPlug );
 }
 MainWidget::MainWidget( QWidget *parent, Qt::WindowFlags fg ) : QWidget( parent, fg ) {
 
@@ -138,18 +156,100 @@ void MainWidget::resizeEvent( QResizeEvent *event ) {
 
 bool MainWidget::updateSettingFileInfo( const QString &filePath ) {
 	if( progressSetting->setFilePath( filePath ) ) {
-		auto allValue = progressSetting->getAllValue( tr( u8"plugs" ) );
-		for( auto &value : allValue ) {
-			auto path = value.toString( );
-			if( path.isEmpty( ) )
-				continue;
-			LoadPlug load( path );
-			load.loadPlugs( );
-			load.findLib( "ab", nullptr );
+		qsizetype webSettingMapSize = webSettingMap.size( );
+		auto value = progressSetting->getValue( settingGroupPlugIniPathKeyMerge ).toString( );
+		if( value.isEmpty( ) )
+			return false;
+		QStringList stringList = value.split( settingPathSep );
+		QFileInfo fileInfo;
+		for( auto &path : stringList ) {
+			fileInfo.setFile( path );
+			if( fileInfo.exists( ) ) {
+				QString absolutePath = fileInfo.absolutePath( );
+				if( webSettingMap.contains( absolutePath ) ) // 存在则跳过
+					continue;
+				webSettingMap.insert( absolutePath, new Setting( absolutePath, this ) );
+			}
 		}
+		if( webSettingMapSize > webSettingMap.size( ) )
+			return true;
 	}
 	return false;
 }
 void MainWidget::updateDateTimeStrFunction( const QString &currentDateTimeStr ) {
+
+}
+void MainWidget::showSelectPlugPathDialog( ) {
+	auto variant = progressSetting->getValue( settingGroupSelectDefaultPaths );
+	auto plugSelectPath = variant.toString( );
+	if( plugSelectPath.isEmpty( ) )
+		plugSelectPath = qApp->applicationDirPath( );
+	do {
+		auto openFileName = QFileDialog::getOpenFileName( this, tr( u8"选择一个插件路径" ), plugSelectPath );
+		if( openFileName.isEmpty( ) ) {
+			if( QMessageBox::question( this, tr( u8"路径异常" ), tr( u8"需要重新选择路径吗？" ) ) == QMessageBox::Ok )
+				continue;
+			return;
+		}
+		plugSelectPath = openFileName;
+		break;
+	} while( true );
+	QFileInfo info( plugSelectPath );
+	QString fileDirPath = info.absoluteDir( ).path( );
+	QDir qDir( qApp->applicationDirPath( ) );
+	QString relativeFilePath = qDir.relativeFilePath( fileDirPath );
+	progressSetting->setValue( settingGroupSelectDefaultPaths, relativeFilePath );
+	plugSelectPath = progressSetting->getValue( settingGroupPlugIniPathKeyMerge ).toString( );
+	if( plugSelectPath.isEmpty( ) )
+		progressSetting->setValue( settingGroupPlugIniPathKeyMerge, relativeFilePath );
+	else {
+		// 检测是否存在相同
+		QStringList paths;
+		auto stringList = plugSelectPath.split( settingPathSep );
+		size_t index = 0;
+		for( auto &path : stringList ) {
+			QString filePath = qDir.relativeFilePath( path );
+			paths << filePath;
+			if( filePath == relativeFilePath )
+				continue;
+			++index;
+		}
+		if( index == paths.size( ) )
+			paths << relativeFilePath;
+		paths.sort( );
+		progressSetting->setValue( settingGroupPlugIniPathKeyMerge, paths.join( settingPathSep ) );
+		progressSetting->sync( );
+	}
+}
+void MainWidget::loadingPlug( ) {
+	auto variant = progressSetting->getValue( settingGroupPlugIniPathKeyMerge ).toString( );
+	if( variant.isEmpty( ) ) {
+		QString msg = QString( tr( u8"没有" ) );
+		emit display->display( msg );
+		return;
+	}
+	auto stringList = variant.split( settingPathSep );
+	for( auto &plugSelectPath : stringList ) {
+		auto pathInfo = Path::getPathInfo( plugSelectPath );
+		for( auto &file : pathInfo.second ) {
+			QString filePtah = file.getCurrentFilePtah( );
+			LoadPlug load( filePtah );
+			auto requestNetInterfaceExtends = load.loadPlugs( );
+			if( requestNetInterfaceExtends.size( ) == 0 )
+				continue;
+			auto iterator = requestNetInterfaceExtends.begin( );
+			auto end = requestNetInterfaceExtends.end( );
+			std::string outUrl;
+			for( ; iterator != end; ++iterator ) {
+				IRequestNetInterfaceExtend *interfaceExtend = iterator.value( );
+				if( interfaceExtend->getUrl( &outUrl ) ) {
+					qDebug( ) << tr( u8"获取url : " ) << QString::fromStdString( outUrl );
+					interfaceExtend->deleteMember( );
+				}
+				outUrl.clear( );
+			}
+		}
+
+	}
 
 }

@@ -13,11 +13,49 @@ public:
 	static std::pair< DirList, FileList > getPathInfo( const QString &path );
 	static std::pair< DirList, FileList > getDirInfo( const QString &path );
 	static std::pair< DirList, FileList > getFileInfo( const QString &path );
+	/// <summary>
+	/// 创建文件
+	/// </summary>
+	/// <param name="path">文件的路径</param>
+	/// <returns>失败返回 false</returns>
 	static bool creatFilePath(const QString &path );
+	/// <summary>
+	/// 创建目录
+	/// </summary>
+	/// <param name="path">目录路径</param>
+	/// <returns>失败返回 false</returns>
 	static bool creatDirPath(const QString &path );
+	/// <summary>
+	/// 删除路径
+	/// </summary>
+	/// <param name="path">删除的路径</param>
+	/// <returns>失败返回 false</returns>
 	static bool removePath(const QString &path );
+	/// <summary>
+	/// 删除文件
+	/// </summary>
+	/// <param name="path">文件路径</param>
+	/// <returns>失败返回 false</returns>
 	static bool removeFilePath(const QString &path );
+	/// <summary>
+	/// 删除目录
+	/// </summary>
+	/// <param name="path">目录路径</param>
+	/// <returns>失败返回 false</returns>
 	static bool removeDirPath(const QString &path );
+	/// <summary>
+	/// 更新 Dir 路径信息
+	/// </summary>
+	/// <param name="dir">更新对象</param>
+	/// <returns>更新个数</returns>
+	static size_t updateInfo( Dir &dir );
+	/// <summary>
+	/// 拷贝路径数据
+	/// </summary>
+	/// <param name="src">拷贝源</param>
+	/// <param name="des">数据输出目标</param>
+	/// <returns>拷贝个数</returns>
+	static size_t copyDirInfoToOtherDir( Dir &src, Dir &des );
 };
 
 #endif // PATH_H_H_HEAD__FILE__

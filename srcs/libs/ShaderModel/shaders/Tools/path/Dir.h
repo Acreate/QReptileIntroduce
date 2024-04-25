@@ -8,7 +8,10 @@
 #include "File.h"
 
 #include "../export/Tools_export.h"
+class Path;
 class TOOLS_EXPORT Dir {
+public:
+	friend class Path;
 private:
 	QString currentPath;
 	std::vector< File > files;
@@ -17,7 +20,7 @@ public:
 	Dir( const QString &path );
 	virtual ~Dir( );
 public: // 动作
-	size_t updateInfo( );
+
 	std::vector< File > getFiles( ) const {
 		return files;
 	}
@@ -46,6 +49,8 @@ public:
 	friend bool operator==( const Dir &dir, const QDir &path ) {
 		return dir.currentPath == path.absolutePath( );
 	}
+	friend bool operator==( const Dir &lhs, const Dir &rhs ) { return lhs.currentPath == rhs.currentPath; }
+	friend bool operator!=( const Dir &lhs, const Dir &rhs ) { return !( lhs == rhs ); }
 };
 
 #endif // DIR_H_H_HEAD__FILE__

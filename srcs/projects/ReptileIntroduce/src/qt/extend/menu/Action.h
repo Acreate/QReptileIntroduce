@@ -15,14 +15,11 @@ public:
 	Action( QObject *parent = nullptr );
 	~Action( ) override;
 public:
-	QObject * getParentMenu( ) {
+	QObject * getParentMenu( ) const {
 		return parentMenu;
 	}
-Q_SIGNALS:
-	/// <summary>
-	/// 点击
-	/// </summary>
-	void click( Action *clickAction );
+	QSharedPointer< QString > getActionXPath( ) const;
+
 public: // 静态函数
 
 	/// <summary>

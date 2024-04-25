@@ -18,7 +18,7 @@ public:
 	void addAction( Action *action );
 	void addMenu( Menu *menu );
 public:
-	QObject * getParentMenu( ) {
+	QObject * getParentMenu( ) const {
 		return parentMenu;
 	}
 Q_SIGNALS:

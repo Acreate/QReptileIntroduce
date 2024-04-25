@@ -6,7 +6,10 @@
 #include <QString>
 
 #include "../export/Tools_export.h"
+class Path;
 class TOOLS_EXPORT File {
+public:
+	friend class Path;
 private:
 	QString currentFilePtah;
 public:
@@ -29,6 +32,8 @@ public:
 	friend bool operator==( const File &file, const QFileInfo &path ) {
 		return file.currentFilePtah == path.absolutePath( );
 	}
+	friend bool operator==( const File &lhs, const File &rhs ) { return lhs.currentFilePtah == rhs.currentFilePtah; }
+	friend bool operator!=( const File &lhs, const File &rhs ) { return !( lhs == rhs ); }
 };
 
 #endif // FILE_H_H_HEAD__FILE__

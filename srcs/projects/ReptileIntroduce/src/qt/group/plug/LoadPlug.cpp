@@ -6,13 +6,21 @@
 #include "path/Path.h"
 
 
-LoadPlug::LoadPlug( const QString &path, QObject *parent ): QObject( parent ), plugPath( path ) {
+LoadPlug::LoadPlug( const QString &path, QObject *parent )
+	: QObject( parent ), plugPath( QFileInfo( path ).absoluteFilePath( ) ) {
 }
 LoadPlug::~LoadPlug( ) {
+	auto iterator = lib.begin( );
+	auto end = lib.end( );
+	for( ; iterator != end; ++iterator ) {
+		QObject *object = iterator.value( ).first;
+		if( object->parent( ) == nullptr )
+			object->deleteLater( );
+	}
 }
 bool LoadPlug::findLib( const QString &path, std::pair< QObject *, IRequestNetInterfaceExtend * > *result ) {
 	QFileInfo fileInfo( path );
-	QString absolutePath = fileInfo.absolutePath( );
+	QString absolutePath = fileInfo.absoluteFilePath( );
 	if( lib.contains( absolutePath ) ) {
 		*result = lib[ absolutePath ];
 		return true;
@@ -62,8 +70,8 @@ std::pair< QObject *, IRequestNetInterfaceExtend * > LoadPlug::getIRequestNetInt
 	const QString &plugFilePath, const QString &name, const QString &spec, const QString &loadClassName, const QString &methodName
 ) {
 	QPluginLoader loader( plugFilePath );
-	if( loader.load( ) ) {
-		QObject *instance = loader.instance( );
+	QObject *instance = loader.instance( );
+	if( instance ) {
 		QGenericPlugin *genericPlugin = qobject_cast< QGenericPlugin * >( instance );
 		if( genericPlugin ) {
 			QObject *object = genericPlugin->create( name, spec );
@@ -73,6 +81,8 @@ std::pair< QObject *, IRequestNetInterfaceExtend * > LoadPlug::getIRequestNetInt
 				return { object, requestNetInterface };
 			}
 		}
+		instance->deleteLater( );
+		loader.unload( );
 	}
 	return { };
 }

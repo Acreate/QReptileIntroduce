@@ -16,6 +16,15 @@
 #include "interface/IRequestNetInterfaceExtend.h"
 #include "path/Dir.h"
 
+#define q_connect_solts( type , signalPtr, signal, slotPtr, slot ) \
+	do{\
+		auto signal_QObject = QOverload< type>::of( signal ); \
+		auto slot_QObject = QOverload< type>::of( slot ); \
+		connect ( signalPtr,signal_QObject,slotPtr,slot_QObject); \
+	}while(false)
+#define q_connect_solts_theSamePtr(type , sycPtr, signal, slot) q_connect_solts(type , sycPtr, signal, sycPtr, slot)
+#define q_connect_solts_thisPtr(type, signal, slot) q_connect_solts_theSamePtr(type , this, signal,  slot)
+
 DisplayWidget::DisplayWidget( QWidget *parent, Qt::WindowFlags flags ) : QWidget( parent, flags ) {
 	initComponent( );
 	initComponentLayout( );
@@ -23,7 +32,6 @@ DisplayWidget::DisplayWidget( QWidget *parent, Qt::WindowFlags flags ) : QWidget
 	initConnect( );
 }
 DisplayWidget::~DisplayWidget( ) {
-	menuHLayout->deleteLater( );
 	delete backImage;
 	auto menus = menuMap.values( );
 	for( auto menu : menus )
@@ -33,69 +41,66 @@ DisplayWidget::~DisplayWidget( ) {
 void DisplayWidget::initComponent( ) {
 	backImage = new QImage( size( ), QImage::Format_BGR888 );
 	mainVLayout = new VLayoutBox( this );
-	menuHLayout = new HLayoutBox;
 	topMenuBar = new MenuBar( this );
 	topMenu = new Menu( this );
 	plugTopMneu = new Menu( this );
+	widgetTopMneu = new Menu( this );
 	startGet = new Action( topMenu );
 }
 void DisplayWidget::initProperty( ) {
 	startGet->setText( tr( u8"打开文件" ) );
 	topMenu->setTitle( tr( u8"开始" ) );
 	plugTopMneu->setTitle( tr( u8"插件菜单" ) );
+	widgetTopMneu->setTitle( tr( u8"窗口菜单" ) );
 	backImage->fill( Qt::gray );
 	currentDisplayType = NORMALE;
 	topHeight = topMenuBar->height( );
+	topMenuBar->setMinimumWidth( 100 );
 }
 void DisplayWidget::initComponentLayout( ) {
 	topMenuBar->addMenu( topMenu );
 	topMenuBar->addMenu( plugTopMneu );
+	topMenuBar->addMenu( widgetTopMneu );
 	topMenu->addAction( startGet );
-	menuHLayout->setMenuBar( topMenuBar );
-	mainVLayout->addLayout( menuHLayout );
+	mainVLayout->setMenuBar( topMenuBar );
 }
 void DisplayWidget::initConnect( ) {
-	connect( this, &DisplayWidget::setType, this, &DisplayWidget::native_slots_setType );
-	connect( this, &DisplayWidget::display, this, &DisplayWidget::native_slots_display );
-	connect( topMenu, &Menu::click, [=]( Action *action ) {
-		QObject *parentMenu = action->getParentMenu( );
-		if( parentMenu ) {
-			std::stack< QString > xpathStack;
-			xpathStack.push( action->text( ) );
-			do {
-				Menu *menu = Action::converToMenu( parentMenu );
-				if( menu ) {
-					xpathStack.push( menu->title( ) );
-					parentMenu = menu->getParentMenu( );
-					continue;
-				}
-				MenuBar *menuBar = Action::converToMenuBar( parentMenu );
-				if( menuBar ) {
-					xpathStack.push( menuBar->windowTitle( ) );
-					parentMenu = menuBar->getParentMenu( );
-					continue;
-				}
-				break;
-			} while( parentMenu );
-			QStringList xpath;
-			while( xpathStack.size( ) ) {
-				xpath << xpathStack.top( );
-				xpathStack.pop( );
-			}
-			QString path = xpath.join( QDir::separator( ) );
-			emit menuActionClick( path );
-			return;
-		}
+	connect( topMenu, &Menu::click, this, &DisplayWidget::slot_click_action );
 
-		emit menuActionClick( action->text( ) );
-	} );
+	// 链接自身的槽
+	connect( this, &DisplayWidget::setType, this, &DisplayWidget::native_slot_setType );
+
+	// 重载的槽
+	q_connect_solts_thisPtr( QObject *, &DisplayWidget::display, &DisplayWidget::native_slot_display );
+	q_connect_solts_thisPtr( const QString &, &DisplayWidget::display, &DisplayWidget::native_slot_display );
+	q_connect_solts_thisPtr( const QArrayData &, &DisplayWidget::display, &DisplayWidget::native_slot_display );
+	q_connect_solts_thisPtr( const QByteArray &, &DisplayWidget::display, &DisplayWidget::native_slot_display );
+}
+void DisplayWidget::slot_click_action( const Action *action ) {
+	emit menuActionClick( *action->getActionXPath( ) );
+}
+
+void DisplayWidget::native_slot_display( const QString &data ) {
+	QPainter painter;
+	painter.begin( backImage );
+	QPen pen;
+	pen.setColor( Qt::red );
+	painter.setPen( pen );
+	painter.drawText( QPoint( 100, 100 ), data );
+	painter.end( );
+	update( );
+}
+void DisplayWidget::native_slot_display( const QArrayData &data ) {
+}
+void DisplayWidget::native_slot_display( const QByteArray &data ) {
 }
 Menu * DisplayWidget::getMenu( QObject *object ) {
 	if( menuMap.contains( object ) )
 		return menuMap[ object ];
 	auto objMenu = new Menu( this );
+	connect( objMenu, &Menu::click, this, &DisplayWidget::slot_click_action );
 	objMenu->setTitle( object->objectName( ) );
-	topMenuBar->addMenu( objMenu );
+	widgetTopMneu->addMenu( objMenu );
 	menuMap.insert( object, objMenu );
 	return objMenu;
 }
@@ -104,6 +109,7 @@ Menu * DisplayWidget::getPlugMenu( IRequestNetInterfaceExtend *object ) {
 	if( menuPlugMap.contains( object ) )
 		return menuPlugMap[ object ];
 	auto objMenu = new Menu( this );
+	connect( objMenu, &Menu::click, this, &DisplayWidget::slot_click_action );
 	std::string url;
 	object->getUrl( &url );
 	objMenu->setTitle( QString::fromStdString( url ) );
@@ -138,9 +144,9 @@ void DisplayWidget::mouseMoveEvent( QMouseEvent *event ) {
 void DisplayWidget::resizeEvent( QResizeEvent *event ) {
 	*backImage = backImage->scaled( event->size( ) );
 }
-void DisplayWidget::native_slots_display( QObject *data ) {
+void DisplayWidget::native_slot_display( QObject *data ) {
 	backImage->fill( Qt::gray );
 	update( );
 }
-void DisplayWidget::native_slots_setType( Display_Type type ) {
+void DisplayWidget::native_slot_setType( Display_Type type ) {
 }

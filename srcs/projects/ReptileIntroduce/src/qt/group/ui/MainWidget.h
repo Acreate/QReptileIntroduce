@@ -27,10 +27,10 @@ private:
 	Setting *progressSetting; // 配置文件
 	QTranslator *translator; // 语言本地化
 private: // 布局组件
-	VLayoutBox * mainVLayoutBox;
+	VLayoutBox *mainVLayoutBox;
 private: // 显示组件
-	FileSelectPathWidget* selectPathWidget; // 路径选择组件
-	DisplayWidget* display; // 信息显示组件
+	FileSelectPathWidget *selectPathWidget; // 路径选择组件
+	DisplayWidget *display; // 信息显示组件
 public:
 	MainWidget( QWidget *parent = nullptr, Qt::WindowFlags fg = Qt::WindowFlags( ) );
 	~MainWidget( ) override;
@@ -39,6 +39,8 @@ protected: // 事件
 	void mouseReleaseEvent( QMouseEvent *event ) override;
 	void mousePressEvent( QMouseEvent *event ) override;
 	void resizeEvent( QResizeEvent *event ) override;
+private: // 控件菜单
+	Menu *fromDisplayWidgetMenu;
 protected:
 	/// <summary>
 	/// 初始化组件的指针对象
@@ -60,15 +62,22 @@ protected:
 	/// 实现组件的完成结尾
 	/// </summary>
 	void initComponentOver( );
-private: // 参考变量 - 只读
-	static const QString qstrPoint; // 格式化字符串
-
 private: // 程序配置-名称
-	static const QString selectReadFileWorkPath;
-	static const QString selectWriteFileWorkPath;
-	static const QString selectWebSettingPath;// 配置文件关键字
+	static const QString settingGroupWork; // 工作路径组名称
+	static const QString settingGroupWorkKeyReadFileWorkPath; // 基于 settingGroupWork 组的选择的读入路径
+	static const QString settingGroupWorkKeyWriteFileWorkPath; // 基于 settingGroupWork 组的选择的写入路径
+	static const QString settingGroupWeb;// 配置文件组名称
+	static const QString settingGroupWebKey;//  基于 settingGroupWeb 组的配置文件关键字
+	static const QString settingGroupSelectDefaultPaths; // 默认的窗口选择路径组
+	static const QString settingGroupSelectDefaultPathskeyPlugPathKey; // 基于 settingGroupSelectDefaultPaths 插件路径
+	static const QString settingGroupPlugIniPathKeyMerge; // 插件的配置文件路径
+	static const QString settingGroupPlugIniPathSettingPath; // 插件的配置文件路径
+	static const QChar settingPathSep; // 路径分隔符
 private: // 程序配置-变量
-	QStringList downNovelTypes;
+	/// <summary>
+	/// 配置与路径的映射<br/>
+	/// </summary>
+	QMap< QString, Setting * > webSettingMap;
 private: // 定时调用
 	DateTimeThread *dateTimeThread;
 private: // ui 组件
@@ -80,12 +89,21 @@ public:
 	/// </summary>
 	/// <param name="filePath">新的路径</param>
 	/// <returns>成功返回 true</returns>
-	bool updateSettingFileInfo(const QString& filePath);
+	bool updateSettingFileInfo( const QString &filePath );
 public slots: // 窗口子控件信号响应
 	/// <summary>
 	/// 时间响应信号
 	/// </summary>
 	void updateDateTimeStrFunction( const QString &currentDateTimeStr );
+
+	/// <summary>
+	/// 显示插件选择窗口
+	/// </summary>
+	void showSelectPlugPathDialog( );
+	/// <summary>
+	/// 加载插件
+	/// </summary>
+	void loadingPlug( );
 Q_SIGNALS:
 	/// <summary>
 	/// 当关联的 web 配置文件同步到该实例对象时候会触发该行为
