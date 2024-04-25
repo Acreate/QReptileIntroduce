@@ -2,6 +2,7 @@
 #define DISPLAYWIDGET_H_H_HEAD__FILE__
 #pragma once
 #include <QWidget>
+class IRequestNetInterfaceExtend;
 class QMenuBar;
 class MenuBar;
 class Action;
@@ -25,7 +26,7 @@ private: // 用户界面布局
 private:
 	MenuBar *topMenuBar; // 菜单显示栏
 	Menu *topMenu; // 菜单
-	Menu* plugTopMneu; // 插件的顶级菜单
+	Menu *plugTopMneu; // 插件的顶级菜单
 	Action *startGet; // 开始请求
 private: // 类成员变量
 	QImage *backImage; // 要绘制的内容
@@ -49,8 +50,9 @@ public:
 		return currentDisplayType;
 	}
 private:
-	QMap< QObject *, Menu * > menuMap;
-	QMap< QObject *, Menu * > menuPlugMap;
+	QMap< QObject *, Menu * > menuMap; // 保存主要菜单
+	QMap< IRequestNetInterfaceExtend *, Menu * > menuPlugMap; // 保存插件菜单
+	QMap< QObject *, QSharedPointer<QString> > actionXpath; // 保存菜单的路径
 public:
 	/// <summary>
 	/// 获取绑定对象的菜单<br/>
@@ -65,7 +67,7 @@ public:
 	/// </summary>
 	/// <param name="object">绑定插件对象</param>
 	/// <returns>插件对象的菜单</returns>
-	Menu * getPlugMenu( QObject *object );
+	Menu * getPlugMenu( IRequestNetInterfaceExtend *object );
 protected:
 	void paintEvent( QPaintEvent *event ) override;
 	void mousePressEvent( QMouseEvent *event ) override;
@@ -95,9 +97,8 @@ Q_SIGNALS:
 	/// <summary>
 	/// 菜单或者选项被点击时发生
 	/// </summary>
-	/// <param name="send">信号发生者</param>
-	/// <param name="menuBar">所在QMenuBar组件</param>
-	void menuActionClick( QAction *send, QMenuBar *menuBar );
+	/// <param name="path">菜单按键的路径</param>
+	void menuActionClick(const QString& path);
 protected slots: // 响应自身信号的槽
 	void native_slots_display( QObject *data );
 	void native_slots_setType( Display_Type type );

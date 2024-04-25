@@ -73,7 +73,6 @@ private: // 定时调用
 	DateTimeThread *dateTimeThread;
 private: // ui 组件
 	FileSelectPathWidget *pathHint; // 提示语
-	DisplayWidget *displayWidget; // 信息显示框
 public:
 	/// <summary>
 	/// 更新配置文件路径，并且应用配置<br/>

@@ -4,13 +4,17 @@
 #include <QMoveEvent>
 #include <QPainter>
 #include <QMap>
+#include <QStack>
 #include <QPushButton>
+#include <stack>
 
 #include "../layout/HLayoutBox.h"
 #include "../layout/VLayoutBox.h"
 #include "../menu/MenuBar.h"
 #include "../menu/Menu.h"
 #include "../menu/Action.h"
+#include "interface/IRequestNetInterfaceExtend.h"
+#include "path/Dir.h"
 
 DisplayWidget::DisplayWidget( QWidget *parent, Qt::WindowFlags flags ) : QWidget( parent, flags ) {
 	initComponent( );
@@ -53,8 +57,37 @@ void DisplayWidget::initComponentLayout( ) {
 void DisplayWidget::initConnect( ) {
 	connect( this, &DisplayWidget::setType, this, &DisplayWidget::native_slots_setType );
 	connect( this, &DisplayWidget::display, this, &DisplayWidget::native_slots_display );
-	connect( topMenu, &QMenu::triggered, [=]( QAction *action ) {
-		emit menuActionClick( action, topMenuBar );
+	connect( topMenu, &Menu::click, [=]( Action *action ) {
+		QObject *parentMenu = action->getParentMenu( );
+		if( parentMenu ) {
+			std::stack< QString > xpathStack;
+			xpathStack.push( action->text( ) );
+			do {
+				Menu *menu = Action::converToMenu( parentMenu );
+				if( menu ) {
+					xpathStack.push( menu->title( ) );
+					parentMenu = menu->getParentMenu( );
+					continue;
+				}
+				MenuBar *menuBar = Action::converToMenuBar( parentMenu );
+				if( menuBar ) {
+					xpathStack.push( menuBar->windowTitle( ) );
+					parentMenu = menuBar->getParentMenu( );
+					continue;
+				}
+				break;
+			} while( parentMenu );
+			QStringList xpath;
+			while( xpathStack.size( ) ) {
+				xpath << xpathStack.top( );
+				xpathStack.pop( );
+			}
+			QString path = xpath.join( QDir::separator( ) );
+			emit menuActionClick( path );
+			return;
+		}
+
+		emit menuActionClick( action->text( ) );
 	} );
 }
 Menu * DisplayWidget::getMenu( QObject *object ) {
@@ -66,11 +99,14 @@ Menu * DisplayWidget::getMenu( QObject *object ) {
 	menuMap.insert( object, objMenu );
 	return objMenu;
 }
-Menu * DisplayWidget::getPlugMenu( QObject *object ) {
+
+Menu * DisplayWidget::getPlugMenu( IRequestNetInterfaceExtend *object ) {
 	if( menuPlugMap.contains( object ) )
 		return menuPlugMap[ object ];
 	auto objMenu = new Menu( this );
-	objMenu->setTitle( object->objectName( ) );
+	std::string url;
+	object->getUrl( &url );
+	objMenu->setTitle( QString::fromStdString( url ) );
 	plugTopMneu->addMenu( objMenu );
 	menuPlugMap.insert( object, objMenu );
 	return objMenu;

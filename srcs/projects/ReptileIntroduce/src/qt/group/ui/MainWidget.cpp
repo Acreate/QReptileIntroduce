@@ -75,6 +75,7 @@ void MainWidget::initComponentLayout( ) {
 	mainVLayoutBox = new VLayoutBox( this );
 	mainVLayoutBox->addWidget( selectPathWidget, 1 );
 	mainVLayoutBox->addWidget( display, 19 );
+	
 }
 void MainWidget::initComponentConnect( ) {
 	connect( dateTimeThread, &DateTimeThread::updateDateTimeStr, this, &MainWidget::updateDateTimeStrFunction, Qt::QueuedConnection );
@@ -83,6 +84,9 @@ void MainWidget::initComponentConnect( ) {
 	} );
 	connect( selectPathWidget, &FileSelectPathWidget::setFilePathFinish, this, [&]( const QString &filePath ) {
 		updateSettingFileInfo( filePath );
+	} );
+	connect( display, &DisplayWidget::menuActionClick, [=]( const QString &xpath ) {
+		qDebug( ) << xpath;
 	} );
 }
 void MainWidget::initComponentOver( ) {
