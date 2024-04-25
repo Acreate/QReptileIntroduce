@@ -65,6 +65,7 @@ void DisplayWidget::initProperty( ) {
 	auto contentsMargins = mainVLayout->contentsMargins( );
 	subV = contentsMargins.top( ) + contentsMargins.bottom( ) + topHeight + spacing * 2;
 	subH = contentsMargins.left( ) + contentsMargins.right( ) + spacing * 2;
+	strBuffMaxSize = 100;
 }
 void DisplayWidget::initComponentLayout( ) {
 	topMenuBar->addMenu( topMenu );
@@ -95,47 +96,50 @@ void DisplayWidget::native_slot_display( const QString &data ) {
 	int width = backImageRect.width( );
 	if( width == 0 )
 		return;
-	this->msgList << data;
+	if( !data.isEmpty( ) )
+		this->msgList << data;
 	stringMsgImage->fill( QColor( 0, 0, 0, 0 ) );
 	QFontMetrics fontMetrics = this->fontMetrics( );
 	int height = fontMetrics.height( ); // 每次换行都这么高
 	int maxLine = backImageRect.height( ) / height; // 最多可以容纳的行数
 	auto showMsg = this->msgList.join( '\n' ); // 统计行数
-	this->msgList.clear( );
-	QStringList showMsgList = showMsg.split( '\n' );
+	QStringList showMsgList = showMsg.split( '\n' ), displayList;
 	for( auto str : showMsgList ) {
 		int horizontalAdvance = fontMetrics.horizontalAdvance( str ); // 占用横向
 		do {
 			if( horizontalAdvance > width ) { // 大于图片的横向
 				size_t fullLineIndex = Font::getFullLineIndex( str, fontMetrics, width ).first;
 				auto mid = str.mid( 0, fullLineIndex );
-				this->msgList << mid;
+				displayList << mid;
 				qint64 length = str.length( );
 				if( length < fullLineIndex )
 					break;
 				str = str.mid( fullLineIndex );
 				horizontalAdvance = fontMetrics.horizontalAdvance( str ); // 占用横向
 				if( horizontalAdvance < width ) {
-					this->msgList << str;
+					displayList << str;
 					break;
 				}
 				continue;
 			}
-			this->msgList << str;
+			displayList << str;
 			break;
 		} while( true );
 	}
-	this->msgList = this->msgList.mid( this->msgList.size( ) - maxLine );
+	displayList = displayList.mid( displayList.size( ) - maxLine );
 	QPainter painter;
 	painter.begin( stringMsgImage );
 	painter.setPen( QColor( 255, 0, 0, 255 ) );
-	qsizetype size = this->msgList.size( );
+	qsizetype size = displayList.size( );
 	for( qsizetype index = 0; index < size; ++index ) {
-		QString chars = this->msgList[ index ];
+		QString chars = displayList[ index ];
 		painter.drawText( QPoint( 0, ( index + 1 ) * height ), chars );
 	}
 	painter.end( );
 	update( );
+	size = this->msgList.size( );
+	if( size > strBuffMaxSize )
+		this->msgList = this->msgList.mid( size - strBuffMaxSize );
 }
 void DisplayWidget::native_slot_display( const QArrayData &data ) {
 }
@@ -196,10 +200,11 @@ void DisplayWidget::resizeEvent( QResizeEvent *event ) {
 	size.setWidth( size.width( ) - subH );
 	*backImage = backImage->scaled( size );
 	*stringMsgImage = stringMsgImage->scaled( size );
+
+	native_slot_display( QString( ) );
 }
 void DisplayWidget::native_slot_display( QObject *data ) {
 	backImage->fill( QColor( 0, 0, 0, 0 ) );
-	stringMsgImage->fill( QColor( 0, 0, 0, 0 ) );
 	update( );
 }
 void DisplayWidget::native_slot_setType( Display_Type type ) {

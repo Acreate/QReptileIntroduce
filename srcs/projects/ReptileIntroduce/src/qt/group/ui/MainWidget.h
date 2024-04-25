@@ -3,6 +3,7 @@
 #pragma once
 #include <QWidget>
 
+class IRequestNetInterfaceExtend;
 class DisplayWidget;
 class FileSelectPathWidget;
 class QLabel;
@@ -90,6 +91,8 @@ public:
 	/// <param name="filePath">新的路径</param>
 	/// <returns>成功返回 true</returns>
 	bool updateSettingFileInfo( const QString &filePath );
+private:
+	QMap< QString, QPair< QObject *, IRequestNetInterfaceExtend * > > plugs;
 public slots: // 窗口子控件信号响应
 	/// <summary>
 	/// 时间响应信号

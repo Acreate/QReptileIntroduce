@@ -113,22 +113,7 @@ void MainWidget::initComponentOver( ) {
 	loadPlug->setText( tr( u8"加载插件" ) );
 	fromDisplayWidgetMenu->addAction( loadPlug );
 	connect( loadPlug, &QAction::triggered, this, &MainWidget::loadingPlug );
-
-	QWidget *testWidget = new QWidget( nullptr, Qt::WindowStaysOnTopHint );
-	VLayoutBox *testWidgetLayout = new VLayoutBox( testWidget );
-	QPushButton *clickBtn = new QPushButton( testWidget );
-	clickBtn->setText( "测试字符串" );
-	testWidgetLayout->addWidget( clickBtn );
-	QPlainTextEdit *plainTextEdit = new QPlainTextEdit( testWidget );
-	plainTextEdit->setPlainText( u8"horizontalAdvance = font_metrics.horizontalAdvance( subStr );horizontalAdvance = font_metrics.horizontalAdvance( subStr );" );
-	testWidgetLayout->addWidget( plainTextEdit );
-	connect( clickBtn, &QPushButton::clicked, [=]( ) {
-		QString plainText = plainTextEdit->toPlainText( );
-		// todo: 测试
-		display->display( plainText );
-	} );
-	testWidget->show( );
-
+	loadingPlug( );
 }
 MainWidget::MainWidget( QWidget *parent, Qt::WindowFlags fg ) : QWidget( parent, fg ) {
 
@@ -238,19 +223,25 @@ void MainWidget::showSelectPlugPathDialog( ) {
 		progressSetting->setValue( settingGroupPlugIniPathKeyMerge, paths.join( settingPathSep ) );
 		progressSetting->sync( );
 	}
+	loadingPlug( );
 }
 void MainWidget::loadingPlug( ) {
 	auto variant = progressSetting->getValue( settingGroupPlugIniPathKeyMerge ).toString( );
 	if( variant.isEmpty( ) ) {
-		QString msg = QString( tr( u8"没有" ) );
-		emit display->display( msg );
+		emit display->display( QString( tr( u8"没有发现配置文件的(%1)值内容" ) ).arg( settingGroupPlugIniPathKeyMerge ) );
 		return;
 	}
 	auto stringList = variant.split( settingPathSep );
+	if( stringList.size( ) == 0 ) {
+		emit display->display( QString( tr( u8"配置文件的(%1)值内容异常，切分过后不存在路径" ) ).arg( settingGroupPlugIniPathKeyMerge ) );
+		return;
+	}
 	for( auto &plugSelectPath : stringList ) {
 		auto pathInfo = Path::getPathInfo( plugSelectPath );
 		for( auto &file : pathInfo.second ) {
 			QString filePtah = file.getCurrentFilePtah( );
+			if( plugs.contains( filePtah ) )
+				continue;
 			LoadPlug load( filePtah );
 			auto requestNetInterfaceExtends = load.loadPlugs( );
 			if( requestNetInterfaceExtends.size( ) == 0 )
@@ -261,8 +252,10 @@ void MainWidget::loadingPlug( ) {
 			for( ; iterator != end; ++iterator ) {
 				IRequestNetInterfaceExtend *interfaceExtend = iterator.value( );
 				if( interfaceExtend->getUrl( &outUrl ) )
-					display->display( ( QStringList( ) << tr( u8"获取url : " ) << QString::fromStdString( outUrl ) ).join( "" ) );
+					emit display->display( QString( tr( u8"获取url : %1" ) ).arg( QString::fromStdString( outUrl ) ) );
 				outUrl.clear( );
+				interfaceExtend->setInterfaceParent( this );
+				plugs.insert( filePtah, { iterator.key( ), iterator.value( ) } );
 			}
 		}
 

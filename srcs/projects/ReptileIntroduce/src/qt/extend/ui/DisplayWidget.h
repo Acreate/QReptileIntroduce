@@ -28,17 +28,29 @@ private:
 	Menu *plugTopMneu; // 插件的顶级菜单
 	Menu *widgetTopMneu; // 窗口的顶级菜单
 	Action *startGet; // 开始请求
-private: // 类成员变量
-	QImage *backImage; // 要绘制的内容
-	QImage *stringMsgImage; // 要绘制的文字
-	Display_Type currentDisplayType; // 当前绘制类型
-private: // 运算参考
+private: // 绘制相关变量
+
 	/// <summary>
 	/// 顶部大小<br/>
 	/// 绘制时，会根据该值来确定开始的 y 轴。
 	/// </summary>
 	size_t topHeight;
-	size_t subV, subH;
+	/// <summary>
+	/// 垂直减持
+	/// </summary>
+	size_t subV;
+	/// <summary>
+	/// 水平减持
+	/// </summary>
+	size_t subH;
+	/// <summary>
+	/// 缓存最大持有
+	/// </summary>
+	size_t strBuffMaxSize;
+private: // 类成员变量
+	QImage *backImage; // 要绘制的内容
+	QImage *stringMsgImage; // 要绘制的文字
+	Display_Type currentDisplayType; // 当前绘制类型
 public:
 	DisplayWidget( QWidget *parent, Qt::WindowFlags flags = Qt::WindowFlags( ) );
 	~DisplayWidget( ) override;
