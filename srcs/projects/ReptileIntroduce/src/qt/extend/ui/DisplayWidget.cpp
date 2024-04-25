@@ -4,6 +4,7 @@
 #include <QMoveEvent>
 #include <QPainter>
 #include <QMap>
+#include <QPixmap>
 #include <QStack>
 #include <QPushButton>
 #include <stack>
@@ -13,6 +14,7 @@
 #include "../menu/MenuBar.h"
 #include "../menu/Menu.h"
 #include "../menu/Action.h"
+#include "font/Font.h"
 #include "interface/IRequestNetInterfaceExtend.h"
 #include "path/Dir.h"
 
@@ -33,13 +35,15 @@ DisplayWidget::DisplayWidget( QWidget *parent, Qt::WindowFlags flags ) : QWidget
 }
 DisplayWidget::~DisplayWidget( ) {
 	delete backImage;
+	delete stringMsgImage;
 	auto menus = menuMap.values( );
 	for( auto menu : menus )
 		if( menu->parent( ) == nullptr )
 			menu->deleteLater( );
 }
 void DisplayWidget::initComponent( ) {
-	backImage = new QImage( size( ), QImage::Format_BGR888 );
+	backImage = new QImage( size( ), QImage::Format_ARGB32 );
+	stringMsgImage = new QImage( size( ), QImage::Format_ARGB32 );
 	mainVLayout = new VLayoutBox( this );
 	topMenuBar = new MenuBar( this );
 	topMenu = new Menu( this );
@@ -52,10 +56,15 @@ void DisplayWidget::initProperty( ) {
 	topMenu->setTitle( tr( u8"开始" ) );
 	plugTopMneu->setTitle( tr( u8"插件菜单" ) );
 	widgetTopMneu->setTitle( tr( u8"窗口菜单" ) );
-	backImage->fill( Qt::gray );
+	backImage->fill( QColor( 0, 0, 0, 0 ) );
+	stringMsgImage->fill( QColor( 0, 0, 0, 0 ) );
 	currentDisplayType = NORMALE;
 	topHeight = topMenuBar->height( );
 	topMenuBar->setMinimumWidth( 100 );
+	int spacing = mainVLayout->spacing( );
+	auto contentsMargins = mainVLayout->contentsMargins( );
+	subV = contentsMargins.top( ) + contentsMargins.bottom( ) + topHeight + spacing * 2;
+	subH = contentsMargins.left( ) + contentsMargins.right( ) + spacing * 2;
 }
 void DisplayWidget::initComponentLayout( ) {
 	topMenuBar->addMenu( topMenu );
@@ -80,13 +89,51 @@ void DisplayWidget::slot_click_action( const Action *action ) {
 	emit menuActionClick( *action->getActionXPath( ) );
 }
 
+// todo : 绘制文字消息
 void DisplayWidget::native_slot_display( const QString &data ) {
+	auto backImageRect = stringMsgImage->rect( );
+	int width = backImageRect.width( );
+	if( width == 0 )
+		return;
+	this->msgList << data;
+	stringMsgImage->fill( QColor( 0, 0, 0, 0 ) );
+	QFontMetrics fontMetrics = this->fontMetrics( );
+	int height = fontMetrics.height( ); // 每次换行都这么高
+	int maxLine = backImageRect.height( ) / height; // 最多可以容纳的行数
+	auto showMsg = this->msgList.join( '\n' ); // 统计行数
+	this->msgList.clear( );
+	QStringList showMsgList = showMsg.split( '\n' );
+	for( auto str : showMsgList ) {
+		int horizontalAdvance = fontMetrics.horizontalAdvance( str ); // 占用横向
+		do {
+			if( horizontalAdvance > width ) { // 大于图片的横向
+				size_t fullLineIndex = Font::getFullLineIndex( str, fontMetrics, width ).first;
+				auto mid = str.mid( 0, fullLineIndex );
+				this->msgList << mid;
+				qint64 length = str.length( );
+				if( length < fullLineIndex )
+					break;
+				str = str.mid( fullLineIndex );
+				horizontalAdvance = fontMetrics.horizontalAdvance( str ); // 占用横向
+				if( horizontalAdvance < width ) {
+					this->msgList << str;
+					break;
+				}
+				continue;
+			}
+			this->msgList << str;
+			break;
+		} while( true );
+	}
+	this->msgList = this->msgList.mid( this->msgList.size( ) - maxLine );
 	QPainter painter;
-	painter.begin( backImage );
-	QPen pen;
-	pen.setColor( Qt::red );
-	painter.setPen( pen );
-	painter.drawText( QPoint( 100, 100 ), data );
+	painter.begin( stringMsgImage );
+	painter.setPen( QColor( 255, 0, 0, 255 ) );
+	qsizetype size = this->msgList.size( );
+	for( qsizetype index = 0; index < size; ++index ) {
+		QString chars = this->msgList[ index ];
+		painter.drawText( QPoint( 0, ( index + 1 ) * height ), chars );
+	}
 	painter.end( );
 	update( );
 }
@@ -123,7 +170,9 @@ void DisplayWidget::paintEvent( QPaintEvent *event ) {
 	// todo : 绘制信息
 	QPainter painter;
 	painter.begin( this );
-	painter.drawImage( 0, topHeight, *backImage );
+	size_t sep = subH / 2;
+	painter.drawImage( 0, topHeight + sep, *backImage );
+	painter.drawImage( 0, topHeight + sep, *stringMsgImage );
 	painter.end( );
 	QWidget::paintEvent( event );
 	// 绘制之后调用
@@ -142,10 +191,15 @@ void DisplayWidget::mouseMoveEvent( QMouseEvent *event ) {
 	QWidget::mouseMoveEvent( event );
 }
 void DisplayWidget::resizeEvent( QResizeEvent *event ) {
-	*backImage = backImage->scaled( event->size( ) );
+	QSize size = event->size( );
+	size.setHeight( size.height( ) - subV );
+	size.setWidth( size.width( ) - subH );
+	*backImage = backImage->scaled( size );
+	*stringMsgImage = stringMsgImage->scaled( size );
 }
 void DisplayWidget::native_slot_display( QObject *data ) {
-	backImage->fill( Qt::gray );
+	backImage->fill( QColor( 0, 0, 0, 0 ) );
+	stringMsgImage->fill( QColor( 0, 0, 0, 0 ) );
 	update( );
 }
 void DisplayWidget::native_slot_setType( Display_Type type ) {

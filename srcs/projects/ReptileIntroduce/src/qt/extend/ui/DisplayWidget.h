@@ -30,6 +30,7 @@ private:
 	Action *startGet; // 开始请求
 private: // 类成员变量
 	QImage *backImage; // 要绘制的内容
+	QImage *stringMsgImage; // 要绘制的文字
 	Display_Type currentDisplayType; // 当前绘制类型
 private: // 运算参考
 	/// <summary>
@@ -37,6 +38,7 @@ private: // 运算参考
 	/// 绘制时，会根据该值来确定开始的 y 轴。
 	/// </summary>
 	size_t topHeight;
+	size_t subV, subH;
 public:
 	DisplayWidget( QWidget *parent, Qt::WindowFlags flags = Qt::WindowFlags( ) );
 	~DisplayWidget( ) override;
@@ -116,6 +118,8 @@ Q_SIGNALS:
 	/// </summary>
 	/// <param name="path">菜单按键的路径</param>
 	void menuActionClick( const QString &path );
+private: // 信号槽所需要变量
+	QStringList msgList;
 protected slots: // 响应自身信号的槽
 	void native_slot_setType( Display_Type type );
 	/// <summary>
