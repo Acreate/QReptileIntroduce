@@ -7,7 +7,9 @@
 #include <qnetworkreply.h>
 class Request;
 class RequestConnect;
-class RequetNetWorkThread : public QThread {
+#include "../../export/Tools_export.h"
+
+class TOOLS_EXPORT RequetNetWorkThread : public QThread {
 	Q_OBJECT;
 private: //  它们不应该由该类控制释放
 	/// <summary>
@@ -29,9 +31,9 @@ public:
 public:
 	QUrl getUrl( ) const;
 	void setUrl( const QUrl &url );
-	Request *getRequest( ) const;
+	Request * getRequest( ) const;
 	void setRequest( Request *const request );
-	RequestConnect *getRequestConnect( ) const;
+	RequestConnect * getRequestConnect( ) const;
 	void setRequestConnect( RequestConnect *const requestConnect );
 protected:
 	void run( ) override;

@@ -29,12 +29,12 @@ void Request::setRequestSettingFilePath( const QString &filePath ) {
 
 }
 
-QNetworkReply *Request::netGetWork( const QString &url, RequestConnect *requestConnect ) {
+QNetworkReply * Request::netGetWork( const QString &url, RequestConnect *requestConnect ) {
 	QUrl qUrl( url );
 
 	return Request::netGetWork( qUrl, requestConnect );
 }
-QNetworkReply *Request::netGetWork( const QUrl &url, RequestConnect *requestConnect ) {
+QNetworkReply * Request::netGetWork( const QUrl &url, RequestConnect *requestConnect ) {
 	QNetworkRequest request;
 	request.setHeader( QNetworkRequest::UserAgentHeader, tr( u8"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.5735.289 Safari/537.36 QIHU 360SE" ) );
 	request.setUrl( url );

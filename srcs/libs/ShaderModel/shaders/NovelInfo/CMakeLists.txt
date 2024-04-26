@@ -9,6 +9,7 @@ message( "============ ${CURRENT_FOLDER}" )
 m_set_env("${Project_Run_bin}" "${Project_Install_bin}")
 
 
+
 qt_standard_project_setup()
 
 file( GLOB_RECURSE SRC_LIST
@@ -19,7 +20,7 @@ file( GLOB_RECURSE SRC_LIST
 	"*.hpp"
 )
 
-file( GLOB_RECURSE SRC_UI
+file( GLOB_RECURSE SRC_UI 
 	"*.ui"
 )
 
@@ -40,14 +41,13 @@ set( cmake_definitions_org "${cmake_definitions_tmp}/cmake_in/cmake_to_c_cpp_hea
 
 set( ${project_name_include_dir}_include_dir ${CMAKE_CURRENT_LIST_DIR}  PARENT_SCOPE )
 
-include_directories( ${NovelInfo_include_dir} )
 include_directories( ${UserHread_include_dir} )
+
 # # 合并源码
 list( APPEND ${SRC_LIST} ${SRC_UI} ${QM_FILES} ${SRC_DATA} ${cmake_definitions_out} )
 qt_add_library( ${PROJECT_NAME} SHARED
 	${SRC_LIST}
 )
-
 get_target_property( project_type_property  ${PROJECT_NAME} TYPE )
 if( "EXECUTABLE" STREQUAL ${project_type_property} )
 	set( project_type_property_is_exe true )
@@ -58,9 +58,6 @@ configure_file( "${cmake_definitions_org}" "${cmake_definitions_out}" )
 
 
 
-string( REPLACE "." "_" project_name_include_dir ${PROJECT_NAME} )
-set( ${project_name_include_dir}_include_dir ${CMAKE_CURRENT_LIST_DIR} ${CMAKE_CURRENT_LIST_DIR}/ PARENT_SCOPE )
-
 target_link_libraries( ${PROJECT_NAME}
 	PRIVATE
 	Qt${QT_VERSION_MAJOR}::Widgets
@@ -68,7 +65,6 @@ target_link_libraries( ${PROJECT_NAME}
 	Qt${QT_VERSION_MAJOR}::Core
 	Qt${QT_VERSION_MAJOR}::Network
 	Qt${QT_VERSION_MAJOR}::Core5Compat
-	NovelInfo
 )
 
 STRING( SUBSTRING "${PROJECT_NAME}" 0 1 exportFileStartName )
@@ -79,6 +75,7 @@ GENERATE_EXPORT_HEADER( ${PROJECT_NAME}
 	EXPORT_FILE_NAME ${exportFileName}
 )
 TARGET_INCLUDE_DIRECTORIES( ${PROJECT_NAME} INTERFACE ${CMAKE_CURRENT_SOURCE_DIR} )
+
 unset(SRC_LIST)
 unset(SRC_UI)
 unset(SRC_DATA)

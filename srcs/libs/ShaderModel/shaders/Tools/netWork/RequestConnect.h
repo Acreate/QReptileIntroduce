@@ -6,7 +6,9 @@
 #include <qtmetamacros.h>
 
 class Request;
-class RequestConnect : public QObject {
+#include "../export/Tools_export.h"
+
+class TOOLS_EXPORT RequestConnect : public QObject {
 	Q_OBJECT;
 private:
 	QList< QNetworkAccessManager * > networkAccessManagerList;

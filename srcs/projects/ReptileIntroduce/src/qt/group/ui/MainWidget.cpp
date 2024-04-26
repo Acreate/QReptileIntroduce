@@ -27,6 +27,7 @@
 #include "FileSelectPathWidget.h"
 #include "../../extend/menu/Action.h"
 #include "../../extend/menu/Menu.h"
+#include "novelNetJob/NovelNetJob.h"
 
 const QString MainWidget::settingGroupWork = tr( u8"工作" );
 const QString MainWidget::settingGroupWeb = tr( u8"网络" );
@@ -254,12 +255,14 @@ void MainWidget::loadingPlug( ) {
 			auto end = requestNetInterfaceExtends.end( );
 			std::string outUrl;
 			for( ; iterator != end; ++iterator ) {
-				IRequestNetInterfaceExtend *interfaceExtend = iterator.value( );
+				IRequestNetInterfaceExtend *requestNetInterfaceExtend = iterator.value( );
+				IRequestNetInterfaceExtend *interfaceExtend = requestNetInterfaceExtend;
 				if( interfaceExtend->getUrl( &outUrl ) )
 					emit display->display( QString( tr( u8"获取url : %1" ) ).arg( QString::fromStdString( outUrl ) ) );
 				outUrl.clear( );
 				interfaceExtend->setInterfaceParent( this );
-				plugs.insert( filePtah, { iterator.key( ), iterator.value( ) } );
+				QObject *object = iterator.key( );
+				plugs.insert( filePtah, QSharedPointer< NovelNetJob >{ new NovelNetJob( this, object, requestNetInterfaceExtend ) } );
 			}
 		}
 
@@ -276,8 +279,9 @@ void MainWidget::LoadWebInfo( ) {
 	for( ; iterator != end; ++iterator ) {
 		qsizetype indexOf = iterator.key( ).indexOf( "www.121ds.cc" );
 		if( indexOf != -1 ) {
-			auto requestNetInterfaceExtend = iterator.value( ).second;
-			requestNetInterfaceExtend->getUrl( &outUrl );
+			QSharedPointer< NovelNetJob > netJob = iterator.value( );
+			netJob->start( nullptr );
+			netJob->getUrl( &outUrl );
 			*display << outUrl << __FILE__ << __LINE__;
 		}
 	}

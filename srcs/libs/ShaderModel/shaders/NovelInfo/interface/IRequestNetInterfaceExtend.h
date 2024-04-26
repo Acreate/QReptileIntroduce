@@ -6,11 +6,11 @@
 #include "IRequestNetInterface.h"
 
 class INovelInfo;
-
+#include "../export/NovelInfo_export.h"
 /// <summary>
 /// 这是一个回调接口，它总是处于被调用的状态
 /// </summary>
-class NOVEINFO_EXPORT IRequestNetInterfaceExtend : public IRequestNetInterface {
+class NOVELINFO_EXPORT IRequestNetInterfaceExtend : public IRequestNetInterface {
 private:
 
 public:

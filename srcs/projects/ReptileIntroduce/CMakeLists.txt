@@ -19,10 +19,11 @@ file( GLOB_RECURSE SRC_UI
 	"*.ui"
 )
 
-include_directories( ${NoveInfo_include_dir} )
+include_directories( ${NovelInfo_include_dir} )
 include_directories( ${UserHread_include_dir} )
 include_directories( ${Tools_include_dir} )
 include_directories( ${HtmlTools_include_dir} )
+include_directories( ${Plug_include_dir} )
 
 set( cmake_definitions_out "${CMAKE_CURRENT_LIST_DIR}/src/macro/cmake_to_c_cpp_header_env.h" )
 
@@ -66,10 +67,16 @@ call_qt_deploy( ${PROJECT_NAME}
 	Qt${QT_VERSION_MAJOR}::Network
 	Qt${QT_VERSION_MAJOR}::OpenGLWidgets
 	Qt${QT_VERSION_MAJOR}::Core5Compat
-	NoveInfo
+	NovelInfo
 	Tools
 	HtmlTools
+	Plug
 )
 set_target_properties( ${PROJECT_NAME} PROPERTIES
 	WIN32_EXECUTABLE FALSE
 )
+unset(SRC_LIST)
+unset(SRC_UI)
+unset(SRC_UI)
+unset(QM_FILES)
+unset(cmake_definitions_out)

@@ -5,7 +5,9 @@
 #include <QSettings>
 #include <QNetworkReply>
 class RequestConnect;
-class Request : public QObject {
+#include "../export/Tools_export.h"
+
+class TOOLS_EXPORT  Request : public QObject {
 	Q_OBJECT;
 private:
 	QSettings *setting = nullptr;
@@ -14,12 +16,12 @@ public:
 	Request( QObject *parent = nullptr );
 	~Request( ) override;
 public:
-	QNetworkAccessManager *getNetworkAccessManager( ) const {
+	QNetworkAccessManager * getNetworkAccessManager( ) const {
 		return networkAccessManager;
 	}
 	void setRequestSettingFilePath( const QString &filePath );
-	QNetworkReply *netGetWork( const QString &url, RequestConnect *requestConnect );
-	QNetworkReply *netGetWork( const QUrl &url, RequestConnect *requestConnect );
+	QNetworkReply * netGetWork( const QString &url, RequestConnect *requestConnect );
+	QNetworkReply * netGetWork( const QUrl &url, RequestConnect *requestConnect );
 
 };
 

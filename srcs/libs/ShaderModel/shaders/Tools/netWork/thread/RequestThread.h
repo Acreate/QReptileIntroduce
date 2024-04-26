@@ -5,7 +5,9 @@
 class RequetNetWorkThread;
 class RequestConnect;
 class Request;
-class RequestThread : public QObject {
+#include "../../export/Tools_export.h"
+
+class TOOLS_EXPORT RequestThread : public QObject {
 	Q_OBJECT;
 private:
 	QUrl *urlRoot;

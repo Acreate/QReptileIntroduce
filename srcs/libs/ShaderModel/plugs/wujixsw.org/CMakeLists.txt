@@ -26,8 +26,8 @@ file( GLOB_RECURSE SRC_DATA
 )
 
 string( REPLACE "." "_" project_name_include_dir ${PROJECT_NAME} )
-include_directories( ../../shaders/NoveInfo )
-include_directories( ../../../shaders/UserHread )
+include_directories( ${NovelInfo_include_dir} )
+include_directories( ${UserHread_include_dir} )
 set( ${project_name_include_dir}_include_dir ${CMAKE_CURRENT_LIST_DIR} ${CMAKE_CURRENT_LIST_DIR}/ PARENT_SCOPE )
 
 # # 合并源码
@@ -43,7 +43,7 @@ target_link_libraries(
 	Qt${QT_VERSION_MAJOR}::Core
 	Qt${QT_VERSION_MAJOR}::Network
 	Qt${QT_VERSION_MAJOR}::Core5Compat
-	NoveInfo
+	NovelInfo
 )
 
 
@@ -58,3 +58,9 @@ string(TOUPPER ${project_name_include_dir} project_head_start)
 
 set( cmake_definitions_out ${CMAKE_CURRENT_LIST_DIR}/macro/cmake_to_c_cpp_header_macro.h )
 configure_file( ${cmake_definitions_in} ${cmake_definitions_out} )
+
+unset(SRC_LIST)
+unset(SRC_UI)
+unset(SRC_DATA)
+unset(QM_FILES)
+  

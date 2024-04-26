@@ -7,13 +7,13 @@
 #include <unordered_map>
 #include <vector>
 
-#include "../export/NoveInfo_export.h"
+#include "../export/NovelInfo_export.h"
 class INovelInfo;
 
 /// <summary>
 /// 这是一个回调接口，它总是处于被调用的状态
 /// </summary>
-class NOVEINFO_EXPORT IRequestNetInterface {
+class NOVELINFO_EXPORT IRequestNetInterface {
 public:
 	virtual ~IRequestNetInterface( ) {
 	}

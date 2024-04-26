@@ -3,6 +3,7 @@
 #pragma once
 #include <QWidget>
 
+class NovelNetJob;
 class IRequestNetInterfaceExtend;
 class DisplayWidget;
 class FileSelectPathWidget;
@@ -32,7 +33,7 @@ private: // 布局组件
 private: // 显示组件
 	FileSelectPathWidget *selectPathWidget; // 路径选择组件
 	DisplayWidget *display; // 信息显示组件
-	Action * LoadWebInfoBtn; // 开始请求按键
+	Action *LoadWebInfoBtn; // 开始请求按键
 public:
 	MainWidget( QWidget *parent = nullptr, Qt::WindowFlags fg = Qt::WindowFlags( ) );
 	~MainWidget( ) override;
@@ -93,7 +94,7 @@ public:
 	/// <returns>成功返回 true</returns>
 	bool updateSettingFileInfo( const QString &filePath );
 private:
-	QMap< QString, QPair< QObject *, IRequestNetInterfaceExtend * > > plugs;
+	QMap< QString, QSharedPointer< NovelNetJob > > plugs;
 public slots: // 窗口子控件信号响应
 	/// <summary>
 	/// 时间响应信号
@@ -111,7 +112,7 @@ public slots: // 窗口子控件信号响应
 	/// <summary>
 	/// 开始爬虫
 	/// </summary>
-	void LoadWebInfo();
+	void LoadWebInfo( );
 Q_SIGNALS:
 	/// <summary>
 	/// 当关联的 web 配置文件同步到该实例对象时候会触发该行为
