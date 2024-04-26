@@ -12,8 +12,8 @@ class TOOLS_EXPORT RequestConnect : public QObject {
 	Q_OBJECT;
 private:
 	QNetworkAccessManager *networkAccessManager;
-	QList< QNetworkReply * > networkReplyList;
-	QList< Request * > requestList;
+	QNetworkReply *networkReply;
+	Request *request;
 private:
 	QMutex mutex;
 public:
@@ -23,12 +23,12 @@ public:
 	QNetworkAccessManager * getNetworkAccessManager( ) const {
 		return networkAccessManager;
 	}
-	QList< QNetworkReply * > getNetworkReplyList( ) const {
-		return networkReplyList;
+	QNetworkReply * getNetworkReply( ) const {
+		return networkReply;
 	}
 
-	QList< Request * > getRequestList( ) const {
-		return requestList;
+	Request *  getRequest( ) const {
+		return request;
 	}
 
 	void setNetworkAccessManager( Request *request );

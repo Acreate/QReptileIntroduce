@@ -6,7 +6,7 @@
 #include <qmutex.h>
 #include "../export/Tools_export.h"
 
-class TOOLS_EXPORT  Setting : public QObject {
+class TOOLS_EXPORT Setting : public QObject {
 	Q_OBJECT;
 private:
 	QSettings *setting;
@@ -99,13 +99,13 @@ public: // 配置文件的值操作
 	/// 获取所有键值对
 	/// </summary>
 	/// <returns>获取所有键值对</returns>
-	QMap< QAnyStringView, QVariant > getAllInfo( ) const;
+	QMap< QString, QVariant > getAllInfo( ) const;
 	/// <summary>
 	/// 获取指定组下的所有键值对
 	/// </summary>
 	/// <param name="group">组名</param>
 	/// <returns>组下的所有键值对</returns>
-	QMap< QAnyStringView, QVariant > getAllInfo( const QAnyStringView &group ) const;
+	QMap< QString, QVariant > getAllInfo( const QAnyStringView &group ) const;
 	/// <summary>
 	/// 同步
 	/// </summary>

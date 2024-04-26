@@ -2,6 +2,8 @@
 #define DISPLAYWIDGET_H_H_HEAD__FILE__
 #pragma once
 #include <QWidget>
+#include <stream/IStream.h>
+#include <stream/OStream.h>
 class IRequestNetInterfaceExtend;
 class QMenuBar;
 class MenuBar;
@@ -11,14 +13,22 @@ class DisplayContentWidget;
 class Button;
 class HLayoutBox;
 class VLayoutBox;
-class DisplayWidget : public QWidget {
+class DisplayWidget : public QWidget, public IStream, public OStream {
 	Q_OBJECT;
 public:
 	enum Display_Type {
-		NORMALE,
-		TEXT,
-		DB_SQLITE,
-		FILE_BIN
+		NORMALE
+		, TEXT
+		, DB_SQLITE
+		, FILE_BIN
+	};
+	enum Display_Repaint_Type {
+		None_Type = 0x0
+		, QString_Type = 0x1
+		, QObject_Type = 0x2
+		, QArrayData_Type = 0x4
+		, QByteArray_Type = 0x8
+		, Any_Type = 0xffffffff
 	};
 private: // 用户界面布局
 	VLayoutBox *mainVLayout; // 顶级纵向主要布局
@@ -47,6 +57,11 @@ private: // 绘制相关变量
 	/// 缓存最大持有
 	/// </summary>
 	size_t strBuffMaxSize;
+	QFont msgFont; // 消息字体
+	/// <summary>
+	/// 更新标识
+	/// </summary>
+	uint8_t updataStatus;
 private: // 类成员变量
 	QImage *objectImage; // 要绘制的内容
 	QImage *stringMsgImage; // 要绘制的文字
@@ -86,6 +101,23 @@ public:
 	/// <param name="object">绑定插件对象</param>
 	/// <returns>插件对象的菜单</returns>
 	Menu * getPlugMenu( IRequestNetInterfaceExtend *object );
+	/// <summary>
+	/// 获取字体
+	/// </summary>
+	/// <returns>消息字体</returns>
+	QFont getDisplayFont( ) const;
+
+	template< Display_Repaint_Type NParamType = Any_Type >
+	void updatDisplay( );
+
+	template< >
+	void updatDisplay< QString_Type >( );
+	template< >
+	void updatDisplay< QObject_Type >( );
+	template< >
+	void updatDisplay< QArrayData_Type >( );
+	template< >
+	void updatDisplay< QByteArray_Type >( );
 protected:
 	void paintEvent( QPaintEvent *event ) override;
 	void mousePressEvent( QMouseEvent *event ) override;
@@ -103,7 +135,7 @@ Q_SIGNALS:
 	/// 显示数据
 	/// </summary>
 	/// <param name="data">数据</param>
-	void display( QObject *data );
+	void display( const QObject &data );
 	/// <summary>
 	/// 显示字符串
 	/// </summary>
@@ -132,6 +164,11 @@ Q_SIGNALS:
 	/// </summary>
 	/// <param name="path">菜单按键的路径</param>
 	void menuActionClick( const QString &path );
+	/// <summary>
+	/// 设置字体
+	/// </summary>
+	/// <param name="font">新的字体</param>
+	void changeDisplayFont( QFont &font );
 private: // 信号槽所需要变量
 	QStringList msgList;
 protected slots: // 响应自身信号的槽
@@ -140,7 +177,7 @@ protected slots: // 响应自身信号的槽
 	/// 显示数据
 	/// </summary>
 	/// <param name="data">数据</param>
-	void native_slot_display( QObject *data );
+	void native_slot_display( const QObject &data );
 	/// <summary>
 	/// 显示字符串
 	/// </summary>
@@ -156,81 +193,47 @@ protected slots: // 响应自身信号的槽
 	/// </summary>
 	/// <param name="data">数据</param>
 	void native_slot_display( const QByteArray &data );
-public: // qt 
-	DisplayWidget & operator<<( const QString &msg ) {
-		emit display( msg );
-		return *this;
-	}
-	DisplayWidget & operator<<( const QByteArray &msg ) {
-		emit display( msg );
-		return *this;
-	}
-	DisplayWidget & operator<<( const QArrayData &msg ) {
-		emit display( msg );
-		return *this;
-	}
-	DisplayWidget & operator<<( QObject *msg ) {
-		emit display( msg );
-		return *this;
-	}
-public: // C 字符串
-	DisplayWidget & operator<<( const char *msg ) {
-		emit display( QString::fromStdString( msg ) );
-		return *this;
-	}
-public: // std 标准库
-	DisplayWidget & operator<<( const std::string &msg ) {
-		emit display( QString::fromStdString( msg ) );
-		return *this;
-	}
-	DisplayWidget & operator<<( const std::wstring &msg ) {
-		emit display( QString::fromStdWString( msg ) );
-		return *this;
-	}
-public: // 值-有符号
-	DisplayWidget & operator<<( const int8_t &msg ) {
-		emit display( QString::number( msg ) );
-		return *this;
-	}
-	DisplayWidget & operator<<( const int16_t &msg ) {
-		emit display( QString::number( msg ) );
-		return *this;
-	}
-	DisplayWidget & operator<<( const int32_t &msg ) {
-		emit display( QString::number( msg ) );
-		return *this;
-	}
-	DisplayWidget & operator<<( const int64_t &msg ) {
-		emit display( QString::number( msg ) );
-		return *this;
-	}
-public:// 值-无符号
-	DisplayWidget & operator<<( const uint8_t &msg ) {
-		emit display( QString::number( msg ) );
-		return *this;
-	}
-	DisplayWidget & operator<<( const uint16_t &msg ) {
-		emit display( QString::number( msg ) );
-		return *this;
-	}
-	DisplayWidget & operator<<( const uint32_t &msg ) {
-		emit display( QString::number( msg ) );
-		return *this;
-	}
-	DisplayWidget & operator<<( const uint64_t &msg ) {
-		emit display( QString::number( msg ) );
-		return *this;
-	}
-public: // 浮点
-	DisplayWidget & operator<<( const float_t &msg ) {
-		emit display( QString::number( msg ) );
-		return *this;
-	}
-	DisplayWidget & operator<<( const double_t &msg ) {
-		emit display( QString::number( msg ) );
-		return *this;
-	}
+public: // 流接口
+	IStream & operator<<( const QChar &msg ) override;
+	IStream & operator<<( const QArrayData &msg ) override;
+	IStream & operator<<( const QByteArray &msg ) override;
+	IStream & operator<<( const QString &msg ) override;
+	IStream & operator<<( const std::string &msg ) override;
+	IStream & operator<<( const std::wstring &msg ) override;
+	IStream & operator<<( const char *msg ) override;
+	IStream & operator<<( int8_t msg ) override;
+	IStream & operator<<( int16_t msg ) override;
+	IStream & operator<<( int32_t msg ) override;
+	IStream & operator<<( int64_t msg ) override;
+	IStream & operator<<( uint8_t msg ) override;
+	IStream & operator<<( uint16_t msg ) override;
+	IStream & operator<<( uint32_t msg ) override;
+	IStream & operator<<( uint64_t msg ) override;
+	IStream & operator<<( float_t msg ) override;
+	IStream & operator<<( double_t msg ) override;
+	OStream & operator>>( QChar &msg ) override;
+	OStream & operator>>( QArrayData &msg ) override;
+	OStream & operator>>( QByteArray &msg ) override;
+	OStream & operator>>( QString &msg ) override;
+	OStream & operator>>( std::string &msg ) override;
+	OStream & operator>>( std::wstring &msg ) override;
+	OStream & operator>>( int8_t &msg ) override;
+	OStream & operator>>( int16_t &msg ) override;
+	OStream & operator>>( int32_t &msg ) override;
+	OStream & operator>>( int64_t &msg ) override;
+	OStream & operator>>( uint8_t &msg ) override;
+	OStream & operator>>( uint16_t &msg ) override;
+	OStream & operator>>( uint32_t &msg ) override;
+	OStream & operator>>( uint64_t &msg ) override;
+	OStream & operator>>( float_t &msg ) override;
+	OStream & operator>>( double_t &msg ) override;
+	void flush( ) override;
 };
 
+
+template< DisplayWidget::Display_Repaint_Type NParamType >
+void DisplayWidget::updatDisplay( ) {
+	this->updataStatus |= NParamType;
+}
 
 #endif // DISPLAYWIDGET_H_H_HEAD__FILE__

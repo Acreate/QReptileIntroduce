@@ -136,9 +136,9 @@ QList< QVariant > Setting::getAllValue( const QAnyStringView &group ) const {
 	}
 	return result;
 }
-QMap< QAnyStringView, QVariant > Setting::getAllInfo( ) const {
+QMap< QString, QVariant > Setting::getAllInfo( ) const {
 	QMutexLocker< QMutex > nstanceLock( instanceMutex );
-	QMap< QAnyStringView, QVariant > result;
+	QMap< QString, QVariant > result;
 	if( setting ) {
 		auto allKey = setting->allKeys( );
 		for( auto &key : allKey )
@@ -146,14 +146,16 @@ QMap< QAnyStringView, QVariant > Setting::getAllInfo( ) const {
 	}
 	return result;
 }
-QMap< QAnyStringView, QVariant > Setting::getAllInfo( const QAnyStringView &group ) const {
+QMap< QString, QVariant > Setting::getAllInfo( const QAnyStringView &group ) const {
 	QMutexLocker< QMutex > nstanceLock( instanceMutex );
-	QMap< QAnyStringView, QVariant > result;
+	QMap< QString, QVariant > result;
 	if( setting ) {
 		setting->beginGroup( group );
 		auto allKey = setting->allKeys( );
-		for( auto &key : allKey )
-			result.insert( key, setting->value( key ) );
+		for( auto &key : allKey ) {
+			auto value = setting->value( key );
+			result[ key ] = value;
+		}
 		setting->endGroup( );
 	}
 	return result;

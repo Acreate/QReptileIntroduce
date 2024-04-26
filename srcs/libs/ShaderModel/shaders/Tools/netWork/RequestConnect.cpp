@@ -2,7 +2,7 @@
 #include "Request.h"
 #include <DebugInfo.h>
 #include <QtMorc.h>
-RequestConnect::RequestConnect( QObject *parent ): QObject( parent ), networkAccessManager( nullptr ) {
+RequestConnect::RequestConnect( QObject *parent ): QObject( parent ), networkAccessManager( nullptr ), networkReply( nullptr ), request( nullptr ) {
 }
 RequestConnect::~RequestConnect( ) {
 
@@ -19,7 +19,7 @@ void RequestConnect::setNetworkAccessManager( Request *request ) {
 	QT_CONNECT_AUTO_THIS( networkAccessManager, QNetworkAccessManager, preSharedKeyAuthenticationRequired, RequestConnect, networkAccessManagerPreSharedKeyAuthenticationRequired );
 	QT_CONNECT_AUTO_THIS( networkAccessManager, QNetworkAccessManager, proxyAuthenticationRequired, RequestConnect, networkAccessManagerProxyAuthenticationRequired );
 	QT_CONNECT_AUTO_THIS( networkAccessManager, QNetworkAccessManager, sslErrors, RequestConnect, networkAccessManagerSslErrors );
-	this->requestList.append( request );
+	this->request = request;
 
 	auto overload = QOverload< QObject * >::of( &QObject::destroyed );
 	// 对象被删除
@@ -31,16 +31,14 @@ void RequestConnect::setNetworkAccessManager( Request *request ) {
 	} );
 	connect( request, overload, [=]( QObject *obj ) {
 		QMutexLocker signalLock( &mutex );
-		if( obj == request )
-			this->requestList.removeAll( request );
 		qDebug( ) << __FILE__ << " : " << __LINE__ << "\n\t""request, overload, [=]( QObject *" << obj << " )";
 	} );
 }
 void RequestConnect::setNetworkReply( QNetworkReply *const networkReply ) {
 	QMutexLocker lock( &mutex );
-	if( networkReplyList.count( networkReply ) != 0 )
+	if( this->networkReply == networkReply )
 		return;
-	this->networkReplyList.append( networkReply );
+	this->networkReply = networkReply;
 	QT_CONNECT_AUTO_THIS( networkReply, QNetworkReply, socketStartedConnecting, RequestConnect, networkReplySocketStartedConnecting );
 	QT_CONNECT_AUTO_THIS( networkReply, QNetworkReply, requestSent, RequestConnect, networkReplyRequestSent );
 	QT_CONNECT_AUTO_THIS( networkReply, QNetworkReply, metaDataChanged, RequestConnect, networkReplyMetaDataChanged );
@@ -62,7 +60,6 @@ void RequestConnect::setNetworkReply( QNetworkReply *const networkReply ) {
 	// 对象被删除
 	connect( networkReply, overload, [=]( QObject *obj ) {
 		QMutexLocker signalLock( &mutex );
-		this->networkReplyList.removeAll( obj );
 		qDebug( ) << __FILE__ << " : " << __LINE__ << "\n\t" "networkReply, overload, [=]( QObject *" << obj << " )";
 	} );
 }

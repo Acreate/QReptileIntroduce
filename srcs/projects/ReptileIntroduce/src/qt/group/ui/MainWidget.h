@@ -74,7 +74,17 @@ private: // 程序配置-名称
 	static const QString settingGroupSelectDefaultPaths; // 默认的窗口选择路径组
 	static const QString settingGroupSelectDefaultPathskeyPlugPathKey; // 基于 settingGroupSelectDefaultPaths 插件路径
 	static const QString settingGroupPlugIniPathKeyMerge; // 插件的配置文件路径
-	static const QString settingGroupPlugIniPathSettingPath; // 插件的配置文件路径
+	static const QString settingGroupFont; // 字体组
+	static const QString settingGroupFontFamily; // 字体名称
+	static const QString settingGroupFontPointSize; // 字体大小
+	static const QString settingGroupFontWeightSize; // 字体宽度
+	static const QString settingGroupFontItalic; // 是否斜体
+	static const QString settingGroupFontBold; // 是否加粗
+	static const QString settingGroupFontStrikeOut; // 划线
+	static const QString settingGroupFontUnderline; // 下划线
+	static const QString settingGroupFontStyle; // 字体风格
+
+
 	static const QChar settingPathSep; // 路径分隔符
 private: // 程序配置-变量
 	/// <summary>

@@ -8,7 +8,7 @@
 #include <QStack>
 #include <QPushButton>
 #include <stack>
-
+#include <QFontDialog>
 #include "../layout/HLayoutBox.h"
 #include "../layout/VLayoutBox.h"
 #include "../menu/MenuBar.h"
@@ -56,8 +56,8 @@ void DisplayWidget::initComponent( ) {
 	startGet = new Action( topMenu );
 }
 void DisplayWidget::initProperty( ) {
-	startGet->setText( tr( u8"打开文件" ) );
-	topMenu->setTitle( tr( u8"开始" ) );
+	topMenu->setTitle( tr( u8"绘制窗口" ) );
+	startGet->setText( tr( u8"设置字体" ) );
 	plugTopMneu->setTitle( tr( u8"插件菜单" ) );
 	widgetTopMneu->setTitle( tr( u8"窗口菜单" ) );
 	objectImage->fill( QColor( 0, 0, 0, 0 ) );
@@ -70,6 +70,9 @@ void DisplayWidget::initProperty( ) {
 	subV = contentsMargins.top( ) + contentsMargins.bottom( ) + topHeight + spacing * 2;
 	subH = contentsMargins.left( ) + contentsMargins.right( ) + spacing * 2;
 	strBuffMaxSize = 100;
+	msgFont = this->font( );
+	msgFont.setBold( true );
+	msgFont.setPixelSize( 14 );
 }
 void DisplayWidget::initComponentLayout( ) {
 	topMenuBar->addMenu( topMenu );
@@ -83,12 +86,23 @@ void DisplayWidget::initConnect( ) {
 
 	// 链接自身的槽
 	connect( this, &DisplayWidget::setType, this, &DisplayWidget::native_slot_setType );
-
+	connect( this, &DisplayWidget::changeDisplayFont, [=]( QFont &font ) {
+		msgFont = font;
+		this->setFont( font );
+		updatDisplay< QString_Type >( );
+		update( );
+	} );
 	// 重载的槽
-	q_connect_solts_thisPtr( QObject *, &DisplayWidget::display, &DisplayWidget::native_slot_display );
+	q_connect_solts_thisPtr( const QObject &, &DisplayWidget::display, &DisplayWidget::native_slot_display );
 	q_connect_solts_thisPtr( const QString &, &DisplayWidget::display, &DisplayWidget::native_slot_display );
 	q_connect_solts_thisPtr( const QArrayData &, &DisplayWidget::display, &DisplayWidget::native_slot_display );
 	q_connect_solts_thisPtr( const QByteArray &, &DisplayWidget::display, &DisplayWidget::native_slot_display );
+	connect( startGet, &QAction::triggered, [this]( ) {
+		bool isOk = false;
+		QFont font = QFontDialog::getFont( &isOk, this->msgFont, this, tr( u8"选择一个显示在窗口的字体" ) );
+		if( isOk )
+			emit changeDisplayFont( font );
+	} );
 }
 void DisplayWidget::slot_click_action( const Action *action ) {
 	emit menuActionClick( *action->getActionXPath( ) );
@@ -103,10 +117,10 @@ void DisplayWidget::native_slot_display( const QString &data ) {
 	if( !data.isEmpty( ) )
 		this->msgList << data;
 	stringMsgImage->fill( QColor( 0, 0, 0, 0 ) );
-	QFontMetrics fontMetrics = this->fontMetrics( );
+	QFontMetrics fontMetrics( msgFont );
 	int height = fontMetrics.height( ); // 每次换行都这么高
 	int maxLine = backImageRect.height( ) / height; // 最多可以容纳的行数
-	auto showMsg = this->msgList.join( '\n' ); // 统计行数
+	auto showMsg = this->msgList.join( "" ); // 统计行数
 	QStringList showMsgList = showMsg.split( '\n' ), displayList;
 	for( auto str : showMsgList ) {
 		int horizontalAdvance = fontMetrics.horizontalAdvance( str ); // 占用横向
@@ -131,8 +145,11 @@ void DisplayWidget::native_slot_display( const QString &data ) {
 		} while( true );
 	}
 	displayList = displayList.mid( displayList.size( ) - maxLine );
+
+	// 绘制
 	QPainter painter;
 	painter.begin( stringMsgImage );
+	painter.setFont( msgFont );
 	painter.setPen( QColor( 255, 0, 0, 255 ) );
 	qsizetype size = displayList.size( );
 	for( qsizetype index = 0; index < size; ++index ) {
@@ -140,7 +157,6 @@ void DisplayWidget::native_slot_display( const QString &data ) {
 		painter.drawText( QPoint( 0, ( index + 1 ) * height ), chars );
 	}
 	painter.end( );
-	update( );
 	size = this->msgList.size( );
 	if( size > strBuffMaxSize )
 		this->msgList = this->msgList.mid( size - strBuffMaxSize );
@@ -149,6 +165,7 @@ void DisplayWidget::native_slot_display( const QArrayData &data ) {
 }
 void DisplayWidget::native_slot_display( const QByteArray &data ) {
 }
+
 Menu * DisplayWidget::getMenu( QObject *object ) {
 	if( menuMap.contains( object ) )
 		return menuMap[ object ];
@@ -172,7 +189,37 @@ Menu * DisplayWidget::getPlugMenu( IRequestNetInterfaceExtend *object ) {
 	menuPlugMap.insert( object, objMenu );
 	return objMenu;
 }
+QFont DisplayWidget::getDisplayFont( ) const {
+	return msgFont;
+}
+
+template< >
+void DisplayWidget::updatDisplay< DisplayWidget::QString_Type >( ) {
+	this->updataStatus |= QString_Type;
+}
+template< >
+void DisplayWidget::updatDisplay< DisplayWidget::QObject_Type >( ) {
+	this->updataStatus |= QObject_Type;
+}
+template< >
+void DisplayWidget::updatDisplay< DisplayWidget::QArrayData_Type >( ) {
+	this->updataStatus |= QArrayData_Type;
+}
+template< >
+void DisplayWidget::updatDisplay< DisplayWidget::QByteArray_Type >( ) {
+	this->updataStatus |= QByteArray_Type;
+}
 void DisplayWidget::paintEvent( QPaintEvent *event ) {
+
+	if( updataStatus & QString_Type )
+		native_slot_display( QString( ) );
+	if( updataStatus & QObject_Type )
+		native_slot_display( QObject( ) );
+	if( updataStatus & QArrayData_Type )
+		native_slot_display( QArrayData( ) );
+	if( updataStatus & QByteArray_Type )
+		native_slot_display( QByteArray( ) );
+	updataStatus = 0;
 	// 绘制之前调用
 	emit displayBefore( );
 	// todo : 绘制信息
@@ -206,11 +253,254 @@ void DisplayWidget::resizeEvent( QResizeEvent *event ) {
 	*stringMsgImage = stringMsgImage->scaled( size );
 	*byteArrayMsgImage = stringMsgImage->scaled( size );
 	*arrayDataMsgImage = stringMsgImage->scaled( size );
-	native_slot_display( QString( ) );
+	updatDisplay< >( );
 }
-void DisplayWidget::native_slot_display( QObject *data ) {
+void DisplayWidget::native_slot_display( const QObject &data ) {
 	objectImage->fill( QColor( 0, 0, 0, 0 ) );
 	update( );
 }
 void DisplayWidget::native_slot_setType( Display_Type type ) {
+}
+
+
+IStream & DisplayWidget::operator<<( const QChar &msg ) {
+	msgList << msg;
+	updatDisplay< QString_Type >( );
+	return *this;
+}
+IStream & DisplayWidget::operator<<( const QArrayData &msg ) {
+	return *this;
+}
+IStream & DisplayWidget::operator<<( const QByteArray &msg ) {
+	return *this;
+}
+IStream & DisplayWidget::operator<<( const QString &msg ) {
+	msgList << msg;
+	updatDisplay< QString_Type >( );
+	update( );
+	return *this;
+}
+IStream & DisplayWidget::operator<<( const std::string &msg ) {
+	msgList << QString::fromStdString( msg );
+	updatDisplay< QString_Type >( );
+	return *this;
+}
+IStream & DisplayWidget::operator<<( const std::wstring &msg ) {
+	msgList << QString::fromStdWString( msg );
+	updatDisplay< QString_Type >( );
+	return *this;
+}
+IStream & DisplayWidget::operator<<( const char *msg ) {
+	msgList << msg;
+	updatDisplay< QString_Type >( );
+	return *this;
+}
+IStream & DisplayWidget::operator<<( int8_t msg ) {
+	msgList << QString::number( msg );
+	updatDisplay< QString_Type >( );
+	return *this;
+}
+IStream & DisplayWidget::operator<<( int16_t msg ) {
+	msgList << QString::number( msg );
+	updatDisplay< QString_Type >( );
+	return *this;
+}
+IStream & DisplayWidget::operator<<( int32_t msg ) {
+	msgList << QString::number( msg );
+	updatDisplay< QString_Type >( );
+	return *this;
+}
+IStream & DisplayWidget::operator<<( int64_t msg ) {
+	msgList << QString::number( msg );
+	updatDisplay< QString_Type >( );
+	return *this;
+}
+IStream & DisplayWidget::operator<<( uint8_t msg ) {
+	msgList << QString::number( msg );
+	updatDisplay< QString_Type >( );
+	return *this;
+}
+IStream & DisplayWidget::operator<<( uint16_t msg ) {
+	msgList << QString::number( msg );
+	updatDisplay< QString_Type >( );
+	return *this;
+}
+IStream & DisplayWidget::operator<<( uint32_t msg ) {
+	msgList << QString::number( msg );
+	updatDisplay< QString_Type >( );
+	return *this;
+}
+IStream & DisplayWidget::operator<<( uint64_t msg ) {
+	msgList << QString::number( msg );
+	updatDisplay< QString_Type >( );
+	return *this;
+}
+IStream & DisplayWidget::operator<<( float_t msg ) {
+	msgList << QString::number( msg );
+	updatDisplay< QString_Type >( );
+	return *this;
+}
+IStream & DisplayWidget::operator<<( double_t msg ) {
+	msgList << QString::number( msg );
+	updatDisplay< QString_Type >( );
+	return *this;
+}
+OStream & DisplayWidget::operator>>( QChar &msg ) {
+	if( msgList.size( ) > 0 ) {
+		QString list = msgList.last( );
+		msg = list[ 0 ];
+	} else
+		msg = QChar( 0 );
+	return *this;
+}
+OStream & DisplayWidget::operator>>( QArrayData &msg ) {
+	return *this;
+}
+OStream & DisplayWidget::operator>>( QByteArray &msg ) {
+	return *this;
+}
+OStream & DisplayWidget::operator>>( QString &msg ) {
+	if( msgList.size( ) > 0 )
+		msg = msgList.last( );
+	else
+		msg.clear( );
+	return *this;
+}
+OStream & DisplayWidget::operator>>( std::string &msg ) {
+	if( msgList.size( ) > 0 )
+		msg = msgList.last( ).toLocal8Bit( ).toStdString( );
+	else
+		msg.clear( );
+	return *this;
+}
+OStream & DisplayWidget::operator>>( std::wstring &msg ) {
+	if( msgList.size( ) > 0 )
+		msg = msgList.last( ).toStdWString( );
+	else
+		msg.clear( );
+	return *this;
+}
+
+OStream & DisplayWidget::operator>>( int8_t &msg ) {
+	if( msgList.size( ) > 0 ) {
+		bool isOk = false;
+		auto result = msgList.last( ).toInt( &isOk );
+		if( isOk ) {
+			msg = result;
+			return *this;
+		}
+	}
+	msg = 0;
+	return *this;
+}
+OStream & DisplayWidget::operator>>( int16_t &msg ) {
+	if( msgList.size( ) > 0 ) {
+		bool isOk = false;
+		auto result = msgList.last( ).toInt( &isOk );
+		if( isOk ) {
+			msg = result;
+			return *this;
+		}
+	}
+	msg = 0;
+	return *this;
+}
+OStream & DisplayWidget::operator>>( int32_t &msg ) {
+	if( msgList.size( ) > 0 ) {
+		bool isOk = false;
+		auto result = msgList.last( ).toInt( &isOk );
+		if( isOk ) {
+			msg = result;
+			return *this;
+		}
+	}
+	msg = 0;
+	return *this;
+}
+OStream & DisplayWidget::operator>>( int64_t &msg ) {
+	if( msgList.size( ) > 0 ) {
+		bool isOk = false;
+		auto result = msgList.last( ).toLongLong( &isOk );
+		if( isOk ) {
+			msg = result;
+			return *this;
+		}
+	}
+	msg = 0;
+	return *this;
+}
+OStream & DisplayWidget::operator>>( uint8_t &msg ) {
+	if( msgList.size( ) > 0 ) {
+		bool isOk = false;
+		auto result = msgList.last( ).toUInt( &isOk );
+		if( isOk ) {
+			msg = result;
+			return *this;
+		}
+	}
+	msg = 0;
+	return *this;
+}
+OStream & DisplayWidget::operator>>( uint16_t &msg ) {
+	if( msgList.size( ) > 0 ) {
+		bool isOk = false;
+		auto result = msgList.last( ).toUInt( &isOk );
+		if( isOk ) {
+			msg = result;
+			return *this;
+		}
+	}
+	msg = 0;
+	return *this;
+}
+OStream & DisplayWidget::operator>>( uint32_t &msg ) {
+	if( msgList.size( ) > 0 ) {
+		bool isOk = false;
+		auto result = msgList.last( ).toUInt( &isOk );
+		if( isOk ) {
+			msg = result;
+			return *this;
+		}
+	}
+	msg = 0;
+	return *this;
+}
+OStream & DisplayWidget::operator>>( uint64_t &msg ) {
+	if( msgList.size( ) > 0 ) {
+		bool isOk = false;
+		auto result = msgList.last( ).toULongLong( &isOk );
+		if( isOk ) {
+			msg = result;
+			return *this;
+		}
+	}
+	msg = 0;
+	return *this;
+}
+OStream & DisplayWidget::operator>>( float_t &msg ) {
+	if( msgList.size( ) > 0 ) {
+		bool isOk = false;
+		auto result = msgList.last( ).toFloat( &isOk );
+		if( isOk ) {
+			msg = result;
+			return *this;
+		}
+	}
+	msg = 0;
+	return *this;
+}
+OStream & DisplayWidget::operator>>( double_t &msg ) {
+	if( msgList.size( ) > 0 ) {
+		bool isOk = false;
+		auto result = msgList.last( ).toDouble( &isOk );
+		if( isOk ) {
+			msg = result;
+			return *this;
+		}
+	}
+	msg = 0;
+	return *this;
+}
+void DisplayWidget::flush( ) {
+	update( );
 }

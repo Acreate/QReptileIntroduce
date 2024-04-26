@@ -37,6 +37,15 @@ const QString MainWidget::settingGroupWorkKeyWriteFileWorkPath = tr( u8"写入�
 const QString MainWidget::settingGroupSelectDefaultPaths = tr( u8"选择窗口默认路径" );
 const QString MainWidget::settingGroupSelectDefaultPathskeyPlugPathKey = tr( u8"插件路径" );
 const QString MainWidget::settingGroupPlugIniPathKeyMerge = tr( u8"插件/配置路径" );
+const QString MainWidget::settingGroupFont = tr( u8"字体" );
+const QString MainWidget::settingGroupFontFamily = tr( u8"名称" );
+const QString MainWidget::settingGroupFontPointSize = tr( u8"点大小" );
+const QString MainWidget::settingGroupFontWeightSize = tr( u8"加重" );
+const QString MainWidget::settingGroupFontItalic = tr( u8"斜体" );
+const QString MainWidget::settingGroupFontBold = tr( u8"加粗" );
+const QString MainWidget::settingGroupFontStrikeOut = tr( u8"划线" ); // 划线
+const QString MainWidget::settingGroupFontUnderline = tr( u8"下划线" ); // 下划线
+const QString MainWidget::settingGroupFontStyle = tr( u8"字体风格" ); // 字体风格
 const QChar MainWidget::settingPathSep = tr( u8";" )[ 0 ];
 
 void MainWidget::initMumberPtrMemory( ) {
@@ -100,6 +109,20 @@ void MainWidget::initComponentConnect( ) {
 	connect( display, &DisplayWidget::menuActionClick, [=]( const QString &xpath ) {
 		qDebug( ) << xpath;
 	} );
+	connect( display, &DisplayWidget::changeDisplayFont, [=]( QFont &font ) {
+		progressSetting->setValue( settingGroupFont, {
+			{ settingGroupFontFamily, font.family( ) }
+			, { settingGroupFontPointSize, font.pointSizeF( ) }
+			, { settingGroupFontWeightSize, font.weight( ) }
+			, { settingGroupFontItalic, font.italic( ) }
+			, { settingGroupFontBold, font.bold( ) }
+			, { settingGroupFontStrikeOut, font.strikeOut( ) }
+			, { settingGroupFontUnderline, font.underline( ) }
+			, { settingGroupFontStyle, font.style( ) }
+			}
+		);
+		progressSetting->sync( );
+	} );
 }
 void MainWidget::initComponentOver( ) {
 	//// 线程开始
@@ -118,6 +141,70 @@ void MainWidget::initComponentOver( ) {
 	LoadWebInfoBtn->setText( tr( u8"开始任务" ) );
 	fromDisplayWidgetMenu->addAction( LoadWebInfoBtn );
 	connect( LoadWebInfoBtn, &QAction::triggered, this, &MainWidget::LoadWebInfo );
+
+	auto map = progressSetting->getAllInfo( settingGroupFont );
+	QFont font;
+	if( map.size( ) > 0 ) {
+		auto iterator = map.begin( );
+		auto end = map.end( );
+		for( ; iterator != end; ++iterator ) {
+			auto key = iterator.key( );
+			if( key.isEmpty( ) )
+				continue;
+			if( settingGroupFontFamily == key ) {
+				QString family = iterator.value( ).toString( );
+				if( !family.isEmpty( ) )
+					font.setFamily( family );
+			} else if( settingGroupFontPointSize == key ) {
+				bool converOk = false;
+				auto size = iterator.value( ).toDouble( &converOk );
+				if( converOk )
+					font.setPointSizeF( size );
+			} else if( settingGroupFontWeightSize == key ) {
+				bool converOk = false;
+				QFont::Weight weight = static_cast< QFont::Weight >( iterator.value( ).toInt( &converOk ) );
+				if( converOk )
+					font.setWeight( weight );
+			} else if( settingGroupFontItalic == key ) {
+				auto variant = iterator.value( );
+				bool isItalic = variant.toBool( );
+				font.setItalic( isItalic );
+			} else if( settingGroupFontBold == key ) {
+				auto variant = iterator.value( );
+				bool isBold = variant.toBool( );
+				font.setBold( isBold );
+			} else if( settingGroupFontStrikeOut == key ) {
+				auto variant = iterator.value( );
+				bool isBold = variant.toBool( );
+				font.setStrikeOut( isBold );
+			} else if( settingGroupFontUnderline == key ) {
+				auto variant = iterator.value( );
+				bool isBold = variant.toBool( );
+				font.setUnderline( isBold );
+			} else if( settingGroupFontStyle == key ) {
+				bool converOk = false;
+				QFont::Style style = static_cast< QFont::Style >( iterator.value( ).toInt( &converOk ) );
+				if( converOk )
+					font.setStyle( style );
+			}
+		}
+
+	} else {
+		font = this->font( );
+		progressSetting->setValue( settingGroupFont, {
+			{ settingGroupFontFamily, font.family( ) }
+			, { settingGroupFontPointSize, font.pointSizeF( ) }
+			, { settingGroupFontWeightSize, font.weight( ) }
+			, { settingGroupFontItalic, font.italic( ) }
+			, { settingGroupFontBold, font.bold( ) }
+			, { settingGroupFontStrikeOut, font.strikeOut( ) }
+			, { settingGroupFontUnderline, font.underline( ) }
+			, { settingGroupFontStyle, font.style( ) }
+			}
+		);
+		progressSetting->sync( );
+	}
+	emit display->changeDisplayFont( font );
 	loadingPlug( );
 }
 MainWidget::MainWidget( QWidget *parent, Qt::WindowFlags fg ) : QWidget( parent, fg ) {
@@ -262,7 +349,7 @@ void MainWidget::loadingPlug( ) {
 				outUrl.clear( );
 				interfaceExtend->setInterfaceParent( this );
 				QObject *object = iterator.key( );
-				plugs.insert( filePtah, QSharedPointer< NovelNetJob >{ new NovelNetJob( this, object, requestNetInterfaceExtend ) } );
+				plugs.insert( filePtah, QSharedPointer< NovelNetJob >{ new NovelNetJob( this, display, object, requestNetInterfaceExtend ) } );
 			}
 		}
 
@@ -280,7 +367,9 @@ void MainWidget::LoadWebInfo( ) {
 		qsizetype indexOf = iterator.key( ).indexOf( "www.121ds.cc" );
 		if( indexOf != -1 ) {
 			QSharedPointer< NovelNetJob > netJob = iterator.value( );
-			*display << QString( u8"%1:(%2 %3)" ).arg( netJob->getUrl( ) ).arg( __FILE__ ).arg( __LINE__ );
+			netJob->start( );
+			*display << QString( u8"%1:(%2 %3)" ).arg( netJob->getUrl( ) ).arg( __FILE__ ).arg( __LINE__ ) << "\n";
+			display->flush(  );
 		}
 	}
 }
