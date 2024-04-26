@@ -11,18 +11,17 @@ class Request;
 class TOOLS_EXPORT RequestConnect : public QObject {
 	Q_OBJECT;
 private:
-	QList< QNetworkAccessManager * > networkAccessManagerList;
+	QNetworkAccessManager *networkAccessManager;
 	QList< QNetworkReply * > networkReplyList;
 	QList< Request * > requestList;
 private:
 	QMutex mutex;
 public:
-	RequestConnect( QObject *parent ) : QObject( parent ) {
-	}
+	RequestConnect( QObject *parent );
 	~RequestConnect( ) override;
 public:
-	QList< QNetworkAccessManager * > getNetworkAccessManagerList( ) const {
-		return networkAccessManagerList;
+	QNetworkAccessManager * getNetworkAccessManager( ) const {
+		return networkAccessManager;
 	}
 	QList< QNetworkReply * > getNetworkReplyList( ) const {
 		return networkReplyList;

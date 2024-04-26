@@ -2,15 +2,17 @@
 #include "Request.h"
 #include <DebugInfo.h>
 #include <QtMorc.h>
+RequestConnect::RequestConnect( QObject *parent ): QObject( parent ), networkAccessManager( nullptr ) {
+}
 RequestConnect::~RequestConnect( ) {
 
 }
 void RequestConnect::setNetworkAccessManager( Request *request ) {
 	QMutexLocker lock( &mutex );
 	auto networkAccessManager = request->getNetworkAccessManager( );
-	if( this->networkAccessManagerList.count( networkAccessManager ) != 0 )
+	if( this->networkAccessManager == networkAccessManager )
 		return;
-	this->networkAccessManagerList.append( networkAccessManager );
+	this->networkAccessManager = networkAccessManager;
 	QT_CONNECT_AUTO_THIS( networkAccessManager, QNetworkAccessManager, authenticationRequired, RequestConnect, networkAccessManagerAuthenticationRequired );
 	QT_CONNECT_AUTO_THIS( networkAccessManager, QNetworkAccessManager, encrypted, RequestConnect, networkAccessManagerEncrypted );
 	QT_CONNECT_AUTO_THIS( networkAccessManager, QNetworkAccessManager, finished, RequestConnect, networkAccessManagerFinished );
@@ -23,12 +25,14 @@ void RequestConnect::setNetworkAccessManager( Request *request ) {
 	// 对象被删除
 	connect( networkAccessManager, overload, [=]( QObject *obj ) {
 		QMutexLocker signalLock( &mutex );
-		this->networkAccessManagerList.removeAll( obj );
+		if( networkAccessManager == obj )
+			this->networkAccessManager = nullptr;
 		qDebug( ) << __FILE__ << " : " << __LINE__ << "\n\t""networkAccessManager, overload, [=]( QObject *" << obj << " )";
 	} );
 	connect( request, overload, [=]( QObject *obj ) {
 		QMutexLocker signalLock( &mutex );
-		this->requestList.removeAll( obj );
+		if( obj == request )
+			this->requestList.removeAll( request );
 		qDebug( ) << __FILE__ << " : " << __LINE__ << "\n\t""request, overload, [=]( QObject *" << obj << " )";
 	} );
 }

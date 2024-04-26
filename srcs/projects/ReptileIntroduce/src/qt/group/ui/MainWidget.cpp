@@ -280,9 +280,7 @@ void MainWidget::LoadWebInfo( ) {
 		qsizetype indexOf = iterator.key( ).indexOf( "www.121ds.cc" );
 		if( indexOf != -1 ) {
 			QSharedPointer< NovelNetJob > netJob = iterator.value( );
-			netJob->start( nullptr );
-			netJob->getUrl( &outUrl );
-			*display << outUrl << __FILE__ << __LINE__;
+			*display << QString( u8"%1:(%2 %3)" ).arg( netJob->getUrl( ) ).arg( __FILE__ ).arg( __LINE__ );
 		}
 	}
 }
