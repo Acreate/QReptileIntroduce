@@ -2,8 +2,7 @@
 #include <QFile>
 #include <DebugInfo.h>
 #include "FileResult.h"
-#include "../../extend/thread//FileThread.h"
-#include "../../extend/thread/FileThread.h"
+#include "../thread/FileThread.h"
 
 RWFileThread::RWFileThread( QObject *parent ): QObject( parent ), file( new QFileInfo ) {
 }

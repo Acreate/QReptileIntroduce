@@ -1,5 +1,5 @@
 ﻿#include "FileThread.h"
-#include "../../../qt/group/file/FileResult.h"
+#include "../file/FileResult.h"
 #include <DebugInfo.h>
 #include <QDir>
 FileThread::FileThread( const QString &filePath,

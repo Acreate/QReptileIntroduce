@@ -4,12 +4,8 @@
 #include <QPushButton>
 #include <QPlainTextEdit>
 
-#include "../../extend/Thread/DateTimeThread.h"
-#include "../../extend/layout/HLayoutBox.h"
-#include "../../extend/layout/VLayoutBox.h"
-#include "../../extend/ui/DisplayWidget.h"
-#include "../plug/LoadPlug.h"
-#include "FileSelectPathWidget.h"
+#include <Thread/DateTimeThread.h>
+#include <plug/LoadPlug.h>
 #include <DebugInfo.h>
 #include <QFileDialog>
 #include <QInputDialog>
@@ -21,12 +17,16 @@
 #include <QScrollBar>
 #include <qcoreapplication.h>
 
+#include <setting/Setting.h>
+#include <interface/IRequestNetInterfaceExtend.h>
+#include <path/Path.h>
+
+#include "../../extend/layout/HLayoutBox.h"
+#include "../../extend/layout/VLayoutBox.h"
+#include "../../extend/ui/DisplayWidget.h"
+#include "FileSelectPathWidget.h"
 #include "../../extend/menu/Action.h"
 #include "../../extend/menu/Menu.h"
-#include "../plug/LoadPlug.h"
-#include "../setting/Setting.h"
-#include "interface/IRequestNetInterfaceExtend.h"
-#include "path/Path.h"
 
 const QString MainWidget::settingGroupWork = tr( u8"工作" );
 const QString MainWidget::settingGroupWeb = tr( u8"网络" );
@@ -44,6 +44,7 @@ void MainWidget::initMumberPtrMemory( ) {
 	translator = new QTranslator( this );
 	selectPathWidget = new FileSelectPathWidget( this );
 	display = new DisplayWidget( this );
+	LoadWebInfoBtn = new Action;
 }
 void MainWidget::initComponentPropertys( ) {
 	dateTimeThread->setParent( this );
@@ -113,6 +114,9 @@ void MainWidget::initComponentOver( ) {
 	loadPlug->setText( tr( u8"加载插件" ) );
 	fromDisplayWidgetMenu->addAction( loadPlug );
 	connect( loadPlug, &QAction::triggered, this, &MainWidget::loadingPlug );
+	LoadWebInfoBtn->setText( tr( u8"开始任务" ) );
+	fromDisplayWidgetMenu->addAction( LoadWebInfoBtn );
+	connect( LoadWebInfoBtn, &QAction::triggered, this, &MainWidget::LoadWebInfo );
 	loadingPlug( );
 }
 MainWidget::MainWidget( QWidget *parent, Qt::WindowFlags fg ) : QWidget( parent, fg ) {
@@ -260,5 +264,21 @@ void MainWidget::loadingPlug( ) {
 		}
 
 	}
-
+	if( plugs.size( ) == 0 )
+		LoadWebInfoBtn->setEnabled( false );
+	else
+		LoadWebInfoBtn->setEnabled( true );
+}
+void MainWidget::LoadWebInfo( ) {
+	auto iterator = plugs.begin( );
+	auto end = plugs.end( );
+	std::string outUrl;
+	for( ; iterator != end; ++iterator ) {
+		qsizetype indexOf = iterator.key( ).indexOf( "www.121ds.cc" );
+		if( indexOf != -1 ) {
+			auto requestNetInterfaceExtend = iterator.value( ).second;
+			requestNetInterfaceExtend->getUrl( &outUrl );
+			*display << outUrl << __FILE__ << __LINE__;
+		}
+	}
 }

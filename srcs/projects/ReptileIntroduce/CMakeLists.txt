@@ -23,7 +23,6 @@ include_directories( ${NoveInfo_include_dir} )
 include_directories( ${UserHread_include_dir} )
 include_directories( ${Tools_include_dir} )
 include_directories( ${HtmlTools_include_dir} )
-include_directories( ${Pugixml_include_dir} )
 
 set( cmake_definitions_out "${CMAKE_CURRENT_LIST_DIR}/src/macro/cmake_to_c_cpp_header_env.h" )
 

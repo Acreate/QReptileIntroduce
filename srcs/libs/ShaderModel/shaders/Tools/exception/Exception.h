@@ -2,7 +2,9 @@
 #define EXCEPTION_H_H_HEAD__FILE__
 #pragma once
 #include <QException>
-class Exception : public QException {
+#include "../export/Tools_export.h"
+
+class TOOLS_EXPORT Exception : public QException {
 private:
 	QString msg;
 public:
@@ -12,11 +14,11 @@ public:
 
 	}
 	void raise( ) const override;
-	QException *clone( ) const override;
-	const QString &getMsg( ) const {
+	QException * clone( ) const override;
+	const QString & getMsg( ) const {
 		return msg;
 	}
-	void setMsg(const QString& newMsg) {
+	void setMsg( const QString &newMsg ) {
 		msg = newMsg;
 	}
 };

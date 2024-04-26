@@ -4,8 +4,9 @@
 #include <QThread>
 #include <QMutexLocker>
 #include <QObject>
+#include "../export/Tools_export.h"
 
-class DateTimeThread : public QThread {
+class TOOLS_EXPORT DateTimeThread : public QThread {
 	Q_OBJECT;
 public:
 	DateTimeThread( QObject *parent = nullptr );

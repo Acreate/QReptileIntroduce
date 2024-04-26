@@ -7,7 +7,9 @@
 #include <QIODeviceBase>
 
 class FileResult;
-class FileThread : public QThread {
+#include "../export/Tools_export.h"
+
+class TOOLS_EXPORT FileThread : public QThread {
 	Q_OBJECT;
 private:
 	qsizetype buffSize = 1024;
@@ -20,12 +22,12 @@ public:
 	~FileThread( ) override;
 public:
 	QIODeviceBase::OpenMode resetOpenMode( const QIODeviceBase::OpenMode &newOpenMode );
-	FileResult *readFile( );
-	FileResult *writeFile( );
+	FileResult * readFile( );
+	FileResult * writeFile( );
 protected:
 	void run( ) override;
 public:
-	FileResult *getFileThreadResult( ) {
+	FileResult * getFileThreadResult( ) {
 		return fileThreadResult;
 	}
 	QIODeviceBase::OpenMode getOpenMode( ) const {

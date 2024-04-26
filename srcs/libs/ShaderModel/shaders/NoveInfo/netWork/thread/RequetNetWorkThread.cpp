@@ -1,7 +1,7 @@
 ﻿#include "RequetNetWorkThread.h"
 #include <QtMath>
 
-#include "../netWork/Request.h"
+#include "../Request.h"
 
 RequetNetWorkThread::RequetNetWorkThread( const QUrl &url, Request *request, RequestConnect *requestConnect, QObject *parent )
 : QThread( parent ), url( url ), request( request ), requestConnect( requestConnect ) {

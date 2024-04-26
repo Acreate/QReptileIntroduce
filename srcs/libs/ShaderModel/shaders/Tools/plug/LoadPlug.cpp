@@ -3,7 +3,7 @@
 #include <interface/IRequestNetInterfaceExtend.h>
 #include <QPluginLoader>
 
-#include "path/Path.h"
+#include "../path/Path.h"
 
 
 LoadPlug::LoadPlug( const QString &path, QObject *parent )

@@ -34,16 +34,20 @@ DisplayWidget::DisplayWidget( QWidget *parent, Qt::WindowFlags flags ) : QWidget
 	initConnect( );
 }
 DisplayWidget::~DisplayWidget( ) {
-	delete backImage;
+	delete objectImage;
 	delete stringMsgImage;
+	delete byteArrayMsgImage;
+	delete arrayDataMsgImage;
 	auto menus = menuMap.values( );
 	for( auto menu : menus )
 		if( menu->parent( ) == nullptr )
 			menu->deleteLater( );
 }
 void DisplayWidget::initComponent( ) {
-	backImage = new QImage( size( ), QImage::Format_ARGB32 );
+	objectImage = new QImage( size( ), QImage::Format_ARGB32 );
 	stringMsgImage = new QImage( size( ), QImage::Format_ARGB32 );
+	byteArrayMsgImage = new QImage( size( ), QImage::Format_ARGB32 );
+	arrayDataMsgImage = new QImage( size( ), QImage::Format_ARGB32 );
 	mainVLayout = new VLayoutBox( this );
 	topMenuBar = new MenuBar( this );
 	topMenu = new Menu( this );
@@ -56,7 +60,7 @@ void DisplayWidget::initProperty( ) {
 	topMenu->setTitle( tr( u8"开始" ) );
 	plugTopMneu->setTitle( tr( u8"插件菜单" ) );
 	widgetTopMneu->setTitle( tr( u8"窗口菜单" ) );
-	backImage->fill( QColor( 0, 0, 0, 0 ) );
+	objectImage->fill( QColor( 0, 0, 0, 0 ) );
 	stringMsgImage->fill( QColor( 0, 0, 0, 0 ) );
 	currentDisplayType = NORMALE;
 	topHeight = topMenuBar->height( );
@@ -175,7 +179,7 @@ void DisplayWidget::paintEvent( QPaintEvent *event ) {
 	QPainter painter;
 	painter.begin( this );
 	size_t sep = subH / 2;
-	painter.drawImage( 0, topHeight + sep, *backImage );
+	painter.drawImage( 0, topHeight + sep, *objectImage );
 	painter.drawImage( 0, topHeight + sep, *stringMsgImage );
 	painter.end( );
 	QWidget::paintEvent( event );
@@ -198,13 +202,14 @@ void DisplayWidget::resizeEvent( QResizeEvent *event ) {
 	QSize size = event->size( );
 	size.setHeight( size.height( ) - subV );
 	size.setWidth( size.width( ) - subH );
-	*backImage = backImage->scaled( size );
+	*objectImage = objectImage->scaled( size );
 	*stringMsgImage = stringMsgImage->scaled( size );
-
+	*byteArrayMsgImage = stringMsgImage->scaled( size );
+	*arrayDataMsgImage = stringMsgImage->scaled( size );
 	native_slot_display( QString( ) );
 }
 void DisplayWidget::native_slot_display( QObject *data ) {
-	backImage->fill( QColor( 0, 0, 0, 0 ) );
+	objectImage->fill( QColor( 0, 0, 0, 0 ) );
 	update( );
 }
 void DisplayWidget::native_slot_setType( Display_Type type ) {

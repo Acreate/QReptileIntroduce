@@ -48,8 +48,10 @@ private: // 绘制相关变量
 	/// </summary>
 	size_t strBuffMaxSize;
 private: // 类成员变量
-	QImage *backImage; // 要绘制的内容
+	QImage *objectImage; // 要绘制的内容
 	QImage *stringMsgImage; // 要绘制的文字
+	QImage *arrayDataMsgImage; // 数据数组
+	QImage *byteArrayMsgImage; // 二进制数据数组
 	Display_Type currentDisplayType; // 当前绘制类型
 public:
 	DisplayWidget( QWidget *parent, Qt::WindowFlags flags = Qt::WindowFlags( ) );
@@ -154,6 +156,80 @@ protected slots: // 响应自身信号的槽
 	/// </summary>
 	/// <param name="data">数据</param>
 	void native_slot_display( const QByteArray &data );
+public: // qt 
+	DisplayWidget & operator<<( const QString &msg ) {
+		emit display( msg );
+		return *this;
+	}
+	DisplayWidget & operator<<( const QByteArray &msg ) {
+		emit display( msg );
+		return *this;
+	}
+	DisplayWidget & operator<<( const QArrayData &msg ) {
+		emit display( msg );
+		return *this;
+	}
+	DisplayWidget & operator<<( QObject *msg ) {
+		emit display( msg );
+		return *this;
+	}
+public: // C 字符串
+	DisplayWidget & operator<<( const char *msg ) {
+		emit display( QString::fromStdString( msg ) );
+		return *this;
+	}
+public: // std 标准库
+	DisplayWidget & operator<<( const std::string &msg ) {
+		emit display( QString::fromStdString( msg ) );
+		return *this;
+	}
+	DisplayWidget & operator<<( const std::wstring &msg ) {
+		emit display( QString::fromStdWString( msg ) );
+		return *this;
+	}
+public: // 值-有符号
+	DisplayWidget & operator<<( const int8_t &msg ) {
+		emit display( QString::number( msg ) );
+		return *this;
+	}
+	DisplayWidget & operator<<( const int16_t &msg ) {
+		emit display( QString::number( msg ) );
+		return *this;
+	}
+	DisplayWidget & operator<<( const int32_t &msg ) {
+		emit display( QString::number( msg ) );
+		return *this;
+	}
+	DisplayWidget & operator<<( const int64_t &msg ) {
+		emit display( QString::number( msg ) );
+		return *this;
+	}
+public:// 值-无符号
+	DisplayWidget & operator<<( const uint8_t &msg ) {
+		emit display( QString::number( msg ) );
+		return *this;
+	}
+	DisplayWidget & operator<<( const uint16_t &msg ) {
+		emit display( QString::number( msg ) );
+		return *this;
+	}
+	DisplayWidget & operator<<( const uint32_t &msg ) {
+		emit display( QString::number( msg ) );
+		return *this;
+	}
+	DisplayWidget & operator<<( const uint64_t &msg ) {
+		emit display( QString::number( msg ) );
+		return *this;
+	}
+public: // 浮点
+	DisplayWidget & operator<<( const float_t &msg ) {
+		emit display( QString::number( msg ) );
+		return *this;
+	}
+	DisplayWidget & operator<<( const double_t &msg ) {
+		emit display( QString::number( msg ) );
+		return *this;
+	}
 };
 
 

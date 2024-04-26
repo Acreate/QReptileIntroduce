@@ -4,9 +4,11 @@
 #include <QFileInfo>
 #include <QGenericPlugin>
 
-#include "path/File.h"
+#include "../path/File.h"
 class IRequestNetInterfaceExtend;
-class LoadPlug : public QObject {
+#include "../export/Tools_export.h"
+
+class TOOLS_EXPORT  LoadPlug : public QObject {
 public: // 静态函数调用
 	/// <summary>
 	/// 根据路径生成插件对象

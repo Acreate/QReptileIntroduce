@@ -1,7 +1,7 @@
 ﻿#include "RequestThread.h"
-#include "../../extend/netWork/RequestConnect.h"
-#include "../../extend/thread/RequetNetWorkThread.h"
-#include "../../extend/netWork/Request.h"
+#include "../RequestConnect.h"
+#include "RequetNetWorkThread.h"
+#include "../Request.h"
 #include <QUrl>
 RequestThread::RequestThread( QObject *parent ): QObject( parent ) {
 	urlRoot = nullptr;

@@ -32,6 +32,7 @@ private: // 布局组件
 private: // 显示组件
 	FileSelectPathWidget *selectPathWidget; // 路径选择组件
 	DisplayWidget *display; // 信息显示组件
+	Action * LoadWebInfoBtn; // 开始请求按键
 public:
 	MainWidget( QWidget *parent = nullptr, Qt::WindowFlags fg = Qt::WindowFlags( ) );
 	~MainWidget( ) override;
@@ -107,6 +108,10 @@ public slots: // 窗口子控件信号响应
 	/// 加载插件
 	/// </summary>
 	void loadingPlug( );
+	/// <summary>
+	/// 开始爬虫
+	/// </summary>
+	void LoadWebInfo();
 Q_SIGNALS:
 	/// <summary>
 	/// 当关联的 web 配置文件同步到该实例对象时候会触发该行为

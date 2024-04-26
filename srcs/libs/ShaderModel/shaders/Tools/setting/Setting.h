@@ -4,7 +4,9 @@
 
 #include <QSettings>
 #include <qmutex.h>
-class Setting : public QObject {
+#include "../export/Tools_export.h"
+
+class TOOLS_EXPORT  Setting : public QObject {
 	Q_OBJECT;
 private:
 	QSettings *setting;
