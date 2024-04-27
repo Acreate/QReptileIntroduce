@@ -345,11 +345,12 @@ void MainWidget::loadingPlug( ) {
 				IRequestNetInterfaceExtend *requestNetInterfaceExtend = iterator.value( );
 				IRequestNetInterfaceExtend *interfaceExtend = requestNetInterfaceExtend;
 				if( interfaceExtend->getUrl( &outUrl ) )
-					emit display->display( QString( tr( u8"获取url : %1" ) ).arg( QString::fromStdString( outUrl ) ) );
+					*display << QString( tr( u8"获取url : %1" ) ).arg( QString::fromStdString( outUrl ) ) << '\n';
 				outUrl.clear( );
 				interfaceExtend->setInterfaceParent( this );
 				QObject *object = iterator.key( );
 				plugs.insert( filePtah, QSharedPointer< NovelNetJob >{ new NovelNetJob( this, display, object, requestNetInterfaceExtend ) } );
+				display->flush( );
 			}
 		}
 
@@ -368,8 +369,8 @@ void MainWidget::LoadWebInfo( ) {
 		if( indexOf != -1 ) {
 			QSharedPointer< NovelNetJob > netJob = iterator.value( );
 			netJob->start( );
-			*display << QString( u8"%1:(%2 %3)" ).arg( netJob->getUrl( ) ).arg( __FILE__ ).arg( __LINE__ ) << "\n";
-			display->flush(  );
+			*display << QString( u8"%1:(%2 %3)" ).arg( netJob->getUrl( ) ).arg( __FILE__ ).arg( __LINE__ ) << '\n';
+			display->flush( );
 		}
 	}
 }

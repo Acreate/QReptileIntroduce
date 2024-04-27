@@ -5,6 +5,7 @@
 
 #include "../export/Plug_export.h"
 
+class OStream;
 class IStream;
 class IRequestNetInterfaceExtend;
 class QNetworkReply;
@@ -15,9 +16,9 @@ class PLUG_EXPORT NovelNetJob : public QObject {
 private:
 	QObject *interfaceObjPtr; // 小说基于 qt 框架的指针
 	IRequestNetInterfaceExtend *interfaceThisPtr; // 小说的原始指针
-	IStream *iStream; // 输入流-程序输出到该流中，显示信息
+	OStream *oStream; // 输入流-程序输出到该流中，显示信息
 public:
-	NovelNetJob( QObject *parent, IStream *i_stream, QObject *interface_obj_ptr, IRequestNetInterfaceExtend *interface_this_ptr );
+	NovelNetJob( QObject *parent, OStream *o_stream, QObject *interface_obj_ptr, IRequestNetInterfaceExtend *interface_this_ptr );
 	~NovelNetJob( ) override;
 public: // 类的独有属性
 	/// <summary>

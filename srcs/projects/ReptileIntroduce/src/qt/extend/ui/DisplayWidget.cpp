@@ -166,6 +166,7 @@ void DisplayWidget::native_slot_display( const QArrayData &data ) {
 void DisplayWidget::native_slot_display( const QByteArray &data ) {
 }
 
+
 Menu * DisplayWidget::getMenu( QObject *object ) {
 	if( menuMap.contains( object ) )
 		return menuMap[ object ];
@@ -263,89 +264,7 @@ void DisplayWidget::native_slot_setType( Display_Type type ) {
 }
 
 
-IStream & DisplayWidget::operator<<( const QChar &msg ) {
-	msgList << msg;
-	updatDisplay< QString_Type >( );
-	return *this;
-}
-IStream & DisplayWidget::operator<<( const QArrayData &msg ) {
-	return *this;
-}
-IStream & DisplayWidget::operator<<( const QByteArray &msg ) {
-	return *this;
-}
-IStream & DisplayWidget::operator<<( const QString &msg ) {
-	msgList << msg;
-	updatDisplay< QString_Type >( );
-	update( );
-	return *this;
-}
-IStream & DisplayWidget::operator<<( const std::string &msg ) {
-	msgList << QString::fromStdString( msg );
-	updatDisplay< QString_Type >( );
-	return *this;
-}
-IStream & DisplayWidget::operator<<( const std::wstring &msg ) {
-	msgList << QString::fromStdWString( msg );
-	updatDisplay< QString_Type >( );
-	return *this;
-}
-IStream & DisplayWidget::operator<<( const char *msg ) {
-	msgList << msg;
-	updatDisplay< QString_Type >( );
-	return *this;
-}
-IStream & DisplayWidget::operator<<( int8_t msg ) {
-	msgList << QString::number( msg );
-	updatDisplay< QString_Type >( );
-	return *this;
-}
-IStream & DisplayWidget::operator<<( int16_t msg ) {
-	msgList << QString::number( msg );
-	updatDisplay< QString_Type >( );
-	return *this;
-}
-IStream & DisplayWidget::operator<<( int32_t msg ) {
-	msgList << QString::number( msg );
-	updatDisplay< QString_Type >( );
-	return *this;
-}
-IStream & DisplayWidget::operator<<( int64_t msg ) {
-	msgList << QString::number( msg );
-	updatDisplay< QString_Type >( );
-	return *this;
-}
-IStream & DisplayWidget::operator<<( uint8_t msg ) {
-	msgList << QString::number( msg );
-	updatDisplay< QString_Type >( );
-	return *this;
-}
-IStream & DisplayWidget::operator<<( uint16_t msg ) {
-	msgList << QString::number( msg );
-	updatDisplay< QString_Type >( );
-	return *this;
-}
-IStream & DisplayWidget::operator<<( uint32_t msg ) {
-	msgList << QString::number( msg );
-	updatDisplay< QString_Type >( );
-	return *this;
-}
-IStream & DisplayWidget::operator<<( uint64_t msg ) {
-	msgList << QString::number( msg );
-	updatDisplay< QString_Type >( );
-	return *this;
-}
-IStream & DisplayWidget::operator<<( float_t msg ) {
-	msgList << QString::number( msg );
-	updatDisplay< QString_Type >( );
-	return *this;
-}
-IStream & DisplayWidget::operator<<( double_t msg ) {
-	msgList << QString::number( msg );
-	updatDisplay< QString_Type >( );
-	return *this;
-}
-OStream & DisplayWidget::operator>>( QChar &msg ) {
+IStream & DisplayWidget::operator>>( QChar &msg ) {
 	if( msgList.size( ) > 0 ) {
 		QString list = msgList.last( );
 		msg = list[ 0 ];
@@ -353,154 +272,314 @@ OStream & DisplayWidget::operator>>( QChar &msg ) {
 		msg = QChar( 0 );
 	return *this;
 }
-OStream & DisplayWidget::operator>>( QArrayData &msg ) {
+IStream & DisplayWidget::operator>>( QArrayData &msg ) {
 	return *this;
 }
-OStream & DisplayWidget::operator>>( QByteArray &msg ) {
+IStream & DisplayWidget::operator>>( QByteArray &msg ) {
 	return *this;
 }
-OStream & DisplayWidget::operator>>( QString &msg ) {
-	if( msgList.size( ) > 0 )
-		msg = msgList.last( );
-	else
+IStream & DisplayWidget::operator>>( QString &msg ) {
+	if( msgList.size( ) > 0 ) {
+		for( auto &qstr : msgList )
+			msg.append( qstr );
+	} else
 		msg.clear( );
 	return *this;
 }
-OStream & DisplayWidget::operator>>( std::string &msg ) {
-	if( msgList.size( ) > 0 )
-		msg = msgList.last( ).toLocal8Bit( ).toStdString( );
-	else
+IStream & DisplayWidget::operator>>( std::string &msg ) {
+	if( msgList.size( ) > 0 ) {
+		QString buff;
+		for( auto &qstr : msgList )
+			buff.append( qstr );
+		msg = buff.toLocal8Bit( ).toStdString( );
+	} else
 		msg.clear( );
 	return *this;
 }
-OStream & DisplayWidget::operator>>( std::wstring &msg ) {
-	if( msgList.size( ) > 0 )
-		msg = msgList.last( ).toStdWString( );
-	else
+IStream & DisplayWidget::operator>>( std::wstring &msg ) {
+	if( msgList.size( ) > 0 ) {
+		QString buff;
+		for( auto &qstr : msgList )
+			buff.append( qstr );
+		msg = buff.toStdWString( );
+	} else
 		msg.clear( );
 	return *this;
 }
 
-OStream & DisplayWidget::operator>>( int8_t &msg ) {
-	if( msgList.size( ) > 0 ) {
+IStream & DisplayWidget::operator>>( int8_t &msg ) {
+	qint64 qsizetype = msgList.size( );
+	if( qsizetype > 0 ) {
 		bool isOk = false;
-		auto result = msgList.last( ).toInt( &isOk );
-		if( isOk ) {
-			msg = result;
-			return *this;
+		for( --qsizetype; qsizetype >= 0; --qsizetype ) {
+			QString string = msgList[ qsizetype ];
+			int num = string.toInt( &isOk );
+			if( isOk ) {
+				msg = num;
+				return *this;
+			}
 		}
 	}
 	msg = 0;
 	return *this;
 }
-OStream & DisplayWidget::operator>>( int16_t &msg ) {
-	if( msgList.size( ) > 0 ) {
+IStream & DisplayWidget::operator>>( int16_t &msg ) {
+	qint64 qsizetype = msgList.size( );
+	if( qsizetype > 0 ) {
 		bool isOk = false;
-		auto result = msgList.last( ).toInt( &isOk );
-		if( isOk ) {
-			msg = result;
-			return *this;
+		for( --qsizetype; qsizetype >= 0; --qsizetype ) {
+			QString string = msgList[ qsizetype ];
+			int num = string.toInt( &isOk );
+			if( isOk ) {
+				msg = num;
+				return *this;
+			}
 		}
 	}
 	msg = 0;
 	return *this;
 }
-OStream & DisplayWidget::operator>>( int32_t &msg ) {
-	if( msgList.size( ) > 0 ) {
+IStream & DisplayWidget::operator>>( int32_t &msg ) {
+	qint64 qsizetype = msgList.size( );
+	if( qsizetype > 0 ) {
 		bool isOk = false;
-		auto result = msgList.last( ).toInt( &isOk );
-		if( isOk ) {
-			msg = result;
-			return *this;
+		for( --qsizetype; qsizetype >= 0; --qsizetype ) {
+			QString string = msgList[ qsizetype ];
+			int num = string.toLong( &isOk );
+			if( isOk ) {
+				msg = num;
+				return *this;
+			}
 		}
 	}
 	msg = 0;
 	return *this;
 }
-OStream & DisplayWidget::operator>>( int64_t &msg ) {
-	if( msgList.size( ) > 0 ) {
+IStream & DisplayWidget::operator>>( int64_t &msg ) {
+	qint64 qsizetype = msgList.size( );
+	if( qsizetype > 0 ) {
 		bool isOk = false;
-		auto result = msgList.last( ).toLongLong( &isOk );
-		if( isOk ) {
-			msg = result;
-			return *this;
+		for( --qsizetype; qsizetype >= 0; --qsizetype ) {
+			QString string = msgList[ qsizetype ];
+			int num = string.toLongLong( &isOk );
+			if( isOk ) {
+				msg = num;
+				return *this;
+			}
 		}
 	}
 	msg = 0;
 	return *this;
 }
-OStream & DisplayWidget::operator>>( uint8_t &msg ) {
-	if( msgList.size( ) > 0 ) {
+IStream & DisplayWidget::operator>>( uint8_t &msg ) {
+	qint64 qsizetype = msgList.size( );
+	if( qsizetype > 0 ) {
 		bool isOk = false;
-		auto result = msgList.last( ).toUInt( &isOk );
-		if( isOk ) {
-			msg = result;
-			return *this;
+		for( --qsizetype; qsizetype >= 0; --qsizetype ) {
+			QString string = msgList[ qsizetype ];
+			int num = string.toUInt( &isOk );
+			if( isOk ) {
+				msg = num;
+				return *this;
+			}
 		}
 	}
 	msg = 0;
 	return *this;
 }
-OStream & DisplayWidget::operator>>( uint16_t &msg ) {
-	if( msgList.size( ) > 0 ) {
+IStream & DisplayWidget::operator>>( uint16_t &msg ) {
+	qint64 qsizetype = msgList.size( );
+	if( qsizetype > 0 ) {
 		bool isOk = false;
-		auto result = msgList.last( ).toUInt( &isOk );
-		if( isOk ) {
-			msg = result;
-			return *this;
+		for( --qsizetype; qsizetype >= 0; --qsizetype ) {
+			QString string = msgList[ qsizetype ];
+			int num = string.toUInt( &isOk );
+			if( isOk ) {
+				msg = num;
+				return *this;
+			}
 		}
 	}
 	msg = 0;
 	return *this;
 }
-OStream & DisplayWidget::operator>>( uint32_t &msg ) {
-	if( msgList.size( ) > 0 ) {
+IStream & DisplayWidget::operator>>( uint32_t &msg ) {
+	qint64 qsizetype = msgList.size( );
+	if( qsizetype > 0 ) {
 		bool isOk = false;
-		auto result = msgList.last( ).toUInt( &isOk );
-		if( isOk ) {
-			msg = result;
-			return *this;
+		for( --qsizetype; qsizetype >= 0; --qsizetype ) {
+			QString string = msgList[ qsizetype ];
+			int num = string.toULong( &isOk );
+			if( isOk ) {
+				msg = num;
+				return *this;
+			}
 		}
 	}
 	msg = 0;
 	return *this;
 }
-OStream & DisplayWidget::operator>>( uint64_t &msg ) {
-	if( msgList.size( ) > 0 ) {
+IStream & DisplayWidget::operator>>( uint64_t &msg ) {
+	qint64 qsizetype = msgList.size( );
+	if( qsizetype > 0 ) {
 		bool isOk = false;
-		auto result = msgList.last( ).toULongLong( &isOk );
-		if( isOk ) {
-			msg = result;
-			return *this;
+		for( --qsizetype; qsizetype >= 0; --qsizetype ) {
+			QString string = msgList[ qsizetype ];
+			int num = string.toULongLong( &isOk );
+			if( isOk ) {
+				msg = num;
+				return *this;
+			}
 		}
 	}
 	msg = 0;
 	return *this;
 }
-OStream & DisplayWidget::operator>>( float_t &msg ) {
-	if( msgList.size( ) > 0 ) {
+IStream & DisplayWidget::operator>>( float_t &msg ) {
+	qint64 qsizetype = msgList.size( );
+	if( qsizetype > 0 ) {
 		bool isOk = false;
-		auto result = msgList.last( ).toFloat( &isOk );
-		if( isOk ) {
-			msg = result;
-			return *this;
+		for( --qsizetype; qsizetype >= 0; --qsizetype ) {
+			QString string = msgList[ qsizetype ];
+			int num = string.toFloat( &isOk );
+			if( isOk ) {
+				msg = num;
+				return *this;
+			}
 		}
 	}
 	msg = 0;
 	return *this;
 }
-OStream & DisplayWidget::operator>>( double_t &msg ) {
-	if( msgList.size( ) > 0 ) {
+IStream & DisplayWidget::operator>>( double_t &msg ) {
+	qint64 qsizetype = msgList.size( );
+	if( qsizetype > 0 ) {
 		bool isOk = false;
-		auto result = msgList.last( ).toDouble( &isOk );
-		if( isOk ) {
-			msg = result;
-			return *this;
+		for( --qsizetype; qsizetype >= 0; --qsizetype ) {
+			QString string = msgList[ qsizetype ];
+			int num = string.toDouble( &isOk );
+			if( isOk ) {
+				msg = num;
+				return *this;
+			}
 		}
 	}
 	msg = 0;
 	return *this;
 }
+OStream & DisplayWidget::operator<<( const QChar &msg ) {
+	msgList << msg;
+	updatDisplay< QString_Type >( );
+	return *this;
+}
+OStream & DisplayWidget::operator<<( const char16_t &msg ) {
+	msgList << QChar( msg );
+	updatDisplay< QString_Type >( );
+	return *this;
+}
+OStream & DisplayWidget::operator<<( const char32_t &msg ) {
+	msgList << QChar( msg );
+	updatDisplay< QString_Type >( );
+	return *this;
+}
+OStream & DisplayWidget::operator<<( const wchar_t &msg ) {
+	msgList << QString::fromStdWString( std::wstring( ) + msg );
+	updatDisplay< QString_Type >( );
+	return *this;
+}
+OStream & DisplayWidget::operator<<( const char &msg ) {
+	msgList << QChar( msg );
+	updatDisplay< QString_Type >( );
+	return *this;
+}
+OStream & DisplayWidget::operator<<( const QArrayData &msg ) {
+	updatDisplay< QArrayData_Type >( );
+	return *this;
+}
+OStream & DisplayWidget::operator<<( const QByteArray &msg ) {
+	updatDisplay< QByteArray_Type >( );
+	return *this;
+}
+OStream & DisplayWidget::operator<<( const QString &msg ) {
+	msgList << msg;
+	updatDisplay< QString_Type >( );
+	return *this;
+}
+OStream & DisplayWidget::operator<<( const char *msg ) {
+	msgList << msg;
+	updatDisplay< QString_Type >( );
+	return *this;
+}
+OStream & DisplayWidget::operator<<( const std::string &msg ) {
+	msgList << QString::fromStdString( msg );
+	updatDisplay< QString_Type >( );
+	return *this;
+}
+OStream & DisplayWidget::operator<<( const std::wstring &msg ) {
+	msgList << QString::fromStdWString( msg );
+	updatDisplay< QString_Type >( );
+	return *this;
+}
+OStream & DisplayWidget::operator<<( const int8_t &msg ) {
+	msgList << QString::number( msg );
+	updatDisplay< QString_Type >( );
+	return *this;
+}
+OStream & DisplayWidget::operator<<( const int16_t &msg ) {
+	msgList << QString::number( msg );
+	updatDisplay< QString_Type >( );
+	return *this;
+}
+OStream & DisplayWidget::operator<<( const int32_t &msg ) {
+	msgList << QString::number( msg );
+	updatDisplay< QString_Type >( );
+	return *this;
+}
+OStream & DisplayWidget::operator<<( const int64_t &msg ) {
+	msgList << QString::number( msg );
+	updatDisplay< QString_Type >( );
+	return *this;
+}
+OStream & DisplayWidget::operator<<( const uint8_t &msg ) {
+	msgList << QString::number( msg );
+	updatDisplay< QString_Type >( );
+	return *this;
+}
+OStream & DisplayWidget::operator<<( const uint16_t &msg ) {
+	msgList << QString::number( msg );
+	updatDisplay< QString_Type >( );
+	return *this;
+}
+OStream & DisplayWidget::operator<<( const uint32_t &msg ) {
+	msgList << QString::number( msg );
+	updatDisplay< QString_Type >( );
+	return *this;
+}
+OStream & DisplayWidget::operator<<( const uint64_t &msg ) {
+	msgList << QString::number( msg );
+	updatDisplay< QString_Type >( );
+	return *this;
+}
+OStream & DisplayWidget::operator<<( const float_t &msg ) {
+	msgList << QString::number( msg );
+	updatDisplay< QString_Type >( );
+	return *this;
+}
+OStream & DisplayWidget::operator<<( const double_t &msg ) {
+	msgList << QString::number( msg );
+	updatDisplay< QString_Type >( );
+	return *this;
+}
+OStream & DisplayWidget::operator<<( const void *msg ) {
+	msgList << QString::number( reinterpret_cast< uint64_t >( msg ), 16 );
+	updatDisplay< QString_Type >( );
+	return *this;
+}
+OStream & DisplayWidget::operator<<( const HtmlTools::XPathTools &msg ) {
+	*this << msg.getWString( );
+	return *this;
+}
+
 void DisplayWidget::flush( ) {
 	update( );
 }

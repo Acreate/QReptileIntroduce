@@ -4,6 +4,8 @@
 #include <QWidget>
 #include <stream/IStream.h>
 #include <stream/OStream.h>
+
+#include "htmls/htmlTools/XPathTools.h"
 class IRequestNetInterfaceExtend;
 class QMenuBar;
 class MenuBar;
@@ -194,39 +196,47 @@ protected slots: // 响应自身信号的槽
 	/// <param name="data">数据</param>
 	void native_slot_display( const QByteArray &data );
 public: // 流接口
-	IStream & operator<<( const QChar &msg ) override;
-	IStream & operator<<( const QArrayData &msg ) override;
-	IStream & operator<<( const QByteArray &msg ) override;
-	IStream & operator<<( const QString &msg ) override;
-	IStream & operator<<( const std::string &msg ) override;
-	IStream & operator<<( const std::wstring &msg ) override;
-	IStream & operator<<( const char *msg ) override;
-	IStream & operator<<( int8_t msg ) override;
-	IStream & operator<<( int16_t msg ) override;
-	IStream & operator<<( int32_t msg ) override;
-	IStream & operator<<( int64_t msg ) override;
-	IStream & operator<<( uint8_t msg ) override;
-	IStream & operator<<( uint16_t msg ) override;
-	IStream & operator<<( uint32_t msg ) override;
-	IStream & operator<<( uint64_t msg ) override;
-	IStream & operator<<( float_t msg ) override;
-	IStream & operator<<( double_t msg ) override;
-	OStream & operator>>( QChar &msg ) override;
-	OStream & operator>>( QArrayData &msg ) override;
-	OStream & operator>>( QByteArray &msg ) override;
-	OStream & operator>>( QString &msg ) override;
-	OStream & operator>>( std::string &msg ) override;
-	OStream & operator>>( std::wstring &msg ) override;
-	OStream & operator>>( int8_t &msg ) override;
-	OStream & operator>>( int16_t &msg ) override;
-	OStream & operator>>( int32_t &msg ) override;
-	OStream & operator>>( int64_t &msg ) override;
-	OStream & operator>>( uint8_t &msg ) override;
-	OStream & operator>>( uint16_t &msg ) override;
-	OStream & operator>>( uint32_t &msg ) override;
-	OStream & operator>>( uint64_t &msg ) override;
-	OStream & operator>>( float_t &msg ) override;
-	OStream & operator>>( double_t &msg ) override;
+	IStream & operator>>( QChar &msg ) override;
+	IStream & operator>>( QArrayData &msg ) override;
+	IStream & operator>>( QByteArray &msg ) override;
+	IStream & operator>>( QString &msg ) override;
+	IStream & operator>>( std::string &msg ) override;
+	IStream & operator>>( std::wstring &msg ) override;
+	IStream & operator>>( int8_t &msg ) override;
+	IStream & operator>>( int16_t &msg ) override;
+	IStream & operator>>( int32_t &msg ) override;
+	IStream & operator>>( int64_t &msg ) override;
+	IStream & operator>>( uint8_t &msg ) override;
+	IStream & operator>>( uint16_t &msg ) override;
+	IStream & operator>>( uint32_t &msg ) override;
+	IStream & operator>>( uint64_t &msg ) override;
+	IStream & operator>>( float_t &msg ) override;
+	IStream & operator>>( double_t &msg ) override;
+
+	OStream & operator<<( const QChar &msg ) override;
+	OStream & operator<<( const char16_t &msg ) override;
+	OStream & operator<<( const char32_t &msg ) override;
+	OStream & operator<<( const wchar_t &msg ) override;
+	OStream & operator<<( const char &msg ) override;
+	OStream & operator<<( const QArrayData &msg ) override;
+	OStream & operator<<( const QByteArray &msg ) override;
+	OStream & operator<<( const QString &msg ) override;
+	OStream & operator<<( const char *msg ) override;
+	OStream & operator<<( const std::string &msg ) override;
+	OStream & operator<<( const std::wstring &msg ) override;
+	OStream & operator<<( const int8_t &msg ) override;
+	OStream & operator<<( const int16_t &msg ) override;
+	OStream & operator<<( const int32_t &msg ) override;
+	OStream & operator<<( const int64_t &msg ) override;
+	OStream & operator<<( const uint8_t &msg ) override;
+	OStream & operator<<( const uint16_t &msg ) override;
+	OStream & operator<<( const uint32_t &msg ) override;
+	OStream & operator<<( const uint64_t &msg ) override;
+	OStream & operator<<( const float_t &msg ) override;
+	OStream & operator<<( const double_t &msg ) override;
+	OStream & operator<<( const void *msg ) override;
+	OStream & operator<<( const HtmlTools::XPathTools &msg ) ;
+	
 	void flush( ) override;
 };
 

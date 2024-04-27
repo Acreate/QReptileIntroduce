@@ -9,26 +9,38 @@ class TOOLS_EXPORT OStream {
 
 public:
 	virtual ~OStream( ) { }
-public: // 重载 >>
-	virtual OStream & operator >>( QChar &msg ) = 0;
-	virtual OStream & operator >>( QArrayData &msg ) = 0;
-	virtual OStream & operator >>( QByteArray &msg ) = 0;
-	virtual OStream & operator >>( QString &msg ) = 0;
-	virtual OStream & operator >>( std::string &msg ) = 0;
-	virtual OStream & operator >>( std::wstring &msg ) = 0;
+public: // 重载 <<
+	virtual OStream & operator <<( const QChar &msg ) = 0;
+	virtual OStream & operator <<( const char &msg ) = 0;
+	virtual OStream & operator <<( const wchar_t &msg ) = 0;
+	virtual OStream & operator <<( const char16_t &msg ) = 0;
+	virtual OStream & operator <<( const char32_t &msg ) = 0;
+	virtual OStream & operator <<( const QArrayData &msg ) = 0;
+	virtual OStream & operator <<( const QByteArray &msg ) = 0;
+	virtual OStream & operator <<( const QString &msg ) = 0;
+	virtual OStream & operator <<( const char *msg ) = 0;
+	virtual OStream & operator <<( const std::string &msg ) = 0;
+	virtual OStream & operator <<( const std::wstring &msg ) = 0;
 
-	virtual OStream & operator >>( int8_t &msg ) = 0;
-	virtual OStream & operator >>( int16_t &msg ) = 0;
-	virtual OStream & operator >>( int32_t &msg ) = 0;
-	virtual OStream & operator >>( int64_t &msg ) = 0;
+	virtual OStream & operator <<( const int8_t &msg ) = 0;
+	virtual OStream & operator <<( const int16_t &msg ) = 0;
+	virtual OStream & operator <<( const int32_t &msg ) = 0;
+	virtual OStream & operator <<( const int64_t &msg ) = 0;
 
-	virtual OStream & operator >>( uint8_t &msg ) = 0;
-	virtual OStream & operator >>( uint16_t &msg ) = 0;
-	virtual OStream & operator >>( uint32_t &msg ) = 0;
-	virtual OStream & operator >>( uint64_t &msg ) = 0;
+	virtual OStream & operator <<( const uint8_t &msg ) = 0;
+	virtual OStream & operator <<( const uint16_t &msg ) = 0;
+	virtual OStream & operator <<( const uint32_t &msg ) = 0;
+	virtual OStream & operator <<( const uint64_t &msg ) = 0;
 
-	virtual OStream & operator >>( float_t &msg ) = 0;
-	virtual OStream & operator >>( double_t &msg ) = 0;
+	virtual OStream & operator <<( const float_t &msg ) = 0;
+	virtual OStream & operator <<( const double_t &msg ) = 0;
+	
+	virtual OStream & operator <<( const void *msg ) = 0;
+public:
+	/// <summary>
+	/// 刷新流
+	/// </summary>
+	virtual void flush( ) = 0;
 };
 
 
