@@ -88,8 +88,14 @@ un_ordered_map * RequestNet::formHtmlGetTypeTheUrls( const HtmlDocString &htmlTe
 			if( key != L"class" )
 				continue;
 			auto value = mapIterator->second;
-			auto msg = key + L":" + value;
-			*oStream<< htmlNode << u8"\t找到属性\t" << QString::fromStdWString( msg ) << '\n';
+			HtmlDocString classVlaueName = L"hd";
+			size_t find = value.find( classVlaueName );
+			if( find < value.size( ) ) { // 找到了
+				HtmlDocString substr = value.substr( find, classVlaueName.size( ) );
+				auto msg = key + L":" + value;
+				*oStream << htmlNode << u8"\t找到属性\t" << QString::fromStdWString( msg ) << '\n';
+				qDebug( ) << *htmlNode->getWSNode( );
+			}
 		}
 	}
 	oStream->flush( );
