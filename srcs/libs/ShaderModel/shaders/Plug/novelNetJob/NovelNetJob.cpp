@@ -5,6 +5,8 @@
 #include <stream/OStream.h>
 
 #include "htmls/htmlDoc/HtmlDoc.h"
+#include "htmls/htmlNode/HtmlNode.h"
+#include "htmls/HtmlNode/HtmlNode.h"
 #include "thread/FileThread.h"
 
 NovelNetJob::NovelNetJob( QObject *parent, OStream *o_stream, QObject *interface_obj_ptr, IRequestNetInterfaceExtend *interface_this_ptr ): QObject( parent ), interfaceObjPtr( interface_obj_ptr ), interfaceThisPtr( interface_this_ptr ), oStream( o_stream ) {
@@ -33,31 +35,34 @@ void NovelNetJob::start( ) {
 			std::shared_ptr< std::wstring > nodeWsName = htmlDoc->getNodeWSName( html_node );
 			if( *nodeWsName == L"div" ) {
 				HtmlTools::StdWString_Shared stdWStringShared = htmlDoc->getPath( html_node );
-				if( *stdWStringShared == L"/html/body/div/div/div/div" ) {
-					*oStream << '\t' << *htmlDoc->getWSNode( html_node ) << '\t' << tr( u8"遍历节点属性->" ) << "\n";
-					htmlDoc->findAttribute( html_node, [=]( HtmlTools::WStringPairUnorderMap_Shared map ) ->bool {
-						if( map->size( ) == 0 )
-							return false;
-						auto mapIterator = map->begin( );
-						auto mapEnd = map->end( );
-						for( ; mapIterator != mapEnd; ++mapIterator ) {
-							std::wstring first = mapIterator->first;
-							std::wstring second = mapIterator->second;
-							*oStream << "\t\t" << first << '=' << second << "\n";
-							if( first == L"class" && second == L"hd" ) {
-								*oStream << "\t\t" << tr( u8"找到节点" ) << "\n";
-								return true;
-							}
-						}
-						return false;
-					} );
+				if( *stdWStringShared == L"/html/body/div/div/div/div" )
 					return true;
-				}
 			}
 			oStream->flush( );
 			return false;
 		} );
 		oStream->flush( );
+
+
+		auto vectorIterator = vectorHtmlNodeSPtrShared->begin( );
+		auto vectorEnd = vectorHtmlNodeSPtrShared->end( );
+		for( ; vectorIterator != vectorEnd; ++vectorIterator ) {
+			auto htmlNode = vectorIterator->get( );
+			*oStream << u8"\t" << *htmlDoc->getWSNode( *vectorIterator ) << tr( u8"遍历属性" );
+			oStream->flush( );
+			auto unorderedMap = htmlNode->analysisAttribute( );
+			size_t mapSize = unorderedMap->size( );
+			*oStream << u8"\t" << mapSize << tr( u8"\n" );
+			oStream->flush( );
+			auto mapIterator = unorderedMap->begin( );
+			auto mapEnd = unorderedMap->end( );
+			for( ; mapIterator != mapEnd; ++mapIterator ) {
+				auto key = mapIterator->first;
+				auto value = mapIterator->second;
+				*oStream << u8"\t\t" << key << u8"=" << value << "\n";
+			}
+		}
+
 		request->deleteLater( );
 		requestConnect->deleteLater( );
 	} );
