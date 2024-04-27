@@ -29,6 +29,7 @@ file( GLOB_RECURSE SRC_DATA
 )
 
 string(REPLACE "." "_" project_name_include_dir ${PROJECT_NAME})
+set( ${project_name_include_dir}_include_dir ${CMAKE_CURRENT_LIST_DIR}  PARENT_SCOPE )
 
 # 设置变量
 set( Cmake_Project_Name "${PROJECT_NAME}" )
@@ -39,9 +40,8 @@ set( Cmake_Project_Binary_File_Name "$<TARGET_FILE:tgt>" )
 set( cmake_definitions_out "${CMAKE_CURRENT_LIST_DIR}/macro/cmake_to_c_cpp_header_env.h" )
 set( cmake_definitions_org "${cmake_definitions_tmp}/cmake_in/cmake_to_c_cpp_header_env.h.in" )
 
-set( ${project_name_include_dir}_include_dir ${CMAKE_CURRENT_LIST_DIR}  PARENT_SCOPE )
-
 include_directories( ${UserHread_include_dir} )
+include_directories( ${IOStream_include_dir} )
 
 # # 合并源码
 list( APPEND ${SRC_LIST} ${SRC_UI} ${QM_FILES} ${SRC_DATA} ${cmake_definitions_out} )
@@ -65,6 +65,7 @@ target_link_libraries( ${PROJECT_NAME}
 	Qt${QT_VERSION_MAJOR}::Core
 	Qt${QT_VERSION_MAJOR}::Network
 	Qt${QT_VERSION_MAJOR}::Core5Compat
+	IOStream
 )
 
 STRING( SUBSTRING "${PROJECT_NAME}" 0 1 exportFileStartName )

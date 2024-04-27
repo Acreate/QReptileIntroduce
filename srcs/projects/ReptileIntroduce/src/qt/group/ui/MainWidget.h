@@ -4,7 +4,9 @@
 #include <QWidget>
 
 class NovelNetJob;
-class IRequestNetInterfaceExtend;
+namespace interfacePlugsType {
+	class IRequestNetInterfaceExtend;
+}
 class DisplayWidget;
 class FileSelectPathWidget;
 class QLabel;

@@ -3,9 +3,9 @@
 #pragma once
 #include <qbytearray.h>
 
-#include "../export/Tools_export.h"
+#include "../export/IOStream_export.h"
 struct QArrayData;
-class TOOLS_EXPORT OStream {
+class IOSTREAM_EXPORT OStream {
 
 public:
 	virtual ~OStream( ) { }

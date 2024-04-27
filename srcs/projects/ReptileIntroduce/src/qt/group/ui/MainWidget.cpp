@@ -28,7 +28,7 @@
 #include "../../extend/menu/Action.h"
 #include "../../extend/menu/Menu.h"
 #include "novelNetJob/NovelNetJob.h"
-
+using interfacePlugsType::IRequestNetInterfaceExtend;
 const QString MainWidget::settingGroupWork = tr( u8"工作" );
 const QString MainWidget::settingGroupWeb = tr( u8"网络" );
 const QString MainWidget::settingGroupWebKey = tr( u8"配置文件路径" );
@@ -340,12 +340,12 @@ void MainWidget::loadingPlug( ) {
 				continue;
 			auto iterator = requestNetInterfaceExtends.begin( );
 			auto end = requestNetInterfaceExtends.end( );
-			std::string outUrl;
+			interfacePlugsType::HtmlDocString outUrl;
 			for( ; iterator != end; ++iterator ) {
 				IRequestNetInterfaceExtend *requestNetInterfaceExtend = iterator.value( );
 				IRequestNetInterfaceExtend *interfaceExtend = requestNetInterfaceExtend;
 				if( interfaceExtend->getUrl( &outUrl ) )
-					*display << QString( tr( u8"获取url : %1" ) ).arg( QString::fromStdString( outUrl ) ) << '\n';
+					*display << QString( tr( u8"获取url : %1" ) ).arg( QString::fromStdWString( outUrl ) ) << '\n';
 				outUrl.clear( );
 				interfaceExtend->setInterfaceParent( this );
 				QObject *object = iterator.key( );

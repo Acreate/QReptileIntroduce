@@ -29,6 +29,8 @@ file( GLOB_RECURSE SRC_DATA
 string( REPLACE "." "_" project_name_include_dir ${PROJECT_NAME} )
 include_directories( ${NovelInfo_include_dir} )
 include_directories( ${UserHread_include_dir} )
+include_directories( ${HtmlTools_include_dir} )
+include_directories( ${IOStream_include_dir} )
 set( ${project_name_include_dir}_include_dir ${CMAKE_CURRENT_LIST_DIR} ${CMAKE_CURRENT_LIST_DIR}/ PARENT_SCOPE )
 
 # # 合并源码
@@ -45,6 +47,8 @@ target_link_libraries(
 	Qt${QT_VERSION_MAJOR}::Network
 	Qt${QT_VERSION_MAJOR}::Core5Compat
 	NovelInfo
+	HtmlTools
+	IOStream
 )
 
 

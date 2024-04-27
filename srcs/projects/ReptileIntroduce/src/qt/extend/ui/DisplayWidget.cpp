@@ -17,7 +17,7 @@
 #include "font/Font.h"
 #include "interface/IRequestNetInterfaceExtend.h"
 #include "path/Dir.h"
-
+using interfacePlugsType::IRequestNetInterfaceExtend;
 #define q_connect_solts( type , signalPtr, signal, slotPtr, slot ) \
 	do{\
 		auto signal_QObject = QOverload< type>::of( signal ); \
@@ -183,9 +183,9 @@ Menu * DisplayWidget::getPlugMenu( IRequestNetInterfaceExtend *object ) {
 		return menuPlugMap[ object ];
 	auto objMenu = new Menu( this );
 	connect( objMenu, &Menu::click, this, &DisplayWidget::slot_click_action );
-	std::string url;
+	interfacePlugsType::HtmlDocString url;
 	object->getUrl( &url );
-	objMenu->setTitle( QString::fromStdString( url ) );
+	objMenu->setTitle( QString::fromStdWString( url ) );
 	plugTopMneu->addMenu( objMenu );
 	menuPlugMap.insert( object, objMenu );
 	return objMenu;
@@ -571,7 +571,7 @@ OStream & DisplayWidget::operator<<( const double_t &msg ) {
 	return *this;
 }
 OStream & DisplayWidget::operator<<( const void *msg ) {
-	msgList << QString::number( reinterpret_cast< uint64_t >( msg ), 16 );
+	msgList << QString( u8"0x%1" ).arg( QString::number( reinterpret_cast< uint64_t >( msg ), 16 ) );
 	updatDisplay< QString_Type >( );
 	return *this;
 }

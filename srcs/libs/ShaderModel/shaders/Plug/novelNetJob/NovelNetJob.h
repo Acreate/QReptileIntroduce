@@ -5,9 +5,9 @@
 
 #include "../export/Plug_export.h"
 
+#include <interface/IRequestNetInterfaceExtend.h>
 class OStream;
 class IStream;
-class IRequestNetInterfaceExtend;
 class QNetworkReply;
 class RequestConnect;
 class PLUG_EXPORT NovelNetJob : public QObject {
@@ -15,10 +15,10 @@ class PLUG_EXPORT NovelNetJob : public QObject {
 	Q_OBJECT;
 private:
 	QObject *interfaceObjPtr; // 小说基于 qt 框架的指针
-	IRequestNetInterfaceExtend *interfaceThisPtr; // 小说的原始指针
+	interfacePlugsType::IRequestNetInterfaceExtend *interfaceThisPtr; // 小说的原始指针
 	OStream *oStream; // 输入流-程序输出到该流中，显示信息
 public:
-	NovelNetJob( QObject *parent, OStream *o_stream, QObject *interface_obj_ptr, IRequestNetInterfaceExtend *interface_this_ptr );
+	NovelNetJob( QObject *parent, OStream *o_stream, QObject *interface_obj_ptr, interfacePlugsType::IRequestNetInterfaceExtend *interface_this_ptr );
 	~NovelNetJob( ) override;
 public: // 类的独有属性
 	/// <summary>

@@ -22,6 +22,7 @@ file( GLOB_RECURSE SRC_UI
 include_directories( ${NovelInfo_include_dir} )
 include_directories( ${UserHread_include_dir} )
 include_directories( ${Tools_include_dir} )
+include_directories( ${IOStream_include_dir} )
 include_directories( ${HtmlTools_include_dir} )
 include_directories( ${Plug_include_dir} )
 
@@ -71,6 +72,7 @@ call_qt_deploy( ${PROJECT_NAME}
 	Tools
 	HtmlTools
 	Plug
+	IOStream
 )
 set_target_properties( ${PROJECT_NAME} PROPERTIES
 	WIN32_EXECUTABLE FALSE

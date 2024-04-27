@@ -5,10 +5,13 @@
 #include <QGenericPlugin>
 
 #include "path/File.h"
-class IRequestNetInterfaceExtend;
+namespace interfacePlugsType {
+	class IRequestNetInterfaceExtend;
+}
+
 #include "../export/Plug_export.h"
 
-class PLUG_EXPORT  LoadPlug : public QObject {
+class PLUG_EXPORT LoadPlug : public QObject {
 public: // 静态函数调用
 	/// <summary>
 	/// 根据路径生成插件对象
@@ -19,7 +22,7 @@ public: // 静态函数调用
 	/// <param name="loadClassName">元数据类型名称</param>
 	/// <param name="methodName">元数据函数名称</param>
 	/// <returns>生成对应与指针的匹配映射</returns>
-	static std::pair< QObject *, IRequestNetInterfaceExtend * > getIRequestNetInterface( const QString &plugFilePath, const QString &name = tr( u8"LoadPlug" ), const QString &spec = tr( u8"getIRequestNetInterface" ), const QString &loadClassName = tr( u8"RequestNet" ), const QString &methodName = tr( u8"getRequestNetInterfaceExtendPatr" ) );
+	static std::pair< QObject *, interfacePlugsType::IRequestNetInterfaceExtend * > getIRequestNetInterface( const QString &plugFilePath, const QString &name = tr( u8"LoadPlug" ), const QString &spec = tr( u8"getIRequestNetInterface" ), const QString &loadClassName = tr( u8"RequestNet" ), const QString &methodName = tr( u8"getRequestNetInterfaceExtendPatr" ) );
 	/// <summary>
 	/// 调用插件的生成函数
 	/// </summary>
@@ -27,7 +30,7 @@ public: // 静态函数调用
 	/// <param name="loadClassName">元数据对象名称</param>
 	/// <param name="methodName">元数据调用的函数名称</param>
 	/// <returns>返回对象指针</returns>
-	static IRequestNetInterfaceExtend * metaGetResult( QObject *outObj, const QString &loadClassName = tr( u8"RequestNet" ), const QString &methodName = tr( u8"getRequestNetInterfaceExtendPatr" ) );
+	static interfacePlugsType::IRequestNetInterfaceExtend * metaGetResult( QObject *outObj, const QString &loadClassName = tr( u8"RequestNet" ), const QString &methodName = tr( u8"getRequestNetInterfaceExtendPatr" ) );
 private:
 	Q_OBJECT;
 private:// 运算参考成员
@@ -36,7 +39,7 @@ private:// 运算参考成员
 	QString name; // 传递到构造器的第一参数
 	QString spec; // 传递到构造器的第二参数
 	QString plugPath; // 目录或者文件
-	QMap< QString, std::pair< QObject *, IRequestNetInterfaceExtend * > > lib; // 已经库存的插件
+	QMap< QString, std::pair< QObject *, interfacePlugsType::IRequestNetInterfaceExtend * > > lib; // 已经库存的插件
 public:
 	/// <summary>
 	/// 指定搜索路径<br/>
@@ -66,14 +69,14 @@ public: // 查找
 	/// <param name="path">路径</param>
 	/// <param name="result">存储容器</param>
 	/// <returns>存在返回 true</returns>
-	bool findLib( const QString &path, std::pair< QObject *, IRequestNetInterfaceExtend * > *result );
+	bool findLib( const QString &path, std::pair< QObject *, interfacePlugsType::IRequestNetInterfaceExtend * > *result );
 public: // 公开调用
 	/// <summary>
 	/// 获取所有插件<br/>
 	/// 返回原始对象与转换的匹配对象（二者地址相同）
 	/// </summary>
 	/// <returns>插件列表映射</returns>
-	QMap< QObject *, IRequestNetInterfaceExtend * > loadPlugs( );
+	QMap< QObject *, interfacePlugsType::IRequestNetInterfaceExtend * > loadPlugs( );
 };
 
 

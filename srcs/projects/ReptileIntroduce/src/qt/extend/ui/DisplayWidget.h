@@ -6,7 +6,10 @@
 #include <stream/OStream.h>
 
 #include "htmls/htmlTools/XPathTools.h"
-class IRequestNetInterfaceExtend;
+namespace interfacePlugsType {
+	class IRequestNetInterfaceExtend;
+}
+
 class QMenuBar;
 class MenuBar;
 class Action;
@@ -86,7 +89,7 @@ private slots:
 	void slot_click_action( const Action *action );
 private:
 	QMap< QObject *, Menu * > menuMap; // 保存主要菜单
-	QMap< IRequestNetInterfaceExtend *, Menu * > menuPlugMap; // 保存插件菜单
+	QMap< interfacePlugsType::IRequestNetInterfaceExtend *, Menu * > menuPlugMap; // 保存插件菜单
 	QMap< QObject *, QSharedPointer< QString > > actionXpath; // 保存菜单的路径
 public:
 	/// <summary>
@@ -102,7 +105,7 @@ public:
 	/// </summary>
 	/// <param name="object">绑定插件对象</param>
 	/// <returns>插件对象的菜单</returns>
-	Menu * getPlugMenu( IRequestNetInterfaceExtend *object );
+	Menu * getPlugMenu( interfacePlugsType::IRequestNetInterfaceExtend *object );
 	/// <summary>
 	/// 获取字体
 	/// </summary>
@@ -235,8 +238,8 @@ public: // 流接口
 	OStream & operator<<( const float_t &msg ) override;
 	OStream & operator<<( const double_t &msg ) override;
 	OStream & operator<<( const void *msg ) override;
-	OStream & operator<<( const HtmlTools::XPathTools &msg ) ;
-	
+	OStream & operator<<( const HtmlTools::XPathTools &msg );
+
 	void flush( ) override;
 };
 

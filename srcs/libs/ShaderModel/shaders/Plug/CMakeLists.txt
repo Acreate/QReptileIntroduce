@@ -44,6 +44,7 @@ include_directories( ${NovelInfo_include_dir} )
 include_directories( ${Tools_include_dir} )
 include_directories( ${UserHread_include_dir} )
 include_directories( ${HtmlTools_include_dir} )
+include_directories( ${IOStream_include_dir} )
 # # 合并源码
 list( APPEND ${SRC_LIST} ${SRC_UI} ${QM_FILES} ${SRC_DATA} ${cmake_definitions_out} )
 qt_add_library( ${PROJECT_NAME} SHARED
@@ -73,6 +74,7 @@ target_link_libraries( ${PROJECT_NAME}
 	NovelInfo
 	Tools
 	HtmlTools
+	IOStream
 )
 
 STRING( SUBSTRING "${PROJECT_NAME}" 0 1 exportFileStartName )

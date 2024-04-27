@@ -5,6 +5,7 @@
 
 #include "path/Path.h"
 
+using namespace interfacePlugsType;
 
 LoadPlug::LoadPlug( const QString &path, QObject *parent )
 	: QObject( parent ), plugPath( QFileInfo( path ).absoluteFilePath( ) ) {

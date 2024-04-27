@@ -78,7 +78,8 @@ qt_add_translations(
 set( cmake_definitions_tmp ${CMAKE_HOME_DIRECTORY}/srcs/cmake/temp )
 set( cmake_definitions_in ${cmake_definitions_tmp}/cmake_in/cmake_to_c_cpp_header_macro.h.in )
 
-get_path_cmake_dir_path( out_path_list ${CMAKE_CURRENT_SOURCE_DIR}/srcs/libs/ShaderModel/plugs "CMakeLists.txt" )
+
+get_path_cmake_dir_path( plug_path_list ${CMAKE_CURRENT_SOURCE_DIR}/srcs/libs/ShaderModel/plugs "CMakeLists.txt" )
 
 # ###################          拷贝模板-不存在则拷贝
 set( target_update_sub_dir_list )
@@ -88,7 +89,7 @@ list( APPEND target_update_sub_dir_list
 	"RequestNetPlugin"
 )
 
-foreach( plug_dir ${out_path_list} )
+foreach( plug_dir ${plug_path_list} )
 	foreach( target_update_sub_dir ${target_update_sub_dir_list} )
 		update_path_files_if( "${cmake_definitions_tmp}/cpp_code/${target_update_sub_dir}" "${plug_dir}/${target_update_sub_dir}" )
 	endforeach()
@@ -100,9 +101,13 @@ m_set_env( "${Project_Run_bin}" "${Project_Install_bin}" )
 set( Cache_Path_Dir "${Project_Run_bin}write_cache/" )
 file( MAKE_DIRECTORY  ${Cache_Path_Dir} )
 
+get_path_cmake_dir_path( out_path_list ${CMAKE_CURRENT_SOURCE_DIR}/srcs/libs/ShaderModel/shaders/IOStream "CMakeLists.txt" )
+list(APPEND out_path_list ${plug_path_list})
 get_path_cmake_dir_path( out_path_list ${CMAKE_CURRENT_SOURCE_DIR}/srcs/git/htmlcpp/srcs "CMakeLists.txt" )
 get_path_cmake_dir_path( out_path_list ${CMAKE_CURRENT_SOURCE_DIR}/srcs/libs/UserHread/defineMorc "CMakeLists.txt" )
-get_path_cmake_dir_path( out_path_list ${CMAKE_CURRENT_SOURCE_DIR}/srcs/libs/ShaderModel/shaders/ "CMakeLists.txt" )
+get_path_cmake_dir_path( out_path_list ${CMAKE_CURRENT_SOURCE_DIR}/srcs/libs/ShaderModel/shaders/NovelInfo "CMakeLists.txt" )
+get_path_cmake_dir_path( out_path_list ${CMAKE_CURRENT_SOURCE_DIR}/srcs/libs/ShaderModel/shaders/Plug "CMakeLists.txt" )
+get_path_cmake_dir_path( out_path_list ${CMAKE_CURRENT_SOURCE_DIR}/srcs/libs/ShaderModel/shaders/Tools "CMakeLists.txt" )
 
 get_path_cmake_dir_path( out_path_list ${CMAKE_CURRENT_SOURCE_DIR}/srcs/projects/ "CMakeLists.txt" )
 

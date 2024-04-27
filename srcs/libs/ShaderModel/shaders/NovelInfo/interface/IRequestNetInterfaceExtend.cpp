@@ -1,18 +1,21 @@
 ﻿#include "IRequestNetInterfaceExtend.h"
+using namespace interfacePlugsType;
 IRequestNetInterfaceExtend::IRequestNetInterfaceExtend( ) {
 }
 IRequestNetInterfaceExtend::~IRequestNetInterfaceExtend( ) {
 }
-IRequestNetInterface::un_ordered_map *IRequestNetInterfaceExtend::formHtmlGetTypeTheUrls( const StdString &htmlText ) {
+un_ordered_map * IRequestNetInterfaceExtend::formHtmlGetTypeTheUrls( const HtmlDocString &htmlText ) {
+	
+
 	return nullptr;
 }
-IRequestNetInterface::NovelPtrList IRequestNetInterfaceExtend::formHtmlGetTypePageNovels( const StdString &htmlText, const NovelPtrList &saveNovelInfos, void *appendDataPtr ) {
+NovelPtrList IRequestNetInterfaceExtend::formHtmlGetTypePageNovels( const HtmlDocString &htmlText, const NovelPtrList &saveNovelInfos, void *appendDataPtr ) {
 	return { };
 }
-IRequestNetInterface::INovelInfoSharedPtr IRequestNetInterfaceExtend::formHtmlGetUrlNovelInfo( const StdString &htmlText, const NovelPtrList &saveNovelInfos, const INovelInfoSharedPtr &networkReplayNovel ) {
+INovelInfoSharedPtr IRequestNetInterfaceExtend::formHtmlGetUrlNovelInfo( const HtmlDocString &htmlText, const NovelPtrList &saveNovelInfos, const INovelInfoSharedPtr &networkReplayNovel ) {
 	return { };
 }
-IRequestNetInterface::StdString IRequestNetInterfaceExtend::formHtmlGetNext( const StdString &htmlText, const NovelPtrList &saveNovelInfos, const NovelPtrList &lastNovelInfos ) {
+HtmlDocString IRequestNetInterfaceExtend::formHtmlGetNext( const HtmlDocString &htmlText, const NovelPtrList &saveNovelInfos, const NovelPtrList &lastNovelInfos ) {
 	return { };
 }
 void IRequestNetInterfaceExtend::novelTypeEnd( const NovelPtrList &saveNovelInfos ) {

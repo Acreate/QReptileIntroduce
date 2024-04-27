@@ -1,5 +1,6 @@
 ﻿#include "RequestNet.h"
 #include <string>
+using namespace interfacePlugsType;
 RequestNet::RequestNet( QObject *parent ): QObject( parent ), url( GET_URL ) {
 }
 
@@ -10,33 +11,33 @@ RequestNet::~RequestNet( ) {
 void RequestNet::getData( void *resultAnyPtr ) {
 
 }
-void RequestNet::setUrl( const StdString &url ) {
-	this->url.setUrl( QString::fromStdString( url ) );
+void RequestNet::setUrl( const HtmlDocString &url ) {
+	this->url.setUrl( QString::fromStdWString( url ) );
 }
-size_t RequestNet::getHost( StdString *outHost ) {
+size_t RequestNet::getHost( HtmlDocString *outHost ) {
 	QString host = this->url.host( );
 	auto byteArray = host.toLocal8Bit( );
-	*outHost = byteArray;
+	*outHost = QString( byteArray ).toStdWString( );
 	return byteArray.length( );
 }
-size_t RequestNet::getScheme( StdString *outScheme ) {
+size_t RequestNet::getScheme( HtmlDocString *outScheme ) {
 
 	QString host = this->url.scheme( );
 	auto byteArray = host.toLocal8Bit( );
-	*outScheme = byteArray;
+	*outScheme = QString( byteArray ).toStdWString( );
 	return byteArray.length( );
 }
-size_t RequestNet::getUrl( StdString *outStr ) {
+size_t RequestNet::getUrl( HtmlDocString *outStr ) {
 	QByteArray array = url.url( ).toLocal8Bit( );
-	*outStr = array.toStdString( );
+	*outStr = QString( array ).toStdWString( );
 	return array.length( );
 
 }
-void RequestNet::setHost( const StdString &host ) {
-	url.setHost( QString::fromStdString( host ) );
+void RequestNet::setHost( const HtmlDocString &host ) {
+	url.setHost( QString::fromStdWString( host ) );
 }
-void RequestNet::setScheme( const StdString &scheme ) {
-	url.setScheme( QString::fromStdString( scheme ) );
+void RequestNet::setScheme( const HtmlDocString &scheme ) {
+	url.setScheme( QString::fromStdWString( scheme ) );
 }
 
 bool RequestNet::setInterfaceParent( void *parent ) {
@@ -49,15 +50,15 @@ void RequestNet::deleteMember( ) {
 }
 
 
-IRequestNetInterface::un_ordered_map *RequestNet::formHtmlGetTypeTheUrls( const StdString &htmlText ) {
+un_ordered_map * RequestNet::formHtmlGetTypeTheUrls( const HtmlDocString &htmlText ) {
 	return IRequestNetInterfaceExtend::formHtmlGetTypeTheUrls( htmlText );
 }
-IRequestNetInterface::NovelPtrList RequestNet::formHtmlGetTypePageNovels( const StdString &htmlText, const NovelPtrList &saveNovelInfos, void *appendDataPtr ) {
+NovelPtrList RequestNet::formHtmlGetTypePageNovels( const HtmlDocString &htmlText, const NovelPtrList &saveNovelInfos, void *appendDataPtr ) {
 	return IRequestNetInterfaceExtend::formHtmlGetTypePageNovels( htmlText, saveNovelInfos, appendDataPtr );
 }
-IRequestNetInterface::INovelInfoSharedPtr RequestNet::formHtmlGetUrlNovelInfo( const StdString &htmlText, const NovelPtrList &saveNovelInfos, const INovelInfoSharedPtr &networkReplayNovel ) {
+INovelInfoSharedPtr RequestNet::formHtmlGetUrlNovelInfo( const HtmlDocString &htmlText, const NovelPtrList &saveNovelInfos, const INovelInfoSharedPtr &networkReplayNovel ) {
 	return IRequestNetInterfaceExtend::formHtmlGetUrlNovelInfo( htmlText, saveNovelInfos, networkReplayNovel );
 }
-IRequestNetInterface::StdString RequestNet::formHtmlGetNext( const StdString &htmlText, const NovelPtrList &saveNovelInfos, const NovelPtrList &lastNovelInfos ) {
+HtmlDocString RequestNet::formHtmlGetNext( const HtmlDocString &htmlText, const NovelPtrList &saveNovelInfos, const NovelPtrList &lastNovelInfos ) {
 	return IRequestNetInterfaceExtend::formHtmlGetNext( htmlText, saveNovelInfos, lastNovelInfos );
 }

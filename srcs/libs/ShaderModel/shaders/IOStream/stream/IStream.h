@@ -3,9 +3,9 @@
 #pragma once
 #include <QString>
 
-#include "../export/Tools_export.h"
+#include "../export/IOStream_export.h"
 class Flush;
-class TOOLS_EXPORT IStream {
+class IOSTREAM_EXPORT IStream {
 public:
 	virtual ~IStream( ) { }
 public: // 重载 >>
