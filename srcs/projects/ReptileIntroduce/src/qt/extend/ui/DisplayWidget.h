@@ -5,9 +5,12 @@
 #include <stream/IStream.h>
 #include <stream/OStream.h>
 
-#include "htmls/htmlTools/XPathTools.h"
+
 namespace interfacePlugsType {
 	class IRequestNetInterfaceExtend;
+}
+namespace htmlTools {
+	class XPath;
 }
 
 class QMenuBar;
@@ -238,7 +241,7 @@ public: // 流接口
 	OStream & operator<<( const float_t &msg ) override;
 	OStream & operator<<( const double_t &msg ) override;
 	OStream & operator<<( const void *msg ) override;
-	OStream & operator<<( const HtmlTools::XPathTools &msg );
+	OStream & operator<<( const htmlTools::XPath &msg );
 
 	void flush( ) override;
 };

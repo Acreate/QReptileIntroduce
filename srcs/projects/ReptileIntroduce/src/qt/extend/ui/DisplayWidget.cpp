@@ -17,7 +17,9 @@
 #include "font/Font.h"
 #include "interface/IRequestNetInterfaceExtend.h"
 #include "path/Dir.h"
+#include <htmls/htmlTools/XPath.h>
 using interfacePlugsType::IRequestNetInterfaceExtend;
+using htmlTools::XPath;
 #define q_connect_solts( type , signalPtr, signal, slotPtr, slot ) \
 	do{\
 		auto signal_QObject = QOverload< type>::of( signal ); \
@@ -575,8 +577,8 @@ OStream & DisplayWidget::operator<<( const void *msg ) {
 	updatDisplay< QString_Type >( );
 	return *this;
 }
-OStream & DisplayWidget::operator<<( const HtmlTools::XPathTools &msg ) {
-	*this << msg.getWString( );
+OStream & DisplayWidget::operator<<( const XPath &msg ) {
+	*this << msg.getHtmlString( );
 	return *this;
 }
 

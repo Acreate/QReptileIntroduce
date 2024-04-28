@@ -4,6 +4,7 @@
 #include "htmls/htmlDoc/HtmlDoc.h"
 #include "htmls/htmlNode/HtmlNode.h"
 using namespace interfacePlugsType;
+using namespace htmlTools;
 RequestNet::RequestNet( QObject *parent ): QObject( parent ), url( GET_URL ), oStream( nullptr ), iStream( nullptr ) {
 }
 
@@ -57,13 +58,13 @@ un_ordered_map * RequestNet::formHtmlGetTypeTheUrls( const HtmlDocString &htmlTe
 
 	std::shared_ptr< std::wstring > stdWString( new std::wstring( htmlText ) );
 	size_t index = 0, end = stdWString->size( );
-	auto htmlDoc = HtmlTools::HtmlDoc::parse( stdWString, end, index );
+	auto htmlDoc = HtmlDoc::parse( stdWString, end, index );
 	if( !htmlDoc.get( ) )
 		return nullptr;
-	auto vectorHtmlNodeSPtrShared = htmlDoc->getNodes( [=]( const HtmlTools::HtmlNode_Shared &html_node ) ->bool {
+	auto vectorHtmlNodeSPtrShared = htmlDoc->getNodes( [=]( const HtmlNode_Shared &html_node ) ->bool {
 		std::shared_ptr< std::wstring > nodeWsName = htmlDoc->getNodeWSName( html_node );
 		if( *nodeWsName == L"div" ) {
-			HtmlTools::StdWString_Shared stdWStringShared = htmlDoc->getPath( html_node );
+			HtmlString_Shared stdWStringShared = htmlDoc->getPath( html_node );
 			if( *stdWStringShared == L"/html/body/div/div/div/div" )
 				return true;
 		}
