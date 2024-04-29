@@ -3,6 +3,7 @@
 
 #include "htmls/htmlDoc/HtmlDoc.h"
 #include "htmls/htmlNode/HtmlNode.h"
+#include "htmls/htmlTools/XPath.h"
 using namespace interfacePlugsType;
 using namespace htmlTools;
 RequestNet::RequestNet( QObject *parent ): QObject( parent ), url( GET_URL ), oStream( nullptr ), iStream( nullptr ) {
@@ -61,15 +62,10 @@ un_ordered_map * RequestNet::formHtmlGetTypeTheUrls( const HtmlDocString &htmlTe
 	auto htmlDoc = HtmlDoc::parse( stdWString, end, index );
 	if( !htmlDoc.get( ) )
 		return nullptr;
-	auto vectorHtmlNodeSPtrShared = htmlDoc->getNodes( [=]( const HtmlNode_Shared &html_node ) ->bool {
-		std::shared_ptr< std::wstring > nodeWsName = htmlDoc->getNodeWSName( html_node );
-		if( *nodeWsName == L"div" ) {
-			HtmlString_Shared stdWStringShared = htmlDoc->getPath( html_node );
-			if( *stdWStringShared == L"/html/body/div/div/div/div" )
-				return true;
-		}
-		return false;
-	} );
+	auto xpath = XPath( L"//html/body/div/div/div/div" );
+	auto vectorHtmlNodeSPtrShared = xpath.buider( htmlDoc );
+	if( !vectorHtmlNodeSPtrShared )
+		return nullptr;
 	size_t size = vectorHtmlNodeSPtrShared->size( );
 	if( size == 0 )
 		return nullptr;
@@ -95,7 +91,7 @@ un_ordered_map * RequestNet::formHtmlGetTypeTheUrls( const HtmlDocString &htmlTe
 				HtmlDocString substr = value.substr( find, classVlaueName.size( ) );
 				auto msg = key + L":" + value;
 				*oStream << htmlNode << u8"\t找到属性\t" << QString::fromStdWString( msg ) << '\n';
-				qDebug( ) << *htmlNode->getWSNode( );
+				qDebug( ) << *htmlNode->getNodeContent( );
 			}
 		}
 	}
