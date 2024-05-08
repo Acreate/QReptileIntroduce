@@ -4,24 +4,28 @@
 #include <QObject>
 #include <QSettings>
 #include <QNetworkReply>
+
+class NetworkRequest;
+class NetworkAccessManager;
 class RequestConnect;
 #include "../export/Tools_export.h"
 
-class TOOLS_EXPORT  Request : public QObject {
+class TOOLS_EXPORT Request : public QObject {
 	Q_OBJECT;
 private:
 	QSettings *setting = nullptr;
-	QNetworkAccessManager *networkAccessManager;
+	NetworkAccessManager *networkAccessManager;
+	RequestConnect *requestConnect;
 public:
-	Request( QObject *parent = nullptr );
+	Request( NetworkAccessManager *networkAccessManager, RequestConnect *requestConnect );
+	Request( NetworkAccessManager *networkAccessManager, RequestConnect *requestConnect, QObject *parent );
 	~Request( ) override;
 public:
-	QNetworkAccessManager * getNetworkAccessManager( ) const {
-		return networkAccessManager;
-	}
-	void setRequestSettingFilePath( const QString &filePath );
-	QNetworkReply * netGetWork( const QString &url, RequestConnect *requestConnect );
-	QNetworkReply * netGetWork( const QUrl &url, RequestConnect *requestConnect );
+	QNetworkReply * netGetWork( const QString &url );
+	QNetworkReply * netGetWork( const QUrl &url );
+	QNetworkReply * netGetWork( const QString &url, NetworkRequest &network_request );
+	QNetworkReply * netGetWork( const QUrl &url, NetworkRequest &network_request );
+	QNetworkReply * netGetWork( NetworkRequest &network_request );
 
 };
 

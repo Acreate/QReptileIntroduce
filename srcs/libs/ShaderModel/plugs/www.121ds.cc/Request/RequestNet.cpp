@@ -5,7 +5,7 @@
 #include "htmls/htmlNode/HtmlNode.h"
 #include "htmls/htmlTools/XPath.h"
 using namespace interfacePlugsType;
-using namespace htmlTools;
+using namespace cylHtmlTools;
 RequestNet::RequestNet( QObject *parent ): QObject( parent ), url( GET_URL ), oStream( nullptr ), iStream( nullptr ) {
 }
 
@@ -59,11 +59,13 @@ un_ordered_map * RequestNet::formHtmlGetTypeTheUrls( const HtmlDocString &htmlTe
 
 	std::shared_ptr< std::wstring > stdWString( new std::wstring( htmlText ) );
 	size_t index = 0, end = stdWString->size( );
-	auto htmlDoc = HtmlDoc::parse( stdWString, end, index );
+	auto htmlDoc = cylHtmlTools::HtmlDoc::parse( stdWString, end, index );
 	if( !htmlDoc.get( ) )
 		return nullptr;
-	auto xpath = XPath( L"//html/body/div/div/div/div" );
-	auto vectorHtmlNodeSPtrShared = xpath.buider( htmlDoc );
+	auto xpath = cylHtmlTools::XPath( QString( u8"div[@class='hd']" ).toStdWString( ) );
+	htmlDoc->analysisBrotherNode( );
+	auto htmlNodeSPtrShared = htmlDoc->getHtmlNodeRoots( );
+	auto vectorHtmlNodeSPtrShared = xpath.buider( htmlNodeSPtrShared );
 	if( !vectorHtmlNodeSPtrShared )
 		return nullptr;
 	size_t size = vectorHtmlNodeSPtrShared->size( );
@@ -72,28 +74,7 @@ un_ordered_map * RequestNet::formHtmlGetTypeTheUrls( const HtmlDocString &htmlTe
 	auto vectorIterator = vectorHtmlNodeSPtrShared->begin( );
 	auto vectorEnd = vectorHtmlNodeSPtrShared->end( );
 	for( ; vectorIterator != vectorEnd; ++vectorIterator ) {
-		auto htmlNode = vectorIterator->get( );
-
-		auto unorderedMap = htmlNode->analysisAttribute( );
-		size_t mapSize = unorderedMap->size( );
-		if( mapSize == 0 )
-			continue;
-		auto mapIterator = unorderedMap->begin( );
-		auto mapEnd = unorderedMap->end( );
-		for( ; mapIterator != mapEnd; ++mapIterator ) {
-			auto key = mapIterator->first;
-			if( key != L"class" )
-				continue;
-			auto value = mapIterator->second;
-			HtmlDocString classVlaueName = L"hd";
-			size_t find = value.find( classVlaueName );
-			if( find < value.size( ) ) { // 找到了
-				HtmlDocString substr = value.substr( find, classVlaueName.size( ) );
-				auto msg = key + L":" + value;
-				*oStream << htmlNode << u8"\t找到属性\t" << QString::fromStdWString( msg ) << '\n';
-				qDebug( ) << *htmlNode->getNodeContent( );
-			}
-		}
+		qDebug( ) << QString::fromStdWString( *vectorIterator->get( )->getNodeContent( ) );
 	}
 	oStream->flush( );
 	return nullptr;

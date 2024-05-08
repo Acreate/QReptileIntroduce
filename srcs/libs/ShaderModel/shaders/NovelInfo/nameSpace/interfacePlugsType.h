@@ -3,7 +3,10 @@
 #pragma once
 
 #include "../export/NovelInfo_export.h"
-
+#include <memory>
+#include <vector>
+#include <string>
+#include <unordered_map>
 namespace interfacePlugsType {
 	class NOVELINFO_EXPORT INovelInfo;
 	class NOVELINFO_EXPORT IRequestNetInterface;

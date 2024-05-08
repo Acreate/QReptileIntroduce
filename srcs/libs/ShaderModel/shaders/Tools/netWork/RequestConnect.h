@@ -5,33 +5,27 @@
 #include <qmutex.h>
 #include <qtmetamacros.h>
 
+class NetworkAccessManager;
 class Request;
 #include "../export/Tools_export.h"
 
 class TOOLS_EXPORT RequestConnect : public QObject {
 	Q_OBJECT;
 private:
-	QNetworkAccessManager *networkAccessManager;
+	NetworkAccessManager *networkAccessManager;
 	QNetworkReply *networkReply;
-	Request *request;
-private:
-	QMutex mutex;
 public:
-	RequestConnect( QObject *parent );
+	RequestConnect( QObject *parent = nullptr );
 	~RequestConnect( ) override;
 public:
-	QNetworkAccessManager * getNetworkAccessManager( ) const {
+	NetworkAccessManager * getNetworkAccessManager( ) const {
 		return networkAccessManager;
 	}
 	QNetworkReply * getNetworkReply( ) const {
 		return networkReply;
 	}
 
-	Request *  getRequest( ) const {
-		return request;
-	}
-
-	void setNetworkAccessManager( Request *request );
+	void setNetworkAccessManager( NetworkAccessManager *request );
 	void setNetworkReply( QNetworkReply *networkReply );
 Q_SIGNALS: //  QNetworkAccessManager 转发
 	void networkAccessManagerAuthenticationRequired( QNetworkReply *reply, QAuthenticator *authenticator );

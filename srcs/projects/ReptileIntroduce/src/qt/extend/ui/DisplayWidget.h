@@ -9,7 +9,7 @@
 namespace interfacePlugsType {
 	class IRequestNetInterfaceExtend;
 }
-namespace htmlTools {
+namespace cylHtmlTools {
 	class XPath;
 }
 
@@ -241,7 +241,7 @@ public: // 流接口
 	OStream & operator<<( const float_t &msg ) override;
 	OStream & operator<<( const double_t &msg ) override;
 	OStream & operator<<( const void *msg ) override;
-	OStream & operator<<( const htmlTools::XPath &msg );
+	OStream & operator<<( const cylHtmlTools::XPath &msg );
 
 	void flush( ) override;
 };

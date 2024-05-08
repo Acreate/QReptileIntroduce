@@ -103,7 +103,7 @@ file( MAKE_DIRECTORY  ${Cache_Path_Dir} )
 
 get_path_cmake_dir_path( out_path_list ${CMAKE_CURRENT_SOURCE_DIR}/srcs/libs/ShaderModel/shaders/IOStream "CMakeLists.txt" )
 list(APPEND out_path_list ${plug_path_list})
-get_path_cmake_dir_path( out_path_list ${CMAKE_CURRENT_SOURCE_DIR}/srcs/git/htmlcpp/srcs "CMakeLists.txt" )
+get_path_cmake_dir_path( out_path_list ${CMAKE_CURRENT_SOURCE_DIR}/srcs/git/htmlcpp/srcs/HtmlTools "CMakeLists.txt" )
 get_path_cmake_dir_path( out_path_list ${CMAKE_CURRENT_SOURCE_DIR}/srcs/libs/UserHread/defineMorc "CMakeLists.txt" )
 get_path_cmake_dir_path( out_path_list ${CMAKE_CURRENT_SOURCE_DIR}/srcs/libs/ShaderModel/shaders/NovelInfo "CMakeLists.txt" )
 get_path_cmake_dir_path( out_path_list ${CMAKE_CURRENT_SOURCE_DIR}/srcs/libs/ShaderModel/shaders/Plug "CMakeLists.txt" )

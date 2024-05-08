@@ -5,41 +5,47 @@
 
 #include <QtMorc.h>
 #include <DebugInfo.h>
-#include <QNetworkAccessManager>
+#include "NetworkAccessManager.h"
 #include <qguiapplication.h>
 
 #include "RequestConnect.h"
+#include "NetworkRequest.h"
 
-Request::Request( QObject *parent ) : QObject( parent ) {
-	networkAccessManager = new QNetworkAccessManager( this );
+
+Request::Request( NetworkAccessManager *networkAccessManager, RequestConnect *requestConnect, QObject *parent ) : networkAccessManager( networkAccessManager ), QObject( parent ), requestConnect( requestConnect ) {
+	requestConnect->setNetworkAccessManager( networkAccessManager );
+}
+
+Request::Request( NetworkAccessManager *networkAccessManager, RequestConnect *requestConnect ): Request( networkAccessManager, requestConnect, nullptr ) {
 }
 Request::~Request( ) {
-	networkAccessManager->deleteLater( );
-	if( setting ) {
-		setting->sync( );
-		delete setting;
-	}
-}
-void Request::setRequestSettingFilePath( const QString &filePath ) {
-	if( setting )
-		setting->setPath( QSettings::IniFormat, QSettings::UserScope, filePath );
-	else
-		setting = new QSettings( filePath, QSettings::IniFormat );
-	QVariant value = setting->value( tr( u8"homeUrl" ) );
-
 }
 
-QNetworkReply * Request::netGetWork( const QString &url, RequestConnect *requestConnect ) {
+
+QNetworkReply * Request::netGetWork( const QString &url ) {
 	QUrl qUrl( url );
-
-	return Request::netGetWork( qUrl, requestConnect );
+	return Request::netGetWork( qUrl );
 }
-QNetworkReply * Request::netGetWork( const QUrl &url, RequestConnect *requestConnect ) {
-	QNetworkRequest request;
-	request.setHeader( QNetworkRequest::UserAgentHeader, tr( u8"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.5735.289 Safari/537.36 QIHU 360SE" ) );
+QNetworkReply * Request::netGetWork( const QUrl &url ) {
+	NetworkRequest request;
 	request.setUrl( url );
-	requestConnect->setNetworkAccessManager( this );
-	QNetworkReply *networkReply = networkAccessManager->get( request );
+	return netGetWork( request );
+}
+QNetworkReply * Request::netGetWork( const QString &url, NetworkRequest &network_request ) {
+	QUrl qUrl( url );
+	NetworkRequest networkRequest = network_request;
+	networkRequest.setUrl( qUrl );
+	return netGetWork( network_request );
+
+}
+QNetworkReply * Request::netGetWork( const QUrl &url, NetworkRequest &network_request ) {
+	NetworkRequest networkRequest = network_request;
+	networkRequest.setUrl( url );
+	return netGetWork( network_request );
+}
+QNetworkReply * Request::netGetWork( NetworkRequest &network_request ) {
+	requestConnect->setNetworkAccessManager( networkAccessManager );
+	QNetworkReply *networkReply = networkAccessManager->get( network_request );
 	requestConnect->setNetworkReply( networkReply );
 	return networkReply;
 }

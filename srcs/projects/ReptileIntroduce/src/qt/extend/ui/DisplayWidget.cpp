@@ -19,7 +19,7 @@
 #include "path/Dir.h"
 #include <htmls/htmlTools/XPath.h>
 using interfacePlugsType::IRequestNetInterfaceExtend;
-using htmlTools::XPath;
+using cylHtmlTools::XPath;
 #define q_connect_solts( type , signalPtr, signal, slotPtr, slot ) \
 	do{\
 		auto signal_QObject = QOverload< type>::of( signal ); \
