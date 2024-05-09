@@ -38,7 +38,8 @@ const QString MainWidget::settingGroupWorkKeyWriteFileWorkPath = tr( u8"写入�
 const QString MainWidget::settingGroupSelectDefaultPaths = tr( u8"选择窗口默认路径" );
 const QString MainWidget::settingGroupSelectDefaultPathskeyPlugPathKey = tr( u8"插件路径" );
 const QString MainWidget::settingGroupPlugIniPathKeyMerge = tr( u8"插件/配置路径" );
-const QString MainWidget::settingGroupFont = tr( u8"字体" );
+const QString MainWidget::settingGroupMenuFont = tr( u8"菜单字体" );
+const QString MainWidget::settingGroupDrawplayFont = tr( u8"绘制字体" );
 const QString MainWidget::settingGroupFontFamily = tr( u8"名称" );
 const QString MainWidget::settingGroupFontPointSize = tr( u8"点大小" );
 const QString MainWidget::settingGroupFontWeightSize = tr( u8"加重" );
@@ -111,20 +112,97 @@ void MainWidget::initComponentConnect( ) {
 		qDebug( ) << xpath;
 	} );
 	connect( display, &DisplayWidget::changeDisplayFont, [=]( QFont &font ) {
-		progressSetting->setValue( settingGroupFont, {
-			{ settingGroupFontFamily, font.family( ) }
-			, { settingGroupFontPointSize, font.pointSizeF( ) }
-			, { settingGroupFontWeightSize, font.weight( ) }
-			, { settingGroupFontItalic, font.italic( ) }
-			, { settingGroupFontBold, font.bold( ) }
-			, { settingGroupFontStrikeOut, font.strikeOut( ) }
-			, { settingGroupFontUnderline, font.underline( ) }
-			, { settingGroupFontStyle, font.style( ) }
+		progressSetting->setValue( settingGroupDrawplayFont, {
+				{ settingGroupFontFamily
+					, font.family( ) }
+				, { settingGroupFontPointSize
+					, font.pointSizeF( ) }
+				, { settingGroupFontWeightSize
+					, font.weight( ) }
+				, { settingGroupFontItalic
+					, font.italic( ) }
+				, { settingGroupFontBold
+					, font.bold( ) }
+				, { settingGroupFontStrikeOut
+					, font.strikeOut( ) }
+				, { settingGroupFontUnderline
+					, font.underline( ) }
+				, { settingGroupFontStyle
+					, font.style( ) }
+			}
+		);
+		progressSetting->sync( );
+	} );
+	connect( display, &DisplayWidget::changeMenuFont, [=]( QFont &font ) {
+		progressSetting->setValue( settingGroupMenuFont, {
+				{ settingGroupFontFamily
+					, font.family( ) }
+				, { settingGroupFontPointSize
+					, font.pointSizeF( ) }
+				, { settingGroupFontWeightSize
+					, font.weight( ) }
+				, { settingGroupFontItalic
+					, font.italic( ) }
+				, { settingGroupFontBold
+					, font.bold( ) }
+				, { settingGroupFontStrikeOut
+					, font.strikeOut( ) }
+				, { settingGroupFontUnderline
+					, font.underline( ) }
+				, { settingGroupFontStyle
+					, font.style( ) }
 			}
 		);
 		progressSetting->sync( );
 	} );
 }
+
+template< typename TKey, typename TValue >
+void setFont( typename QMap< TKey, TValue >::Iterator &iterator, typename QMap< TKey, TValue >::Iterator &end, QFont &font ) {
+	for( ; iterator != end; ++iterator ) {
+		auto key = iterator.key( );
+		if( key.isEmpty( ) )
+			continue;
+		if( MainWidget::settingGroupFontFamily == key ) {
+			QString family = iterator.value( ).toString( );
+			if( !family.isEmpty( ) )
+				font.setFamily( family );
+		} else if( MainWidget::settingGroupFontPointSize == key ) {
+			bool converOk = false;
+			auto size = iterator.value( ).toDouble( &converOk );
+			if( converOk )
+				font.setPointSizeF( size );
+		} else if( MainWidget::settingGroupFontWeightSize == key ) {
+			bool converOk = false;
+			QFont::Weight weight = static_cast< QFont::Weight >( iterator.value( ).toInt( &converOk ) );
+			if( converOk )
+				font.setWeight( weight );
+		} else if( MainWidget::settingGroupFontItalic == key ) {
+			auto variant = iterator.value( );
+			bool isItalic = variant.toBool( );
+			font.setItalic( isItalic );
+		} else if( MainWidget::settingGroupFontBold == key ) {
+			auto variant = iterator.value( );
+			bool isBold = variant.toBool( );
+			font.setBold( isBold );
+		} else if( MainWidget::settingGroupFontStrikeOut == key ) {
+			auto variant = iterator.value( );
+			bool isBold = variant.toBool( );
+			font.setStrikeOut( isBold );
+		} else if( MainWidget::settingGroupFontUnderline == key ) {
+			auto variant = iterator.value( );
+			bool isBold = variant.toBool( );
+			font.setUnderline( isBold );
+		} else if( MainWidget::settingGroupFontStyle == key ) {
+			bool converOk = false;
+			QFont::Style style = static_cast< QFont::Style >( iterator.value( ).toInt( &converOk ) );
+			if( converOk )
+				font.setStyle( style );
+		}
+	}
+
+}
+
 void MainWidget::initComponentOver( ) {
 	//// 线程开始
 	dateTimeThread->start( );
@@ -143,64 +221,61 @@ void MainWidget::initComponentOver( ) {
 	fromDisplayWidgetMenu->addAction( LoadWebInfoBtn );
 	connect( LoadWebInfoBtn, &QAction::triggered, this, &MainWidget::LoadWebInfo );
 
-	auto map = progressSetting->getAllInfo( settingGroupFont );
+	auto map = progressSetting->getAllInfo( settingGroupDrawplayFont );
 	QFont font;
 	if( map.size( ) > 0 ) {
 		auto iterator = map.begin( );
 		auto end = map.end( );
-		for( ; iterator != end; ++iterator ) {
-			auto key = iterator.key( );
-			if( key.isEmpty( ) )
-				continue;
-			if( settingGroupFontFamily == key ) {
-				QString family = iterator.value( ).toString( );
-				if( !family.isEmpty( ) )
-					font.setFamily( family );
-			} else if( settingGroupFontPointSize == key ) {
-				bool converOk = false;
-				auto size = iterator.value( ).toDouble( &converOk );
-				if( converOk )
-					font.setPointSizeF( size );
-			} else if( settingGroupFontWeightSize == key ) {
-				bool converOk = false;
-				QFont::Weight weight = static_cast< QFont::Weight >( iterator.value( ).toInt( &converOk ) );
-				if( converOk )
-					font.setWeight( weight );
-			} else if( settingGroupFontItalic == key ) {
-				auto variant = iterator.value( );
-				bool isItalic = variant.toBool( );
-				font.setItalic( isItalic );
-			} else if( settingGroupFontBold == key ) {
-				auto variant = iterator.value( );
-				bool isBold = variant.toBool( );
-				font.setBold( isBold );
-			} else if( settingGroupFontStrikeOut == key ) {
-				auto variant = iterator.value( );
-				bool isBold = variant.toBool( );
-				font.setStrikeOut( isBold );
-			} else if( settingGroupFontUnderline == key ) {
-				auto variant = iterator.value( );
-				bool isBold = variant.toBool( );
-				font.setUnderline( isBold );
-			} else if( settingGroupFontStyle == key ) {
-				bool converOk = false;
-				QFont::Style style = static_cast< QFont::Style >( iterator.value( ).toInt( &converOk ) );
-				if( converOk )
-					font.setStyle( style );
-			}
-		}
-
+		::setFont< QString, QVariant >( iterator, end, font );
 	} else {
 		font = this->font( );
-		progressSetting->setValue( settingGroupFont, {
-			{ settingGroupFontFamily, font.family( ) }
-			, { settingGroupFontPointSize, font.pointSizeF( ) }
-			, { settingGroupFontWeightSize, font.weight( ) }
-			, { settingGroupFontItalic, font.italic( ) }
-			, { settingGroupFontBold, font.bold( ) }
-			, { settingGroupFontStrikeOut, font.strikeOut( ) }
-			, { settingGroupFontUnderline, font.underline( ) }
-			, { settingGroupFontStyle, font.style( ) }
+		progressSetting->setValue( settingGroupDrawplayFont, {
+				{ settingGroupFontFamily
+					, font.family( ) }
+				, { settingGroupFontPointSize
+					, font.pointSizeF( ) }
+				, { settingGroupFontWeightSize
+					, font.weight( ) }
+				, { settingGroupFontItalic
+					, font.italic( ) }
+				, { settingGroupFontBold
+					, font.bold( ) }
+				, { settingGroupFontStrikeOut
+					, font.strikeOut( ) }
+				, { settingGroupFontUnderline
+					, font.underline( ) }
+				, { settingGroupFontStyle
+					, font.style( ) }
+			}
+		);
+		progressSetting->sync( );
+	}
+	emit display->changeDisplayFont( font );
+
+	map = progressSetting->getAllInfo( settingGroupMenuFont );
+	if( map.size( ) > 0 ) {
+		auto iterator = map.begin( );
+		auto end = map.end( );
+		::setFont< QString, QVariant >( iterator, end, font );
+	} else {
+		font = this->font( );
+		progressSetting->setValue( settingGroupDrawplayFont, {
+				{ settingGroupFontFamily
+					, font.family( ) }
+				, { settingGroupFontPointSize
+					, font.pointSizeF( ) }
+				, { settingGroupFontWeightSize
+					, font.weight( ) }
+				, { settingGroupFontItalic
+					, font.italic( ) }
+				, { settingGroupFontBold
+					, font.bold( ) }
+				, { settingGroupFontStrikeOut
+					, font.strikeOut( ) }
+				, { settingGroupFontUnderline
+					, font.underline( ) }
+				, { settingGroupFontStyle
+					, font.style( ) }
 			}
 		);
 		progressSetting->sync( );
@@ -360,6 +435,12 @@ void MainWidget::loadingPlug( ) {
 		LoadWebInfoBtn->setEnabled( false );
 	else
 		LoadWebInfoBtn->setEnabled( true );
+	*display << QString( tr( u8"获取url 123" ) ) << '\n';
+	*display << QString( tr( u8"获取url 123" ) ) << '\n';
+	*display << QString( tr( u8"获取url 123" ) ) << '\n';
+	*display << QString( tr( u8"获取url 123" ) ) << '\n';
+	*display << QString( tr( u8"获取url 123" ) ) << '\n';
+	display->flush( );
 }
 void MainWidget::LoadWebInfo( ) {
 	auto iterator = plugs.begin( );

@@ -55,11 +55,13 @@ void DisplayWidget::initComponent( ) {
 	topMenu = new Menu( this );
 	plugTopMneu = new Menu( this );
 	widgetTopMneu = new Menu( this );
-	startGet = new Action( topMenu );
+	setDrawPlayFont = new Action( topMenu );
+	setMenuFont = new Action( topMenu );
 }
 void DisplayWidget::initProperty( ) {
 	topMenu->setTitle( tr( u8"绘制窗口" ) );
-	startGet->setText( tr( u8"设置字体" ) );
+	setDrawPlayFont->setText( tr( u8"设置绘制字体" ) );
+	setMenuFont->setText( tr( u8"设置菜单字体" ) );
 	plugTopMneu->setTitle( tr( u8"插件菜单" ) );
 	widgetTopMneu->setTitle( tr( u8"窗口菜单" ) );
 	objectImage->fill( QColor( 0, 0, 0, 0 ) );
@@ -75,12 +77,14 @@ void DisplayWidget::initProperty( ) {
 	msgFont = this->font( );
 	msgFont.setBold( true );
 	msgFont.setPixelSize( 14 );
+	lineGainSpace = 0;
 }
 void DisplayWidget::initComponentLayout( ) {
 	topMenuBar->addMenu( topMenu );
 	topMenuBar->addMenu( plugTopMneu );
 	topMenuBar->addMenu( widgetTopMneu );
-	topMenu->addAction( startGet );
+	topMenu->addAction( setDrawPlayFont );
+	topMenu->addAction( setMenuFont );
 	mainVLayout->setMenuBar( topMenuBar );
 }
 void DisplayWidget::initConnect( ) {
@@ -90,20 +94,38 @@ void DisplayWidget::initConnect( ) {
 	connect( this, &DisplayWidget::setType, this, &DisplayWidget::native_slot_setType );
 	connect( this, &DisplayWidget::changeDisplayFont, [=]( QFont &font ) {
 		msgFont = font;
-		this->setFont( font );
 		updatDisplay< QString_Type >( );
 		update( );
+	} );
+	connect( this, &DisplayWidget::changeMenuFont, [=]( QFont &font ) {
+		this->topMenuBar->setFont( font );
+		this->topMenuBar->update( );
+		topHeight = topMenuBar->height( );
+		int spacing = mainVLayout->spacing( );
+		auto contentsMargins = mainVLayout->contentsMargins( );
+		subV = contentsMargins.top( ) + contentsMargins.bottom( ) + topHeight + spacing;
+		subH = contentsMargins.left( ) + contentsMargins.right( ) + spacing;
+		update( );
+	} );
+	connect( this, &DisplayWidget::changeDisplayFontLineHeight, [=]( int64_t line_gain_space ) {
+		lineGainSpace = line_gain_space;
 	} );
 	// 重载的槽
 	q_connect_solts_thisPtr( const QObject &, &DisplayWidget::display, &DisplayWidget::native_slot_display );
 	q_connect_solts_thisPtr( const QString &, &DisplayWidget::display, &DisplayWidget::native_slot_display );
 	q_connect_solts_thisPtr( const QArrayData &, &DisplayWidget::display, &DisplayWidget::native_slot_display );
 	q_connect_solts_thisPtr( const QByteArray &, &DisplayWidget::display, &DisplayWidget::native_slot_display );
-	connect( startGet, &QAction::triggered, [this]( ) {
+	connect( setDrawPlayFont, &QAction::triggered, [this]( ) {
 		bool isOk = false;
 		QFont font = QFontDialog::getFont( &isOk, this->msgFont, this, tr( u8"选择一个显示在窗口的字体" ) );
 		if( isOk )
 			emit changeDisplayFont( font );
+	} );
+	connect( setMenuFont, &QAction::triggered, [this]( ) {
+		bool isOk = false;
+		QFont font = QFontDialog::getFont( &isOk, this->msgFont, this, tr( u8"选择一个显示在菜单的字体" ) );
+		if( isOk )
+			emit changeMenuFont( font );
 	} );
 }
 void DisplayWidget::slot_click_action( const Action *action ) {
@@ -119,6 +141,7 @@ void DisplayWidget::native_slot_display( const QString &data ) {
 	if( !data.isEmpty( ) )
 		this->msgList << data;
 	stringMsgImage->fill( QColor( 0, 0, 0, 0 ) );
+	auto styleName = msgFont.family( );
 	QFontMetrics fontMetrics( msgFont );
 	int height = fontMetrics.height( ); // 每次换行都这么高
 	int maxLine = backImageRect.height( ) / height; // 最多可以容纳的行数
@@ -156,7 +179,9 @@ void DisplayWidget::native_slot_display( const QString &data ) {
 	qsizetype size = displayList.size( );
 	for( qsizetype index = 0; index < size; ++index ) {
 		QString chars = displayList[ index ];
-		painter.drawText( QPoint( 0, ( index + 1 ) * height ), chars );
+		qint64 drawY = ( index + 1 ) * height + lineGainSpace;
+		QPoint point( 0, drawY );
+		painter.drawText( point, chars );
 	}
 	painter.end( );
 	size = this->msgList.size( );
@@ -225,14 +250,13 @@ void DisplayWidget::paintEvent( QPaintEvent *event ) {
 	updataStatus = 0;
 	// 绘制之前调用
 	emit displayBefore( );
-	// todo : 绘制信息
 	QPainter painter;
 	painter.begin( this );
 	size_t sep = subH / 2;
-	painter.drawImage( 0, topHeight + sep, *objectImage );
-	painter.drawImage( 0, topHeight + sep, *stringMsgImage );
+	size_t y = topHeight + sep;
+	painter.drawImage( 0, y, *objectImage );
+	painter.drawImage( 0, y, *stringMsgImage );
 	painter.end( );
-	QWidget::paintEvent( event );
 	// 绘制之后调用
 	emit displayLater( );
 }

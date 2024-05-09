@@ -1,4 +1,4 @@
-﻿#include "./Setting.h"
+﻿#include "Setting.h"
 
 #include <qcoreapplication.h>
 #include <qdir.h>

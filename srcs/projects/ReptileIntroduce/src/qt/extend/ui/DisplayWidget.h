@@ -43,7 +43,8 @@ private:
 	Menu *topMenu; // 菜单
 	Menu *plugTopMneu; // 插件的顶级菜单
 	Menu *widgetTopMneu; // 窗口的顶级菜单
-	Action *startGet; // 开始请求
+	Action *setDrawPlayFont; // 绘制字体菜单
+	Action *setMenuFont; // 菜单字体菜单
 private: // 绘制相关变量
 
 	/// <summary>
@@ -64,6 +65,7 @@ private: // 绘制相关变量
 	/// </summary>
 	size_t strBuffMaxSize;
 	QFont msgFont; // 消息字体
+	int64_t lineGainSpace; // 字体每行增益空间(可正负)，每行字体的高度加上该增益得到实际绘制高度间隔
 	/// <summary>
 	/// 更新标识
 	/// </summary>
@@ -171,10 +173,20 @@ Q_SIGNALS:
 	/// <param name="path">菜单按键的路径</param>
 	void menuActionClick( const QString &path );
 	/// <summary>
-	/// 设置字体
+	/// 设置绘制字体
 	/// </summary>
 	/// <param name="font">新的字体</param>
 	void changeDisplayFont( QFont &font );
+	/// <summary>
+	/// 设置绘制字体间隔
+	/// </summary>
+	/// <param name="space">空间</param>
+	void changeDisplayFontLineHeight( int64_t space );
+	/// <summary>
+	/// 设置菜单字体
+	/// </summary>
+	/// <param name="font">新的字体</param>
+	void changeMenuFont( QFont &font );
 private: // 信号槽所需要变量
 	QStringList msgList;
 protected slots: // 响应自身信号的槽

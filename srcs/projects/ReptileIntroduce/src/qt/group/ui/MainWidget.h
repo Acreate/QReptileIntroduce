@@ -67,7 +67,7 @@ protected:
 	/// 实现组件的完成结尾
 	/// </summary>
 	void initComponentOver( );
-private: // 程序配置-名称
+public: // 程序配置-名称
 	static const QString settingGroupWork; // 工作路径组名称
 	static const QString settingGroupWorkKeyReadFileWorkPath; // 基于 settingGroupWork 组的选择的读入路径
 	static const QString settingGroupWorkKeyWriteFileWorkPath; // 基于 settingGroupWork 组的选择的写入路径
@@ -76,7 +76,8 @@ private: // 程序配置-名称
 	static const QString settingGroupSelectDefaultPaths; // 默认的窗口选择路径组
 	static const QString settingGroupSelectDefaultPathskeyPlugPathKey; // 基于 settingGroupSelectDefaultPaths 插件路径
 	static const QString settingGroupPlugIniPathKeyMerge; // 插件的配置文件路径
-	static const QString settingGroupFont; // 字体组
+	static const QString settingGroupMenuFont; // 菜单字体组
+	static const QString settingGroupDrawplayFont; // 绘制字体组
 	static const QString settingGroupFontFamily; // 字体名称
 	static const QString settingGroupFontPointSize; // 字体大小
 	static const QString settingGroupFontWeightSize; // 字体宽度
