@@ -8,6 +8,8 @@
 #include <vector>
 
 #include "../nameSpace/interfacePlugsType.h"
+class IStream;
+class OStream;
 namespace interfacePlugsType {
 	/// <summary>
 	/// 这是一个回调接口，它总是处于被调用的状态
@@ -60,7 +62,7 @@ namespace interfacePlugsType {
 		/// </summary>
 		/// <param name="htmlText">解析页面</param>
 		/// <returns>类型与目标地址</returns>
-		virtual un_ordered_map * formHtmlGetTypeTheUrls( const HtmlDocString &htmlText ) = 0;
+		virtual Map_HtmlStrK_HtmlStrV * formHtmlGetTypeTheUrls( const HtmlDocString &htmlText ) = 0;
 
 		/// <summary>
 		/// 从页中返回解析到的小说
@@ -69,7 +71,7 @@ namespace interfacePlugsType {
 		/// <param name="saveNovelInfos">已经存储的小说</param>
 		/// <param name="appendDataPtr">附加的数据对象指针</param>
 		/// <returns>解析到的小说列表</returns>
-		virtual NovelPtrList formHtmlGetTypePageNovels( const HtmlDocString &htmlText, const NovelPtrList &saveNovelInfos, void *appendDataPtr ) = 0;
+		virtual Vector_NovelSPtr formHtmlGetTypePageNovels( const HtmlDocString &htmlText, const Vector_NovelSPtr &saveNovelInfos, void *appendDataPtr ) = 0;
 
 		/// <summary>
 		/// 从一个链接当中获取单个小说信息，这个行为不建议在 formHtmlGetTypePageNovels 中调用，而是作为被调用者隐式回调使用
@@ -78,7 +80,7 @@ namespace interfacePlugsType {
 		/// <param name="saveNovelInfos">已经存储的小说列表</param>
 		/// <param name="networkReplayNovel">当前获取的小说页面内容</param>
 		/// <returns>小说信息对象指针</returns>
-		virtual INovelInfoSharedPtr formHtmlGetUrlNovelInfo( const HtmlDocString &htmlText, const NovelPtrList &saveNovelInfos, const INovelInfoSharedPtr &networkReplayNovel ) = 0;
+		virtual INovelInfo_Shared formHtmlGetUrlNovelInfo( const HtmlDocString &htmlText, const Vector_NovelSPtr &saveNovelInfos, const INovelInfo_Shared &networkReplayNovel ) = 0;
 		/// <summary>
 		/// 基于请求实现后进行下一次请求的判定
 		/// 返回有效的链接对象表示继续请求，无效对象则退出请求
@@ -87,16 +89,22 @@ namespace interfacePlugsType {
 		/// <param name="saveNovelInfos">已经保存的小说列表</param>
 		/// <param name="lastNovelInfos">调用该成员函数之前已经存储的对象列表，与 saveNovelInfos 不同的是，它仅仅存储一页</param>
 		/// <returns>下一页的地址</returns>
-		virtual HtmlDocString formHtmlGetNext( const HtmlDocString &htmlText, const NovelPtrList &saveNovelInfos, const NovelPtrList &lastNovelInfos ) = 0;
+		virtual HtmlDocString formHtmlGetNext( const HtmlDocString &htmlText, const Vector_NovelSPtr &saveNovelInfos, const Vector_NovelSPtr &lastNovelInfos ) = 0;
+		/// <summary>
+		/// 是否请求小说详情页面
+		/// </summary>
+		/// <param name="novel_info_ptr">查询的小说</param>
+		/// <returns>如果需要获取，则返回 true，否则返回 true</returns>
+		virtual bool isRequestNovelInfoUrl( const INovelInfoPtr &novel_info_ptr ) = 0;
 		/// <summary>
 		/// 类型调用结束时候会被调用
 		/// </summary>
 		/// <param name="saveNovelInfos"></param>
-		virtual void novelTypeEnd( const NovelPtrList &saveNovelInfos ) = 0;
+		virtual void novelTypeEnd( const Vector_NovelSPtr &saveNovelInfos ) = 0;
 		/// <summary>
 		/// 结束该网站请求时被调用
 		/// </summary>
-		virtual void endHost( const NovelPtrList &saveNovelInfos ) = 0;
+		virtual void endHost( const Vector_NovelSPtr &saveNovelInfos ) = 0;
 		/// <summary>
 		/// 设置父类
 		/// </summary>
@@ -108,7 +116,19 @@ namespace interfacePlugsType {
 		/// </summary>
 		virtual void deleteMember( ) = 0;
 
+		/// <summary>
+		/// 设置输出流
+		/// </summary>
+		/// <param name="o_stream">输出流对象</param>
+		/// <returns>旧的流</returns>
+		virtual OStream * setOStream( OStream *o_stream ) = 0;
 		
+		/// <summary>
+		/// 设置输入流
+		/// </summary>
+		/// <param name="i_stream">输入流对象</param>
+		/// <returns>旧的流</returns>
+		virtual IStream * setIStream( IStream *i_stream ) = 0;
 	};
 
 }

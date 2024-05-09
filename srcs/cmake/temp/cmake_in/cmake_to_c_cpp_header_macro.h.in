@@ -2,7 +2,7 @@
 #define ${project_head_start}_HEADER_MACRO_H_H_HEAD__FILE__
 #pragma once
 
-#define IRequestNetInterfaceExtend_iid	${iid}
+#define IRequestNetInterface_iid	${iid}
 #define GET_URL	u8${get_url}
 
 #endif // ${project_head_start}_HEADER_MACRO_H_H_HEAD__FILE__

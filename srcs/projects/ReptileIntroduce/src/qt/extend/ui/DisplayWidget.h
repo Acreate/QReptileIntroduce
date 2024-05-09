@@ -4,11 +4,9 @@
 #include <QWidget>
 #include <stream/IStream.h>
 #include <stream/OStream.h>
+#include <nameSpace/interfacePlugsType.h>
 
 
-namespace interfacePlugsType {
-	class IRequestNetInterfaceExtend;
-}
 namespace cylHtmlTools {
 	class XPath;
 }
@@ -92,7 +90,7 @@ private slots:
 	void slot_click_action( const Action *action );
 private:
 	QMap< QObject *, Menu * > menuMap; // 保存主要菜单
-	QMap< interfacePlugsType::IRequestNetInterfaceExtend *, Menu * > menuPlugMap; // 保存插件菜单
+	QMap< interfacePlugsType::IRequestNetInterface *, Menu * > menuPlugMap; // 保存插件菜单
 	QMap< QObject *, QSharedPointer< QString > > actionXpath; // 保存菜单的路径
 public:
 	/// <summary>
@@ -108,7 +106,7 @@ public:
 	/// </summary>
 	/// <param name="object">绑定插件对象</param>
 	/// <returns>插件对象的菜单</returns>
-	Menu * getPlugMenu( interfacePlugsType::IRequestNetInterfaceExtend *object );
+	Menu * getPlugMenu( interfacePlugsType::IRequestNetInterface *object );
 	/// <summary>
 	/// 获取字体
 	/// </summary>

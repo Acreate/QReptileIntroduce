@@ -1,16 +1,18 @@
 ﻿#include "RequestNet.h"
 #include <string>
 
+#include <QFile>
 #include "htmls/htmlDoc/HtmlDoc.h"
 #include "htmls/htmlNode/HtmlNode.h"
 #include "htmls/htmlTools/XPath.h"
+#include "macro/cmake_to_c_cpp_header_env.h"
 using namespace interfacePlugsType;
 using namespace cylHtmlTools;
-RequestNet::RequestNet( QObject *parent ): QObject( parent ), url( GET_URL ), oStream( nullptr ), iStream( nullptr ) {
+RequestNet::RequestNet( QObject *parent ): QObject( parent ), url( GET_URL ), oStream( nullptr ), iStream( nullptr ), typeUrlMap( nullptr ) {
 }
 
 RequestNet::~RequestNet( ) {
-	qDebug( ) << "RequestNet::~RequestNet( " << IRequestNetInterfaceExtend_iid << ")";
+	qDebug( ) << "RequestNet::~RequestNet( " << IRequestNetInterface_iid << ")";
 
 }
 void RequestNet::getData( void *resultAnyPtr ) {
@@ -55,38 +57,98 @@ void RequestNet::deleteMember( ) {
 }
 
 
-un_ordered_map * RequestNet::formHtmlGetTypeTheUrls( const HtmlDocString &htmlText ) {
+Map_HtmlStrK_HtmlStrV * RequestNet::formHtmlGetTypeTheUrls( const HtmlDocString &htmlText ) {
+	auto removeBothSpaceHtmlText = htmlText;
+	HtmlStringTools::removeBothSpace( removeBothSpaceHtmlText );
+	if( removeBothSpaceHtmlText.size( ) > 0 ) {
+		auto result = std::make_shared< Map_HtmlStrK_HtmlStrV >( );
+		auto stdWString( std::make_shared< HtmlString >( removeBothSpaceHtmlText ) );
+		size_t index = 0, end = stdWString->size( );
+		auto htmlDoc = cylHtmlTools::HtmlDoc::parse( stdWString, end, index );
+		if( !htmlDoc.get( ) )
+			return nullptr;
 
-	std::shared_ptr< std::wstring > stdWString( new std::wstring( htmlText ) );
+		htmlDoc->analysisBrotherNode( );
+		auto xpath = cylHtmlTools::XPath( QString( u8"div[@class='hd']/ul/li/a" ).toStdWString( ) );
+
+		auto htmlNodeSPtrShared = htmlDoc->getHtmlNodeRoots( );
+		auto vectorHtmlNodeSPtrShared = xpath.buider( htmlNodeSPtrShared );
+		if( !vectorHtmlNodeSPtrShared )
+			return nullptr;
+		auto vectorIterator = vectorHtmlNodeSPtrShared->begin( );
+		auto vectorEnd = vectorHtmlNodeSPtrShared->end( );
+
+		for( ; vectorIterator != vectorEnd; ++vectorIterator ) {
+
+			qDebug( ) << QString::fromStdWString( *vectorIterator->get( )->getNodeContent( ) );
+
+			auto element = vectorIterator->get( );
+			QString url;
+			auto unorderedMap = element->findAttribute( [&]( const HtmlString &first, const HtmlString &scen ) ->bool {
+				if( HtmlStringTools::equRemoveSpaceOverHtmlString( first, L"href" ) )
+					return true;
+				return false;
+			} );
+			if( unorderedMap ) {
+				auto key = *element->getNodeContentText( );
+				auto value = unorderedMap->at( L"href" );
+				QString qulr = QString( u8"%1%2" ).arg( GET_URL ).arg( value.substr( 1, value.size( ) - 2 ) );
+				value = qulr.toStdWString( );
+				result->emplace( key, value );
+			}
+		}
+		if( result->size( ) > 0 ) {
+			typeUrlMap = result;
+			return typeUrlMap.get( );
+		}
+	}
+	if( typeUrlMap == nullptr || typeUrlMap->size( ) == 0 )
+		return nullptr;
+	return typeUrlMap.get( );
+}
+Vector_NovelSPtr RequestNet::formHtmlGetTypePageNovels( const HtmlDocString &htmlText, const Vector_NovelSPtr &saveNovelInfos, void *appendDataPtr ) {
+	Vector_NovelSPtr result;
+	auto stdWString( std::make_shared< HtmlString >( htmlText ) );
 	size_t index = 0, end = stdWString->size( );
 	auto htmlDoc = cylHtmlTools::HtmlDoc::parse( stdWString, end, index );
-	if( !htmlDoc.get( ) )
-		return nullptr;
-	auto xpath = cylHtmlTools::XPath( QString( u8"div[@class='hd']" ).toStdWString( ) );
-	htmlDoc->analysisBrotherNode( );
-	auto htmlNodeSPtrShared = htmlDoc->getHtmlNodeRoots( );
-	auto vectorHtmlNodeSPtrShared = xpath.buider( htmlNodeSPtrShared );
-	if( !vectorHtmlNodeSPtrShared )
-		return nullptr;
-	size_t size = vectorHtmlNodeSPtrShared->size( );
-	if( size == 0 )
-		return nullptr;
-	auto vectorIterator = vectorHtmlNodeSPtrShared->begin( );
-	auto vectorEnd = vectorHtmlNodeSPtrShared->end( );
-	for( ; vectorIterator != vectorEnd; ++vectorIterator ) {
-		qDebug( ) << QString::fromStdWString( *vectorIterator->get( )->getNodeContent( ) );
+	if( htmlDoc ) {
+
+		htmlDoc->analysisBrotherNode( );
+		auto xpath = cylHtmlTools::XPath( QString( u8"div[@class='cf' @id='sitebox']/dl" ).toStdWString( ) );
+
+		auto htmlNodeSPtrShared = htmlDoc->getHtmlNodeRoots( );
+		auto vectorHtmlNodeSPtrShared = xpath.buider( htmlNodeSPtrShared );
+		if( !vectorHtmlNodeSPtrShared )
+			return result;
+		auto vectorIterator = vectorHtmlNodeSPtrShared->begin( );
+		auto vectorEnd = vectorHtmlNodeSPtrShared->end( );
+
+		for( ; vectorIterator != vectorEnd; ++vectorIterator ) {
+			qDebug( ) << QString::fromStdWString( *vectorIterator->get( )->getIncludeNodeContent( ) );
+		}
 	}
-	oStream->flush( );
-	return nullptr;
+	return result;
 }
-NovelPtrList RequestNet::formHtmlGetTypePageNovels( const HtmlDocString &htmlText, const NovelPtrList &saveNovelInfos, void *appendDataPtr ) {
-	return IRequestNetInterfaceExtend::formHtmlGetTypePageNovels( htmlText, saveNovelInfos, appendDataPtr );
+INovelInfo_Shared RequestNet::formHtmlGetUrlNovelInfo( const HtmlDocString &htmlText, const Vector_NovelSPtr &saveNovelInfos, const INovelInfo_Shared &networkReplayNovel ) {
+	INovelInfo_Shared result = nullptr;
+	auto stdWString( std::make_shared< HtmlString >( htmlText ) );
+	size_t index = 0, end = stdWString->size( );
+	auto htmlDoc = cylHtmlTools::HtmlDoc::parse( stdWString, end, index );
+	if( htmlDoc ) {
+
+	}
+
+	return result;
 }
-INovelInfoSharedPtr RequestNet::formHtmlGetUrlNovelInfo( const HtmlDocString &htmlText, const NovelPtrList &saveNovelInfos, const INovelInfoSharedPtr &networkReplayNovel ) {
-	return IRequestNetInterfaceExtend::formHtmlGetUrlNovelInfo( htmlText, saveNovelInfos, networkReplayNovel );
+HtmlDocString RequestNet::formHtmlGetNext( const HtmlDocString &htmlText, const Vector_NovelSPtr &saveNovelInfos, const Vector_NovelSPtr &lastNovelInfos ) {
+	return { };
 }
-HtmlDocString RequestNet::formHtmlGetNext( const HtmlDocString &htmlText, const NovelPtrList &saveNovelInfos, const NovelPtrList &lastNovelInfos ) {
-	return IRequestNetInterfaceExtend::formHtmlGetNext( htmlText, saveNovelInfos, lastNovelInfos );
+bool RequestNet::isRequestNovelInfoUrl( const interfacePlugsType::INovelInfoPtr &novel_info_ptr ) {
+	return false;
+}
+void RequestNet::novelTypeEnd( const interfacePlugsType::Vector_NovelSPtr &saveNovelInfos ) {
+}
+void RequestNet::endHost( const interfacePlugsType::Vector_NovelSPtr &saveNovelInfos ) {
 }
 OStream * RequestNet::setOStream( OStream *o_stream ) {
 	auto oldOStream = this->oStream;

@@ -35,13 +35,13 @@ QNetworkReply * Request::netGetWork( const QString &url, NetworkRequest &network
 	QUrl qUrl( url );
 	NetworkRequest networkRequest = network_request;
 	networkRequest.setUrl( qUrl );
-	return netGetWork( network_request );
+	return netGetWork( networkRequest );
 
 }
 QNetworkReply * Request::netGetWork( const QUrl &url, NetworkRequest &network_request ) {
 	NetworkRequest networkRequest = network_request;
 	networkRequest.setUrl( url );
-	return netGetWork( network_request );
+	return netGetWork( networkRequest );
 }
 QNetworkReply * Request::netGetWork( NetworkRequest &network_request ) {
 	requestConnect->setNetworkAccessManager( networkAccessManager );

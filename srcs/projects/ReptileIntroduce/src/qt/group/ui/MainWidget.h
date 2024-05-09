@@ -5,7 +5,7 @@
 
 class NovelNetJob;
 namespace interfacePlugsType {
-	class IRequestNetInterfaceExtend;
+	class IRequestNetInterface;
 }
 class DisplayWidget;
 class FileSelectPathWidget;

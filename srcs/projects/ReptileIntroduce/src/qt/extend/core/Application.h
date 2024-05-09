@@ -3,14 +3,14 @@
 #pragma once
 #include <QApplication>
 
-class Appliction : public QApplication {
+class Application : public QApplication {
 	Q_OBJECT;
 private:
 	QStringList catchEventAtClassNameList;
 	QVector< QObject * > catchEventAtObjectPtrList;
 public:
-	Appliction( int &argc, char **argv, int i = ApplicationFlags );
-	~Appliction( ) override;
+	Application( int &argc, char **argv, int i = ApplicationFlags );
+	~Application( ) override;
 public:
 	bool notify( QObject *, QEvent * ) override;
 public:

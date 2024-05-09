@@ -1,9 +1,10 @@
 ﻿#include "../qt/group/ui/MainWidget.h"
-#include "../qt/extend/core/Appliction.h"
+#include "../qt/extend/core/Application.h"
 
 int main( int argc, char *argv[ ] ) {
-	Appliction appliction( argc, argv );
+	Application application( argc, argv );
 	MainWidget qWidget;
 	qWidget.show( );
-	return appliction.exec( );
+	auto *instance = qApp;
+	return instance->exec( );
 }

@@ -10,13 +10,14 @@
 namespace interfacePlugsType {
 	class NOVELINFO_EXPORT INovelInfo;
 	class NOVELINFO_EXPORT IRequestNetInterface;
-	class NOVELINFO_EXPORT IRequestNetInterfaceExtend;
 
-	using INovelInfoSharedPtr = std::shared_ptr< INovelInfo >;
-	using NovelPtrList = std::vector< INovelInfoSharedPtr >;
+	using INovelInfoPtr = INovelInfo *;
+	using INovelInfo_Shared = std::shared_ptr< INovelInfo >;
+	using Vector_NovelSPtr = std::vector< INovelInfo_Shared >;
+	using Vector_NovelSPtr_Shared = std::shared_ptr< Vector_NovelSPtr >;
 	using HtmlDocString = std::wstring;
 	using StdStringPtr = HtmlDocString *;
-	using un_ordered_map = std::unordered_map< HtmlDocString, HtmlDocString >;
+	using Map_HtmlStrK_HtmlStrV = std::unordered_map< HtmlDocString, HtmlDocString >;
 };
 
 

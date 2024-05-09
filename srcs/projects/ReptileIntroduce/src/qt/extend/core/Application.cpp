@@ -1,12 +1,12 @@
-﻿#include "Appliction.h"
+﻿#include "Application.h"
 #include "../../group/ui/MainWidget.h"
 #include <QEvent>
 #include <QMouseEvent>
-Appliction::Appliction( int &argc, char **argv, int i ): QApplication( argc, argv, i ) {
+Application::Application( int &argc, char **argv, int i ): QApplication( argc, argv, i ) {
 }
-Appliction::~Appliction( ) {
+Application::~Application( ) {
 }
-bool Appliction::notify( QObject *object, QEvent *event ) {
+bool Application::notify( QObject *object, QEvent *event ) {
 	//const char *className = object->metaObject( )->className( );
 	//if( catchEventAtObjectPtrList.contains( object ) ) {
 	//	if( className == Menu::staticMetaObject.className( ) )

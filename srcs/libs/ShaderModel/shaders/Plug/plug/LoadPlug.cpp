@@ -1,6 +1,6 @@
 ﻿#include "LoadPlug.h"
 
-#include <interface/IRequestNetInterfaceExtend.h>
+#include <interface/IRequestNetInterface.h>
 #include <QPluginLoader>
 
 #include "path/Path.h"
@@ -19,7 +19,7 @@ LoadPlug::~LoadPlug( ) {
 			object->deleteLater( );
 	}
 }
-bool LoadPlug::findLib( const QString &path, std::pair< QObject *, IRequestNetInterfaceExtend * > *result ) {
+bool LoadPlug::findLib( const QString &path, std::pair< QObject *, IRequestNetInterface * > *result ) {
 	QFileInfo fileInfo( path );
 	QString absolutePath = fileInfo.absoluteFilePath( );
 	if( lib.contains( absolutePath ) ) {
@@ -28,8 +28,8 @@ bool LoadPlug::findLib( const QString &path, std::pair< QObject *, IRequestNetIn
 	}
 	return false;
 }
-QMap< QObject *, IRequestNetInterfaceExtend * > LoadPlug::loadPlugs( ) {
-	QMap< QObject *, IRequestNetInterfaceExtend * > result;
+QMap< QObject *, IRequestNetInterface * > LoadPlug::loadPlugs( ) {
+	QMap< QObject *, IRequestNetInterface * > result;
 	auto pathInfo = Path::getPathInfo( plugPath );
 	auto files = pathInfo.second;
 	if( files.size( ) == 0 )
@@ -52,22 +52,20 @@ QMap< QObject *, IRequestNetInterfaceExtend * > LoadPlug::loadPlugs( ) {
 }
 
 
-IRequestNetInterfaceExtend * LoadPlug::metaGetResult(
-	QObject *outObj, const QString &loadClassName, const QString &methodName
-) {
+IRequestNetInterface * LoadPlug::metaGetResult( QObject *outObj, const QString &loadClassName, const QString &methodName ) {
 	const QMetaObject *metaObject = outObj->metaObject( );
 	if( metaObject->className( ) == loadClassName ) {
-		IRequestNetInterfaceExtend *res = nullptr;
+		IRequestNetInterface *res = nullptr;
 		QByteArray local8Bit = methodName.toLocal8Bit( );
 		std::string stdString = local8Bit.toStdString( );
 		const char *cStr = stdString.c_str( );
-		bool invokeMethod = metaObject->invokeMethod( outObj, cStr, Qt::DirectConnection, Q_RETURN_ARG( IRequestNetInterfaceExtend *, res ) );
+		bool invokeMethod = metaObject->invokeMethod( outObj, cStr, Qt::DirectConnection, Q_RETURN_ARG( IRequestNetInterface *, res ) );
 		if( invokeMethod )
 			return res;
 	}
 	return nullptr;
 }
-std::pair< QObject *, IRequestNetInterfaceExtend * > LoadPlug::getIRequestNetInterface(
+std::pair< QObject *, IRequestNetInterface * > LoadPlug::getIRequestNetInterface(
 	const QString &plugFilePath, const QString &name, const QString &spec, const QString &loadClassName, const QString &methodName
 ) {
 	QPluginLoader loader( plugFilePath );
@@ -76,7 +74,7 @@ std::pair< QObject *, IRequestNetInterfaceExtend * > LoadPlug::getIRequestNetInt
 		QGenericPlugin *genericPlugin = qobject_cast< QGenericPlugin * >( instance );
 		if( genericPlugin ) {
 			QObject *object = genericPlugin->create( name, spec );
-			IRequestNetInterfaceExtend *requestNetInterface = metaGetResult( object, loadClassName, methodName );
+			IRequestNetInterface *requestNetInterface = metaGetResult( object, loadClassName, methodName );
 			if( requestNetInterface ) {
 				requestNetInterface->setInterfaceParent( nullptr );
 				return { object, requestNetInterface };

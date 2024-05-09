@@ -15,10 +15,10 @@
 #include "../menu/Menu.h"
 #include "../menu/Action.h"
 #include "font/Font.h"
-#include "interface/IRequestNetInterfaceExtend.h"
+#include "interface/IRequestNetInterface.h"
 #include "path/Dir.h"
 #include <htmls/htmlTools/XPath.h>
-using interfacePlugsType::IRequestNetInterfaceExtend;
+using interfacePlugsType::IRequestNetInterface;
 using cylHtmlTools::XPath;
 #define q_connect_solts( type , signalPtr, signal, slotPtr, slot ) \
 	do{\
@@ -180,7 +180,7 @@ Menu * DisplayWidget::getMenu( QObject *object ) {
 	return objMenu;
 }
 
-Menu * DisplayWidget::getPlugMenu( IRequestNetInterfaceExtend *object ) {
+Menu * DisplayWidget::getPlugMenu( IRequestNetInterface *object ) {
 	if( menuPlugMap.contains( object ) )
 		return menuPlugMap[ object ];
 	auto objMenu = new Menu( this );
