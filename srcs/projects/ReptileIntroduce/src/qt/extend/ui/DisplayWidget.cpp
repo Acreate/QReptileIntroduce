@@ -34,6 +34,7 @@ DisplayWidget::DisplayWidget( QWidget *parent, Qt::WindowFlags flags ) : QWidget
 	initComponentLayout( );
 	initProperty( );
 	initConnect( );
+	initOver( );
 }
 DisplayWidget::~DisplayWidget( ) {
 	delete objectImage;
@@ -53,6 +54,7 @@ void DisplayWidget::initComponent( ) {
 	mainVLayout = new VLayoutBox( this );
 	topMenuBar = new MenuBar( this );
 	topMenu = new Menu( this );
+	fontMenu = new Menu( this );
 	plugTopMneu = new Menu( this );
 	widgetTopMneu = new Menu( this );
 	setDrawPlayFont = new Action( topMenu );
@@ -60,6 +62,7 @@ void DisplayWidget::initComponent( ) {
 }
 void DisplayWidget::initProperty( ) {
 	topMenu->setTitle( tr( u8"绘制窗口" ) );
+	fontMenu->setTitle( tr( u8"字体设置" ) );
 	setDrawPlayFont->setText( tr( u8"设置绘制字体" ) );
 	setMenuFont->setText( tr( u8"设置菜单字体" ) );
 	plugTopMneu->setTitle( tr( u8"插件菜单" ) );
@@ -67,12 +70,7 @@ void DisplayWidget::initProperty( ) {
 	objectImage->fill( QColor( 0, 0, 0, 0 ) );
 	stringMsgImage->fill( QColor( 0, 0, 0, 0 ) );
 	currentDisplayType = NORMALE;
-	topHeight = topMenuBar->height( );
 	topMenuBar->setMinimumWidth( 100 );
-	int spacing = mainVLayout->spacing( );
-	auto contentsMargins = mainVLayout->contentsMargins( );
-	subV = contentsMargins.top( ) + contentsMargins.bottom( ) + topHeight + spacing * 2;
-	subH = contentsMargins.left( ) + contentsMargins.right( ) + spacing * 2;
 	strBuffMaxSize = 100;
 	msgFont = this->font( );
 	msgFont.setBold( true );
@@ -83,8 +81,9 @@ void DisplayWidget::initComponentLayout( ) {
 	topMenuBar->addMenu( topMenu );
 	topMenuBar->addMenu( plugTopMneu );
 	topMenuBar->addMenu( widgetTopMneu );
-	topMenu->addAction( setDrawPlayFont );
-	topMenu->addAction( setMenuFont );
+	topMenu->addMenu( fontMenu );
+	fontMenu->addAction( setDrawPlayFont );
+	fontMenu->addAction( setMenuFont );
 	mainVLayout->setMenuBar( topMenuBar );
 }
 void DisplayWidget::initConnect( ) {
@@ -95,16 +94,13 @@ void DisplayWidget::initConnect( ) {
 	connect( this, &DisplayWidget::changeDisplayFont, [=]( QFont &font ) {
 		msgFont = font;
 		updatDisplay< QString_Type >( );
+
 		update( );
 	} );
 	connect( this, &DisplayWidget::changeMenuFont, [=]( QFont &font ) {
 		this->topMenuBar->setFont( font );
 		this->topMenuBar->update( );
-		topHeight = topMenuBar->height( );
-		int spacing = mainVLayout->spacing( );
-		auto contentsMargins = mainVLayout->contentsMargins( );
-		subV = contentsMargins.top( ) + contentsMargins.bottom( ) + topHeight + spacing;
-		subH = contentsMargins.left( ) + contentsMargins.right( ) + spacing;
+		resizeEvent( nullptr );
 		update( );
 	} );
 	connect( this, &DisplayWidget::changeDisplayFontLineHeight, [=]( int64_t line_gain_space ) {
@@ -127,6 +123,9 @@ void DisplayWidget::initConnect( ) {
 		if( isOk )
 			emit changeMenuFont( font );
 	} );
+}
+void DisplayWidget::initOver( ) {
+
 }
 void DisplayWidget::slot_click_action( const Action *action ) {
 	emit menuActionClick( *action->getActionXPath( ) );
@@ -252,8 +251,7 @@ void DisplayWidget::paintEvent( QPaintEvent *event ) {
 	emit displayBefore( );
 	QPainter painter;
 	painter.begin( this );
-	size_t sep = subH / 2;
-	size_t y = topHeight + sep;
+	size_t y = topMenuBar->height( ) + mainVLayout->spacing( );
 	painter.drawImage( 0, y, *objectImage );
 	painter.drawImage( 0, y, *stringMsgImage );
 	painter.end( );
@@ -273,9 +271,8 @@ void DisplayWidget::mouseMoveEvent( QMouseEvent *event ) {
 	QWidget::mouseMoveEvent( event );
 }
 void DisplayWidget::resizeEvent( QResizeEvent *event ) {
-	QSize size = event->size( );
-	size.setHeight( size.height( ) - subV );
-	size.setWidth( size.width( ) - subH );
+	QSize size = this->size( );
+	size.setHeight( size.height( ) - topMenuBar->height( ) );
 	*objectImage = objectImage->scaled( size );
 	*stringMsgImage = stringMsgImage->scaled( size );
 	*byteArrayMsgImage = stringMsgImage->scaled( size );

@@ -41,25 +41,12 @@ private: // 用户界面布局
 private:
 	MenuBar *topMenuBar; // 菜单显示栏
 	Menu *topMenu; // 菜单
+	Menu *fontMenu; // 字体菜单
 	Menu *plugTopMneu; // 插件的顶级菜单
 	Menu *widgetTopMneu; // 窗口的顶级菜单
 	Action *setDrawPlayFont; // 绘制字体菜单
 	Action *setMenuFont; // 菜单字体菜单
 private: // 绘制相关变量
-
-	/// <summary>
-	/// 顶部大小<br/>
-	/// 绘制时，会根据该值来确定开始的 y 轴。
-	/// </summary>
-	size_t topHeight;
-	/// <summary>
-	/// 垂直减持
-	/// </summary>
-	size_t subV;
-	/// <summary>
-	/// 水平减持
-	/// </summary>
-	size_t subH;
 	/// <summary>
 	/// 缓存最大持有
 	/// </summary>
@@ -84,6 +71,7 @@ private:
 	void initProperty( ); // 初始化属性
 	void initComponentLayout( ); // 初始化组件布局
 	void initConnect( ); // 初始化信号
+	void initOver( ); // 初始化完毕
 public:
 	Display_Type getDisplay( ) const {
 		return currentDisplayType;

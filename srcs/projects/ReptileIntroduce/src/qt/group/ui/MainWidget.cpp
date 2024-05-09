@@ -435,11 +435,6 @@ void MainWidget::loadingPlug( ) {
 		LoadWebInfoBtn->setEnabled( false );
 	else
 		LoadWebInfoBtn->setEnabled( true );
-	*display << QString( tr( u8"获取url 123" ) ) << '\n';
-	*display << QString( tr( u8"获取url 123" ) ) << '\n';
-	*display << QString( tr( u8"获取url 123" ) ) << '\n';
-	*display << QString( tr( u8"获取url 123" ) ) << '\n';
-	*display << QString( tr( u8"获取url 123" ) ) << '\n';
 	display->flush( );
 }
 void MainWidget::LoadWebInfo( ) {
