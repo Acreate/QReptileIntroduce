@@ -24,6 +24,17 @@ param receive_slots_name :  信号槽名称（不包含类名称）
 return static Connection: 返回链接操作对象
 */
 #define QT_CONNECT_AUTO_THIS( signals_obj_ptr, signals_class_name, signal_name, receive_class_name, receive_slots_name) QObject::connect( signals_obj_ptr, &signals_class_name::signal_name, this, &receive_class_name::receive_slots_name );
+/*
+信号链接信号槽，它总是使用 this 对象来作为信号槽
+param signals_obj_ptr :  信号产生对象
+param signals_class_name :  信号发生类名
+param signal_name :  信号名称（不包含类名称）
+param receive_class_name :  信号接受类名
+param receive_slots_name :  信号槽名称（不包含类名称）
+param connect_type :  链接方式
+return static Connection: 返回链接操作对象
+*/
+#define QT_CONNECT_AUTO_THIS_CONNECT_TYPE( signals_obj_ptr, signals_class_name, signal_name, receive_class_name, receive_slots_name, connect_type) QObject::connect( signals_obj_ptr, &signals_class_name::signal_name, this, &receive_class_name::receive_slots_name,connect_type );
 
 /*
 同名信号链接信号槽(信号与信号槽名称相同)，它总是使用 this 对象来作为信号槽

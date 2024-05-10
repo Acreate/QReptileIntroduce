@@ -425,7 +425,7 @@ void MainWidget::loadingPlug( ) {
 				outUrl.clear( );
 				interfaceExtend->setInterfaceParent( this );
 				QObject *object = iterator.key( );
-				plugs.insert( filePtah, QSharedPointer< NovelNetJob >{ new NovelNetJob( this, display, object, requestNetInterfaceExtend ) } );
+				plugs.insert( filePtah, QSharedPointer< NovelNetJob >{ new NovelNetJob( display, object, requestNetInterfaceExtend ) } );
 				display->flush( );
 			}
 		}

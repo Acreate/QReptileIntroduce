@@ -71,7 +71,7 @@ void DisplayWidget::initProperty( ) {
 	stringMsgImage->fill( QColor( 0, 0, 0, 0 ) );
 	currentDisplayType = NORMALE;
 	topMenuBar->setMinimumWidth( 100 );
-	strBuffMaxSize = 100;
+	strBuffMaxSize = 1024;
 	msgFont = this->font( );
 	msgFont.setBold( true );
 	msgFont.setPixelSize( 14 );
