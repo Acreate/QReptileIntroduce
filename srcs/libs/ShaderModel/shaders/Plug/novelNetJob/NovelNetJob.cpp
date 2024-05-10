@@ -15,29 +15,36 @@
 #include "interface/INovelInfo.h"
 using namespace interfacePlugsType;
 NovelNetJob::NovelNetJob( OStream *o_stream, QObject *interface_obj_ptr, IRequestNetInterface *interface_this_ptr ): interfaceObjPtr( interface_obj_ptr ), interfaceThisPtr( interface_this_ptr ), oStream( o_stream ) {
-	interface_this_ptr->setOStream( oStream );
 	initObj( );
+	initObjProperty( );
+	initConnect( );
 }
 
 NovelNetJob::~NovelNetJob( ) {
 	interfaceObjPtr->deleteLater( );
 }
 void NovelNetJob::initObj( ) {
+	networkAccessManager = std::make_shared< cylHttpNetWork::NetworkAccessManager >( );
+	networkRequest = std::make_shared< cylHttpNetWork::NetworkRequest >( );
+	root = std::make_shared< std::pair< RequestConnect_Shared, Request_Shared > >( );
+	root->first = std::make_shared< cylHttpNetWork::RequestConnect >( );
+	root->second = std::make_shared< cylHttpNetWork::Request >( networkAccessManager.get( ), root->first.get( ) );
+	connect( root->first.get( ), &cylHttpNetWork::RequestConnect::networkReplyFinished, this, &NovelNetJob::root_get_over );
 }
-#define Q_CONNECT(sing_ptr, sing_type, rev_ptr, rev_type, connect_name , connectType) \
-	connect(sing_ptr,&sing_type::connect_name ,rev_ptr,&rev_type::connect_name,connectType)
-#define Q_CONNECT_THIS(  send_name , rev_name) \
-	connect(this,&NovelNetJob::send_name ,this,&NovelNetJob::rev_name)
-
+void NovelNetJob::initObjProperty( ) {
+	interfaceThisPtr->setOStream( oStream );
+	networkRequest->setHeader( QNetworkRequest::UserAgentHeader, networkRequest->getRandomUserAgentHeader( ) );
+}
 
 void NovelNetJob::initConnect( ) {
-	
+
 }
 bool NovelNetJob::start( ) {
 	HtmlDocString resultUrl;
 	size_t size = interfaceThisPtr->getUrl( &resultUrl );
 	if( size == 0 )
 		return false;
+	root->second->netGetWork( QString::fromStdWString( resultUrl ), *networkRequest );
 	return true;
 }
 QString NovelNetJob::getUrl( ) const {
@@ -46,6 +53,34 @@ QString NovelNetJob::getUrl( ) const {
 	if( size )
 		return QString::fromStdWString( resultUrl );
 	return "";
+}
+void NovelNetJob::root_get_over( cylHttpNetWork::RequestConnect *request ) {
+	auto networkReply = request->getNetworkReply( );
+	QString htmlText( networkReply->readAll( ) );
+	if( htmlText.isEmpty( ) )
+		return;
+	auto mapHtmlStrKHtmlStrV = interfaceThisPtr->formHtmlGetTypeTheUrls( htmlText.toStdWString( ) );
+
+	if( !mapHtmlStrKHtmlStrV )
+		return;
+	typeRequestMap->clear( );
+	auto iterator = mapHtmlStrKHtmlStrV->begin( );
+	auto end = mapHtmlStrKHtmlStrV->end( );
+	for( ; iterator != end; ++iterator ) {
+		// 构建 url 映射
+		Url_Pair urlPair;
+		urlPair.first = std::make_shared< QString >( QString::fromStdWString( iterator->first ) );
+		urlPair.second = std::make_shared< QUrl >( QString::fromStdWString( iterator->second ) );
+		Request_Pairt_Shared requestPairtShared = std::make_shared< Request_Pairt >( );
+		requestPairtShared->first = std::make_shared< cylHttpNetWork::RequestConnect >( );
+		requestPairtShared->second = std::make_shared< cylHttpNetWork::Request >( networkAccessManager.get( ), requestPairtShared->first.get( ) );
+		typeRequestMap->emplace( urlPair, requestPairtShared );
+		qDebug( ) << *urlPair.first << " : " << *urlPair.second;
+		qDebug( ) << "==============";
+
+		// todo : 开始请求
+
+	}
 }
 void NovelNetJob::slots_requesting_get_root_page_signals( const QUrl &url ) {
 	qDebug( ) << u8"slots_requesting_get_root_page_signals" << url;

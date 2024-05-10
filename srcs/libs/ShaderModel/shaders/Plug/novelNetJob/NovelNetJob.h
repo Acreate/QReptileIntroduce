@@ -12,9 +12,40 @@
 class PLUG_EXPORT NovelNetJob : public QObject {
 
 	Q_OBJECT;
+public:
+	/// <summary>
+	/// std::shared_ptr< cylHttpNetWork::RequestConnect >
+	/// </summary>
+	using RequestConnect_Shared = std::shared_ptr< cylHttpNetWork::RequestConnect >;
+	/// <summary>
+	/// std::shared_ptr< cylHttpNetWork::Request >
+	/// </summary>
+	using Request_Shared = std::shared_ptr< cylHttpNetWork::Request >;
+	/// <summary>
+	///  std::pair< std::shared_ptr< cylHttpNetWork::RequestConnect >, std::shared_ptr< cylHttpNetWork::Request > >
+	/// </summary>
+	using Request_Pairt = std::pair< RequestConnect_Shared, Request_Shared >;
+	/// <summary>
+	/// std::shared_ptr< std::pair< std::shared_ptr< cylHttpNetWork::RequestConnect > ,std::shared_ptr< cylHttpNetWork::Request > 
+	///	>
+	/// </summary>
+	using Request_Pairt_Shared = std::shared_ptr< Request_Pairt >;
+	/// <summary>
+	///  std::pair<std::shared_ptr<QString>, std::shared_ptr<QUrl>>
+	/// </summary>
+	using Url_Pair = std::pair< std::shared_ptr< QString >, std::shared_ptr< QUrl > >;
+	/// <summary>
+	/// std::unordered_map< Url_Pair, Request_Pairt_Shared >
+	/// </summary>
+	using Unordered_Map_Pairt = std::unordered_map< Url_Pair, Request_Pairt_Shared >;
 private: // - 装饰指针
 	QObject *interfaceObjPtr; // 小说基于 qt 框架的指针
 	interfacePlugsType::IRequestNetInterface *interfaceThisPtr; // 小说的原始指针
+private: // - 网络
+	std::shared_ptr< cylHttpNetWork::NetworkAccessManager > networkAccessManager; // 请求管理对象
+	std::shared_ptr< cylHttpNetWork::NetworkRequest > networkRequest; // 请求模型
+	Request_Pairt_Shared root; // 首页的请求网络配对
+	std::shared_ptr< Unordered_Map_Pairt > typeRequestMap; // 小数类型请求网络配对列表
 private: // - 流
 	OStream *oStream; // 输入流-程序输出到该流中，显示信息
 public:
@@ -22,6 +53,7 @@ public:
 	~NovelNetJob( ) override;
 private: // - 初始化
 	void initObj( ); // 初始化对象
+	void initObjProperty( );// 初始化对象属性
 	void initConnect( ); // 初始信号
 public: // 类的独有属性
 	/// <summary>
@@ -35,9 +67,12 @@ public: // 类的独有属性
 	/// <returns>url</returns>
 	QString getUrl( ) const;
 public: // - 小说网站的信息数据
-	std::unordered_map< QString, std::shared_ptr< interfacePlugsType::Vector_NovelSPtr > > typeMap;
-	std::unordered_map< cylHttpNetWork::RequestConnect *, QNetworkReply::NetworkError > errorUrlMap;
-
+	/// <summary>
+	/// 类型与小说列表之间的映射
+	/// </summary>
+	std::unordered_map< QString, std::shared_ptr< interfacePlugsType::Vector_NovelSPtr > > typeNovelsMap;
+private slots:
+	void root_get_over( cylHttpNetWork::RequestConnect *request );
 Q_SIGNALS: // - 获取被调用
 	/// <summary>
 	/// 请求一个根路径-获取被调用
