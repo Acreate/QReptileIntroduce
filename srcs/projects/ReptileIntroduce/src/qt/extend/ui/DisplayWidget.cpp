@@ -210,7 +210,7 @@ Menu * DisplayWidget::getPlugMenu( IRequestNetInterface *object ) {
 	auto objMenu = new Menu( this );
 	connect( objMenu, &Menu::click, this, &DisplayWidget::slot_click_action );
 	interfacePlugsType::HtmlDocString url;
-	object->getUrl( &url );
+	object->getRootUrl( &url );
 	objMenu->setTitle( QString::fromStdWString( url ) );
 	plugTopMneu->addMenu( objMenu );
 	menuPlugMap.insert( object, objMenu );

@@ -420,7 +420,7 @@ void MainWidget::loadingPlug( ) {
 			for( ; iterator != end; ++iterator ) {
 				IRequestNetInterface *requestNetInterfaceExtend = iterator.value( );
 				IRequestNetInterface *interfaceExtend = requestNetInterfaceExtend;
-				if( interfaceExtend->getUrl( &outUrl ) )
+				if( interfaceExtend->getRootUrl( &outUrl ) )
 					*display << QString( tr( u8"获取url : %1" ) ).arg( QString::fromStdWString( outUrl ) ) << '\n';
 				outUrl.clear( );
 				interfaceExtend->setInterfaceParent( this );
