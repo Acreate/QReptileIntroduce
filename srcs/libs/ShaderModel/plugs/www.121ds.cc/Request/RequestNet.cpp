@@ -65,9 +65,11 @@ void RequestNet::deleteMember( ) {
 
 
 Map_HtmlStrK_HtmlStrV * RequestNet::formHtmlGetTypeTheUrls( const HtmlDocString &htmlText ) {
-	auto removeBothSpaceHtmlText = htmlText;
-	HtmlStringTools::removeBothSpace( removeBothSpaceHtmlText );
-	if( removeBothSpaceHtmlText.size( ) > 0 ) {
+	do {
+		auto removeBothSpaceHtmlText = htmlText;
+		HtmlStringTools::removeBothSpace( removeBothSpaceHtmlText );
+		if( removeBothSpaceHtmlText.size( ) == 0 )
+			break;
 		HtmlWorkThread< std::shared_ptr< HtmlString > > thread;
 		auto stdWString( std::make_shared< HtmlString >( removeBothSpaceHtmlText ) );
 		auto result = std::make_shared< Map_HtmlStrK_HtmlStrV >( );
@@ -83,7 +85,7 @@ Map_HtmlStrK_HtmlStrV * RequestNet::formHtmlGetTypeTheUrls( const HtmlDocString 
 					return;
 
 				htmlDoc->analysisBrotherNode( );
-				auto xpath = cylHtmlTools::XPath( QString( u8"div[@class='hd']/ul/li/a" ).toStdWString( ) );
+				auto xpath = cylHtmlTools::XPath( QString( tr( u8"div[@class='hd']/ul/li/a" ) ).toStdWString( ) );
 
 				auto htmlNodeSPtrShared = htmlDoc->getHtmlNodeRoots( );
 				auto vectorHtmlNodeSPtrShared = xpath.buider( htmlNodeSPtrShared );
@@ -115,47 +117,48 @@ Map_HtmlStrK_HtmlStrV * RequestNet::formHtmlGetTypeTheUrls( const HtmlDocString 
 		thread.start( );
 		while( !thread.isFinish( ) )
 			qApp->processEvents( );
-		if( result->size( ) > 0 ) {
+		if( result->size( ) > 0 )
 			typeUrlMap = result;
-			return typeUrlMap.get( );
-		}
-	}
+	} while( false );
+	std::this_thread::sleep_for( std::chrono::microseconds( 200 ) );
 	if( typeUrlMap == nullptr || typeUrlMap->size( ) == 0 )
 		return nullptr;
 	return typeUrlMap.get( );
 }
 Vector_NovelSPtr RequestNet::formHtmlGetTypePageNovels( const HtmlDocString &htmlText, const Vector_NovelSPtr &saveNovelInfos, void *appendDataPtr ) {
 	Vector_NovelSPtr result;
-	auto stdWString( std::make_shared< HtmlString >( htmlText ) );
-	size_t index = 0, end = stdWString->size( );
-	auto htmlDoc = cylHtmlTools::HtmlDoc::parse( stdWString, end, index );
-	if( htmlDoc ) {
-
+	do {
+		auto stdWString( std::make_shared< HtmlString >( htmlText ) );
+		size_t index = 0, end = stdWString->size( );
+		auto htmlDoc = cylHtmlTools::HtmlDoc::parse( stdWString, end, index );
+		if( !htmlDoc )
+			break;
 		htmlDoc->analysisBrotherNode( );
-		auto xpath = cylHtmlTools::XPath( QString( u8"div[@class='cf' @id='sitebox']/dl" ).toStdWString( ) );
+		auto xpath = cylHtmlTools::XPath( QString( tr( u8"div[@class='cf' @id='sitebox']/dl" ) ).toStdWString( ) );
 
 		auto htmlNodeSPtrShared = htmlDoc->getHtmlNodeRoots( );
 		auto vectorHtmlNodeSPtrShared = xpath.buider( htmlNodeSPtrShared );
 		if( !vectorHtmlNodeSPtrShared )
-			return result;
+			break;
 		auto vectorIterator = vectorHtmlNodeSPtrShared->begin( );
 		auto vectorEnd = vectorHtmlNodeSPtrShared->end( );
-
-		for( ; vectorIterator != vectorEnd; ++vectorIterator ) {
+		for( ; vectorIterator != vectorEnd; ++vectorIterator )
 			qDebug( ) << QString::fromStdWString( *vectorIterator->get( )->getIncludeNodeContent( ) );
-		}
-	}
+	} while( false );
+	std::this_thread::sleep_for( std::chrono::microseconds( 200 ) );
 	return result;
 }
 INovelInfo_Shared RequestNet::formHtmlGetUrlNovelInfo( const HtmlDocString &htmlText, const Vector_NovelSPtr &saveNovelInfos, const INovelInfo_Shared &networkReplayNovel ) {
 	INovelInfo_Shared result = nullptr;
-	auto stdWString( std::make_shared< HtmlString >( htmlText ) );
-	size_t index = 0, end = stdWString->size( );
-	auto htmlDoc = cylHtmlTools::HtmlDoc::parse( stdWString, end, index );
-	if( htmlDoc ) {
+	do {
+		auto stdWString( std::make_shared< HtmlString >( htmlText ) );
+		size_t index = 0, end = stdWString->size( );
+		auto htmlDoc = cylHtmlTools::HtmlDoc::parse( stdWString, end, index );
+		if( htmlDoc )
+			break;
+	} while( false );
 
-	}
-
+	std::this_thread::sleep_for( std::chrono::microseconds( 200 ) );
 	return result;
 }
 HtmlDocString RequestNet::formHtmlGetNext( const HtmlDocString &htmlText, const Vector_NovelSPtr &saveNovelInfos, const Vector_NovelSPtr &lastNovelInfos ) {
