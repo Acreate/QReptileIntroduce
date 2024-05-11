@@ -4,11 +4,18 @@
 #include <QFile>
 #include "htmls/htmlDoc/HtmlDoc.h"
 #include "htmls/htmlNode/HtmlNode.h"
-#include "htmls/htmlTools/XPath.h"
+#include "htmls/htmlTools/XPath/XPath.h"
+#include <htmls/htmlTools/HtmlWorkThread/HtmlWorkThread.h>
+#include <qguiapplication.h>
+
 #include "macro/cmake_to_c_cpp_header_env.h"
 using namespace interfacePlugsType;
 using namespace cylHtmlTools;
-RequestNet::RequestNet( QObject *parent ): QObject( parent ), url( GET_URL ), oStream( nullptr ), iStream( nullptr ), typeUrlMap( nullptr ) {
+RequestNet::RequestNet( QObject *parent ): QObject( parent )
+, url( GET_URL )
+, oStream( nullptr )
+, iStream( nullptr )
+, typeUrlMap( nullptr ) {
 }
 
 RequestNet::~RequestNet( ) {
@@ -61,42 +68,53 @@ Map_HtmlStrK_HtmlStrV * RequestNet::formHtmlGetTypeTheUrls( const HtmlDocString 
 	auto removeBothSpaceHtmlText = htmlText;
 	HtmlStringTools::removeBothSpace( removeBothSpaceHtmlText );
 	if( removeBothSpaceHtmlText.size( ) > 0 ) {
-		auto result = std::make_shared< Map_HtmlStrK_HtmlStrV >( );
+		HtmlWorkThread< std::shared_ptr< HtmlString > > thread;
 		auto stdWString( std::make_shared< HtmlString >( removeBothSpaceHtmlText ) );
-		size_t index = 0, end = stdWString->size( );
-		auto htmlDoc = cylHtmlTools::HtmlDoc::parse( stdWString, end, index );
-		if( !htmlDoc.get( ) )
-			return nullptr;
+		auto result = std::make_shared< Map_HtmlStrK_HtmlStrV >( );
+		thread.setData( stdWString );
+		thread.setCurrentThreadRun( [&, this](
+			const HtmlWorkThread< std::shared_ptr< HtmlString > > *html_work_thread,
+			const std::thread *run_std_cpp_thread, std::mutex *html_work_thread_mutex,
+			std::mutex *std_cpp_thread_mutex, std::shared_ptr< HtmlString > &data,
+			const time_t *startTime ) {
+				size_t index = 0, end = stdWString->size( );
+				auto htmlDoc = cylHtmlTools::HtmlDoc::parse( stdWString, end, index );
+				if( !htmlDoc.get( ) )
+					return;
 
-		htmlDoc->analysisBrotherNode( );
-		auto xpath = cylHtmlTools::XPath( QString( u8"div[@class='hd']/ul/li/a" ).toStdWString( ) );
+				htmlDoc->analysisBrotherNode( );
+				auto xpath = cylHtmlTools::XPath( QString( u8"div[@class='hd']/ul/li/a" ).toStdWString( ) );
 
-		auto htmlNodeSPtrShared = htmlDoc->getHtmlNodeRoots( );
-		auto vectorHtmlNodeSPtrShared = xpath.buider( htmlNodeSPtrShared );
-		if( !vectorHtmlNodeSPtrShared )
-			return nullptr;
-		auto vectorIterator = vectorHtmlNodeSPtrShared->begin( );
-		auto vectorEnd = vectorHtmlNodeSPtrShared->end( );
+				auto htmlNodeSPtrShared = htmlDoc->getHtmlNodeRoots( );
+				auto vectorHtmlNodeSPtrShared = xpath.buider( htmlNodeSPtrShared );
+				if( !vectorHtmlNodeSPtrShared )
+					return;
+				auto vectorIterator = vectorHtmlNodeSPtrShared->begin( );
+				auto vectorEnd = vectorHtmlNodeSPtrShared->end( );
 
-		for( ; vectorIterator != vectorEnd; ++vectorIterator ) {
+				for( ; vectorIterator != vectorEnd; ++vectorIterator ) {
 
-			qDebug( ) << QString::fromStdWString( *vectorIterator->get( )->getNodeContent( ) );
+					qDebug( ) << QString::fromStdWString( *vectorIterator->get( )->getNodeContent( ) );
 
-			auto element = vectorIterator->get( );
-			QString url;
-			auto unorderedMap = element->findAttribute( [&]( const HtmlString &first, const HtmlString &scen ) ->bool {
-				if( HtmlStringTools::equRemoveSpaceOverHtmlString( first, L"href" ) )
-					return true;
-				return false;
+					auto element = vectorIterator->get( );
+					QString url;
+					auto unorderedMap = element->findAttribute( [&]( const HtmlString &first, const HtmlString &scen ) ->bool {
+						if( HtmlStringTools::equRemoveSpaceOverHtmlString( first, L"href" ) )
+							return true;
+						return false;
+					} );
+					if( unorderedMap ) {
+						auto key = *element->getNodeContentText( );
+						auto value = unorderedMap->at( L"href" );
+						QString qulr = QString( u8"%1%2" ).arg( GET_URL ).arg( value.substr( 1, value.size( ) - 2 ) );
+						value = qulr.toStdWString( );
+						result->emplace( key, value );
+					}
+				}
 			} );
-			if( unorderedMap ) {
-				auto key = *element->getNodeContentText( );
-				auto value = unorderedMap->at( L"href" );
-				QString qulr = QString( u8"%1%2" ).arg( GET_URL ).arg( value.substr( 1, value.size( ) - 2 ) );
-				value = qulr.toStdWString( );
-				result->emplace( key, value );
-			}
-		}
+		thread.start( );
+		while( !thread.isFinish( ) )
+			qApp->processEvents( );
 		if( result->size( ) > 0 ) {
 			typeUrlMap = result;
 			return typeUrlMap.get( );

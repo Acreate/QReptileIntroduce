@@ -6,15 +6,19 @@
 
 #include "htmls/htmlDoc/HtmlDoc.h"
 #include "htmls/htmlNode/HtmlNode.h"
-#include "htmls/htmlTools/XPath.h"
+#include "htmls/htmlTools/XPath/XPath.h"
 #include "htmls/HtmlNode/HtmlNode.h"
 #include "thread/FileThread.h"
 #include <HttpNetWork/NetworkAccessManager.h>
 #include <qguiapplication.h>
+#include <unordered_map>
+
 
 #include "interface/INovelInfo.h"
 using namespace interfacePlugsType;
-NovelNetJob::NovelNetJob( OStream *o_stream, QObject *interface_obj_ptr, IRequestNetInterface *interface_this_ptr ): interfaceObjPtr( interface_obj_ptr ), interfaceThisPtr( interface_this_ptr ), oStream( o_stream ) {
+NovelNetJob::NovelNetJob( OStream *o_stream, QObject *interface_obj_ptr, IRequestNetInterface *interface_this_ptr ): interfaceObjPtr( interface_obj_ptr )
+, interfaceThisPtr( interface_this_ptr )
+, oStream( o_stream ) {
 	initObj( );
 	initObjProperty( );
 	initConnect( );
@@ -30,6 +34,7 @@ void NovelNetJob::initObj( ) {
 	root->first = std::make_shared< cylHttpNetWork::RequestConnect >( );
 	root->second = std::make_shared< cylHttpNetWork::Request >( networkAccessManager.get( ), root->first.get( ) );
 	connect( root->first.get( ), &cylHttpNetWork::RequestConnect::networkReplyFinished, this, &NovelNetJob::root_get_over );
+	typeRequestMap = std::make_shared< Unordered_Map_Pairt >( );
 }
 void NovelNetJob::initObjProperty( ) {
 	interfaceThisPtr->setOStream( oStream );
@@ -68,14 +73,14 @@ void NovelNetJob::root_get_over( cylHttpNetWork::RequestConnect *request ) {
 	auto end = mapHtmlStrKHtmlStrV->end( );
 	for( ; iterator != end; ++iterator ) {
 		// 构建 url 映射
-		Url_Pair urlPair;
-		urlPair.first = std::make_shared< QString >( QString::fromStdWString( iterator->first ) );
-		urlPair.second = std::make_shared< QUrl >( QString::fromStdWString( iterator->second ) );
+		NovelTypeNamePair_Shared urlPair(std::make_shared<NovelTypeNamePair>(  ));
+		urlPair->setUrl( QString::fromStdWString( iterator->second ) );
+		urlPair->setTypeName( QString::fromStdWString( iterator->first ) );
 		Request_Pairt_Shared requestPairtShared = std::make_shared< Request_Pairt >( );
 		requestPairtShared->first = std::make_shared< cylHttpNetWork::RequestConnect >( );
 		requestPairtShared->second = std::make_shared< cylHttpNetWork::Request >( networkAccessManager.get( ), requestPairtShared->first.get( ) );
 		typeRequestMap->emplace( urlPair, requestPairtShared );
-		qDebug( ) << *urlPair.first << " : " << *urlPair.second;
+		qDebug( ) << urlPair->getTypeName( ) << " : " << urlPair->getUrl( ).host( );
 		qDebug( ) << "==============";
 
 		// todo : 开始请求

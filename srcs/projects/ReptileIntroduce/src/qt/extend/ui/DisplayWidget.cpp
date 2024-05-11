@@ -17,7 +17,7 @@
 #include "font/Font.h"
 #include "interface/IRequestNetInterface.h"
 #include "path/Dir.h"
-#include <htmls/htmlTools/XPath.h>
+#include <htmls/htmlTools/XPath/XPath.h>
 using interfacePlugsType::IRequestNetInterface;
 using cylHtmlTools::XPath;
 #define q_connect_solts( type , signalPtr, signal, slotPtr, slot ) \

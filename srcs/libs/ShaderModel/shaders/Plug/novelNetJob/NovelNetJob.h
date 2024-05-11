@@ -8,10 +8,51 @@
 #include <nameSpace/httpNetWork.h>
 #include <interface/IRequestNetInterface.h>
 #include <QNetworkReply>
+#include <memory>
+#include <unordered_map>
 
 class PLUG_EXPORT NovelNetJob : public QObject {
-
 	Q_OBJECT;
+public:
+	class PLUG_EXPORT NovelTypeNamePair {
+		using Type_Name_String_Shared = std::shared_ptr< QString >;
+		using Type_QUrl_Shared = std::shared_ptr< QUrl >;
+		Type_Name_String_Shared typeName;
+		Type_QUrl_Shared url;
+	public:
+		NovelTypeNamePair( const Type_Name_String_Shared &type_name, const Type_QUrl_Shared &url )
+		: typeName( type_name )
+		, url( url ) { }
+		NovelTypeNamePair( const QString &type_name, const QUrl &url )
+		: typeName( std::make_shared< QString >( type_name ) )
+		, url( std::make_shared< QUrl >( url ) ) { }
+		NovelTypeNamePair( const QString &type_name, const QString &url )
+		: typeName( std::make_shared< QString >( type_name ) )
+		, url( std::make_shared< QUrl >( url ) ) { }
+		NovelTypeNamePair( ) : typeName( std::make_shared< QString >( ) )
+		, url( std::make_shared< QUrl >( ) ) { }
+		virtual ~NovelTypeNamePair( ) { }
+	public: //- 属性
+		void setTypeName( const QString &type_name ) { *typeName = type_name; }
+		void setUrl( const QString &url ) { *this->url = url; }
+		QString getTypeName( ) const {
+			return *typeName;
+		}
+		QUrl getUrl( ) const {
+			return *url;
+		}
+	public: //- 比较
+		friend bool operator==( const NovelTypeNamePair &lhs, const NovelTypeNamePair &rhs ) {
+			if( lhs.typeName == rhs.typeName
+				&& lhs.url == rhs.url )
+				return true;
+			if( *lhs.typeName == *rhs.typeName
+				&& *lhs.url == *rhs.url )
+				return true;
+			return false;
+		}
+		friend bool operator!=( const NovelTypeNamePair &lhs, const NovelTypeNamePair &rhs ) { return !( lhs == rhs ); }
+	};
 public:
 	/// <summary>
 	/// std::shared_ptr< cylHttpNetWork::RequestConnect >
@@ -30,14 +71,11 @@ public:
 	///	>
 	/// </summary>
 	using Request_Pairt_Shared = std::shared_ptr< Request_Pairt >;
-	/// <summary>
-	///  std::pair<std::shared_ptr<QString>, std::shared_ptr<QUrl>>
-	/// </summary>
-	using Url_Pair = std::pair< std::shared_ptr< QString >, std::shared_ptr< QUrl > >;
+	using NovelTypeNamePair_Shared = std::shared_ptr< NovelTypeNamePair >;
 	/// <summary>
 	/// std::unordered_map< Url_Pair, Request_Pairt_Shared >
 	/// </summary>
-	using Unordered_Map_Pairt = std::unordered_map< Url_Pair, Request_Pairt_Shared >;
+	using Unordered_Map_Pairt = std::unordered_map< NovelTypeNamePair_Shared, Request_Pairt_Shared >;
 private: // - 装饰指针
 	QObject *interfaceObjPtr; // 小说基于 qt 框架的指针
 	interfacePlugsType::IRequestNetInterface *interfaceThisPtr; // 小说的原始指针
