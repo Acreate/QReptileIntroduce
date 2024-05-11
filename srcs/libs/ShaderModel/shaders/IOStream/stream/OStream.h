@@ -6,7 +6,8 @@
 #include "../export/IOStream_export.h"
 struct QArrayData;
 class IOSTREAM_EXPORT OStream {
-
+public:
+	static void errorQDebugOut( const std::string &msg, const std::string &fileName, size_t line );
 public:
 	virtual ~OStream( ) { }
 public: // 重载 <<
@@ -34,7 +35,7 @@ public: // 重载 <<
 
 	virtual OStream & operator <<( const float_t &msg ) = 0;
 	virtual OStream & operator <<( const double_t &msg ) = 0;
-	
+
 	virtual OStream & operator <<( const void *msg ) = 0;
 public:
 	/// <summary>
