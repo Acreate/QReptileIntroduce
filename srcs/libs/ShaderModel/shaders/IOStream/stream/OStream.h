@@ -2,12 +2,12 @@
 #define OSTREAM_H_H_HEAD__FILE__
 #pragma once
 #include <qbytearray.h>
-
+#include <QString>
 #include "../export/IOStream_export.h"
 struct QArrayData;
 class IOSTREAM_EXPORT OStream {
 public:
-	static void errorQDebugOut( const std::string &msg, const std::string &fileName, size_t line );
+	static void errorQDebugOut( const std::string &msg, const std::string &fileName, size_t line, const QString &writePath = QString( u8"" ), const QString &writeContent = QString( u8"" ) );
 public:
 	virtual ~OStream( ) { }
 public: // 重载 <<

@@ -142,13 +142,8 @@ Vector_NovelSPtr RequestNet::formHtmlGetTypePageNovels( const interfacePlugsType
 		auto htmlDoc = cylHtmlTools::HtmlDoc::parse( stdWString, end, index );
 		if( !htmlDoc ) {
 			auto msg = QString( "%1 : %2 : %3" ).arg( type_name ).arg( request_url ).arg( QString( u8" HtmlDoc::parse 异常，登出" ) );
-			OStream::errorQDebugOut( msg.toStdString( ), __FILE__, __LINE__ );
-			msg = QString( Cache_Path_Dir ).append( QDir::separator( ) ).append( type_name ).append( u8".html" );
-			QFile writeHtmlFile( msg );
-			if( writeHtmlFile.open( QIODeviceBase::WriteOnly | QIODeviceBase::Text | QIODeviceBase::Truncate ) ) {
-				writeHtmlFile.write( QString::fromStdWString( htmlText ).toLocal8Bit( ) );
-				writeHtmlFile.close( );
-			}
+			auto path = QString( Cache_Path_Dir ).append( QDir::separator( ) ).append( type_name ).append( u8".html" );
+			OStream::errorQDebugOut( msg.toStdString( ), __FILE__, __LINE__, path, QString::fromStdWString( htmlText ).toLocal8Bit( ) );
 			break;
 		}
 		htmlDoc->analysisBrotherNode( );
@@ -157,13 +152,8 @@ Vector_NovelSPtr RequestNet::formHtmlGetTypePageNovels( const interfacePlugsType
 		auto vectorHtmlNodeSPtrShared = xpath.buider( htmlNodeSPtrShared );
 		if( !vectorHtmlNodeSPtrShared ) {
 			auto msg = QString( "%1 : %2 : %3" ).arg( type_name ).arg( request_url ).arg( QString( u8" xpath 异常，登出" ) );
-			OStream::errorQDebugOut( msg.toStdString( ), __FILE__, __LINE__ );
-			msg = QString( Cache_Path_Dir ).append( QDir::separator( ) ).append( type_name ).append( u8".html" );
-			QFile writeHtmlFile( msg );
-			if( writeHtmlFile.open( QIODeviceBase::WriteOnly | QIODeviceBase::Text | QIODeviceBase::Truncate ) ) {
-				writeHtmlFile.write( QString::fromStdWString( htmlText ).toLocal8Bit( ) );
-				writeHtmlFile.close( );
-			}
+			auto path = QString( Cache_Path_Dir ).append( QDir::separator( ) ).append( type_name ).append( u8".html" );
+			OStream::errorQDebugOut( msg.toStdString( ), __FILE__, __LINE__, path, QString::fromStdWString( htmlText ).toLocal8Bit( ) );
 			break;
 		}
 		auto vectorIterator = vectorHtmlNodeSPtrShared->begin( );
