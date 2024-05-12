@@ -62,7 +62,6 @@ void NovelNetJob::initObjProperty( ) {
 	QSslConfiguration sslConfiguration = networkRequest->sslConfiguration( );
 	sslConfiguration.setPeerVerifyMode( QSslSocket::VerifyNone );
 	networkRequest->setSslConfiguration( sslConfiguration );
-	microseconds = std::chrono::microseconds( 1500 );
 
 	QString ingFile( u8"%1%2%3%2%4%5" );
 	ingFile = ingFile.arg( Project_Plug_bin ).arg( QDir::separator( ) ).arg( u8"ini" ).arg( u8"get_type" ).arg( u8".txt" );
@@ -99,7 +98,7 @@ bool NovelNetJob::start( ) {
 		return false;
 	qDebug( ) << networkAccessManager->supportedSchemes( );
 	qDebug( ) << QSslSocket::sslLibraryBuildVersionString( );
-	root->second->netGetWork( QString::fromStdWString( resultUrl ), *networkRequest, microseconds );
+	root->second->netGetWork( QString::fromStdWString( resultUrl ), *networkRequest );
 	return true;
 }
 QString NovelNetJob::getUrl( ) const {
@@ -156,7 +155,7 @@ void NovelNetJob::slots_requesting_get_root_page_signals( const QUrl &url, cylHt
 			requestConnect->deleteLater( );
 			request->deleteLater( );
 		} );
-		request->netGetWork( typeUrl, *networkRequest, microseconds );
+		request->netGetWork( typeUrl, *networkRequest );
 	}
 }
 

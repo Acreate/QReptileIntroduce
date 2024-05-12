@@ -89,7 +89,6 @@ private: // - 网络
 private: // - 流
 	OStream *oStream; // 输入流-程序输出到该流中，显示信息
 private: // 配置
-	std::chrono::microseconds microseconds; // 每次请求的等待时间
 	QStringList getTypeNamelist; // 获取的小说类型列表
 public:
 	NovelNetJob( OStream *o_stream, QObject *interface_obj_ptr, interfacePlugsType::IRequestNetInterface *interface_this_ptr );

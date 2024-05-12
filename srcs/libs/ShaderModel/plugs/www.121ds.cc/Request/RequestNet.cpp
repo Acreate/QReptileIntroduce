@@ -11,6 +11,8 @@
 
 #include "macro/cmake_to_c_cpp_header_env.h"
 #include <stream/OStream.h>
+#include <HttpNetWork/NetworkRequest.h>
+#include <HttpNetWork/Request.h>
 using namespace interfacePlugsType;
 using namespace cylHtmlTools;
 
@@ -20,6 +22,7 @@ RequestNet::RequestNet( QObject *parent ): QObject( parent )
 , oStream( nullptr )
 , iStream( nullptr )
 , typeUrlMap( nullptr ) {
+	cylHttpNetWork::NetworkRequest::setHostUrlRequestInterval( rootUrl, 15000 );
 }
 
 RequestNet::~RequestNet( ) {
