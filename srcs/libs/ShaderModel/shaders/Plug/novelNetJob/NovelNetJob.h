@@ -19,8 +19,8 @@ public:
 	class PLUG_EXPORT NovelTypeNamePair {
 		using Type_Name_String_Shared = std::shared_ptr< QString >;
 		using Type_QUrl_Shared = std::shared_ptr< QUrl >;
-		Type_Name_String_Shared typeName;
-		Type_QUrl_Shared url;
+		Type_Name_String_Shared typeName; // 首页名称
+		Type_QUrl_Shared url; // 首页
 	public:
 		NovelTypeNamePair( const Type_Name_String_Shared &type_name, const Type_QUrl_Shared &url )
 		: typeName( type_name )
@@ -86,6 +86,7 @@ private: // - 网络
 	std::shared_ptr< cylHttpNetWork::NetworkAccessManager > networkAccessManager; // 请求管理对象
 	std::shared_ptr< cylHttpNetWork::NetworkRequest > networkRequest; // 请求模型
 	Request_Pairt_Shared root; // 首页的请求网络配对
+	int32_t typeCount; // 小说类型的数量
 private: // - 流
 	OStream *oStream; // 输入流-程序输出到该流中，显示信息
 private: // 配置
@@ -154,17 +155,6 @@ Q_SIGNALS: // - 获取被调用
 	void requesting_get_novel_page_url_signals( const QString &root_url, const QString &type, const QString &type_page_url, const QString &novelName, const QUrl &url, const interfacePlugsType::Vector_NovelSPtr_Shared novel_s_ptr_shared, const QString &html_txt );
 
 	/// <summary>
-	/// 请求小说页面-完成
-	/// </summary>
-	/// <param name="root_url">根链接</param>
-	/// <param name="type">小说类型</param>
-	/// <param name="type_page_url">小说页面链接</param>
-	/// <param name="novelName">小说名称</param>
-	/// <param name="url">小说url</param>
-	/// <param name="novel_s_ptr_shared">已经获取到的小说列表</param>
-	/// <param name="novel_info_shared">获取到的小说</param>
-	void requested_get_novel_page_url_signals( const QString &root_url, const QString &type, const QString &type_page_url, const QString &novelName, const QUrl &url, const interfacePlugsType::Vector_NovelSPtr_Shared novel_s_ptr_shared, const interfacePlugsType::INovelInfo_Shared novel_info_shared );
-	/// <summary>
 	/// 页面请求结束
 	/// </summary>
 	/// <param name="root_url">根链接</param>
@@ -191,12 +181,11 @@ private slots: // 信号处理
 	/// </summary>
 	/// <param name="root_url">根链接</param>
 	/// <param name="type">小说类型</param>
-	/// <param name="url">小说页面链接</param>
+	/// <param name="type_url">小说页面链接</param>
 	/// <param name="html_string">网页内容</param>
-	void slots_requesting_get_type_page_url_signals( const QString &root_url, const QString &type_name, const QUrl &url, cylHtmlTools::HtmlString_Shared html_string );
+	void slots_requesting_get_type_page_url_signals( const QString &root_url, const QString &type_name, const QUrl &type_url, cylHtmlTools::HtmlString_Shared html_string );
 	void slots_requesting_get_next_type_page_url_signals( const QString &root_url, const QString &type_name, const QUrl &old_url, const QUrl &url, size_t old_page_index, size_t current_page_index, const interfacePlugsType::Vector_NovelSPtr_Shared novel_s_ptr_shared );
 	void slots_requesting_get_novel_page_url_signals( const QString &root_url, const QString &type_name, const QString &type_page_url, const QString &novelName, const QUrl &url, const interfacePlugsType::Vector_NovelSPtr_Shared novel_s_ptr_shared, const QString &html_txt );
-	void slots_requested_get_novel_page_url_signals( const QString &root_url, const QString &type_name, const QString &type_page_url, const QString &novelName, const QUrl &url, const interfacePlugsType::Vector_NovelSPtr_Shared novel_s_ptr_shared, const interfacePlugsType::INovelInfo_Shared novel_info_shared );
 	void slots_requested_get_type_page_url_end( const QString &root_url, const QString &type_name, const QUrl &url, size_t current_page_index, const interfacePlugsType::Vector_NovelSPtr_Shared novel_s_ptr_shared );
 	void slots_requested_get_web_page_signals_end( const QUrl &url );
 };

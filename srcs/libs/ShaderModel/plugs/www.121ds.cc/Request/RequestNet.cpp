@@ -184,7 +184,7 @@ HtmlDocString RequestNet::formHtmlGetNext( const interfacePlugsType::HtmlDocStri
 bool RequestNet::isRequestNovelInfoUrl( const interfacePlugsType::INovelInfoPtr &novel_info_ptr ) {
 	return false;
 }
-void RequestNet::novelTypeEnd( const interfacePlugsType::Vector_NovelSPtr &saveNovelInfos ) {
+void RequestNet::novelTypeEnd(const HtmlDocString &root_url, const HtmlDocString &type_name, const HtmlDocString &url, const interfacePlugsType::Vector_NovelSPtr &saveNovelInfos ) {
 }
 void RequestNet::endHost( const interfacePlugsType::Vector_NovelSPtr &saveNovelInfos ) {
 }

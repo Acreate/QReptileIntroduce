@@ -110,8 +110,11 @@ public: // 实现解析
 	/// <summary>
 	/// 类型调用结束时候会被调用
 	/// </summary>
+	/// <param name="root_url">根路径</param>
+	/// <param name="type_name">请求类型名称</param>
+	/// <param name="url">类型页面</param>
 	/// <param name="saveNovelInfos"></param>
-	void novelTypeEnd( const interfacePlugsType::Vector_NovelSPtr &saveNovelInfos ) override;
+	void novelTypeEnd( const interfacePlugsType::HtmlDocString &root_url, const interfacePlugsType::HtmlDocString &type_name, const interfacePlugsType::HtmlDocString &url, const interfacePlugsType::Vector_NovelSPtr &saveNovelInfos ) override;
 	/// <summary>
 	/// 结束该网站请求时被调用
 	/// </summary>

@@ -63,7 +63,7 @@ namespace interfacePlugsType {
 		/// <param name="request_url">解析页的 url</param>
 		/// <param name="htmlText">解析页面</param>
 		/// <returns>类型与目标地址</returns>
-		virtual Map_HtmlStrK_HtmlStrV * formHtmlGetTypeTheUrls(  const HtmlDocString &request_url, const HtmlDocString &htmlText ) = 0;
+		virtual Map_HtmlStrK_HtmlStrV * formHtmlGetTypeTheUrls( const HtmlDocString &request_url, const HtmlDocString &htmlText ) = 0;
 
 		/// <summary>
 		/// 从页中返回解析到的小说
@@ -105,8 +105,11 @@ namespace interfacePlugsType {
 		/// <summary>
 		/// 类型调用结束时候会被调用
 		/// </summary>
+		/// <param name="root_url">根路径</param>
+		/// <param name="type_name">请求类型名称</param>
+		/// <param name="url">类型页面</param>
 		/// <param name="saveNovelInfos"></param>
-		virtual void novelTypeEnd( const Vector_NovelSPtr &saveNovelInfos ) = 0;
+		virtual void novelTypeEnd( const HtmlDocString &root_url, const HtmlDocString &type_name, const HtmlDocString &url, const interfacePlugsType::Vector_NovelSPtr &saveNovelInfos ) = 0;
 		/// <summary>
 		/// 结束该网站请求时被调用
 		/// </summary>

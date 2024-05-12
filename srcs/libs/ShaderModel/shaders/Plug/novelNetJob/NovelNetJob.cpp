@@ -62,7 +62,7 @@ void NovelNetJob::initObjProperty( ) {
 	QSslConfiguration sslConfiguration = networkRequest->sslConfiguration( );
 	sslConfiguration.setPeerVerifyMode( QSslSocket::VerifyNone );
 	networkRequest->setSslConfiguration( sslConfiguration );
-
+	typeCount = 0;
 	QString ingFile( u8"%1%2%3%2%4%5" );
 	ingFile = ingFile.arg( Project_Plug_bin ).arg( QDir::separator( ) ).arg( u8"ini" ).arg( u8"get_type" ).arg( u8".txt" );
 	QFile qFile;
@@ -90,6 +90,10 @@ void NovelNetJob::initConnect( ) {
 
 	connect( this, &NovelNetJob::requesting_get_root_page_signals, this, &NovelNetJob::slots_requesting_get_root_page_signals );
 	connect( this, &NovelNetJob::requesting_get_type_page_url_signals, this, &NovelNetJob::slots_requesting_get_type_page_url_signals );
+	connect( this, &NovelNetJob::requesting_get_next_type_page_url_signals, this, &NovelNetJob::slots_requesting_get_next_type_page_url_signals );
+	connect( this, &NovelNetJob::requesting_get_novel_page_url_signals, this, &NovelNetJob::slots_requesting_get_novel_page_url_signals );
+	connect( this, &NovelNetJob::requested_get_type_page_url_end, this, &NovelNetJob::slots_requested_get_type_page_url_end );
+	connect( this, &NovelNetJob::requested_get_web_page_signals_end, this, &NovelNetJob::slots_requested_get_web_page_signals_end );
 }
 bool NovelNetJob::start( ) {
 	HtmlDocString resultUrl;
@@ -155,11 +159,12 @@ void NovelNetJob::slots_requesting_get_root_page_signals( const QUrl &url, cylHt
 			requestConnect->deleteLater( );
 			request->deleteLater( );
 		} );
+		++typeCount;
 		request->netGetWork( typeUrl, *networkRequest );
 	}
 }
 
-void NovelNetJob::slots_requesting_get_type_page_url_signals( const QString &root_url, const QString &type_name, const QUrl &url, cylHtmlTools::HtmlString_Shared html_string ) {
+void NovelNetJob::slots_requesting_get_type_page_url_signals( const QString &root_url, const QString &type_name, const QUrl &type_url, cylHtmlTools::HtmlString_Shared html_string ) {
 	std::shared_ptr< interfacePlugsType::Vector_NovelSPtr > sharedPtrs;
 	if( this->typeNovelsMap.count( type_name ) )
 		sharedPtrs = this->typeNovelsMap.at( type_name );
@@ -171,7 +176,7 @@ void NovelNetJob::slots_requesting_get_type_page_url_signals( const QString &roo
 	size_t count = 0;
 	if( this->typeCountMap.count( type_name ) )
 		count = this->typeCountMap.at( type_name );
-	QString typePageUrl = url.host( );
+	QString typePageUrl = type_url.toString( );
 	auto novelInfos = interfaceThisPtr->formHtmlGetTypePageNovels( type_name.toStdWString( ), typePageUrl.toStdWString( ), *html_string, *sharedPtrs, nullptr );
 	do {
 		if( novelInfos.size( ) == 0 )
@@ -205,28 +210,22 @@ void NovelNetJob::slots_requesting_get_type_page_url_signals( const QString &roo
 			} else
 				sharedPtrs->emplace_back( novel ); // 存储已知小说
 		}
-		//auto formHtmlGetNext = interfaceThisPtr->formHtmlGetNext( type_name.toStdWString( ), typePageUrl.toStdWString( ), *html_string, *sharedPtrs, novelInfos );
-		//if( formHtmlGetNext.empty( ) ) 	// 返回空，则表示没有下一页
-		//	break;
-		//auto requestConnect = new cylHttpNetWork::RequestConnect;
-		//auto Request = new cylHttpNetWork::Request( networkAccessManager.get( ), requestConnect );
-		//connect( requestConnect, &cylHttpNetWork::RequestConnect::networkReplyFinished, [this, type, url,Request,requestConnect]( cylHttpNetWork::RequestConnect *request_connect ) {
-		//	auto networkReply = request_connect->getNetworkReply( );
-		//	if( networkReply->error( ) != QNetworkReply::NoError ) {
-		//		errorQDebugOut( getErrorQStr( networkReply->error( ) ).toStdString( ), __FILE__, __LINE__ );
-		//		return;
-		//	}
-		//	emit requesting_get_type_page_url_signals( getUrl( ), type, url, std::make_shared< cylHtmlTools::HtmlString >( QString( networkReply->readAll( ) ).toStdWString( ) ) );
-		//	Request->deleteLater( );
-		//	requestConnect->deleteLater( );
-		//} );
+		auto formHtmlGetNext = interfaceThisPtr->formHtmlGetNext( type_name.toStdWString( ), typePageUrl.toStdWString( ), *html_string, *sharedPtrs, novelInfos );
+		if( formHtmlGetNext.empty( ) ) {			// 返回空，则表示没有下一页
+			auto msg = QString( ).append( u8"\n类型 : " ).append( type_name ).append( u8"(" )
+								.append( typePageUrl ).append( ")" ).append( u8"没有匹配下一页的链接" );
+			OStream::errorQDebugOut( msg.toStdString( ), __FILE__, __LINE__ );
+			break;
+		}
+		QUrl nextUrl( QString::fromStdWString( formHtmlGetNext ) );
+		++count;
+		emit requesting_get_next_type_page_url_signals( root_url, type_name, type_url, nextUrl, count, count + 1, sharedPtrs );
+		this->typeCountMap.emplace( type_name, count );
 
-		//this->typeCountMap.emplace( type, count + 1 );
-
-		//return;  // 正常执行完毕
+		return;  // 正常执行完毕
 	} while( false );
 	// 没有使用 return 返回，则表示终止调用
-	emit requested_get_type_page_url_end( getUrl( ), type_name, url, count, sharedPtrs );
+	emit requested_get_type_page_url_end( getUrl( ), type_name, type_url, count, sharedPtrs );
 }
 void NovelNetJob::slots_requesting_get_next_type_page_url_signals( const QString &root_url, const QString &type_name, const QUrl &old_url, const QUrl &url, size_t old_page_index, size_t current_page_index, const interfacePlugsType::Vector_NovelSPtr_Shared novel_s_ptr_shared ) {
 }
@@ -234,9 +233,18 @@ void NovelNetJob::slots_requesting_get_novel_page_url_signals( const QString &ro
 
 
 }
-void NovelNetJob::slots_requested_get_novel_page_url_signals( const QString &root_url, const QString &type_name, const QString &type_page_url, const QString &novelName, const QUrl &url, const interfacePlugsType::Vector_NovelSPtr_Shared novel_s_ptr_shared, const interfacePlugsType::INovelInfo_Shared novel_info_shared ) {
-}
+
 void NovelNetJob::slots_requested_get_type_page_url_end( const QString &root_url, const QString &type_name, const QUrl &url, size_t current_page_index, const interfacePlugsType::Vector_NovelSPtr_Shared novel_s_ptr_shared ) {
+	qDebug( ) << u8"-----------------------";
+	qDebug( ) << type_name << "(" << url.toString( ) << ") 请求结束";
+	qDebug( ) << u8"-----------------------";
+	auto novelInfos = typeNovelsMap.at( type_name );
+	interfaceThisPtr->novelTypeEnd( root_url.toStdWString( ), type_name.toStdWString( ), url.toString( ).toStdWString( ), *novelInfos );
+	--typeCount;
+	if( typeCount == 0 )
+		emit requested_get_web_page_signals_end( root_url );
 }
 void NovelNetJob::slots_requested_get_web_page_signals_end( const QUrl &url ) {
+	interfaceThisPtr->endHost( { } );
+	qDebug( ) << "请求 : " << url.host( ) << " 结束";
 }
