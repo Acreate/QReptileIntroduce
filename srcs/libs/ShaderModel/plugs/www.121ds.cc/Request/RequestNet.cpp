@@ -13,6 +13,8 @@
 #include <stream/OStream.h>
 #include <HttpNetWork/NetworkRequest.h>
 #include <HttpNetWork/Request.h>
+
+#include "../NovelInfo/NovelInfo.h"
 using namespace interfacePlugsType;
 using namespace cylHtmlTools;
 
@@ -22,7 +24,8 @@ RequestNet::RequestNet( QObject *parent ): QObject( parent )
 , oStream( nullptr )
 , iStream( nullptr )
 , typeUrlMap( nullptr ) {
-	cylHttpNetWork::NetworkRequest::setHostUrlRequestInterval( rootUrl, 15000 );
+	cylHttpNetWork::NetworkRequest::initTools( );
+	cylHttpNetWork::NetworkRequest::setHostUrlRequestInterval( rootUrl, 5000 );
 }
 
 RequestNet::~RequestNet( ) {
@@ -90,7 +93,7 @@ Map_HtmlStrK_HtmlStrV * RequestNet::formHtmlGetTypeTheUrls( const interfacePlugs
 				auto htmlDoc = cylHtmlTools::HtmlDoc::parse( stdWString, end, index );
 				if( !htmlDoc.get( ) ) {
 					auto msg = QString( "%1 : %2" ).arg( QString::fromStdWString( url ) ).arg( QString( u8" HtmlDoc::parse 异常，登出" ) ).toStdString( );
-					OStream::errorQDebugOut( msg, __FILE__, __LINE__ );
+					OStream::errorQDebugOut( msg, __FILE__, __LINE__, __FUNCTION__ );
 					return;
 				}
 
@@ -101,7 +104,7 @@ Map_HtmlStrK_HtmlStrV * RequestNet::formHtmlGetTypeTheUrls( const interfacePlugs
 				auto vectorHtmlNodeSPtrShared = xpath.buider( htmlNodeSPtrShared );
 				if( !vectorHtmlNodeSPtrShared ) {
 					auto msg = QString( "%1 : %2 " ).arg( QString::fromStdWString( url ) ).arg( QString( u8" xpath 异常，登出" ) ).toStdString( );
-					OStream::errorQDebugOut( msg, __FILE__, __LINE__ );
+					OStream::errorQDebugOut( msg, __FILE__, __LINE__, __FUNCTION__ );
 					return;
 				}
 				auto vectorIterator = vectorHtmlNodeSPtrShared->begin( );
@@ -146,23 +149,61 @@ Vector_NovelSPtr RequestNet::formHtmlGetTypePageNovels( const interfacePlugsType
 		if( !htmlDoc ) {
 			auto msg = QString( "%1 : %2 : %3" ).arg( type_name ).arg( request_url ).arg( QString( u8" HtmlDoc::parse 异常，登出" ) );
 			auto path = QString( Cache_Path_Dir ).append( QDir::separator( ) ).append( type_name ).append( u8".html" );
-			OStream::errorQDebugOut( msg.toStdString( ), __FILE__, __LINE__, path, QString::fromStdWString( htmlText ).toLocal8Bit( ) );
+			OStream::errorQDebugOut( msg.toStdString( ), __FILE__, __LINE__, __FUNCTION__, path, QString::fromStdWString( htmlText ) );
 			break;
 		}
 		htmlDoc->analysisBrotherNode( );
-		auto xpath = cylHtmlTools::XPath( QString( tr( u8"div[@class='cf']" ) ).toStdWString( ) );
+		auto xpath = cylHtmlTools::XPath( QString( tr( u8"div[@class='cf' @id='sitebox' ]/dl" ) ).toStdWString( ) );
 		auto htmlNodeSPtrShared = htmlDoc->getHtmlNodeRoots( );
 		auto vectorHtmlNodeSPtrShared = xpath.buider( htmlNodeSPtrShared );
 		if( !vectorHtmlNodeSPtrShared ) {
 			auto msg = QString( "%1 : %2 : %3" ).arg( type_name ).arg( request_url ).arg( QString( u8" xpath 异常，登出" ) );
 			auto path = QString( Cache_Path_Dir ).append( QDir::separator( ) ).append( type_name ).append( u8".html" );
-			OStream::errorQDebugOut( msg.toStdString( ), __FILE__, __LINE__, path, QString::fromStdWString( htmlText ).toLocal8Bit( ) );
+			OStream::errorQDebugOut( msg.toStdString( ), __FILE__, __LINE__, __FUNCTION__, path, QString::fromStdWString( htmlText ) );
 			break;
 		}
 		auto vectorIterator = vectorHtmlNodeSPtrShared->begin( );
 		auto vectorEnd = vectorHtmlNodeSPtrShared->end( );
-		for( ; vectorIterator != vectorEnd; ++vectorIterator )
-			qDebug( ) << QString::fromStdWString( *vectorIterator->get( )->getIncludeNodeContent( ) );
+		INovelInfoPtr novelInfoPtr = nullptr;
+		for( ; vectorIterator != vectorEnd; ++vectorIterator ) {
+			auto novelInfoBuffPtr = new NovelInfo;
+			do {
+				//////////// 名称 xpath
+				xpath = cylHtmlTools::XPath( QString( tr( u8"./dd/h3/a" ) ).toStdWString( ) );
+				HtmlString_Shared content = vectorIterator->get( )->getIncludeNodeContent( );
+				auto htmlNodes = vectorIterator->get( )->xpath( xpath );
+				if( htmlNodes ) {
+					auto findResultEnd = htmlNodes->end( );
+					auto findResultIterator = htmlNodes->begin( );
+					for( ; findResultEnd != findResultIterator; ++findResultIterator ) {
+						auto contentText = findResultIterator->get( )->getNodeContentText( );
+						if( contentText && !contentText->empty( ) ) 
+							novelInfoBuffPtr->novelName = std::make_shared< interfacePlugsType::HtmlDocString >( *contentText );
+					}
+				} else
+					break;
+				//////////// url xpath
+				
+				//////////// 更新时间 xpath
+				
+				//////////// 作者 xpath
+				
+				//////////// 最后更新项目 xpath
+				
+				//////////// 最后更新时间 xpath
+				
+				//////////// 详情 xpath
+				novelInfoPtr = novelInfoBuffPtr;
+			} while( false );
+			if( novelInfoPtr ) { // 为空，说明没有被赋值，也就是异常
+				auto msg = QString( "%1 : %2 : %3" ).arg( type_name ).arg( request_url ).arg( QString( u8" xpath 异常，登出" ) );
+				auto path = QString( Cache_Path_Dir ).append( QDir::separator( ) ).append( type_name ).append( u8".html" );
+				OStream::errorQDebugOut( msg.toStdString( ), __FILE__, __LINE__, __FUNCTION__, path, QString::fromStdWString( htmlText ) );
+			} else {
+				result.emplace_back( novelInfoPtr ); // 加入列表
+				novelInfoPtr = nullptr; // 重置
+			}
+		}
 	} while( false );
 	return result;
 }
@@ -184,7 +225,7 @@ HtmlDocString RequestNet::formHtmlGetNext( const interfacePlugsType::HtmlDocStri
 bool RequestNet::isRequestNovelInfoUrl( const interfacePlugsType::INovelInfoPtr &novel_info_ptr ) {
 	return false;
 }
-void RequestNet::novelTypeEnd(const HtmlDocString &root_url, const HtmlDocString &type_name, const HtmlDocString &url, const interfacePlugsType::Vector_NovelSPtr &saveNovelInfos ) {
+void RequestNet::novelTypeEnd( const HtmlDocString &root_url, const HtmlDocString &type_name, const HtmlDocString &url, const interfacePlugsType::Vector_NovelSPtr &saveNovelInfos ) {
 }
 void RequestNet::endHost( const interfacePlugsType::Vector_NovelSPtr &saveNovelInfos ) {
 }

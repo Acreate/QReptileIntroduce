@@ -4,11 +4,36 @@
 
 #include "interface/INovelInfo.h"
 class NovelInfo : public interfacePlugsType::INovelInfo {
-
+public:
+	friend class RequestNet;
+private:
+	interfacePlugsType::HtmlDocString_Shared
+		novelName,
+		info,
+		time,
+		format,
+		lastRequestTime,
+		lastRequestTimeFormat,
+		author,
+		url,
+		lastItem,
+		additionalDat,
+		typePageUrl;
 public:
 	NovelInfo( ) = default;
 	~NovelInfo( ) override;
 public: // - 继承
+	size_t getNovelName( interfacePlugsType::HtmlDocString *result_name ) override;
+	size_t getNovelInfo( interfacePlugsType::HtmlDocString *result_info ) override;
+	size_t getNovelUpdateTime( interfacePlugsType::HtmlDocString *result_time ) override;
+	size_t getNovelUpdateTimeFormat( interfacePlugsType::HtmlDocString *result_format ) override;
+	size_t getNovelLastRequestGetTime( interfacePlugsType::HtmlDocString *result_last_request_time ) override;
+	size_t getNovelLastRequestGetTimeFormat( interfacePlugsType::HtmlDocString *result_last_request_time_format ) override;
+	size_t getNovelAuthor( interfacePlugsType::HtmlDocString *result_author ) override;
+	size_t getNovelUrl( interfacePlugsType::HtmlDocString *result_url ) override;
+	size_t getNovelLastItem( interfacePlugsType::HtmlDocString *result_last_item ) override;
+	size_t getNovelAttach( void *result_additional_data ) override;
+	size_t getNovelUrlAtPageLocation( interfacePlugsType::HtmlDocString *result_type_page_url ) override;
 };
 
 

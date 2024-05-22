@@ -16,6 +16,7 @@ namespace interfacePlugsType {
 	using Vector_NovelSPtr = std::vector< INovelInfo_Shared >;
 	using Vector_NovelSPtr_Shared = std::shared_ptr< Vector_NovelSPtr >;
 	using HtmlDocString = std::wstring;
+	using HtmlDocString_Shared = std::shared_ptr< HtmlDocString >;
 	using StdStringPtr = HtmlDocString *;
 	using Map_HtmlStrK_HtmlStrV = std::unordered_map< HtmlDocString, HtmlDocString >;
 };

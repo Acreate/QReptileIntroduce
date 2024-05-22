@@ -7,7 +7,7 @@
 struct QArrayData;
 class IOSTREAM_EXPORT OStream {
 public:
-	static void errorQDebugOut( const std::string &msg, const std::string &fileName, size_t line, const QString &writePath = QString( u8"" ), const QString &writeContent = QString( u8"" ) );
+	static void errorQDebugOut( const std::string &msg, const std::string &fileName, size_t line, const std::string &callFunName, const QString &writePath = QString( u8"" ), const QString &writeContent = QString( u8"" ) );
 public:
 	virtual ~OStream( ) { }
 public: // 重载 <<
