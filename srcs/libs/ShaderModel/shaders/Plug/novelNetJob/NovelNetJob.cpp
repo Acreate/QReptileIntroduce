@@ -71,13 +71,11 @@ void NovelNetJob::initObjProperty( ) {
 		auto byteArray = qFile.readAll( );
 		QString fileContent( byteArray );
 		auto list = fileContent.split( "\n" );
-
 		for( auto &str : list ) {
 			auto normalQString = getNormalQString( str );
 			if( normalQString.isEmpty( ) )
 				continue;
 			getTypeNamelist << normalQString;
-
 		}
 	}
 }
@@ -98,6 +96,7 @@ void NovelNetJob::initConnect( ) {
 bool NovelNetJob::start( ) {
 	HtmlDocString resultUrl;
 	size_t size = interfaceThisPtr->getRootUrl( &resultUrl );
+	cylHttpNetWork::NetworkRequest::setHostUrlRequestInterval( QString::fromStdWString( resultUrl ), 5000 );
 	if( size == 0 )
 		return false;
 	qDebug( ) << networkAccessManager->supportedSchemes( );
@@ -118,7 +117,7 @@ void NovelNetJob::slots_requesting_get_root_page_signals( const QUrl &url, cylHt
 	if( networkReply->error( ) != QNetworkReply::NoError ) {
 		QString msg;
 		msg.append( u8"首页异常 : " ).append( u8"\n\t" ).append( getErrorQStr( networkReply->error( ) ) ).append( "\n\t" ).append( u8"(" ).append( rootUrl ).append( ")" );
-		OStream::errorQDebugOut( msg.toStdString( ), __FILE__, __LINE__, __FUNCTION__  );
+		OStream::errorQDebugOut( msg.toStdString( ), __FILE__, __LINE__, __FUNCTION__ );
 		return;
 	}
 	QString htmlText( networkReply->readAll( ) );
@@ -128,7 +127,7 @@ void NovelNetJob::slots_requesting_get_root_page_signals( const QUrl &url, cylHt
 	if( !mapHtmlStrKHtmlStrV ) {
 		QString msg;
 		msg.append( u8"首页异常 : " ).append( u8"(没有找到类型节点)结束" ).append( u8"(" ).append( rootUrl ).append( ")" );
-		OStream::errorQDebugOut( msg.toStdString( ), __FILE__, __LINE__, __FUNCTION__  );
+		OStream::errorQDebugOut( msg.toStdString( ), __FILE__, __LINE__, __FUNCTION__ );
 		return;
 	}
 
@@ -152,7 +151,7 @@ void NovelNetJob::slots_requesting_get_root_page_signals( const QUrl &url, cylHt
 			if( networkReply->error( ) != QNetworkReply::NoError ) {
 				auto msg = getErrorQStr( networkReply->error( ) );
 				msg.append( u8"\n类型 : " ).append( typeName ).append( u8"(" ).append( typeUrl ).append( ")" );
-				OStream::errorQDebugOut( msg.toStdString( ), __FILE__, __LINE__, __FUNCTION__  );
+				OStream::errorQDebugOut( msg.toStdString( ), __FILE__, __LINE__, __FUNCTION__ );
 				return;
 			}
 			emit requesting_get_type_page_url_signals( getUrl( ), typeName, typeUrl, std::make_shared< cylHtmlTools::HtmlString >( QString( networkReply->readAll( ) ).toStdWString( ) ) );
@@ -197,7 +196,7 @@ void NovelNetJob::slots_requesting_get_type_page_url_signals( const QString &roo
 					if( networkReply->error( ) != QNetworkReply::NoError ) {
 						auto msg = getErrorQStr( networkReply->error( ) );
 						msg.append( u8"\n小说地址:" ).append( novelUrl );
-						OStream::errorQDebugOut( msg.toStdString( ), __FILE__, __LINE__, __FUNCTION__  );
+						OStream::errorQDebugOut( msg.toStdString( ), __FILE__, __LINE__, __FUNCTION__ );
 						return;
 					}
 					auto byteArray = networkReply->readAll( );
@@ -214,7 +213,7 @@ void NovelNetJob::slots_requesting_get_type_page_url_signals( const QString &roo
 		if( formHtmlGetNext.empty( ) ) {			// 返回空，则表示没有下一页
 			auto msg = QString( ).append( u8"\n类型 : " ).append( type_name ).append( u8"(" )
 								.append( typePageUrl ).append( ")" ).append( u8"没有匹配下一页的链接" );
-			OStream::errorQDebugOut( msg.toStdString( ), __FILE__, __LINE__, __FUNCTION__  );
+			OStream::errorQDebugOut( msg.toStdString( ), __FILE__, __LINE__, __FUNCTION__ );
 			break;
 		}
 		QUrl nextUrl( QString::fromStdWString( formHtmlGetNext ) );

@@ -25,7 +25,6 @@ RequestNet::RequestNet( QObject *parent ): QObject( parent )
 , iStream( nullptr )
 , typeUrlMap( nullptr ) {
 	cylHttpNetWork::NetworkRequest::initTools( );
-	cylHttpNetWork::NetworkRequest::setHostUrlRequestInterval( rootUrl, 5000 );
 }
 
 RequestNet::~RequestNet( ) {
@@ -65,7 +64,7 @@ void RequestNet::setScheme( const HtmlDocString &scheme ) {
 }
 
 bool RequestNet::setInterfaceParent( void *parent ) {
-	QObject *object = reinterpret_cast< QObject * >( parent );
+	QObject *object = static_cast< QObject * >( parent );
 	QObject::setParent( object );
 	return true;
 }
@@ -165,40 +164,107 @@ Vector_NovelSPtr RequestNet::formHtmlGetTypePageNovels( const interfacePlugsType
 		auto vectorIterator = vectorHtmlNodeSPtrShared->begin( );
 		auto vectorEnd = vectorHtmlNodeSPtrShared->end( );
 		INovelInfoPtr novelInfoPtr = nullptr;
+		Vector_HtmlNodeSPtr_Shared htmlNodes = nullptr;
+		HtmlString_Shared content = nullptr;
+		QString rootUrl = GET_URL;
+		auto novelInfoBuffPtr = new NovelInfo;
+		std::vector< std::shared_ptr< HtmlNode > >::iterator findResultEnd;
+		std::vector< std::shared_ptr< HtmlNode > >::iterator findResultIterator;
 		for( ; vectorIterator != vectorEnd; ++vectorIterator ) {
-			auto novelInfoBuffPtr = new NovelInfo;
 			do {
 				//////////// 名称 xpath
 				xpath = cylHtmlTools::XPath( QString( tr( u8"./dd/h3/a" ) ).toStdWString( ) );
-				HtmlString_Shared content = vectorIterator->get( )->getIncludeNodeContent( );
-				auto htmlNodes = vectorIterator->get( )->xpath( xpath );
-				if( htmlNodes ) {
-					auto findResultEnd = htmlNodes->end( );
-					auto findResultIterator = htmlNodes->begin( );
-					for( ; findResultEnd != findResultIterator; ++findResultIterator ) {
-						auto contentText = findResultIterator->get( )->getNodeContentText( );
-						if( contentText && !contentText->empty( ) ) 
-							novelInfoBuffPtr->novelName = std::make_shared< interfacePlugsType::HtmlDocString >( *contentText );
-					}
-				} else
+				content = vectorIterator->get( )->getIncludeNodeContent( );
+				htmlNodes = vectorIterator->get( )->xpath( xpath );
+				if( !htmlNodes )
 					break;
+				findResultIterator = htmlNodes->begin( );
+				findResultEnd = htmlNodes->end( );
+				if( findResultIterator == findResultEnd )
+					break;
+				HtmlNode *element = findResultIterator->get( );
+				auto contentText = element->getNodeContentText( );
+				if( contentText && !contentText->empty( ) )
+					novelInfoBuffPtr->novelName = std::make_shared< QString >( QString::fromStdWString( *contentText ) );
 				//////////// url xpath
-				
+				auto unorderedMapAttribute = element->findAttribute( []( const HtmlString &attributeName, const HtmlString &attributeValue )->bool {
+					if( HtmlStringTools::equRemoveSpaceOverHtmlString( attributeName, L"href" ) )
+						return true;
+					return false;
+				} );
+				if( unorderedMapAttribute->size( ) == 0 )
+					break;
+				auto begin = unorderedMapAttribute->begin( );
+
+				auto second = begin->second;
+				auto newSecond = second.substr( 1, second.length( ) - 2 );
+				QString urlLastStr = QString::fromStdWString( newSecond );
+				novelInfoBuffPtr->url = std::make_shared< QString >( QString( u8"%1%2" ).arg( rootUrl ).arg( urlLastStr ) );
 				//////////// 更新时间 xpath
-				
+				xpath = cylHtmlTools::XPath( QString( tr( u8"./dd/h3/span[@class='uptime']" ) ).toStdWString( ) );
+				content = vectorIterator->get( )->getIncludeNodeContent( );
+				htmlNodes = vectorIterator->get( )->xpath( xpath );
+				if( !htmlNodes )
+					break;
+				findResultIterator = htmlNodes->begin( );
+				findResultEnd = htmlNodes->end( );
+				if( findResultIterator == findResultEnd )
+					break;
+				auto lastTime = findResultIterator->get( )->getNodeContentText( );
+				if( !lastTime )
+					break;
+				novelInfoBuffPtr->time = std::make_shared< QString >( QString::fromStdWString( *lastTime ) );
 				//////////// 作者 xpath
-				
+				xpath = cylHtmlTools::XPath( QString( tr( u8"./dd/span" ) ).toStdWString( ) );
+				content = vectorIterator->get( )->getIncludeNodeContent( );
+				htmlNodes = vectorIterator->get( )->xpath( xpath );
+				if( !htmlNodes )
+					break;
+				findResultIterator = htmlNodes->begin( );
+				findResultEnd = htmlNodes->end( );
+				if( findResultIterator == findResultEnd )
+					break;
+				auto author = findResultIterator->get( )->getNodeContentText( );
+				if( !author )
+					break;
+				novelInfoBuffPtr->author = std::make_shared< QString >( QString::fromStdWString( *author ) );
 				//////////// 最后更新项目 xpath
-				
-				//////////// 最后更新时间 xpath
-				
+				xpath = cylHtmlTools::XPath( QString( tr( u8R"(./dd[@class="book_other"]/a)" ) ).toStdWString( ) );
+				content = vectorIterator->get( )->getIncludeNodeContent( );
+				htmlNodes = vectorIterator->get( )->xpath( xpath );
+				if( !htmlNodes )
+					break;
+				findResultIterator = htmlNodes->begin( );
+				findResultEnd = htmlNodes->end( );
+				if( findResultIterator == findResultEnd )
+					break;
+				auto lastItem = findResultIterator->get( )->getNodeContentText( );
+				if( !lastItem )
+					break;
+				novelInfoBuffPtr->lastItem = std::make_shared< QString >( QString::fromStdWString( *lastItem ) );
 				//////////// 详情 xpath
+				xpath = cylHtmlTools::XPath( QString( tr( u8"./dd[@class='book_des']" ) ).toStdWString( ) );
+				content = vectorIterator->get( )->getIncludeNodeContent( );
+				htmlNodes = vectorIterator->get( )->xpath( xpath );
+				if( !htmlNodes )
+					break;
+				findResultIterator = htmlNodes->begin( );
+				findResultEnd = htmlNodes->end( );
+				if( findResultIterator == findResultEnd )
+					break;
+				auto info = findResultIterator->get( )->getNodeContentText( );
+				if( !info )
+					break;
+				novelInfoBuffPtr->info = std::make_shared< QString >( QString::fromStdWString( *info ) );
+				// 成功则赋值
 				novelInfoPtr = novelInfoBuffPtr;
 			} while( false );
 			if( novelInfoPtr ) { // 为空，说明没有被赋值，也就是异常
 				auto msg = QString( "%1 : %2 : %3" ).arg( type_name ).arg( request_url ).arg( QString( u8" xpath 异常，登出" ) );
 				auto path = QString( Cache_Path_Dir ).append( QDir::separator( ) ).append( type_name ).append( u8".html" );
 				OStream::errorQDebugOut( msg.toStdString( ), __FILE__, __LINE__, __FUNCTION__, path, QString::fromStdWString( htmlText ) );
+				delete novelInfoBuffPtr; // 释放
+				novelInfoBuffPtr = nullptr; // 置 0
 			} else {
 				result.emplace_back( novelInfoPtr ); // 加入列表
 				novelInfoPtr = nullptr; // 重置

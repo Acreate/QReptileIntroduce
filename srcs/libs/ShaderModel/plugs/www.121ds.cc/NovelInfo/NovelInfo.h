@@ -3,11 +3,12 @@
 #pragma once
 
 #include "interface/INovelInfo.h"
+class QString;
 class NovelInfo : public interfacePlugsType::INovelInfo {
 public:
 	friend class RequestNet;
 private:
-	interfacePlugsType::HtmlDocString_Shared
+	std::shared_ptr< QString >
 		novelName,
 		info,
 		time,
