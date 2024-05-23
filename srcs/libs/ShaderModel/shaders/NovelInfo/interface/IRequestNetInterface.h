@@ -86,7 +86,7 @@ namespace interfacePlugsType {
 		/// <param name="saveNovelInfos">已经存储的小说</param>
 		/// <param name="appendDataPtr">附加的数据对象指针</param>
 		/// <returns>解析到的小说列表</returns>
-		virtual Vector_NovelSPtr formHtmlGetTypePageNovels( const HtmlDocString &type_name, const HtmlDocString &request_url, const HtmlDocString &htmlText, const Vector_NovelSPtr &saveNovelInfos, void *appendDataPtr ) = 0;
+		virtual Vector_INovelInfoSPtr formHtmlGetTypePageNovels( const HtmlDocString &type_name, const HtmlDocString &request_url, const HtmlDocString &htmlText, const Vector_INovelInfoSPtr &saveNovelInfos, void *appendDataPtr ) = 0;
 
 		/// <summary>
 		/// 从一个链接当中获取单个小说信息，这个行为不建议在 formHtmlGetTypePageNovels 中调用，而是作为被调用者隐式回调使用
@@ -96,7 +96,7 @@ namespace interfacePlugsType {
 		/// <param name="saveNovelInfos">已经存储的小说列表</param>
 		/// <param name="networkReplayNovel">当前获取的小说页面内容</param>
 		/// <returns>小说信息对象指针</returns>
-		virtual INovelInfo_Shared formHtmlGetUrlNovelInfo( const HtmlDocString &request_url, const HtmlDocString &htmlText, const Vector_NovelSPtr &saveNovelInfos, const INovelInfo_Shared &networkReplayNovel ) = 0;
+		virtual INovelInfo_Shared formHtmlGetUrlNovelInfo(  const HtmlDocString &request_url, const HtmlDocString &htmlText, const Vector_INovelInfoSPtr &saveNovelInfos, const INovelInfo_Shared &networkReplayNovel ) = 0;
 		/// <summary>
 		/// 基于请求实现后进行下一次请求的判定
 		/// 返回有效的链接对象表示继续请求，无效对象则退出请求
@@ -107,7 +107,7 @@ namespace interfacePlugsType {
 		/// <param name="saveNovelInfos">已经保存的小说列表</param>
 		/// <param name="lastNovelInfos">调用该成员函数之前已经存储的对象列表，与 saveNovelInfos 不同的是，它仅仅存储一页</param>
 		/// <returns>下一页的地址</returns>
-		virtual HtmlDocString formHtmlGetNext( const HtmlDocString &type_name, const HtmlDocString &request_url, const HtmlDocString &htmlText, const Vector_NovelSPtr &saveNovelInfos, const Vector_NovelSPtr &lastNovelInfos ) = 0;
+		virtual HtmlDocString formHtmlGetNext( const HtmlDocString &type_name, const HtmlDocString &request_url, const HtmlDocString &htmlText, const Vector_INovelInfoSPtr &saveNovelInfos, const Vector_INovelInfoSPtr &lastNovelInfos ) = 0;
 		/// <summary>
 		/// 是否请求小说详情页面
 		/// </summary>
@@ -121,11 +121,11 @@ namespace interfacePlugsType {
 		/// <param name="type_name">请求类型名称</param>
 		/// <param name="url">类型页面</param>
 		/// <param name="saveNovelInfos"></param>
-		virtual void novelTypeEnd( const HtmlDocString &root_url, const HtmlDocString &type_name, const HtmlDocString &url, const interfacePlugsType::Vector_NovelSPtr &saveNovelInfos ) = 0;
+		virtual void novelTypeEnd( const HtmlDocString &root_url, const HtmlDocString &type_name, const HtmlDocString &url, const interfacePlugsType::Vector_INovelInfoSPtr &saveNovelInfos ) = 0;
 		/// <summary>
 		/// 结束该网站请求时被调用
 		/// </summary>
-		virtual void endHost( const Vector_NovelSPtr &saveNovelInfos ) = 0;
+		virtual void endHost( const Vector_INovelInfoSPtr &saveNovelInfos ) = 0;
 		/// <summary>
 		/// 设置父类
 		/// </summary>

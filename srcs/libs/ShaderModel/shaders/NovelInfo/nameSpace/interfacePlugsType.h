@@ -13,8 +13,8 @@ namespace interfacePlugsType {
 
 	using INovelInfoPtr = INovelInfo *;
 	using INovelInfo_Shared = std::shared_ptr< INovelInfo >;
-	using Vector_NovelSPtr = std::vector< INovelInfo_Shared >;
-	using Vector_NovelSPtr_Shared = std::shared_ptr< Vector_NovelSPtr >;
+	using Vector_INovelInfoSPtr = std::vector< INovelInfo_Shared >;
+	using Vector_INovelInfoSPtr_Shared = std::shared_ptr< Vector_INovelInfoSPtr >;
 	using HtmlDocString = std::wstring;
 	using HtmlDocString_Shared = std::shared_ptr< HtmlDocString >;
 	using StdStringPtr = HtmlDocString *;

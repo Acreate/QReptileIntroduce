@@ -113,7 +113,7 @@ public: // - 小说网站的信息数据
 	/// <summary>
 	/// 类型与小说列表之间的映射
 	/// </summary>
-	std::unordered_map< QString, std::shared_ptr< interfacePlugsType::Vector_NovelSPtr > > typeNovelsMap;
+	std::unordered_map< QString, interfacePlugsType::Vector_INovelInfoSPtr_Shared > typeNovelsMap;
 	std::unordered_map< QString, size_t > typeCountMap;
 
 Q_SIGNALS: // - 获取被调用
@@ -140,8 +140,9 @@ Q_SIGNALS: // - 获取被调用
 	/// <param name="url">小说页面链接</param>
 	/// <param name="old_page_index">上一个页数</param>
 	/// <param name="current_page_index">当前页数</param>
+	/// <param name="saveMapNovelInfos">已经保存的小说列表</param>
 	/// <param name="novel_s_ptr_shared">已经获取的小说</param>
-	void requesting_get_next_type_page_url_signals( const QString &root_url, const QString &type, const QUrl &old_url, const QUrl &url, size_t old_page_index, size_t current_page_index, const interfacePlugsType::Vector_NovelSPtr_Shared novel_s_ptr_shared );
+	void requesting_get_next_type_page_url_signals( const QString &root_url, const QString &type, const QUrl &old_url, const QUrl &url, size_t old_page_index, size_t current_page_index, const interfacePlugsType::Vector_INovelInfoSPtr_Shared saveMapNovelInfos, const interfacePlugsType::Vector_INovelInfoSPtr_Shared novel_s_ptr_shared );
 	/// <summary>
 	/// 请求小说页面
 	/// </summary>
@@ -152,7 +153,7 @@ Q_SIGNALS: // - 获取被调用
 	/// <param name="url">小说url</param>
 	/// <param name="novel_s_ptr_shared">已经获取到的小说列表</param>
 	/// <param name="html_txt">获取到的小说文本</param>
-	void requesting_get_novel_page_url_signals( const QString &root_url, const QString &type, const QString &type_page_url, const QString &novelName, const QUrl &url, const interfacePlugsType::Vector_NovelSPtr_Shared novel_s_ptr_shared, const QString &html_txt );
+	void requesting_get_novel_page_url_signals( const QString &root_url, const QString &type, const QString &type_page_url, const QString &novelName, const QUrl &url, const interfacePlugsType::Vector_INovelInfoSPtr_Shared novel_s_ptr_shared, const QString &html_txt );
 
 	/// <summary>
 	/// 页面请求结束
@@ -162,7 +163,7 @@ Q_SIGNALS: // - 获取被调用
 	/// <param name="url">链接</param>
 	/// <param name="current_page_index">结束的当前下标</param>
 	/// <param name="novel_s_ptr_shared">获取到的小说列表</param>
-	void requested_get_type_page_url_end( const QString &root_url, const QString &type, const QUrl &url, size_t current_page_index, const interfacePlugsType::Vector_NovelSPtr_Shared novel_s_ptr_shared );
+	void requested_get_type_page_url_end( const QString &root_url, const QString &type, const QUrl &url, size_t current_page_index, const interfacePlugsType::Vector_INovelInfoSPtr_Shared novel_s_ptr_shared );
 	/// <summary>
 	/// 小说网站请求结束
 	/// </summary>
@@ -193,8 +194,9 @@ private slots: // 信号处理
 	/// <param name="url">当前也链接</param>
 	/// <param name="old_page_index">上一页下标</param>
 	/// <param name="current_page_index">当前页下标</param>
+	/// <param name="saveMapNovelInfos">已经保存的小说列表</param>
 	/// <param name="novel_s_ptr_shared">小说列表</param>
-	void slots_requesting_get_next_type_page_url_signals( const QString &root_url, const QString &type_name, const QUrl &old_url, const QUrl &url, size_t old_page_index, size_t current_page_index, const interfacePlugsType::Vector_NovelSPtr_Shared novel_s_ptr_shared );
+	void slots_requesting_get_next_type_page_url_signals( const QString &root_url, const QString &type_name, const QUrl &old_url, const QUrl &url, size_t old_page_index, size_t current_page_index, const interfacePlugsType::Vector_INovelInfoSPtr_Shared saveMapNovelInfos, const interfacePlugsType::Vector_INovelInfoSPtr_Shared novel_s_ptr_shared );
 	/// <summary>
 	/// 小说需要到详情页请求时，会调用该页面
 	/// </summary>
@@ -205,7 +207,7 @@ private slots: // 信号处理
 	/// <param name="url">小数链接</param>
 	/// <param name="novel_s_ptr_shared">请求列表</param>
 	/// <param name="html_txt">页面文本</param>
-	void slots_requesting_get_novel_page_url_signals( const QString &root_url, const QString &type_name, const QString &type_page_url, const QString &novelName, const QUrl &url, const interfacePlugsType::Vector_NovelSPtr_Shared novel_s_ptr_shared, const QString &html_txt );
+	void slots_requesting_get_novel_page_url_signals( const QString &root_url, const QString &type_name, const QString &type_page_url, const QString &novelName, const QUrl &url, const interfacePlugsType::Vector_INovelInfoSPtr_Shared novel_s_ptr_shared, const QString &html_txt );
 	/// <summary>
 	/// 小说类型结束会调用该函数
 	/// </summary>
@@ -214,7 +216,7 @@ private slots: // 信号处理
 	/// <param name="url">类型链接</param>
 	/// <param name="current_page_index">当前下标</param>
 	/// <param name="novel_s_ptr_shared">小说列表</param>
-	void slots_requested_get_type_page_url_end( const QString &root_url, const QString &type_name, const QUrl &url, size_t current_page_index, const interfacePlugsType::Vector_NovelSPtr_Shared novel_s_ptr_shared );
+	void slots_requested_get_type_page_url_end( const QString &root_url, const QString &type_name, const QUrl &url, size_t current_page_index, const interfacePlugsType::Vector_INovelInfoSPtr_Shared novel_s_ptr_shared );
 	/// <summary>
 	/// 网站结束会调用该链接
 	/// </summary>

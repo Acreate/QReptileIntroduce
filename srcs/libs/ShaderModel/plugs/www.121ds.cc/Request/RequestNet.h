@@ -11,7 +11,7 @@ class RequestNet : public QObject, public IRequestNetInterface {
 	Q_INTERFACES( IRequestNetInterface )
 private:
 	QUrl rootUrl;
-	OStream* thisOStream;
+	OStream *thisOStream;
 	std::shared_ptr< interfacePlugsType::Map_HtmlStrK_HtmlStrV > typeUrlMap;
 public:
 	RequestNet( QObject *parent = nullptr );
@@ -92,7 +92,7 @@ public: // 实现解析
 	/// <param name="saveNovelInfos">已经存储的小说</param>
 	/// <param name="appendDataPtr">附加的数据对象指针</param>
 	/// <returns>解析到的小说列表</returns>
-	interfacePlugsType::Vector_NovelSPtr formHtmlGetTypePageNovels( const interfacePlugsType::HtmlDocString &type_name, const interfacePlugsType::HtmlDocString &request_url, const interfacePlugsType::HtmlDocString &htmlText, const interfacePlugsType::Vector_NovelSPtr &saveNovelInfos, void *appendDataPtr ) override;
+	interfacePlugsType::Vector_INovelInfoSPtr formHtmlGetTypePageNovels( const interfacePlugsType::HtmlDocString &type_name, const interfacePlugsType::HtmlDocString &request_url, const interfacePlugsType::HtmlDocString &htmlText, const interfacePlugsType::Vector_INovelInfoSPtr &saveNovelInfos, void *appendDataPtr ) override;
 	/// <summary>
 	/// 从一个链接当中获取单个小说信息，这个行为不建议在 formHtmlGetTypePageNovels 中调用，而是作为被调用者隐式回调使用
 	/// </summary>
@@ -101,7 +101,7 @@ public: // 实现解析
 	/// <param name="saveNovelInfos">已经存储的小说列表</param>
 	/// <param name="networkReplayNovel">当前获取的小说页面内容</param>
 	/// <returns>小说信息对象指针</returns>
-	interfacePlugsType::INovelInfo_Shared formHtmlGetUrlNovelInfo( const interfacePlugsType::HtmlDocString &request_url, const interfacePlugsType::HtmlDocString &htmlText, const interfacePlugsType::Vector_NovelSPtr &saveNovelInfos, const interfacePlugsType::INovelInfo_Shared &networkReplayNovel ) override;
+	interfacePlugsType::INovelInfo_Shared formHtmlGetUrlNovelInfo( const interfacePlugsType::HtmlDocString &request_url, const interfacePlugsType::HtmlDocString &htmlText, const interfacePlugsType::Vector_INovelInfoSPtr &saveNovelInfos, const interfacePlugsType::INovelInfo_Shared &networkReplayNovel ) override;
 	/// <summary>
 	/// 基于请求实现后进行下一次请求的判定
 	/// 返回有效的链接对象表示继续请求，无效对象则退出请求
@@ -112,7 +112,7 @@ public: // 实现解析
 	/// <param name="saveNovelInfos">已经保存的小说列表</param>
 	/// <param name="lastNovelInfos">调用该成员函数之前已经存储的对象列表，与 saveNovelInfos 不同的是，它仅仅存储一页</param>
 	/// <returns>下一页的地址</returns>
-	interfacePlugsType::HtmlDocString formHtmlGetNext( const interfacePlugsType::HtmlDocString &type_name, const interfacePlugsType::HtmlDocString &request_url, const interfacePlugsType::HtmlDocString &htmlText, const interfacePlugsType::Vector_NovelSPtr &saveNovelInfos, const interfacePlugsType::Vector_NovelSPtr &lastNovelInfos ) override;
+	interfacePlugsType::HtmlDocString formHtmlGetNext( const interfacePlugsType::HtmlDocString &type_name, const interfacePlugsType::HtmlDocString &request_url, const interfacePlugsType::HtmlDocString &htmlText, const interfacePlugsType::Vector_INovelInfoSPtr &saveNovelInfos, const interfacePlugsType::Vector_INovelInfoSPtr &lastNovelInfos ) override;
 	// 实现判定
 	/// <summary>
 	/// 是否请求小说详情页面
@@ -127,11 +127,11 @@ public: // 实现解析
 	/// <param name="type_name">请求类型名称</param>
 	/// <param name="url">类型页面</param>
 	/// <param name="saveNovelInfos"></param>
-	void novelTypeEnd( const interfacePlugsType::HtmlDocString &root_url, const interfacePlugsType::HtmlDocString &type_name, const interfacePlugsType::HtmlDocString &url, const interfacePlugsType::Vector_NovelSPtr &saveNovelInfos ) override;
+	void novelTypeEnd( const interfacePlugsType::HtmlDocString &root_url, const interfacePlugsType::HtmlDocString &type_name, const interfacePlugsType::HtmlDocString &url, const interfacePlugsType::Vector_INovelInfoSPtr &saveNovelInfos ) override;
 	/// <summary>
 	/// 结束该网站请求时被调用
 	/// </summary>
-	void endHost( const interfacePlugsType::Vector_NovelSPtr &saveNovelInfos ) override;
+	void endHost( const interfacePlugsType::Vector_INovelInfoSPtr &saveNovelInfos ) override;
 private:
 	OStream *oStream;
 	IStream *iStream;
