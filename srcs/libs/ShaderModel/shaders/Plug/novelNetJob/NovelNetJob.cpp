@@ -96,12 +96,17 @@ void NovelNetJob::initConnect( ) {
 bool NovelNetJob::start( ) {
 	HtmlDocString resultUrl;
 	size_t size = interfaceThisPtr->getRootUrl( &resultUrl );
-	cylHttpNetWork::NetworkRequest::setHostUrlRequestInterval( QString::fromStdWString( resultUrl ), 5000 );
+	QString qUrl = QString::fromStdWString( resultUrl );
+	cylHttpNetWork::NetworkRequest::setHostUrlRequestInterval( qUrl, 5000 );
 	if( size == 0 )
 		return false;
 	qDebug( ) << networkAccessManager->supportedSchemes( );
 	qDebug( ) << QSslSocket::sslLibraryBuildVersionString( );
-	root->second->netGetWork( QString::fromStdWString( resultUrl ), *networkRequest );
+	if( OStream::hasDefaultOStream( qUrl ) == false )
+		OStream::setDefaultOStream( qUrl, oStream );
+	interfaceThisPtr->initAfter( );
+	interfaceThisPtr->initBefore( );
+	root->second->netGetWork( qUrl, *networkRequest );
 	return true;
 }
 QString NovelNetJob::getUrl( ) const {

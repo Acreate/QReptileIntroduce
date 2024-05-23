@@ -1,4 +1,7 @@
 ﻿#include "NovelInfo.h"
+NovelInfo::NovelInfo( ) {
+	clear( );
+}
 NovelInfo::~NovelInfo( ) {
 }
 size_t NovelInfo::getNovelName( interfacePlugsType::HtmlDocString *result_name ) {
@@ -33,4 +36,10 @@ size_t NovelInfo::getNovelAttach( void *result_additional_data ) {
 }
 size_t NovelInfo::getNovelUrlAtPageLocation( interfacePlugsType::HtmlDocString *result_type_page_url ) {
 	return 0;
+}
+void NovelInfo::clear( ) {
+	novelName = info = time = format =
+		lastRequestTime = lastRequestTimeFormat =
+		author = url = lastItem = additionalDat =
+		typePageUrl = nullptr;
 }

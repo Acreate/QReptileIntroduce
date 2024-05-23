@@ -7,7 +7,78 @@
 struct QArrayData;
 class IOSTREAM_EXPORT OStream {
 public:
+	/// <summary>
+	/// 同步流输出，使用指定 OStream 与 qdebu() 输出信息
+	/// 如果 writePath 正确，那么将会写入内容。
+	/// </summary>
+	/// <param name="os">输出</param>
+	/// <param name="msg">消息</param>
+	/// <param name="fileName">产生错误的文件</param>
+	/// <param name="line">产生错误的文件行数</param>
+	/// <param name="callFunName">产生错误的调用函数</param>
+	/// <param name="writePath">写入路径</param>
+	/// <param name="writeContent">写入内容</param>
+	static void anyDebugOut( OStream *os, const std::string &msg, const std::string &fileName, size_t line, const std::string &callFunName, const QString &writePath = QString( u8"" ), const QString &writeContent = QString( u8"" ) );
+
+	/// <summary>
+	/// 使用指定 qdebug() 输出信息
+	/// 如果 writePath 正确，那么将会写入内容。
+	/// </summary>
+	/// <param name="msg">消息</param>
+	/// <param name="fileName">产生错误的文件</param>
+	/// <param name="line">产生错误的文件行数</param>
+	/// <param name="callFunName">产生错误的调用函数</param>
+	/// <param name="writePath">写入路径</param>
+	/// <param name="writeContent">写入内容</param>
 	static void errorQDebugOut( const std::string &msg, const std::string &fileName, size_t line, const std::string &callFunName, const QString &writePath = QString( u8"" ), const QString &writeContent = QString( u8"" ) );
+	/// <summary>
+	/// 使用指定 os 输出信息，假设 os 为null，将会调用
+	/// static void errorQDebugOut( const std::string &msg, const std::string &fileName, size_t line, const std::string &callFunName, const QString &writePath = QString( u8"" ), const QString &writeContent = QString( u8"" ) );
+	/// 如果 writePath 正确，那么将会写入内容。
+	/// </summary>
+	/// <param name="os">输出</param>
+	/// <param name="msg">消息</param>
+	/// <param name="fileName">产生错误的文件</param>
+	/// <param name="line">产生错误的文件行数</param>
+	/// <param name="callFunName">产生错误的调用函数</param>
+	/// <param name="writePath">写入路径</param>
+	/// <param name="writeContent">写入内容</param>
+	static void errorQDebugOut( OStream *os, const std::string &msg, const std::string &fileName, size_t line, const std::string &callFunName, const QString &writePath = QString( u8"" ), const QString &writeContent = QString( u8"" ) );
+private:
+	template< class TKey, class TValue >
+	using UN_Map_Iterator_Template = std::unordered_map< TKey, TValue >;
+	using QString_Shared = std::shared_ptr< QString >;
+	using OStream_Ptr = OStream *;
+	using UN_Map_Iterator = UN_Map_Iterator_Template< QString_Shared, OStream_Ptr >::iterator;
+	static UN_Map_Iterator_Template< QString_Shared, OStream_Ptr > defaultOStreamMap;
+public:
+	static bool hasDefaultOStream( const QString &key ) {
+		auto end = defaultOStreamMap.end( );
+		auto first = defaultOStreamMap.begin( );
+		for( ; first != end; ++first )
+			if( *first->first == key )
+				return true;
+		return false;
+	}
+	static void setDefaultOStream( const QString &key, OStream *default_OStream ) {
+		auto end = defaultOStreamMap.end( );
+		auto first = defaultOStreamMap.begin( );
+		for( ; first != end; ++first )
+			if( *first->first == key ) {
+				first->second = default_OStream;
+				return;
+			}
+		defaultOStreamMap.emplace( std::make_shared< QString >( key ), default_OStream );
+	}
+
+	static OStream * getDefaultOStream( const QString &key ) {
+		auto end = defaultOStreamMap.end( );
+		auto first = defaultOStreamMap.begin( );
+		for( ; first != end; ++first )
+			if( *first->first == key )
+				return first->second;
+		return nullptr;
+	}
 public:
 	virtual ~OStream( ) { }
 public: // 重载 <<

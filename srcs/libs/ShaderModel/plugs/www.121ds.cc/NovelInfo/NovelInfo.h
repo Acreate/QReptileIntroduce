@@ -21,7 +21,7 @@ private:
 		additionalDat,
 		typePageUrl;
 public:
-	NovelInfo( ) = default;
+	NovelInfo( );
 	~NovelInfo( ) override;
 public: // - 继承
 	size_t getNovelName( interfacePlugsType::HtmlDocString *result_name ) override;
@@ -35,6 +35,7 @@ public: // - 继承
 	size_t getNovelLastItem( interfacePlugsType::HtmlDocString *result_last_item ) override;
 	size_t getNovelAttach( void *result_additional_data ) override;
 	size_t getNovelUrlAtPageLocation( interfacePlugsType::HtmlDocString *result_type_page_url ) override;
+	void clear( );
 };
 
 

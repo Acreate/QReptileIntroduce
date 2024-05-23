@@ -20,6 +20,18 @@ namespace interfacePlugsType {
 		}
 	public:
 		/// <summary>
+		/// 初始化之前，被动调用
+		/// 使用对象之前，应该调用该函数一次，并且它必须在 initBefore() 之前
+		/// </summary>
+		/// <returns>初始化之前</returns>
+		virtual int initAfter( ) = 0;
+		/// <summary>
+		/// 初始化之后，被动调用
+		/// 使用对象之前，应该调用该函数一次，并且它必须在 initAfter() 之后
+		/// </summary>
+		/// <returns>初始化直走</returns>
+		virtual int initBefore( ) = 0;
+		/// <summary>
 		/// 获取附加数据
 		/// </summary>
 		/// <returns>附加数据</returns>

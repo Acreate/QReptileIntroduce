@@ -11,11 +11,24 @@ class RequestNet : public QObject, public IRequestNetInterface {
 	Q_INTERFACES( IRequestNetInterface )
 private:
 	QUrl rootUrl;
+	OStream* thisOStream;
 	std::shared_ptr< interfacePlugsType::Map_HtmlStrK_HtmlStrV > typeUrlMap;
 public:
 	RequestNet( QObject *parent = nullptr );
 	~RequestNet( ) override;
 public: // 实现虚函数
+	/// <summary>
+	/// 初始化之前，被动调用
+	/// 使用对象之前，应该调用该函数一次，并且它必须在 initBefore() 之前
+	/// </summary>
+	/// <returns>初始化之前</returns>
+	int initAfter( ) override;
+	/// <summary>
+	/// 初始化之后，被动调用
+	/// 使用对象之前，应该调用该函数一次，并且它必须在 initAfter() 之后
+	/// </summary>
+	/// <returns>初始化直走</returns>
+	int initBefore( ) override;
 	/// <summary>
 	/// 获取附加数据
 	/// </summary>
