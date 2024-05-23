@@ -18,8 +18,9 @@ private:
 		author,
 		url,
 		lastItem,
-		additionalDat,
-		typePageUrl;
+		additionalData,
+		typePageUrl,
+		typeName;
 public:
 	NovelInfo( );
 	~NovelInfo( ) override;
@@ -33,8 +34,9 @@ public: // - 继承
 	size_t getNovelAuthor( interfacePlugsType::HtmlDocString *result_author ) override;
 	size_t getNovelUrl( interfacePlugsType::HtmlDocString *result_url ) override;
 	size_t getNovelLastItem( interfacePlugsType::HtmlDocString *result_last_item ) override;
-	size_t getNovelAttach( void *result_additional_data ) override;
+	size_t getNovelAttach( void *&result_additional_data ) override;
 	size_t getNovelUrlAtPageLocation( interfacePlugsType::HtmlDocString *result_type_page_url ) override;
+	size_t getNovelUrlAtName( interfacePlugsType::HtmlDocString *result_type_name ) override;
 	void clear( );
 };
 

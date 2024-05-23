@@ -18,6 +18,9 @@
 #include "../NovelInfo/NovelInfo.h"
 using namespace interfacePlugsType;
 using namespace cylHtmlTools;
+QString RequestNet::timeForm = QObject::tr( u8R"(yyyy-MM-dd hh:mm:ss)" );
+QString RequestNet::currentTimeForm = QObject::tr( u8R"(yyyy-MM-dd hh:mm:ss)" );
+QDateTime RequestNet::currentTime;
 
 
 RequestNet::RequestNet( QObject *parent ): QObject( parent )
@@ -35,6 +38,7 @@ RequestNet::~RequestNet( ) {
 }
 int RequestNet::initAfter( ) {
 	thisOStream = OStream::getDefaultOStream( rootUrl.toString( ) );
+	currentTime = QDateTime::currentDateTime( );
 	return 0;
 }
 int RequestNet::initBefore( ) {
@@ -117,21 +121,17 @@ Map_HtmlStrK_HtmlStrV * RequestNet::formHtmlGetTypeTheUrls( const interfacePlugs
 				}
 				auto vectorIterator = vectorHtmlNodeSPtrShared->begin( );
 				auto vectorEnd = vectorHtmlNodeSPtrShared->end( );
-
+				HtmlDocString hrefKey = L"href";
 				for( ; vectorIterator != vectorEnd; ++vectorIterator ) {
-
-					qDebug( ) << QString::fromStdWString( *vectorIterator->get( )->getNodeContent( ) );
-
 					auto element = vectorIterator->get( );
-					QString url;
 					auto unorderedMap = element->findAttribute( [&]( const HtmlString &first, const HtmlString &scen ) ->bool {
-						if( HtmlStringTools::equRemoveSpaceOverHtmlString( first, L"href" ) )
+						if( HtmlStringTools::equRemoveSpaceOverHtmlString( first, hrefKey ) )
 							return true;
 						return false;
 					} );
 					if( unorderedMap ) {
 						auto key = *element->getNodeContentText( );
-						auto value = unorderedMap->at( L"href" );
+						auto value = unorderedMap->at( hrefKey );
 						QString qulr = QString( u8"%1%2" ).arg( GET_URL ).arg( value.substr( 1, value.size( ) - 2 ) );
 						value = qulr.toStdWString( );
 						result->emplace( key, value );
@@ -172,12 +172,12 @@ Vector_INovelInfoSPtr RequestNet::formHtmlGetTypePageNovels( const interfacePlug
 		}
 		auto vectorIterator = vectorHtmlNodeSPtrShared->begin( );
 		auto vectorEnd = vectorHtmlNodeSPtrShared->end( );
-		INovelInfoPtr novelInfoPtr = nullptr;
+		std::shared_ptr< INovelInfo > novelInfoPtr = nullptr;
 		Vector_HtmlNodeSPtr_Shared htmlNodes = nullptr;
 		HtmlString_Shared content = nullptr;
 		QString rootUrl = GET_URL;
 		size_t quitMsg;
-		auto novelInfoBuffPtr = new NovelInfo;
+		auto novelInfoBuffPtr = std::make_shared< NovelInfo >( );
 		std::vector< std::shared_ptr< HtmlNode > >::iterator findResultEnd;
 		std::vector< std::shared_ptr< HtmlNode > >::iterator findResultIterator;
 		for( ; vectorIterator != vectorEnd; ++vectorIterator ) {
@@ -237,7 +237,9 @@ Vector_INovelInfoSPtr RequestNet::formHtmlGetTypePageNovels( const interfacePlug
 					quitMsg = 6; // xpath 异常 : 更新时间 找不到
 					break;
 				}
-				novelInfoBuffPtr->time = std::make_shared< QString >( QString::fromStdWString( *lastTime ) );
+				QString fromStdWString = QString::fromStdWString( *lastTime );
+
+				novelInfoBuffPtr->time = std::make_shared< QString >( fromStdWString );
 				//////////// 作者 xpath
 				xpath = cylHtmlTools::XPath( QString( tr( u8"./dd/span" ) ).toStdWString( ) );
 				htmlNodes = vectorIterator->get( )->xpath( xpath );
@@ -274,6 +276,12 @@ Vector_INovelInfoSPtr RequestNet::formHtmlGetTypePageNovels( const interfacePlug
 							novelInfoBuffPtr->info = std::make_shared< QString >( QString::fromStdWString( *info ) );
 					}
 				}
+				novelInfoBuffPtr->format = std::make_shared< QString >( RequestNet::timeForm );
+				novelInfoBuffPtr->lastRequestTimeFormat = std::make_shared< QString >( currentTimeForm );
+				QString fromStdString = RequestNet::currentTime.toString( currentTimeForm );
+				novelInfoBuffPtr->lastRequestTime = std::make_shared< QString >( fromStdString );
+				novelInfoBuffPtr->typePageUrl = std::make_shared< QString >( QString::fromStdWString( request_url ) );
+				novelInfoBuffPtr->typeName = std::make_shared< QString >( QString::fromStdWString( type_name ) );
 				// 成功则赋值
 				novelInfoPtr = novelInfoBuffPtr;
 			} while( false );
@@ -302,11 +310,11 @@ Vector_INovelInfoSPtr RequestNet::formHtmlGetTypePageNovels( const interfacePlug
 					OStream::anyDebugOut( thisOStream, msg.toStdString( ), __FILE__, __LINE__, __FUNCTION__, path, QString::fromStdWString( htmlText ) );
 				}
 				novelInfoBuffPtr->clear( ); // 重置
-				novelInfoPtr = nullptr; // 重置
+				novelInfoPtr.reset( ); // 重置
 			} else {
-				//OStream::anyDebugOut( msg.toStdString( ), __FILE__, __LINE__, __FUNCTION__, path, QString::fromStdWString( htmlText ) );
 				result.emplace_back( novelInfoPtr ); // 加入列表
-				novelInfoPtr = nullptr; // 重置
+				novelInfoPtr.reset( ); // 重置
+				novelInfoBuffPtr = std::make_shared< NovelInfo >( );
 			}
 		}
 	} while( false );

@@ -69,13 +69,19 @@ namespace interfacePlugsType {
 		/// </summary>
 		/// <param name="result_additional_data">直线附加信息的指针，如果为 nullptr 则不存在</param>
 		/// <returns>小说附加信息的长度，如果为 0， 并且 result_additional_data 不等于 nullptr。则指向的内容存在，但为空</returns>
-		virtual size_t getNovelAttach( void *result_additional_data ) = 0;
+		virtual size_t getNovelAttach( void *&result_additional_data ) = 0;
 		/// <summary>
 		/// 获取小说解析的页面所在地址
 		/// </summary>
 		/// <param name="result_type_page_url">返回小说获取的页面，该页面并非小说详情页面而是从那获取小说详情页面的地址</param>
 		/// <returns>地址长度</returns>
 		virtual size_t getNovelUrlAtPageLocation( HtmlDocString *result_type_page_url ) = 0;
+		/// <summary>
+		/// 获取小说的类型
+		/// </summary>
+		/// <param name="result_type_name">返回小说类型</param>
+		/// <returns>类型名称</returns>
+		virtual size_t getNovelUrlAtName( HtmlDocString *result_type_name ) = 0;
 	};
 }
 

@@ -4,14 +4,27 @@
 #include <QGenericPlugin>
 #include "../macro/cmake_to_c_cpp_header_macro.h"
 #include "interface/IRequestNetInterface.h"
+#include "nameSpace/cylHtmlTools.h"
 using interfacePlugsType::IRequestNetInterface;
 Q_DECLARE_INTERFACE( IRequestNetInterface, IRequestNetInterface_iid );
 class RequestNet : public QObject, public IRequestNetInterface {
 	Q_OBJECT;
 	Q_INTERFACES( IRequestNetInterface )
 private:
+	static QString timeForm; // 时间格式
+	static QDateTime currentTime; // 请求时间
+	static QString currentTimeForm; // 当前请求时间的格式
+public:
+	/// <summary>
+	/// 获取小说的更新时间戳
+	/// </summary>
+	/// <param name="novel_info_ptr"></param>
+	/// <returns></returns>
+	QDateTime getNovelLastUpdateDateTime( interfacePlugsType::INovelInfoPtr &novel_info_ptr );
+private:
 	QUrl rootUrl;
 	OStream *thisOStream;
+
 	std::shared_ptr< interfacePlugsType::Map_HtmlStrK_HtmlStrV > typeUrlMap;
 public:
 	RequestNet( QObject *parent = nullptr );

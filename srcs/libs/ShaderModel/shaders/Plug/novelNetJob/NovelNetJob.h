@@ -10,6 +10,7 @@
 #include <QNetworkReply>
 #include <memory>
 #include <unordered_map>
+#include <chrono>
 
 #include "nameSpace/cylHtmlTools.h"
 
@@ -55,6 +56,7 @@ public:
 		}
 		friend bool operator!=( const NovelTypeNamePair &lhs, const NovelTypeNamePair &rhs ) { return !( lhs == rhs ); }
 	};
+
 public:
 	/// <summary>
 	/// std::shared_ptr< cylHttpNetWork::RequestConnect >
@@ -91,6 +93,8 @@ private: // - 流
 	OStream *oStream; // 输入流-程序输出到该流中，显示信息
 private: // 配置
 	QStringList getTypeNamelist; // 获取的小说类型列表
+private: // 状态
+	size_t runStatus; // 记录对象的运行状态
 public:
 	NovelNetJob( OStream *o_stream, QObject *interface_obj_ptr, interfacePlugsType::IRequestNetInterface *interface_this_ptr );
 	~NovelNetJob( ) override;

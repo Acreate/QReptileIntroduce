@@ -12,7 +12,7 @@
 #include <HttpNetWork/NetworkAccessManager.h>
 #include <qguiapplication.h>
 #include <unordered_map>
-
+#include "../dateTime/DateTime.h"
 
 #include "interface/INovelInfo.h"
 #include "macro/cmake_to_c_cpp_header_env.h"
@@ -78,6 +78,7 @@ void NovelNetJob::initObjProperty( ) {
 			getTypeNamelist << normalQString;
 		}
 	}
+	runStatus = 0;
 }
 
 void NovelNetJob::initConnect( ) {
@@ -94,6 +95,8 @@ void NovelNetJob::initConnect( ) {
 	connect( this, &NovelNetJob::requested_get_web_page_signals_end, this, &NovelNetJob::slots_requested_get_web_page_signals_end );
 }
 bool NovelNetJob::start( ) {
+	if( runStatus != 0 )
+		return false;
 	HtmlDocString resultUrl;
 	size_t size = interfaceThisPtr->getRootUrl( &resultUrl );
 	QString qUrl = QString::fromStdWString( resultUrl );
@@ -106,6 +109,7 @@ bool NovelNetJob::start( ) {
 		OStream::setDefaultOStream( qUrl, oStream );
 	interfaceThisPtr->initAfter( );
 	interfaceThisPtr->initBefore( );
+	runStatus = 1;
 	root->second->netGetWork( qUrl, *networkRequest );
 	return true;
 }
@@ -174,7 +178,7 @@ void NovelNetJob::slots_requesting_get_type_page_url_signals( const QString &roo
 	if( this->typeCountMap.count( type_name ) )
 		count = this->typeCountMap.at( type_name );
 
-	Vector_INovelInfoSPtr_Shared sharedPtrs( std::make_shared< interfacePlugsType::Vector_INovelInfoSPtr >( ) );
+	Vector_INovelInfoSPtr_Shared requestedGetVectorINovelInfoSPtrShared( std::make_shared< interfacePlugsType::Vector_INovelInfoSPtr >( ) );
 	// 存储获取的小说
 	auto iterator = this->typeNovelsMap.begin( );
 	auto end = this->typeNovelsMap.end( );
@@ -185,12 +189,12 @@ void NovelNetJob::slots_requesting_get_type_page_url_signals( const QString &roo
 			break;
 		}
 	if( iterator == end ) { // 这是首次调用
-		saveMapNovelInfos = sharedPtrs;
-		this->typeNovelsMap.emplace( type_name, sharedPtrs );
+		saveMapNovelInfos = std::make_shared< interfacePlugsType::Vector_INovelInfoSPtr >( );
+		this->typeNovelsMap.emplace( type_name, saveMapNovelInfos );
 	}
 
 	QString typePageUrl = type_url.toString( );
-	auto novelInfos = interfaceThisPtr->formHtmlGetTypePageNovels( type_name.toStdWString( ), typePageUrl.toStdWString( ), *html_string, *sharedPtrs, nullptr );
+	auto novelInfos = interfaceThisPtr->formHtmlGetTypePageNovels( type_name.toStdWString( ), typePageUrl.toStdWString( ), *html_string, *saveMapNovelInfos, nullptr );
 	do {
 		if( novelInfos.size( ) == 0 )
 			break;
@@ -205,7 +209,7 @@ void NovelNetJob::slots_requesting_get_type_page_url_signals( const QString &roo
 				QString novelName = QString::fromStdWString( buffStr );
 				auto requestConnect = new cylHttpNetWork::RequestConnect;
 				auto Request = new cylHttpNetWork::Request( networkAccessManager.get( ), requestConnect );
-				connect( requestConnect, &cylHttpNetWork::RequestConnect::networkReplyFinished, [Request,requestConnect,type_name,typePageUrl,novelName,novelUrl, sharedPtrs,this]( cylHttpNetWork::RequestConnect *request_connect ) {
+				connect( requestConnect, &cylHttpNetWork::RequestConnect::networkReplyFinished, [Request,requestConnect,type_name,typePageUrl,novelName,novelUrl, requestedGetVectorINovelInfoSPtrShared,this]( cylHttpNetWork::RequestConnect *request_connect ) {
 					auto networkReply = request_connect->getNetworkReply( );
 					if( networkReply->error( ) != QNetworkReply::NoError ) {
 						auto msg = getErrorQStr( networkReply->error( ) );
@@ -215,36 +219,60 @@ void NovelNetJob::slots_requesting_get_type_page_url_signals( const QString &roo
 					}
 					auto byteArray = networkReply->readAll( );
 					QString htmlTxt( byteArray );
-					emit requesting_get_novel_page_url_signals( getUrl( ), type_name, typePageUrl, novelName, novelUrl, sharedPtrs, htmlTxt );
+					emit requesting_get_novel_page_url_signals( getUrl( ), type_name, typePageUrl, novelName, novelUrl, requestedGetVectorINovelInfoSPtrShared, htmlTxt );
 					Request->deleteLater( );
 					requestConnect->deleteLater( );
 				} );
 
-			} else
-				sharedPtrs->emplace_back( novel ); // 存储已知小说
+			} else {
+				HtmlDocString buff;
+				size_t resultSize;
+				resultSize = novel->getNovelUpdateTime( &buff );
+				if( resultSize == 0 )
+					continue;
+				QString leftTime( QString::fromStdWString( buff ) );
+
+				resultSize = novel->getNovelUpdateTimeFormat( &buff );
+				if( resultSize == 0 )
+					continue;
+				QString leftTimeFormat( QString::fromStdWString( buff ) );
+
+				resultSize = novel->getNovelLastRequestGetTime( &buff );
+				if( resultSize == 0 )
+					continue;
+				QString rightTime( QString::fromStdWString( buff ) );
+
+				resultSize = novel->getNovelLastRequestGetTimeFormat( &buff );
+				if( resultSize == 0 )
+					continue;
+				QString rightTimeFormat( QString::fromStdWString( buff ) );
+
+				resultSize = DateTime::getTimeToDay( DateTime::compareDateTime( leftTime, leftTimeFormat, rightTime, rightTimeFormat ) );
+				if( resultSize > 1 )
+					continue;
+				requestedGetVectorINovelInfoSPtrShared->emplace_back( novel ); // 存储已知小说
+			}
+		}
+		auto requestedGetVectorIterator = requestedGetVectorINovelInfoSPtrShared->begin( );
+		auto requestedGetVectorEnd = requestedGetVectorINovelInfoSPtrShared->end( );
+		if( requestedGetVectorIterator != requestedGetVectorEnd ) {
+			auto vectorPtr = saveMapNovelInfos.get( );
+			for( ; requestedGetVectorIterator != requestedGetVectorEnd; ++requestedGetVectorIterator )
+				vectorPtr->emplace_back( *requestedGetVectorIterator );
 		}
 
-		auto vectorPtr = saveMapNovelInfos.get( );
-		auto vectorIterator = sharedPtrs->begin( );
-		auto vectorEnd = sharedPtrs->end( );
-		for( ; vectorIterator != vectorEnd; ++vectorIterator )
-			vectorPtr->emplace( vectorIterator );
-		auto formHtmlGetNext = interfaceThisPtr->formHtmlGetNext( type_name.toStdWString( ), typePageUrl.toStdWString( ), *html_string, *saveMapNovelInfos, *sharedPtrs );
-		if( formHtmlGetNext.empty( ) ) {			// 返回空，则表示没有下一页
-			auto msg = QString( ).append( u8"\n类型 : " ).append( type_name ).append( u8"(" )
-								.append( typePageUrl ).append( ")" ).append( u8"没有匹配下一页的链接" );
-			OStream::errorQDebugOut( msg.toStdString( ), __FILE__, __LINE__, __FUNCTION__ );
+		auto formHtmlGetNext = interfaceThisPtr->formHtmlGetNext( type_name.toStdWString( ), typePageUrl.toStdWString( ), *html_string, *saveMapNovelInfos, *requestedGetVectorINovelInfoSPtrShared );
+		if( formHtmlGetNext.empty( ) )
 			break;
-		}
 		QUrl nextUrl( QString::fromStdWString( formHtmlGetNext ) );
 		++count;
 		this->typeCountMap.emplace( type_name, count );
-		emit requesting_get_next_type_page_url_signals( root_url, type_name, type_url, nextUrl, count, count + 1, saveMapNovelInfos, sharedPtrs );
+		emit requesting_get_next_type_page_url_signals( root_url, type_name, type_url, nextUrl, count, count + 1, saveMapNovelInfos, requestedGetVectorINovelInfoSPtrShared );
 		return;  // 正常执行完毕
 	} while( false );
 
 	// 没有使用 return 返回，则表示终止调用
-	emit requested_get_type_page_url_end( getUrl( ), type_name, type_url, count, sharedPtrs );
+	emit requested_get_type_page_url_end( getUrl( ), type_name, type_url, count, requestedGetVectorINovelInfoSPtrShared );
 }
 void NovelNetJob::slots_requesting_get_next_type_page_url_signals( const QString &root_url, const QString &type_name, const QUrl &old_url, const QUrl &url, size_t old_page_index, size_t current_page_index, const interfacePlugsType::Vector_INovelInfoSPtr_Shared saveMapNovelInfos, const interfacePlugsType::Vector_INovelInfoSPtr_Shared novel_s_ptr_shared ) {
 	if( novel_s_ptr_shared->size( ) == 0 ) {
@@ -305,5 +333,6 @@ void NovelNetJob::slots_requested_get_web_page_signals_end( const QUrl &url ) {
 		}
 	}
 	interfaceThisPtr->endHost( novelInfoSPtr );
+	runStatus = 0; // 可以重新运行
 	qDebug( ) << "请求 : " << url.host( ) << " 结束";
 }
