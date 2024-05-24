@@ -424,14 +424,29 @@ HtmlDocString RequestNet::formHtmlGetNext( const interfacePlugsType::HtmlDocStri
 
 		}
 	} while( false );
-	if( result.empty( ) ) { // 异常， 输出
-		if( quitMsg < 2 ) { // 找不到节点
-			QString errorMsg( u8" xpath 异常，登出 => 退出代码(%1)" );
-			errorMsg = errorMsg.arg( quitMsg );
-			auto msg = QString( "%1 : %2 : %3" ).arg( type_name ).arg( url ).arg( errorMsg );
-			auto path = QString( Cache_Path_Dir ).append( QDir::separator( ) ).append( type_name ).append( u8".html" );
-			OStream::anyDebugOut( thisOStream, msg, __FILE__, __LINE__, __FUNCTION__, path, QString::fromStdWString( htmlText ) );
+	if( result.empty( ) ) { // 输出
+		QString errorMsg;
+		QString fileBaseName;
+		QString errorType;
+		QString dirName = QUrl( GET_URL ).host( );
+		if( quitMsg == 0 ) {
+			errorMsg = u8" 找不到下一页，登出 => 退出代码(%1)";
+			fileBaseName = QString::fromStdWString( type_name );
+			errorType = u8"normal quit";
+		} else if( quitMsg == 1 ) {// 找不到节点
+			errorMsg = u8" xpath 异常，登出 => 退出代码(%1)";
+			errorType = u8"xpath 异常";
+			fileBaseName = QString::fromStdWString( type_name );
 		}
+		errorMsg = errorMsg.arg( quitMsg );
+		auto errorFile = __FILE__;
+		auto errorLine = __LINE__;
+		auto errorFunction = __FUNCTION__;
+		auto msg = QString( "%1 : %2 : %3\n文件:\n\t%4\n行号:\n\t%5 -> %6" ).arg( errorMsg ).arg( type_name ).arg( url ).arg( errorFile ).arg( errorLine ).arg( errorFunction );
+		QString formMsg( u8"<--  \n%1\n -->\n%2" );
+		auto content = formMsg.arg( msg ).arg( QString::fromStdWString( htmlText ) );
+		OStream::anyDebugOut( thisOStream, msg, errorFile, errorLine, errorFunction );
+		OStream::outDebugLogFile( Cache_Path_Dir, content.toLatin1( ), fileBaseName, errorType, dirName, ".html" );
 	}
 	return result;
 }

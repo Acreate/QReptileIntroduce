@@ -45,6 +45,7 @@ include_directories( ${Tools_include_dir} )
 include_directories( ${UserHread_include_dir} )
 include_directories( ${HtmlTools_include_dir} )
 include_directories( ${IOStream_include_dir} )
+include_directories( ${Path_Tool_include_dir} )
 include_directories( ${QtExtendHttpNetWork_include_dir} )
 # # 合并源码
 list( APPEND ${SRC_LIST} ${SRC_UI} ${QM_FILES} ${SRC_DATA} ${cmake_definitions_out} )
@@ -75,6 +76,7 @@ target_link_libraries( ${PROJECT_NAME}
 	NovelInfo
 	Tools
 	HtmlTools
+	Path_Tool
 	IOStream
 	QtExtendHttpNetWork
 )

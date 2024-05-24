@@ -315,8 +315,8 @@ void NovelNetJob::slots_requested_get_type_page_url_end( const QString &root_url
 	qDebug( ) << u8"-----------------------";
 	qDebug( ) << type_name << "(" << url.toString( ) << ") 请求结束";
 	qDebug( ) << u8"-----------------------";
-	QString writeFilePath( u8"%1%3%2%3%4%5" );
-	writeFilePath = writeFilePath.arg( Cache_Path_Dir ).arg( url.host( ) ).arg( QDir::separator( ) ).arg( type_name ).arg( u8".txt" );
+	QString writeFilePath( u8"%2%3%1%4%1%5%6" );
+	writeFilePath = writeFilePath.arg( QDir::separator( ) ).arg( Cache_Path_Dir ).arg( url.host( ) ).arg( u8"txt_out" ).arg( type_name ).arg( u8".txt" );
 
 	Vector_INovelInfoSPtr_Shared infos = typeNovelsMap.at( type_name );
 
@@ -337,18 +337,25 @@ void NovelNetJob::slots_requested_get_web_page_signals_end( const QUrl &url ) {
 	for( ; mapIterator != mapEnd; ++mapIterator ) {
 		auto novelInfos = *mapIterator->second;
 		for( auto &novel : novelInfos ) {
-			auto saveIterator = novelInfoSPtr->begin( );
-			auto saveEnd = novelInfoSPtr->end( );
-			for( ; saveIterator != saveEnd; ++saveIterator ) {
-				auto nsaveNovel = *saveIterator;
-				HtmlDocString leftUrl;
-				HtmlDocString rightUrl;
-				if( nsaveNovel->getNovelUrl( &leftUrl ) == novel->getNovelUrl( &rightUrl ) && leftUrl == rightUrl )
-					break;
-			}
-			if( saveIterator != saveEnd )
-				continue;
-			novelInfoSPtr->emplace_back( novel );
+			cylHtmlTools::HtmlWorkThread< bool * >::Current_Thread_Run currentThreadRun = [&]( const cylHtmlTools::HtmlWorkThread< bool * > *html_work_thread, const std::thread *run_std_cpp_thread, std::mutex *html_work_thread_mutex, std::mutex *std_cpp_thread_mutex, bool *data, const time_t *startTime ) {
+				auto saveIterator = novelInfoSPtr->begin( );
+				auto saveEnd = novelInfoSPtr->end( );
+				for( ; saveIterator != saveEnd; ++saveIterator ) {
+					auto nsaveNovel = *saveIterator;
+					HtmlDocString leftUrl;
+					HtmlDocString rightUrl;
+					if( nsaveNovel->getNovelUrl( &leftUrl ) == novel->getNovelUrl( &rightUrl ) && leftUrl == rightUrl )
+						break;
+				}
+				if( saveIterator != saveEnd )
+					return;
+				novelInfoSPtr->emplace_back( novel );
+			};
+			bool has = true;
+			cylHtmlTools::HtmlWorkThread< bool * > thread( nullptr, currentThreadRun, nullptr, &has );
+			thread.start( );
+			while( thread.isRun( ) )
+				qApp->processEvents( );
 		}
 	}
 	interfaceThisPtr->endHost( *novelInfoSPtr );
