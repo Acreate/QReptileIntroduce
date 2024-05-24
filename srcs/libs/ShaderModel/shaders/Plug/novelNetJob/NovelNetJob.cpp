@@ -209,11 +209,7 @@ void NovelNetJob::slots_requesting_get_type_page_url_signals( const QString &roo
 				auto requestConnect = new cylHttpNetWork::RequestConnect;
 				auto request = new cylHttpNetWork::Request( networkAccessManager.get( ), requestConnect );
 				request->netGetWork( novelUrl, *networkRequest );
-				auto reply = requestConnect->getNetworkReply( );
-				while( !reply->isRunning( ) ) // 等待运行
-					request->sleep( 200 );
-				while( !reply->isFinished( ) ) // 等待结束
-					request->sleep( 200 );
+				auto reply = request->getNetworkReply( );
 				if( reply->error( ) != QNetworkReply::NoError ) { // 异常则跳过这次获取
 					auto msg = getErrorQStr( reply->error( ) );
 					msg.append( u8"\n小说地址:" ).append( novelUrl );
