@@ -89,6 +89,10 @@ size_t NovelInfo::getNovelUrlAtName( interfacePlugsType::HtmlDocString *result_t
 	}
 	return 0;
 }
+size_t NovelInfo::objToHtmlDocString( interfacePlugsType::HtmlDocString *result_serializable_html_doc_string ) {
+	
+	return 0;
+}
 
 void NovelInfo::clear( ) {
 	novelName = info = time = format =

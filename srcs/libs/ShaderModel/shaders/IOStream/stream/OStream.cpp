@@ -1,15 +1,15 @@
 ﻿#include "OStream.h"
 #include <QDebug>
 #include <QFile>
-OStream::UN_Map_Iterator_Template< OStream::QString_Shared, OStream::OStream_Ptr > OStream::defaultOStreamMap;
-void OStream::anyDebugOut( OStream *os, const std::string &msg, const std::string &fileName, size_t line, const std::string &callFunName, const QString &writePath, const QString &writeContent ) {
+
+void OStream::anyDebugOut( OStream *os, const QString &msg, const QString &fileName, size_t line, const QString &callFunName, const QString &writePath, const QString &writeContent ) {
 	QStringList msgList;
 	QString buff;
 	msgList << u8"============================================";
-	msgList << msg.c_str( );
+	msgList << msg;
 	msgList << u8"--------------------------------------------";
 	msgList << u8"--------------------------------------------";
-	buff.append( fileName.c_str( ) ).append( u8"\n\t调用: " ).append( QString::fromStdString( callFunName ) ).append( u8"\n\t第 " ).append( QString( u8"%1" ).arg( line ) ).append( u8" 行" );
+	buff.append( fileName ).append( u8"\n\t调用: " ).append( callFunName ).append( u8"\n\t第 " ).append( QString( u8"%1" ).arg( line ) ).append( u8" 行" );
 	msgList << buff;
 	msgList << u8"============================================";
 	buff = msgList.join( "\n" );
@@ -28,14 +28,14 @@ void OStream::anyDebugOut( OStream *os, const std::string &msg, const std::strin
 		writeHtmlFile.close( );
 	}
 }
-void OStream::errorQDebugOut( const std::string &msg, const std::string &fileName, size_t line, const std::string &callFunName, const QString &writePath, const QString &writeContent ) {
+void OStream::errorQDebugOut( const QString &msg, const QString &fileName, size_t line, const QString &callFunName, const QString &writePath, const QString &writeContent ) {
 	QStringList msgList;
 	QString buff;
 	msgList << u8"============================================";
-	msgList << msg.c_str( );
+	msgList << msg;
 	msgList << u8"--------------------------------------------";
 	msgList << u8"--------------------------------------------";
-	buff.append( fileName.c_str( ) ).append( u8"\n\t调用: " ).append( QString::fromStdString( callFunName ) ).append( u8"\n\t第 " ).append( QString( u8"%1" ).arg( line ) ).append( u8" 行" );
+	buff.append( fileName ).append( u8"\n\t调用: " ).append( callFunName ).append( u8"\n\t第 " ).append( QString( u8"%1" ).arg( line ) ).append( u8" 行" );
 	msgList << buff;
 	msgList << u8"============================================";
 	buff = msgList.join( "\n" );
@@ -49,15 +49,15 @@ void OStream::errorQDebugOut( const std::string &msg, const std::string &fileNam
 		writeHtmlFile.close( );
 	}
 }
-void OStream::errorQDebugOut( OStream *os, const std::string &msg, const std::string &fileName, size_t line, const std::string &callFunName, const QString &writePath, const QString &writeContent ) {
+void OStream::errorQDebugOut( OStream *os, const QString &msg, const QString &fileName, size_t line, const QString &callFunName, const QString &writePath, const QString &writeContent ) {
 	if( os ) {
 		QStringList msgList;
 		QString buff;
 		msgList << u8"============================================";
-		msgList << msg.c_str( );
+		msgList << msg;
 		msgList << u8"--------------------------------------------";
 		msgList << u8"--------------------------------------------";
-		buff.append( fileName.c_str( ) ).append( u8"\n\t调用: " ).append( QString::fromStdString( callFunName ) ).append( u8"\n\t第 " ).append( QString( u8"%1" ).arg( line ) ).append( u8" 行" );
+		buff.append( fileName ).append( u8"\n\t调用: " ).append( callFunName ).append( u8"\n\t第 " ).append( QString( u8"%1" ).arg( line ) ).append( u8" 行" );
 		msgList << buff;
 		msgList << u8"============================================";
 		buff = msgList.join( "\n" );
@@ -75,17 +75,19 @@ void OStream::errorQDebugOut( OStream *os, const std::string &msg, const std::st
 	} else
 		OStream::errorQDebugOut( msg, fileName, line, callFunName, writePath, writeContent );
 }
-void OStream::anyDebugOut( OStream *os, const std::string &msg ) {
+void OStream::anyDebugOut( OStream *os, const QString &msg ) {
+
 	if( os )
 		*os << msg;
 	qDebug( ) << msg;
 }
-void OStream::errorQDebugOut( OStream *os, const std::string &msg ) {
+
+void OStream::errorQDebugOut( OStream *os, const QString &msg ) {
 	if( os )
 		*os << msg;
 	else
 		OStream::errorQDebugOut( msg );
 }
-void OStream::errorQDebugOut( const std::string &msg ) {
+void OStream::errorQDebugOut( const QString &msg ) {
 	qDebug( ) << msg;
 }

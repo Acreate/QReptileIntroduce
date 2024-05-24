@@ -56,7 +56,6 @@ public:
 		}
 		friend bool operator!=( const NovelTypeNamePair &lhs, const NovelTypeNamePair &rhs ) { return !( lhs == rhs ); }
 	};
-
 public:
 	/// <summary>
 	/// std::shared_ptr< cylHttpNetWork::RequestConnect >
@@ -119,7 +118,20 @@ public: // - 小说网站的信息数据
 	/// </summary>
 	std::unordered_map< QString, interfacePlugsType::Vector_INovelInfoSPtr_Shared > typeNovelsMap;
 	std::unordered_map< QString, size_t > typeCountMap;
-
+private:
+	/// <summary>
+	/// 存储小说到仓库
+	/// </summary>
+	/// <param name="requestedGetVectorINovelInfoSPtrShared">存储列表</param>
+	/// <param name="saveMapNovelInfos">仓库已经保存的列表</param>
+	/// <param name="novel">检测的小说</param>
+	/// <param name="result_msg">如果返回为 nullptr，则该值保存错误消息</param>
+	/// <returns>解析得到的小说</returns>
+	interfacePlugsType::INovelInfo_Shared saveToStoreNovels(
+		interfacePlugsType::Vector_INovelInfoSPtr_Shared &requestedGetVectorINovelInfoSPtrShared,
+		interfacePlugsType::Vector_INovelInfoSPtr_Shared &saveMapNovelInfos,
+		interfacePlugsType::INovelInfo_Shared &novel,
+		QString *result_msg );
 Q_SIGNALS: // - 获取被调用
 	/// <summary>
 	/// 请求一个根路径-获取被调用
@@ -181,6 +193,7 @@ private slots: // 信号处理
 	/// <param name="url">链接</param>
 	/// <param name="request_connect">请求体</param>
 	void slots_requesting_get_root_page_signals( const QUrl &url, cylHttpNetWork::RequestConnect *request_connect );
+
 	/// <summary>
 	/// 请求一个 type 类型的页面-首次获取被调用
 	/// </summary>
@@ -201,7 +214,7 @@ private slots: // 信号处理
 	/// <param name="saveMapNovelInfos">已经保存的小说列表</param>
 	/// <param name="novel_s_ptr_shared">小说列表</param>
 	void slots_requesting_get_next_type_page_url_signals( const QString &root_url, const QString &type_name, const QUrl &old_url, const QUrl &url, size_t old_page_index, size_t current_page_index, const interfacePlugsType::Vector_INovelInfoSPtr_Shared saveMapNovelInfos, const interfacePlugsType::Vector_INovelInfoSPtr_Shared novel_s_ptr_shared );
-	
+
 	/// <summary>
 	/// 小说类型结束会调用该函数
 	/// </summary>

@@ -82,6 +82,14 @@ namespace interfacePlugsType {
 		/// <param name="result_type_name">返回小说类型</param>
 		/// <returns>类型名称</returns>
 		virtual size_t getNovelUrlAtName( HtmlDocString *result_type_name ) = 0;
+
+		/// <summary>
+		/// 对象转换到字符串
+		/// </summary>
+		/// <param name="result_serializable_html_doc_string">字符串返回</param>
+		/// <returns>字符串大小</returns>
+		virtual size_t objToHtmlDocString( HtmlDocString *result_serializable_html_doc_string ) = 0;
+		
 	};
 }
 
