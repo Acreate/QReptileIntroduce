@@ -82,11 +82,6 @@ void NovelNetJob::initObjProperty( ) {
 }
 
 void NovelNetJob::initConnect( ) {
-	connect( root->first.get( ), &cylHttpNetWork::RequestConnect::networkReplyFinished, [this]( cylHttpNetWork::RequestConnect *request_connect ) {
-		QNetworkReply *networkReply = request_connect->getNetworkReply( );
-		emit requesting_get_root_page_signals( networkReply->url( ), request_connect );
-	} );
-
 	connect( this, &NovelNetJob::requesting_get_root_page_signals, this, &NovelNetJob::slots_requesting_get_root_page_signals );
 	connect( this, &NovelNetJob::requesting_get_type_page_url_signals, this, &NovelNetJob::slots_requesting_get_type_page_url_signals );
 	connect( this, &NovelNetJob::requesting_get_next_type_page_url_signals, this, &NovelNetJob::slots_requesting_get_next_type_page_url_signals );
@@ -109,8 +104,14 @@ bool NovelNetJob::start( ) {
 	interfaceThisPtr->initAfter( );
 	interfaceThisPtr->initBefore( );
 	runStatus = 1;
-	root->second->netGetWork( qUrl, *networkRequest );
-	return true;
+	cylHttpNetWork::Request *request = root->second.get( );
+	request->netGetWork( qUrl, *networkRequest );
+	auto networkReply = request->getNetworkReply( 15, 3 * 60 * 1000, 200 );
+	if( networkReply->error( ) != QNetworkReply::NoError ) {
+		emit requesting_get_root_page_signals( networkReply->url( ), root->first.get( ) );
+		return true;
+	}
+	return false;
 }
 QString NovelNetJob::getUrl( ) const {
 	HtmlDocString resultUrl;
@@ -154,8 +155,12 @@ void NovelNetJob::slots_requesting_get_root_page_signals( const QUrl &url, cylHt
 		QString typeUrl = QString::fromStdWString( iterator->second );
 		auto requestConnect = new cylHttpNetWork::RequestConnect;
 		auto request = new cylHttpNetWork::Request( networkAccessManager.get( ), requestConnect );
-		connect( requestConnect, &cylHttpNetWork::RequestConnect::networkReplyFinished, [requestConnect,request, typeName, typeUrl ,this]( cylHttpNetWork::RequestConnect *request_connect ) {
-			auto networkReply = request_connect->getNetworkReply( );
+
+		++typeCount;
+		request->netGetWork( typeUrl, *networkRequest );
+		networkReply = request->getNetworkReply( 15, 3 * 60 * 1000, 200 );
+		if( networkReply->error( ) != QNetworkReply::NoError ) {
+			emit requesting_get_root_page_signals( networkReply->url( ), root->first.get( ) );
 			if( networkReply->error( ) != QNetworkReply::NoError ) {
 				auto msg = getErrorQStr( networkReply->error( ) );
 				msg.append( u8"\n类型 : " ).append( typeName ).append( u8"(" ).append( typeUrl ).append( ")" );
@@ -165,9 +170,7 @@ void NovelNetJob::slots_requesting_get_root_page_signals( const QUrl &url, cylHt
 			emit requesting_get_type_page_url_signals( getUrl( ), typeName, typeUrl, std::make_shared< cylHtmlTools::HtmlString >( QString( networkReply->readAll( ) ).toStdWString( ) ) );
 			requestConnect->deleteLater( );
 			request->deleteLater( );
-		} );
-		++typeCount;
-		request->netGetWork( typeUrl, *networkRequest );
+		}
 	}
 }
 
@@ -209,7 +212,9 @@ void NovelNetJob::slots_requesting_get_type_page_url_signals( const QString &roo
 				auto requestConnect = new cylHttpNetWork::RequestConnect;
 				auto request = new cylHttpNetWork::Request( networkAccessManager.get( ), requestConnect );
 				request->netGetWork( novelUrl, *networkRequest );
-				auto reply = request->getNetworkReply( );
+
+
+				auto reply = request->getNetworkReply( 15, 3 * 60 * 1000, 200 );
 				if( reply->error( ) != QNetworkReply::NoError ) { // 异常则跳过这次获取
 					auto msg = getErrorQStr( reply->error( ) );
 					msg.append( u8"\n小说地址:" ).append( novelUrl );
@@ -261,20 +266,23 @@ void NovelNetJob::slots_requesting_get_next_type_page_url_signals( const QString
 	}
 	auto requestConnect = new cylHttpNetWork::RequestConnect;
 	auto request = new cylHttpNetWork::Request( networkAccessManager.get( ), requestConnect );
-	connect( requestConnect, &cylHttpNetWork::RequestConnect::networkReplyFinished, [requestConnect,request, type_name, url ,this]( cylHttpNetWork::RequestConnect *request_connect ) {
-		auto networkReply = request_connect->getNetworkReply( );
-		if( networkReply->error( ) != QNetworkReply::NoError ) {
-			auto msg = getErrorQStr( networkReply->error( ) );
-			msg.append( u8"\n类型 : " ).append( type_name ).append( u8"(" ).append( url.toString( ) ).append( ")" );
-			OStream::anyDebugOut( oStream, msg.toStdString( ), __FILE__, __LINE__, __FUNCTION__ );
-			return;
-		}
-		emit requesting_get_type_page_url_signals( getUrl( ), type_name, url, std::make_shared< cylHtmlTools::HtmlString >( QString( networkReply->readAll( ) ).toStdWString( ) ) );
-		requestConnect->deleteLater( );
-		request->deleteLater( );
-	} );
 	++typeCount;
 	request->netGetWork( url, *networkRequest );
+	auto reply = request->getNetworkReply( 15, 3 * 60 * 1000, 200 );
+	if( reply->error( ) != QNetworkReply::NoError ) { // 异常则跳过这次获取
+		auto msg = getErrorQStr( reply->error( ) );
+		msg.append( u8"\n类型 : " ).append( type_name ).append( u8"(" ).append( url.toString( ) ).append( ")" );
+		OStream::anyDebugOut( oStream, msg.toStdString( ), __FILE__, __LINE__, __FUNCTION__ );
+		requestConnect->deleteLater( );
+		request->deleteLater( );
+		return;
+	}
+	QString string( reply->readAll( ) );
+	auto stdWString = string.toStdWString( );
+	auto htmlString = std::make_shared< cylHtmlTools::HtmlString >( stdWString );
+	emit requesting_get_type_page_url_signals( getUrl( ), type_name, url, htmlString );
+	requestConnect->deleteLater( );
+	request->deleteLater( );
 }
 
 void NovelNetJob::slots_requested_get_type_page_url_end( const QString &root_url, const QString &type_name, const QUrl &url, size_t current_page_index, const interfacePlugsType::Vector_INovelInfoSPtr_Shared novel_s_ptr_shared ) {
