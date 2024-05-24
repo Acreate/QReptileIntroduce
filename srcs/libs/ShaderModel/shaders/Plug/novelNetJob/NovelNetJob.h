@@ -201,17 +201,7 @@ private slots: // 信号处理
 	/// <param name="saveMapNovelInfos">已经保存的小说列表</param>
 	/// <param name="novel_s_ptr_shared">小说列表</param>
 	void slots_requesting_get_next_type_page_url_signals( const QString &root_url, const QString &type_name, const QUrl &old_url, const QUrl &url, size_t old_page_index, size_t current_page_index, const interfacePlugsType::Vector_INovelInfoSPtr_Shared saveMapNovelInfos, const interfacePlugsType::Vector_INovelInfoSPtr_Shared novel_s_ptr_shared );
-	/// <summary>
-	/// 小说需要到详情页请求时，会调用该页面
-	/// </summary>
-	/// <param name="root_url">根链接</param>
-	/// <param name="type_name">类型名称</param>
-	/// <param name="type_page_url">类型链接</param>
-	/// <param name="novelName">小说名称</param>
-	/// <param name="url">小数链接</param>
-	/// <param name="novel_s_ptr_shared">请求列表</param>
-	/// <param name="html_txt">页面文本</param>
-	void slots_requesting_get_novel_page_url_signals( const QString &root_url, const QString &type_name, const QString &type_page_url, const QString &novelName, const QUrl &url, const interfacePlugsType::Vector_INovelInfoSPtr_Shared novel_s_ptr_shared, const QString &html_txt );
+	
 	/// <summary>
 	/// 小说类型结束会调用该函数
 	/// </summary>

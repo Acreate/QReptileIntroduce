@@ -75,3 +75,17 @@ void OStream::errorQDebugOut( OStream *os, const std::string &msg, const std::st
 	} else
 		OStream::errorQDebugOut( msg, fileName, line, callFunName, writePath, writeContent );
 }
+void OStream::anyDebugOut( OStream *os, const std::string &msg ) {
+	if( os )
+		*os << msg;
+	qDebug( ) << msg;
+}
+void OStream::errorQDebugOut( OStream *os, const std::string &msg ) {
+	if( os )
+		*os << msg;
+	else
+		OStream::errorQDebugOut( msg );
+}
+void OStream::errorQDebugOut( const std::string &msg ) {
+	qDebug( ) << msg;
+}

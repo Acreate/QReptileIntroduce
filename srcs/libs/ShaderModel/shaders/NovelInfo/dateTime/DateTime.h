@@ -6,40 +6,40 @@
 #include <qdatetime.h>
 #include <QString>
 
-#include "../export/Plug_export.h"
-class PLUG_EXPORT DateTime {
+#include "../nameSpace/interfacePlugsType.h"
+class NOVELINFO_EXPORT DateTime {
 public:
 	/// <summary>
 	/// 从时间戳当中获取-秒
 	/// </summary>
 	/// <param name="milliseconds">时间戳</param>
 	/// <returns>秒</returns>
-	static int16_t getTimeToSecond(const std::chrono::milliseconds& milliseconds);
+	static int16_t getTimeToSecond( const std::chrono::milliseconds &milliseconds );
 	/// <summary>
 	/// 从时间戳当中获取-分钟
 	/// </summary>
 	/// <param name="milliseconds">时间戳</param>
 	/// <returns>分钟</returns>
-	static int16_t getTimeToMinute(const std::chrono::milliseconds& milliseconds);
+	static int16_t getTimeToMinute( const std::chrono::milliseconds &milliseconds );
 	/// <summary>
 	/// 从时间戳当中获取-小时
 	/// </summary>
 	/// <param name="milliseconds">时间戳</param>
 	/// <returns>小时</returns>
-	static int16_t getTimeToHour(const std::chrono::milliseconds& milliseconds);
+	static int16_t getTimeToHour( const std::chrono::milliseconds &milliseconds );
 	/// <summary>
 	/// 从时间戳当中获取-日
 	/// </summary>
 	/// <param name="milliseconds">时间戳</param>
 	/// <returns>日</returns>
-	static int16_t getTimeToDay(const std::chrono::milliseconds& milliseconds);
+	static int16_t getTimeToDay( const std::chrono::milliseconds &milliseconds );
 	/// <summary>
 	/// 比较一个时间，并且返回时间差
 	/// </summary>
 	/// <param name="left_date_time">被减数</param>
 	/// <param name="right_date_time">减数</param>
 	/// <returns>时间差-日</returns>
-	static std::chrono::milliseconds compare( const QDateTime &left_date_time, const QDateTime &right_date_time );
+	static std::chrono::milliseconds compareDateTime( const QDateTime &left_date_time, const QDateTime &right_date_time );
 	/// <summary>
 	/// 比较一个时间，并且返回时间差
 	/// </summary>

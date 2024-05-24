@@ -44,6 +44,29 @@ public:
 	/// <param name="writePath">写入路径</param>
 	/// <param name="writeContent">写入内容</param>
 	static void errorQDebugOut( OStream *os, const std::string &msg, const std::string &fileName, size_t line, const std::string &callFunName, const QString &writePath = QString( u8"" ), const QString &writeContent = QString( u8"" ) );
+	/// <summary>
+	/// 使用指定 os 输出信息，假设 os 为null，将会调用
+	/// static void errorQDebugOut( const std::string &msg );
+	/// 如果 writePath 正确，那么将会写入内容。
+	/// </summary>
+	/// <param name="os">输出</param>
+	/// <param name="msg">消息</param>
+	static void anyDebugOut( OStream *os, const std::string &msg );
+	/// <summary>
+	/// 使用指定 os 输出信息，假设 os 为null，将会调用
+	/// static void errorQDebugOut( const std::string &msg );
+	/// 如果 writePath 正确，那么将会写入内容。
+	/// </summary>
+	/// <param name="os">输出</param>
+	/// <param name="msg">消息</param>
+	static void errorQDebugOut( OStream *os, const std::string &msg );
+	/// <summary>
+	/// 使用指定 os 输出信息，假设 os 为null，将会调用
+	/// static void errorQDebugOut( const std::string &msg );
+	/// 如果 writePath 正确，那么将会写入内容。
+	/// </summary>
+	/// <param name="msg">消息</param>
+	static void errorQDebugOut( const std::string &msg );
 private:
 	template< class TKey, class TValue >
 	using UN_Map_Iterator_Template = std::unordered_map< TKey, TValue >;
