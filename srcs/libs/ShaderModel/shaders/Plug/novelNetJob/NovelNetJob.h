@@ -185,7 +185,7 @@ Q_SIGNALS: // - 获取被调用
 	/// </summary>
 	/// <param name="url">小说的网站</param>
 	void requested_get_web_page_signals_end( const QUrl &url );
-private slots: // 信号处理
+private : // 信号处理
 
 	/// <summary>
 	/// 请求一个根路径-获取被调用
@@ -201,7 +201,7 @@ private slots: // 信号处理
 	/// <param name="type_name">小说类型</param>
 	/// <param name="type_url">小说页面链接</param>
 	/// <param name="html_string">网页内容</param>
-	void slots_requesting_get_type_page_url_signals( const QString &root_url, const QString &type_name, const QUrl &type_url, cylHtmlTools::HtmlString_Shared html_string );
+	void slots_requesting_get_type_page_url_signals( const QString &root_url, const QString &type_name, const QUrl &type_url, cylHtmlTools::HtmlString_Shared &html_string );
 	/// <summary>
 	/// 请求下一页时调用该链接
 	/// </summary>
@@ -213,7 +213,7 @@ private slots: // 信号处理
 	/// <param name="current_page_index">当前页下标</param>
 	/// <param name="saveMapNovelInfos">已经保存的小说列表</param>
 	/// <param name="novel_s_ptr_shared">小说列表</param>
-	void slots_requesting_get_next_type_page_url_signals( const QString &root_url, const QString &type_name, const QUrl &old_url, const QUrl &url, size_t old_page_index, size_t current_page_index, const interfacePlugsType::Vector_INovelInfoSPtr_Shared saveMapNovelInfos, const interfacePlugsType::Vector_INovelInfoSPtr_Shared novel_s_ptr_shared );
+	void slots_requesting_get_next_type_page_url_signals( const QString &root_url, const QString &type_name, const QUrl &old_url, const QUrl &url, size_t old_page_index, size_t current_page_index, const interfacePlugsType::Vector_INovelInfoSPtr_Shared &saveMapNovelInfos, const interfacePlugsType::Vector_INovelInfoSPtr_Shared &novel_s_ptr_shared );
 
 	/// <summary>
 	/// 小说类型结束会调用该函数
@@ -223,7 +223,7 @@ private slots: // 信号处理
 	/// <param name="url">类型链接</param>
 	/// <param name="current_page_index">当前下标</param>
 	/// <param name="novel_s_ptr_shared">小说列表</param>
-	void slots_requested_get_type_page_url_end( const QString &root_url, const QString &type_name, const QUrl &url, size_t current_page_index, const interfacePlugsType::Vector_INovelInfoSPtr_Shared novel_s_ptr_shared );
+	void slots_requested_get_type_page_url_end( const QString &root_url, const QString &type_name, const QUrl &url, size_t current_page_index, const interfacePlugsType::Vector_INovelInfoSPtr_Shared &novel_s_ptr_shared );
 	/// <summary>
 	/// 网站结束会调用该链接
 	/// </summary>

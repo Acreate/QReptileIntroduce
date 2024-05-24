@@ -29,7 +29,7 @@ QStringList OStream::anyDebugOut( OStream *os, const QString &msg, const QString
 	auto errorMessage = buff.toStdString( );
 	qDebug( ) << errorMessage.c_str( );
 	if( os ) {
-		*os << errorMessage;
+		*os << errorMessage << "\n";
 		os->flush( );
 	}
 	return msgList;
@@ -62,7 +62,8 @@ QStringList OStream::errorQDebugOut( OStream *os, const QString &msg, const QStr
 		buff = msgList.join( "\n" );
 		std::string string = buff.toStdString( );
 		const char *cStr = string.c_str( );
-		*os << cStr;
+		*os << cStr << "\n";
+		os->flush( );
 		return msgList;
 	} else
 		return OStream::errorQDebugOut( msg, fileName, line, callFunName );
@@ -96,17 +97,20 @@ QStringList OStream::errorQDebugOut( OStream *os, const QString &msg, const QStr
 	return msgList;
 }
 void OStream::anyDebugOut( OStream *os, const QString &msg ) {
-	if( os )
-		*os << msg;
-	qDebug( ) << msg;
+	if( os ) {
+		*os << msg << "\n";
+		os->flush( );
+	}
+	qDebug( ) << msg.toStdString(  ).c_str(  );
 }
 
 void OStream::errorQDebugOut( OStream *os, const QString &msg ) {
-	if( os )
-		*os << msg;
-	else
+	if( os ) {
+		*os << msg << "\n";
+		os->flush( );
+	} else
 		OStream::errorQDebugOut( msg );
 }
 void OStream::errorQDebugOut( const QString &msg ) {
-	qDebug( ) << msg;
+	qDebug( ) << msg.toStdString(  ).c_str(  );
 }

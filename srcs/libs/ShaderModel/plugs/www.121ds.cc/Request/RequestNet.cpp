@@ -249,7 +249,7 @@ Vector_INovelInfoSPtr RequestNet::formHtmlGetTypePageNovels( const interfacePlug
 					quitMsg = DateTime_Error_Expire; // xpath 异常 : 更新时间 找不到
 					break;
 				}
-				novelInfoBuffPtr->time = std::make_shared< QString >( fromStdWString );
+				novelInfoBuffPtr->updateTime = std::make_shared< QString >( fromStdWString );
 				//////////// 作者 xpath
 				xpath = cylHtmlTools::XPath( QString( tr( u8"./dd/span" ) ).toStdWString( ) );
 				htmlNodes = vectorIterator->get( )->xpath( xpath );
@@ -365,7 +365,7 @@ Vector_INovelInfoSPtr RequestNet::formHtmlGetTypePageNovels( const interfacePlug
 				// 成功获取即可输出
 				QString outMsg( u8"[%1]小说(%2):url(%3) -> 解析成功" );
 				outMsg = outMsg.arg( *novelInfoBuffPtr->typeName ).arg( *novelInfoBuffPtr->novelName ).arg( *novelInfoBuffPtr->url );
-				OStream::anyDebugOut( oStream, outMsg );
+				OStream::anyDebugOut( thisOStream, outMsg );
 				novelInfoPtr.reset( ); // 重置
 				novelInfoBuffPtr = std::make_shared< NovelInfo >( );
 			}

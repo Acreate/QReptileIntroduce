@@ -11,7 +11,7 @@ private:
 	std::shared_ptr< QString >
 		novelName,
 		info,
-		time,
+		updateTime,
 		format,
 		lastRequestTime,
 		lastRequestTimeFormat,

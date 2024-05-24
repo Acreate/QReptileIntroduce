@@ -20,8 +20,8 @@ size_t NovelInfo::getNovelInfo( interfacePlugsType::HtmlDocString *result_info )
 	return 0;
 }
 size_t NovelInfo::getNovelUpdateTime( interfacePlugsType::HtmlDocString *result_time ) {
-	if( time ) {
-		*result_time = time->toStdWString( );
+	if( updateTime ) {
+		*result_time = updateTime->toStdWString( );
 		return result_time->size( );
 	}
 	return 0;
@@ -89,13 +89,35 @@ size_t NovelInfo::getNovelUrlAtName( interfacePlugsType::HtmlDocString *result_t
 	}
 	return 0;
 }
+#define SHARED_PTR_TO_RESULT( shared_ptr , default) ((shared_ptr)? *(shared_ptr):(default))
 size_t NovelInfo::objToHtmlDocString( interfacePlugsType::HtmlDocString *result_serializable_html_doc_string ) {
-	
-	return 0;
+
+	QString result(
+		u8"\t名称: %1\n"
+		u8"\t类型: %2\n"
+		u8"\t作者: %3\n"
+		u8"\t最后更新项: %4\n"
+		u8"\t更新日期: %5\n"
+		u8"\t获取日期: %6\n"
+		u8"\t地址: %7\n"
+		u8"\t详情: %8"
+	);
+	*result_serializable_html_doc_string =
+		result.arg( SHARED_PTR_TO_RESULT( novelName, "" ) )
+			.arg( SHARED_PTR_TO_RESULT( typeName, "" ) )
+			.arg( SHARED_PTR_TO_RESULT( author, "" ) )
+			.arg( SHARED_PTR_TO_RESULT( lastItem, "" ) )
+			.arg( SHARED_PTR_TO_RESULT( updateTime, "" ) )
+			.arg( SHARED_PTR_TO_RESULT( lastRequestTime, "" ) )
+			.arg( SHARED_PTR_TO_RESULT( url, "" ) )
+			.arg( SHARED_PTR_TO_RESULT( info, "" ) )
+			.toStdWString( );
+
+	return result_serializable_html_doc_string->size( );
 }
 
 void NovelInfo::clear( ) {
-	novelName = info = time = format =
+	novelName = info = updateTime = format =
 		lastRequestTime = lastRequestTimeFormat =
 		author = url = lastItem = additionalData =
 		typePageUrl = nullptr;
