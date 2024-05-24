@@ -106,7 +106,7 @@ Map_HtmlStrK_HtmlStrV * RequestNet::formHtmlGetTypeTheUrls( const interfacePlugs
 				size_t index = 0, end = stdWString->size( );
 				auto htmlDoc = cylHtmlTools::HtmlDoc::parse( stdWString, end, index );
 				if( !htmlDoc.get( ) ) {
-					auto msg = QString( "%1 : %2" ).arg( QString::fromStdWString( url ) ).arg( QString( u8" HtmlDoc::parse 异常，登出" ) ).toStdString( );
+					auto msg = QString( "%1 : %2" ).arg( QString::fromStdWString( url ) ).arg( QString( u8" HtmlDoc::parse 异常，登出" ) );
 					OStream::anyDebugOut( thisOStream, msg, __FILE__, __LINE__, __FUNCTION__ );
 					return;
 				}
@@ -117,7 +117,7 @@ Map_HtmlStrK_HtmlStrV * RequestNet::formHtmlGetTypeTheUrls( const interfacePlugs
 				auto htmlNodeSPtrShared = htmlDoc->getHtmlNodeRoots( );
 				auto vectorHtmlNodeSPtrShared = xpath.buider( htmlNodeSPtrShared );
 				if( !vectorHtmlNodeSPtrShared ) {
-					auto msg = QString( "%1 : %2 " ).arg( QString::fromStdWString( url ) ).arg( QString( u8" xpath 异常，登出" ) ).toStdString( );
+					auto msg = QString( "%1 : %2 " ).arg( QString::fromStdWString( url ) ).arg( QString( u8" xpath 异常，登出" ) );
 					OStream::anyDebugOut( thisOStream, msg, __FILE__, __LINE__, __FUNCTION__ );
 					return;
 				}
@@ -303,49 +303,49 @@ Vector_INovelInfoSPtr RequestNet::formHtmlGetTypePageNovels( const interfacePlug
 						QString errorMsg( u8" DateTime_Error_Expire 异常(过期)，登出:\n\turl (%1) -> 小说名称 (%2) => 退出代码(%3)" );
 						errorMsg = errorMsg.arg( *novelInfoBuffPtr->url ).arg( *novelInfoBuffPtr->novelName ).arg( quitMsg );
 						auto msg = QString( "%1 : %2 : %3" ).arg( type_name ).arg( request_url ).arg( errorMsg );
-						OStream::anyDebugOut( thisOStream, msg.toStdString( ) );
+						OStream::anyDebugOut( thisOStream, msg );
 						break;
 					}
 					case DateTime_Error_None : {
 						QString errorMsg( u8" DateTime_Error_None 异常(日期找不到)，登出:\n\turl (%1) -> 小说名称 (%2) => 退出代码(%3)" );
 						errorMsg = errorMsg.arg( *novelInfoBuffPtr->url ).arg( *novelInfoBuffPtr->novelName ).arg( quitMsg ) + includeNodeContent;
 						auto msg = QString( "%1 : %2 : %3" ).arg( type_name ).arg( request_url ).arg( errorMsg );
-						OStream::anyDebugOut( thisOStream, msg.toStdString( ) );
+						OStream::anyDebugOut( thisOStream, msg );
 						break;
 					}
 					case DateTime_Error_Xpath : {
 						QString errorMsg( u8" DateTime_Error_Xpath 异常(日期 xpath 错误)，登出:\n\turl (%1) -> 小说名称 (%2) => 退出代码(%3)" );
 						errorMsg = errorMsg.arg( *novelInfoBuffPtr->url ).arg( *novelInfoBuffPtr->novelName ).arg( quitMsg ) + includeNodeContent;
 						auto msg = QString( "%1 : %2 : %3" ).arg( type_name ).arg( request_url ).arg( errorMsg );
-						OStream::anyDebugOut( thisOStream, msg.toStdString( ) );
+						OStream::anyDebugOut( thisOStream, msg );
 						break;
 					}
 					case Name_Error_None : {
 						QString errorMsg( u8" Name_Error_None 异常，登出:\n\turl (%1) -> 小说名称 (none) => 退出代码(%2)" );
 						errorMsg = errorMsg.arg( *novelInfoBuffPtr->url ).arg( quitMsg ) + includeNodeContent;
 						auto msg = QString( "%1 : %2 : %3" ).arg( type_name ).arg( request_url ).arg( errorMsg );
-						OStream::anyDebugOut( thisOStream, msg.toStdString( ) );
+						OStream::anyDebugOut( thisOStream, msg );
 						break;
 					}
 					case Name_Error_Xpath : {
 						QString errorMsg( u8" Name_Error_Xpath 异常，登出:\n\turl (%1) -> 小说名称 (none) => 退出代码(%2)" );
 						errorMsg = errorMsg.arg( *novelInfoBuffPtr->url ).arg( quitMsg ) + includeNodeContent;
 						auto msg = QString( "%1 : %2 : %3" ).arg( type_name ).arg( request_url ).arg( errorMsg );
-						OStream::anyDebugOut( thisOStream, msg.toStdString( ) );
+						OStream::anyDebugOut( thisOStream, msg );
 						break;
 					}
 					case Url_Error_Xpath : {
 						QString errorMsg( u8" Url_Error_Xpath 异常，登出 => 退出代码(%1)" );
 						errorMsg = errorMsg.arg( quitMsg ) + includeNodeContent;
 						auto msg = QString( "%1 : %2 : %3" ).arg( type_name ).arg( request_url ).arg( errorMsg );
-						OStream::anyDebugOut( thisOStream, msg.toStdString( ) );
+						OStream::anyDebugOut( thisOStream, msg );
 						break;
 					}
 					case Url_Error_None : {
 						QString errorMsg( u8" Url_Error_None 异常，登出 => 退出代码(%1)" );
 						errorMsg = errorMsg.arg( quitMsg ) + includeNodeContent;
 						auto msg = QString( "%1 : %2 : %3" ).arg( type_name ).arg( request_url ).arg( errorMsg );
-						OStream::anyDebugOut( thisOStream, msg.toStdString( ) );
+						OStream::anyDebugOut( thisOStream, msg );
 						break;
 					}
 					case None :
