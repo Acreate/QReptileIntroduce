@@ -103,8 +103,7 @@ Map_HtmlStrK_HtmlStrV * RequestNet::formHtmlGetTypeTheUrls( const interfacePlugs
 			const std::thread *run_std_cpp_thread, std::mutex *html_work_thread_mutex,
 			std::mutex *std_cpp_thread_mutex, std::shared_ptr< HtmlString > &data,
 			const time_t *startTime ) {
-				size_t index = 0, end = stdWString->size( );
-				auto htmlDoc = cylHtmlTools::HtmlDoc::parse( stdWString, end, index );
+				auto htmlDoc = cylHtmlTools::HtmlDoc::parse( stdWString );
 				if( !htmlDoc.get( ) ) {
 					auto msg = QString( "%1 : %2" ).arg( QString::fromStdWString( url ) ).arg( QString( u8" HtmlDoc::parse 异常，登出" ) );
 					OStream::anyDebugOut( thisOStream, msg, __FILE__, __LINE__, __FUNCTION__ );
@@ -132,7 +131,7 @@ Map_HtmlStrK_HtmlStrV * RequestNet::formHtmlGetTypeTheUrls( const interfacePlugs
 						return false;
 					} );
 					if( unorderedMap ) {
-						auto key = *element->getNodeContentText( );
+						auto key = *element->getNodeIncludeContentText( );
 						auto value = unorderedMap->at( hrefKey );
 						QString qulr = QString( u8"%1%2" ).arg( GET_URL ).arg( value.substr( 1, value.size( ) - 2 ) );
 						value = qulr.toStdWString( );
@@ -153,9 +152,7 @@ Map_HtmlStrK_HtmlStrV * RequestNet::formHtmlGetTypeTheUrls( const interfacePlugs
 Vector_INovelInfoSPtr RequestNet::formHtmlGetTypePageNovels( const interfacePlugsType::HtmlDocString &type_name, const interfacePlugsType::HtmlDocString &request_url, const HtmlDocString &htmlText, const Vector_INovelInfoSPtr &saveNovelInfos, void *appendDataPtr ) {
 	Vector_INovelInfoSPtr result;
 	do {
-		auto stdWString( std::make_shared< HtmlString >( htmlText ) );
-		size_t index = 0, end = stdWString->size( );
-		auto htmlDoc = cylHtmlTools::HtmlDoc::parse( stdWString, end, index );
+		auto htmlDoc = cylHtmlTools::HtmlDoc::parse( htmlText );
 		if( !htmlDoc ) {
 			auto msg = QString( "%1 : %2 : %3" ).arg( type_name ).arg( request_url ).arg( QString( u8" HtmlDoc::parse 异常，登出" ) );
 			auto path = QString( Cache_Path_Dir ).append( QDir::separator( ) ).append( type_name ).append( u8".html" );
@@ -179,34 +176,19 @@ Vector_INovelInfoSPtr RequestNet::formHtmlGetTypePageNovels( const interfacePlug
 		HtmlString_Shared content = nullptr;
 		QString rootUrl = GET_URL;
 		Novel_Xpath_Analysis_Error quitMsg;
+		HtmlNode *element;
 		auto novelInfoBuffPtr = std::make_shared< NovelInfo >( );
-		std::vector< std::shared_ptr< HtmlNode > >::iterator findResultEnd;
-		std::vector< std::shared_ptr< HtmlNode > >::iterator findResultIterator;
 		for( ; vectorIterator != vectorEnd; ++vectorIterator ) {
 			quitMsg = None;
 			do {
-				//////////// 名称 xpath
+				//////////// url xpath
 				xpath = cylHtmlTools::XPath( QString( tr( u8"./dd/h3/a" ) ).toStdWString( ) );
 				htmlNodes = vectorIterator->get( )->xpath( xpath );
 				if( !htmlNodes ) {
-					quitMsg = Name_Error_Xpath; // xpath 异常：名称
+					quitMsg = Url_Error_None; // xpath 异常 : url 找不到
 					break;
 				}
-				findResultIterator = htmlNodes->begin( );
-				findResultEnd = htmlNodes->end( );
-				if( findResultIterator == findResultEnd ) {
-					quitMsg = Name_Error_None; // xpath 找不到：名称
-					break;
-				}
-				HtmlNode *element = findResultIterator->get( );
-				auto contentText = element->getNodeContentText( );
-				if( contentText && !contentText->empty( ) )
-					novelInfoBuffPtr->novelName = std::make_shared< QString >( QString::fromStdWString( *contentText ) );
-				else {
-					quitMsg = Name_Error_None; // xpath 找不到：名称
-					break;
-				}
-				//////////// url xpath
+				element = htmlNodes->at( 0 ).get( );
 				auto unorderedMapAttribute = element->findAttribute( []( const HtmlString &attributeName, const HtmlString &attributeValue )->bool {
 					if( HtmlStringTools::equRemoveSpaceOverHtmlString( attributeName, L"href" ) )
 						return true;
@@ -216,6 +198,14 @@ Vector_INovelInfoSPtr RequestNet::formHtmlGetTypePageNovels( const interfacePlug
 					quitMsg = Url_Error_None; // xpath 异常 : url 找不到
 					break;
 				}
+
+				//////////// 名称 xpath
+				auto contentText = element->getNodeIncludeContentText( );
+				if( contentText )
+					novelInfoBuffPtr->novelName = std::make_shared< QString >( QString::fromStdWString( *contentText ) );
+				else
+					novelInfoBuffPtr->novelName = std::make_shared< QString >( QString::fromStdWString( L"" ) );
+
 				auto begin = unorderedMapAttribute->begin( );
 				auto second = begin->second;
 				auto newSecond = second.substr( 1, second.length( ) - 2 );
@@ -228,13 +218,7 @@ Vector_INovelInfoSPtr RequestNet::formHtmlGetTypePageNovels( const interfacePlug
 					quitMsg = DateTime_Error_Xpath; // xpath 异常 : 更新时间
 					break;
 				}
-				findResultIterator = htmlNodes->begin( );
-				findResultEnd = htmlNodes->end( );
-				if( findResultIterator == findResultEnd ) {
-					quitMsg = DateTime_Error_None; // xpath 异常 : 更新时间 找不到
-					break;
-				}
-				auto lastTime = findResultIterator->get( )->getNodeContentText( );
+				auto lastTime = htmlNodes->at( 0 ).get( )->getNodeIncludeContentText( );
 				if( !lastTime ) {
 					quitMsg = DateTime_Error_None; // xpath 异常 : 更新时间 找不到
 					break;
@@ -254,37 +238,25 @@ Vector_INovelInfoSPtr RequestNet::formHtmlGetTypePageNovels( const interfacePlug
 				xpath = cylHtmlTools::XPath( QString( tr( u8"./dd/span" ) ).toStdWString( ) );
 				htmlNodes = vectorIterator->get( )->xpath( xpath );
 				if( htmlNodes ) {
-					findResultIterator = htmlNodes->begin( );
-					findResultEnd = htmlNodes->end( );
-					if( findResultIterator != findResultEnd ) {
-						auto author = findResultIterator->get( )->getNodeContentText( );
-						if( author )
-							novelInfoBuffPtr->author = std::make_shared< QString >( QString::fromStdWString( *author ) );
-					}
+					auto author = htmlNodes->at( 0 ).get( )->getNodeIncludeContentText( );
+					if( author )
+						novelInfoBuffPtr->author = std::make_shared< QString >( QString::fromStdWString( *author ) );
 				}
 				//////////// 最后更新项目 xpath
 				xpath = cylHtmlTools::XPath( QString( tr( u8R"(./dd[@class="book_other"]/a)" ) ).toStdWString( ) );
 				htmlNodes = vectorIterator->get( )->xpath( xpath );
 				if( htmlNodes ) {
-					findResultIterator = htmlNodes->begin( );
-					findResultEnd = htmlNodes->end( );
-					if( findResultIterator != findResultEnd ) {
-						auto lastItem = findResultIterator->get( )->getNodeContentText( );
-						if( lastItem )
-							novelInfoBuffPtr->lastItem = std::make_shared< QString >( QString::fromStdWString( *lastItem ) );
-					}
+					auto lastItem = htmlNodes->at( 0 ).get( )->getNodeIncludeContentText( );
+					if( lastItem )
+						novelInfoBuffPtr->lastItem = std::make_shared< QString >( QString::fromStdWString( *lastItem ) );
 				}
 				//////////// 详情 xpath
 				xpath = cylHtmlTools::XPath( QString( tr( u8"./dd[@class='book_des']" ) ).toStdWString( ) );
 				htmlNodes = vectorIterator->get( )->xpath( xpath );
 				if( htmlNodes ) {
-					findResultIterator = htmlNodes->begin( );
-					findResultEnd = htmlNodes->end( );
-					if( findResultIterator != findResultEnd ) {
-						auto info = findResultIterator->get( )->getNodeContentText( );
-						if( info )
-							novelInfoBuffPtr->info = std::make_shared< QString >( QString::fromStdWString( *info ) );
-					}
+					auto info = htmlNodes->at( 0 ).get( )->getNodeIncludeContentText( );
+					if( info )
+						novelInfoBuffPtr->info = std::make_shared< QString >( QString::fromStdWString( *info ) );
 				}
 				novelInfoBuffPtr->format = std::make_shared< QString >( RequestNet::timeForm );
 				novelInfoBuffPtr->lastRequestTimeFormat = std::make_shared< QString >( currentTimeForm );
@@ -376,9 +348,7 @@ Vector_INovelInfoSPtr RequestNet::formHtmlGetTypePageNovels( const interfacePlug
 INovelInfo_Shared RequestNet::formHtmlGetUrlNovelInfo( const interfacePlugsType::HtmlDocString &url, const HtmlDocString &htmlText, const Vector_INovelInfoSPtr &saveNovelInfos, const INovelInfo_Shared &networkReplayNovel ) {
 	INovelInfo_Shared result = nullptr;
 	do {
-		auto stdWString( std::make_shared< HtmlString >( htmlText ) );
-		size_t index = 0, end = stdWString->size( );
-		auto htmlDoc = cylHtmlTools::HtmlDoc::parse( stdWString, end, index );
+		auto htmlDoc = cylHtmlTools::HtmlDoc::parse( htmlText );
 		if( htmlDoc )
 			break;
 	} while( false );
@@ -391,9 +361,7 @@ HtmlDocString RequestNet::formHtmlGetNext( const interfacePlugsType::HtmlDocStri
 		return result;
 	size_t quitMsg = 0;
 	do {
-		auto stdWString( std::make_shared< HtmlString >( htmlText ) );
-		size_t index = 0, end = stdWString->size( );
-		auto htmlDoc = cylHtmlTools::HtmlDoc::parse( stdWString, end, index );
+		auto htmlDoc = cylHtmlTools::HtmlDoc::parse( htmlText );
 		if( !htmlDoc )
 			break;
 
@@ -408,7 +376,7 @@ HtmlDocString RequestNet::formHtmlGetNext( const interfacePlugsType::HtmlDocStri
 		HtmlString wstrNextPageKey = L"下一页";
 		for( ; iterator != endIterator; ++iterator ) {
 			HtmlNode *element = iterator->get( );
-			HtmlString_Shared contentText = element->getNodeContentText( );
+			HtmlString_Shared contentText = element->getNodeIncludeContentText( );
 			if( HtmlStringTools::findNextHtmlStringPotion( contentText.get( ), 0, &wstrNextPageKey ) ) {
 				auto findAttribute = element->findAttribute( []( const HtmlString &attributeName, const HtmlString &attributeValue ) {
 					if( HtmlStringTools::equRemoveSpaceOverHtmlString( attributeName, L"href" ) )
@@ -443,7 +411,7 @@ HtmlDocString RequestNet::formHtmlGetNext( const interfacePlugsType::HtmlDocStri
 		auto errorLine = __LINE__;
 		auto errorFunction = __FUNCTION__;
 		auto msg = QString( "%1 : %2 : %3\n文件:\n\t%4\n行号:\n\t%5 -> %6" ).arg( errorMsg ).arg( type_name ).arg( url ).arg( errorFile ).arg( errorLine ).arg( errorFunction );
-		QString formMsg( u8"<--  \n%1\n -->\n%2" );
+		QString formMsg( u8"<!--  \n%1\n -->\n%2" );
 		auto content = formMsg.arg( msg ).arg( QString::fromStdWString( htmlText ) );
 		OStream::anyDebugOut( thisOStream, msg, errorFile, errorLine, errorFunction );
 		OStream::outDebugLogFile( Cache_Path_Dir, content.toLatin1( ), fileBaseName, errorType, dirName, ".html" );
