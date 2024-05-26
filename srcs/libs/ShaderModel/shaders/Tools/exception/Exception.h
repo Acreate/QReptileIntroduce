@@ -2,7 +2,7 @@
 #define EXCEPTION_H_H_HEAD__FILE__
 #pragma once
 #include <QException>
-#include "../export/Tools_export.h"
+#include "../auto_generate_files/export/Tools_export.h"
 
 class TOOLS_EXPORT Exception : public QException {
 private:

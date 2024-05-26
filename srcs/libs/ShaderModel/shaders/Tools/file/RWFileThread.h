@@ -9,7 +9,7 @@ class QFileInfo;
 class FileThread;
 class QFile;
 class FileResult;
-#include "../export/Tools_export.h"
+#include "../auto_generate_files/export/Tools_export.h"
 
 class TOOLS_EXPORT  RWFileThread : public QObject {
 

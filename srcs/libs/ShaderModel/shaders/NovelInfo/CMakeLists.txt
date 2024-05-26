@@ -37,7 +37,7 @@ set( Cmake_Project_Binary_Dir "${CMAKE_BINARY_DIR}" )
 set( Cmake_Project_Binary_Dir "${PROJECT_BINARY_DIR}" )
 set( Cmake_Project_Binary_File_Name "$<TARGET_FILE:tgt>" )
 
-set( cmake_definitions_out "${CMAKE_CURRENT_LIST_DIR}/macro/cmake_to_c_cpp_header_env.h" )
+set( cmake_definitions_out "${CMAKE_CURRENT_LIST_DIR}/auto_generate_files/macro/cmake_to_c_cpp_header_env.h" )
 set( cmake_definitions_org "${cmake_definitions_tmp}/cmake_in/cmake_to_c_cpp_header_env.h.in" )
 
 include_directories( ${UserHread_include_dir} )
@@ -73,7 +73,7 @@ target_link_libraries( ${PROJECT_NAME}
 STRING( SUBSTRING "${PROJECT_NAME}" 0 1 exportFileStartName )
 STRING( SUBSTRING "${PROJECT_NAME}" 1 -1 exportFileName )
 STRING( TOUPPER ${exportFileStartName} exportFileStartName )
-SET( exportFileName ${CMAKE_CURRENT_SOURCE_DIR}/export/${exportFileStartName}${exportFileName}_export.h )
+SET( exportFileName ${CMAKE_CURRENT_SOURCE_DIR}/auto_generate_files/export/${exportFileStartName}${exportFileName}_export.h )
 GENERATE_EXPORT_HEADER( ${PROJECT_NAME}
 	EXPORT_FILE_NAME ${exportFileName}
 )

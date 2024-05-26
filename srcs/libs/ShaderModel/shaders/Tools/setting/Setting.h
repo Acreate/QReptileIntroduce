@@ -4,7 +4,7 @@
 
 #include <QSettings>
 #include <qmutex.h>
-#include "../export/Tools_export.h"
+#include "../auto_generate_files/export/Tools_export.h"
 
 class TOOLS_EXPORT Setting : public QObject {
 	Q_OBJECT;

@@ -28,7 +28,7 @@ include_directories( ${Plug_include_dir} )
 include_directories( ${Path_Tool_include_dir} )
 include_directories( ${QtExtendHttpNetWork_include_dir} )
 
-set( cmake_definitions_out "${CMAKE_CURRENT_LIST_DIR}/src/macro/cmake_to_c_cpp_header_env.h" )
+set( cmake_definitions_out "${CMAKE_CURRENT_LIST_DIR}/src/${cmake_auto_sub_dir_name}/macro/cmake_to_c_cpp_header_env.h" )
 
 # # 合并源码
 list( APPEND ${SRC_LIST} ${SRC_UI} ${QM_FILES} ${cmake_definitions_out} )

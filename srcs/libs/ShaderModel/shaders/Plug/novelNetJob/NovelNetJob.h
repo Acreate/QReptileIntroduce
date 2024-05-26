@@ -3,7 +3,7 @@
 #pragma once
 #include <QObject>
 
-#include "../export/Plug_export.h"
+#include "../auto_generate_files/export/Plug_export.h"
 #include <nameSpace/interfacePlugsType.h>
 #include <nameSpace/httpNetWork.h>
 #include <interface/IRequestNetInterface.h>

@@ -2,7 +2,7 @@
 #define REQUESTNET_H_H_HEAD__FILE__
 #pragma once
 #include <QGenericPlugin>
-#include "../macro/cmake_to_c_cpp_header_macro.h"
+#include "../auto_generate_files/macro/cmake_to_c_cpp_header_macro.h"
 #include "interface/IRequestNetInterface.h"
 #include "nameSpace/cylHtmlTools.h"
 using interfacePlugsType::IRequestNetInterface;

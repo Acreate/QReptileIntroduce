@@ -4,7 +4,7 @@
 #include <QThread>
 #include <QMutexLocker>
 #include <QObject>
-#include "../export/Tools_export.h"
+#include "../auto_generate_files/export/Tools_export.h"
 
 class TOOLS_EXPORT DateTimeThread : public QThread {
 	Q_OBJECT;

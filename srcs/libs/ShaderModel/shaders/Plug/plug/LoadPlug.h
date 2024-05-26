@@ -7,7 +7,7 @@
 #include "path/File.h"
 #include <nameSpace/interfacePlugsType.h>
 
-#include "../export/Plug_export.h"
+#include "../auto_generate_files/export/Plug_export.h"
 
 class PLUG_EXPORT LoadPlug : public QObject {
 public: // 静态函数调用

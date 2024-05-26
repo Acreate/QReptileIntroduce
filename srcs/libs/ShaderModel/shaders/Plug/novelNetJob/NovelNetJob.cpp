@@ -18,7 +18,7 @@
 #include "dateTime/DateTime.h"
 
 #include "interface/INovelInfo.h"
-#include "macro/cmake_to_c_cpp_header_env.h"
+#include "auto_generate_files/macro/cmake_to_c_cpp_header_env.h"
 #include "path/Dir.h"
 using namespace interfacePlugsType;
 

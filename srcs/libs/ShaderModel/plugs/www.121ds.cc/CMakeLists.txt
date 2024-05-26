@@ -35,8 +35,8 @@ include_directories( ${QtExtendHttpNetWork_include_dir} )
 set( ${project_name_include_dir}_include_dir ${CMAKE_CURRENT_LIST_DIR} ${CMAKE_CURRENT_LIST_DIR}/ PARENT_SCOPE )
 
 
-set( cmake_definitions_macro_out "${CMAKE_CURRENT_LIST_DIR}/macro/cmake_to_c_cpp_header_macro.h" )
-set( cmake_definitions_env_out "${CMAKE_CURRENT_LIST_DIR}/macro/cmake_to_c_cpp_header_env.h" )
+set( cmake_definitions_macro_out "${CMAKE_CURRENT_LIST_DIR}/${cmake_auto_sub_dir_name}/macro/cmake_to_c_cpp_header_macro.h" )
+set( cmake_definitions_env_out "${CMAKE_CURRENT_LIST_DIR}/${cmake_auto_sub_dir_name}/macro/cmake_to_c_cpp_header_env.h" )
 
 # # 合并源码
 list( APPEND ${SRC_LIST} ${SRC_UI} ${QM_FILES} ${SRC_DATA} ${cmake_definitions_macro_out} ${cmake_definitions_env_out} )

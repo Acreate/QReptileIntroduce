@@ -3,7 +3,7 @@
 #pragma once
 #include <qbytearray.h>
 #include <QString>
-#include "../export/IOStream_export.h"
+#include "../auto_generate_files/export/IOStream_export.h"
 struct QArrayData;
 class IOSTREAM_EXPORT OStream {
 public:

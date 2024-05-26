@@ -2,7 +2,7 @@
 #define INTERFACETYPE_H_H_HEAD__FILE__
 #pragma once
 
-#include "../export/NovelInfo_export.h"
+#include "../auto_generate_files/export/NovelInfo_export.h"
 #include <memory>
 #include <vector>
 #include <string>

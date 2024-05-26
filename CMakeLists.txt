@@ -77,6 +77,7 @@ qt_add_translations(
 # # 根部定义的模板位置
 set( cmake_definitions_tmp ${CMAKE_HOME_DIRECTORY}/srcs/cmake/temp )
 set( cmake_definitions_in ${cmake_definitions_tmp}/cmake_in/cmake_to_c_cpp_header_macro.h.in )
+set( cmake_auto_sub_dir_name auto_generate_files )
 
 
 get_path_cmake_dir_path( plug_path_list ${CMAKE_CURRENT_SOURCE_DIR}/srcs/libs/ShaderModel/plugs "CMakeLists.txt" )

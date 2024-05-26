@@ -4,7 +4,7 @@
 #include <QString>
 #include <QFile>
 
-#include "../export/Plug_export.h"
+#include "../auto_generate_files/export/Plug_export.h"
 #include "interface/INovelInfo.h"
 #include "nameSpace/interfacePlugsType.h"
 #include "path/Path.h"

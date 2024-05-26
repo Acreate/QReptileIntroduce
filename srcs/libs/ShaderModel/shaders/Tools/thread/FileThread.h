@@ -7,7 +7,7 @@
 #include <QIODeviceBase>
 
 class FileResult;
-#include "../export/Tools_export.h"
+#include "../auto_generate_files/export/Tools_export.h"
 
 class TOOLS_EXPORT FileThread : public QThread {
 	Q_OBJECT;

@@ -5,7 +5,7 @@
 #include <QFileInfo>
 #include <QString>
 
-#include "../export/Path_Tool_export.h"
+#include "../auto_generate_files/export/Path_Tool_export.h"
 class Path;
 class PATH_TOOL_EXPORT File {
 public:
