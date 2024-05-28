@@ -15,6 +15,12 @@
 #include <HttpNetWork/Request.h>
 #include <qbrush.h>
 
+#include <DB/DBTools.h>
+#include <DB/dbInterface/i_depositoryInterface/I_Depository.h>
+#include <DB/dbInterface/i_resultInfo/I_ResultInfo.h>
+#include <DB/dbInterface/i_tabInfo/I_TabInfo.h>
+#include <DB/dbInterface/I_DB.h>
+
 #include "../NovelInfo/NovelInfo.h"
 #include "dateTime/DateTime.h"
 using namespace interfacePlugsType;
@@ -25,12 +31,7 @@ int RequestNet::expireDay = 2;
 QDateTime RequestNet::currentTime;
 
 
-RequestNet::RequestNet( QObject *parent ): QObject( parent )
-, rootUrl( GET_URL )
-, oStream( nullptr )
-, iStream( nullptr )
-, thisOStream( nullptr )
-, typeUrlMap( nullptr ) {
+RequestNet::RequestNet( QObject *parent ): QObject( parent ), rootUrl( GET_URL ), oStream( nullptr ), iStream( nullptr ), thisOStream( nullptr ), typeUrlMap( nullptr ) {
 	cylHttpNetWork::NetworkRequest::initTools( );
 }
 
@@ -99,10 +100,12 @@ Map_HtmlStrK_HtmlStrV * RequestNet::formHtmlGetTypeTheUrls( const interfacePlugs
 		auto result = std::make_shared< Map_HtmlStrK_HtmlStrV >( );
 		thread.setData( stdWString );
 		thread.setCurrentThreadRun( [&result,&stdWString, this,&url](
-			const HtmlWorkThread< std::shared_ptr< HtmlString > > *html_work_thread,
-			const std::thread *run_std_cpp_thread, std::mutex *html_work_thread_mutex,
-			std::mutex *std_cpp_thread_mutex, std::shared_ptr< HtmlString > &data,
-			const time_t *startTime ) {
+			const HtmlWorkThread< std::shared_ptr< HtmlString > > *html_work_thread
+			, const std::thread *run_std_cpp_thread
+			, std::mutex *html_work_thread_mutex
+			, std::mutex *std_cpp_thread_mutex
+			, std::shared_ptr< HtmlString > &data
+			, const time_t *startTime ) {
 				auto htmlDoc = cylHtmlTools::HtmlDoc::parse( stdWString );
 				if( !htmlDoc.get( ) ) {
 					auto msg = QString( "%1 : %2" ).arg( QString::fromStdWString( url ) ).arg( QString( u8" HtmlDoc::parse 异常，登出" ) );
@@ -423,7 +426,155 @@ bool RequestNet::isRequestNovelInfoUrl( const interfacePlugsType::INovelInfoPtr 
 }
 void RequestNet::novelTypeEnd( const HtmlDocString &root_url, const HtmlDocString &type_name, const HtmlDocString &url, const interfacePlugsType::Vector_INovelInfoSPtr &saveNovelInfos ) {
 }
+/// <summary>
+/// 分解列表数据<br/>
+///	根据游离列表 src_vector 与永久列表 db_result 进行匹配解析<br/>
+/// updateList : src_vector 与 db_result 交集<br/>
+/// interList : src_vector 与 db_result 的超集部分<br/>
+/// </summary>
+/// <param name="src_vector">游离列表</param>
+/// <param name="db_result">磁盘列表</param>
+/// <param name="updateList">更新列表</param>
+/// <param name="interList">插入列表</param>
+inline void separate_list( const interfacePlugsType::Vector_INovelInfoSPtr &src_vector, cylDB::IResultInfo_Shared &db_result, interfacePlugsType::Vector_INovelInfoSPtr &updateList, interfacePlugsType::Vector_INovelInfoSPtr &interList ) {
+
+}
+inline QVariantMap conver_str_sql_text( const QVariantMap &updateMap ) {
+	QVariantMap result;
+	auto iterator = updateMap.begin( );
+	auto end = updateMap.end( );
+	QString form( R"("%1")" );
+	for( ; iterator != end; ++iterator )
+		result.insert( form.arg( iterator.key( ) ), QVariant( form.arg( iterator.value( ).toString( ) ) ) );
+	return result;
+}
+inline bool generate_db_tab( const cylDB::DB_Shared &dbInterface, const cylDB::Depository_Shared &depositoryShared, const QString &tab_name, OStream *thisOStream ) {
+	auto supportType = dbInterface->getSupportType( );
+	QString dbTextType = supportType.find( typeid( QString ).name( ) )->toString( );
+	bool hasTab = false;
+	if( dbTextType.isEmpty( ) )
+		dbTextType = "TEXT";
+	hasTab = depositoryShared->createTab( tab_name
+		, { { "rootUrl", dbTextType }
+			, { "novelName", dbTextType }
+			, { "info", dbTextType }
+			, { "updateTime", dbTextType }
+			, { "format", dbTextType }
+			, { "lastRequestTime", dbTextType }
+			, { "lastRequestTimeFormat", dbTextType }
+			, { "author", dbTextType }
+			, { "url", dbTextType }
+			, { "lastItem", dbTextType }
+			, { "additionalData", dbTextType }
+			, { "typePageUrl", dbTextType }
+			, { "typeName", dbTextType }
+		} );
+	if( !hasTab )
+		OStream::anyDebugOut( thisOStream, "无法创建正确的 db 文件", __FILE__, __LINE__, __FUNCTION__ );
+	return hasTab;
+}
+
 void RequestNet::endHost( const interfacePlugsType::Vector_INovelInfoSPtr &saveNovelInfos ) {
+
+	auto dbInterface = cylDB::DBTools::linkDB( Cache_Path_Dir );
+	if( dbInterface->link( ) ) {
+		cylHtmlTools::HtmlWorkThread< bool * >::Current_Thread_Run currentThreadRun = [dbInterface,saveNovelInfos,this]( const cylHtmlTools::HtmlWorkThread< bool * > *html_work_thread, const std::thread *run_std_cpp_thread, std::mutex *html_work_thread_mutex, std::mutex *std_cpp_thread_mutex, bool *data, const time_t *startTime ) {
+			QString dbName = this->rootUrl.host( );
+			auto depositoryShared = dbInterface->openDepository( dbName );
+			if( depositoryShared->open( ) ) {
+				auto tabName = this->rootUrl.toString( );
+				bool hasTab = depositoryShared->hasTab( tabName );
+
+				if( !hasTab )
+					if( generate_db_tab( dbInterface, depositoryShared, tabName, thisOStream ) )
+						return;
+
+				auto allItem = depositoryShared->findItems( tabName );
+
+				interfacePlugsType::Vector_INovelInfoSPtr updateList; // 更新列表
+				interfacePlugsType::Vector_INovelInfoSPtr interList; // 插入列表
+				// 分解-插入/更新 列表
+				if( allItem ) {
+					separate_list( saveNovelInfos, allItem, updateList, interList );
+				} else
+					interList = saveNovelInfos; // 数据库不存在数据的时候，全部拷贝到插入列表
+				// 开始更新
+				HtmlDocString rootUrl = this->rootUrl.toString( ).toStdWString( ),
+					novelName,
+					novelInfo,
+					novelUpdateTime,
+					novelFormat,
+					novelLastRequestTime,
+					novelLastRequestTimeFormat,
+					novelAuthor,
+					novelUrl,
+					novelLastItem,
+					novelAdditionalData,
+					novelTypePageUrl,
+					novelTypeName;
+				QString where;
+				QVariantMap updateMap;
+				for( auto &novel : updateList ) {
+					novel->getNovelUrl( &novelUrl );
+					novel->getNovelUpdateTime( &novelUpdateTime );
+					novel->getNovelLastItem( &novelLastItem );
+					novel->getNovelLastRequestGetTime( &novelLastRequestTime );
+					void *ptr = &novelAuthor;
+					novel->getNovelAttach( ptr );
+					updateMap.insert( "updateTime", QString::fromStdWString( novelUpdateTime ) );
+					updateMap.insert( "lastRequestTime", QString::fromStdWString( novelLastRequestTime ) );
+					updateMap.insert( "lastItem", QString::fromStdWString( novelLastItem ) );
+					updateMap.insert( "additionalData", QString::fromStdWString( novelAuthor ) );
+					where.append( "url=\"" ).append( QString::fromStdWString( novelUrl ) ).append( "\"" );
+					if( depositoryShared->updateItem( tabName, conver_str_sql_text( updateMap ), where ) )
+						OStream::anyDebugOut( thisOStream, "无法更新正确的小说内容", __FILE__, __LINE__, __FUNCTION__ );
+					updateMap.clear( );
+					where.clear( );
+				}
+				QStringList tabNames = { "rootUrl", "novelName", "info", "updateTime", "format", "lastRequestTime", "lastRequestTimeFormat", "author", "url", "lastItem", "additionalData", "typePageUrl", "typeName" };
+				QStringList tabValues;
+				for( auto &novel : updateList ) {
+					novel->getNovelName( &novelName );
+					novel->getNovelInfo( &novelInfo );
+					novel->getNovelUpdateTime( &novelUpdateTime );
+					novel->getNovelUpdateTimeFormat( &novelFormat );
+					novel->getNovelLastRequestGetTime( &novelLastRequestTime );
+					novel->getNovelLastRequestGetTimeFormat( &novelLastRequestTimeFormat );
+					novel->getNovelAuthor( &novelAuthor );
+					novel->getNovelUrl( &novelUrl );
+					novel->getNovelLastItem( &novelLastItem );
+					void *ptr = &novelAuthor;
+					novel->getNovelAttach( ptr );
+					novel->getNovelUrlAtPageLocation( &novelTypePageUrl );
+					novel->getNovelTypeName( &novelTypeName );
+					tabValues << QString::fromStdWString( rootUrl )
+						<< QString::fromStdWString( novelName )
+						<< QString::fromStdWString( novelInfo )
+						<< QString::fromStdWString( novelUpdateTime )
+						<< QString::fromStdWString( novelFormat )
+						<< QString::fromStdWString( novelLastRequestTime )
+						<< QString::fromStdWString( novelLastRequestTimeFormat )
+						<< QString::fromStdWString( novelAuthor )
+						<< QString::fromStdWString( novelUrl )
+						<< QString::fromStdWString( novelLastItem )
+						<< QString::fromStdWString( novelTypePageUrl )
+						<< QString::fromStdWString( novelTypeName );
+					if( depositoryShared->addItem( tabName, tabNames, tabValues ) )
+						OStream::anyDebugOut( thisOStream, "无法更新正确的小说内容", __FILE__, __LINE__, __FUNCTION__ );
+					tabValues.clear( );
+				}
+
+
+			}
+
+		};
+		bool has = true;
+		cylHtmlTools::HtmlWorkThread< bool * > thread( nullptr, currentThreadRun, nullptr, &has );
+		thread.start( );
+		while( thread.isRun( ) )
+			qApp->processEvents( );
+	}
+
 }
 OStream * RequestNet::setOStream( OStream *o_stream ) {
 	auto oldOStream = this->oStream;

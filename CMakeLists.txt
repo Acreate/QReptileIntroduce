@@ -41,6 +41,7 @@ FIND_PACKAGE( Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS
 	Core5Compat
 	LinguistTools
 	Xml
+	Sql
 )
 
 get_current_dir_name( current_dir_name ${CMAKE_CURRENT_SOURCE_DIR} )
@@ -79,6 +80,7 @@ set( cmake_definitions_tmp ${CMAKE_HOME_DIRECTORY}/srcs/cmake/temp )
 set( cmake_definitions_in ${cmake_definitions_tmp}/cmake_in/cmake_to_c_cpp_header_macro.h.in )
 set( cmake_auto_sub_dir_name auto_generate_files )
 
+set(plug_path_list)
 
 get_path_cmake_dir_path( plug_path_list ${CMAKE_CURRENT_SOURCE_DIR}/srcs/libs/ShaderModel/plugs "CMakeLists.txt" )
 
@@ -102,11 +104,15 @@ m_set_env( "${Project_Run_bin}" "${Project_Install_bin}" )
 set( Cache_Path_Dir "${Project_Run_bin}write_cache/" )
 file( MAKE_DIRECTORY  ${Cache_Path_Dir} )
 
-get_path_cmake_dir_path( out_path_list ${CMAKE_CURRENT_SOURCE_DIR}/srcs/git/QtExtendHttpNetWork/srcs/QtExtendHttpNetWork "CMakeLists.txt" )
+
+get_path_cmake_dir_path( git_path_list ${CMAKE_CURRENT_SOURCE_DIR}/srcs/git/QtExtendHttpNetWork/srcs/QtExtendHttpNetWork "CMakeLists.txt" )
+get_path_cmake_dir_path( git_path_list ${CMAKE_CURRENT_SOURCE_DIR}/srcs/git/htmlcpp/srcs/HtmlTools "CMakeLists.txt" )
+get_path_cmake_dir_path( git_path_list ${CMAKE_CURRENT_SOURCE_DIR}/srcs/git/QtExtendDB/srcs/git/DataCheck/srcs/DataCheck "CMakeLists.txt" )
+get_path_cmake_dir_path( git_path_list ${CMAKE_CURRENT_SOURCE_DIR}/srcs/git/QtExtendDB/srcs/QtExtendDB "CMakeLists.txt" )
+list(APPEND out_path_list ${git_path_list})
 get_path_cmake_dir_path( out_path_list ${CMAKE_CURRENT_SOURCE_DIR}/srcs/libs/ShaderModel/shaders/Path_Tool "CMakeLists.txt" )
 get_path_cmake_dir_path( out_path_list ${CMAKE_CURRENT_SOURCE_DIR}/srcs/libs/ShaderModel/shaders/IOStream "CMakeLists.txt" )
 list(APPEND out_path_list ${plug_path_list})
-get_path_cmake_dir_path( out_path_list ${CMAKE_CURRENT_SOURCE_DIR}/srcs/git/htmlcpp/srcs/HtmlTools "CMakeLists.txt" )
 get_path_cmake_dir_path( out_path_list ${CMAKE_CURRENT_SOURCE_DIR}/srcs/libs/UserHread/defineMorc "CMakeLists.txt" )
 get_path_cmake_dir_path( out_path_list ${CMAKE_CURRENT_SOURCE_DIR}/srcs/libs/ShaderModel/shaders/NovelInfo "CMakeLists.txt" )
 get_path_cmake_dir_path( out_path_list ${CMAKE_CURRENT_SOURCE_DIR}/srcs/libs/ShaderModel/shaders/Plug "CMakeLists.txt" )

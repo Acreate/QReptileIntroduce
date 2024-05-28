@@ -81,7 +81,7 @@ namespace interfacePlugsType {
 		/// </summary>
 		/// <param name="result_type_name">返回小说类型</param>
 		/// <returns>类型名称</returns>
-		virtual size_t getNovelUrlAtName( HtmlDocString *result_type_name ) = 0;
+		virtual size_t getNovelTypeName( HtmlDocString *result_type_name ) = 0;
 
 		/// <summary>
 		/// 对象转换到字符串

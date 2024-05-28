@@ -36,7 +36,7 @@ public: // - 继承
 	size_t getNovelLastItem( interfacePlugsType::HtmlDocString *result_last_item ) override;
 	size_t getNovelAttach( void *&result_additional_data ) override;
 	size_t getNovelUrlAtPageLocation( interfacePlugsType::HtmlDocString *result_type_page_url ) override;
-	size_t getNovelUrlAtName( interfacePlugsType::HtmlDocString *result_type_name ) override;
+	size_t getNovelTypeName( interfacePlugsType::HtmlDocString *result_type_name ) override;
 	size_t objToHtmlDocString( interfacePlugsType::HtmlDocString *result_serializable_html_doc_string ) override;
 	void clear( );
 };

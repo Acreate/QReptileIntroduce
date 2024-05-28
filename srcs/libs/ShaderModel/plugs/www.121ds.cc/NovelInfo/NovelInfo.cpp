@@ -82,7 +82,7 @@ size_t NovelInfo::getNovelUrlAtPageLocation( interfacePlugsType::HtmlDocString *
 	}
 	return 0;
 }
-size_t NovelInfo::getNovelUrlAtName( interfacePlugsType::HtmlDocString *result_type_name ) {
+size_t NovelInfo::getNovelTypeName( interfacePlugsType::HtmlDocString *result_type_name ) {
 	if( typeName ) {
 		*result_type_name = typeName->toStdWString( );
 		return result_type_name->size( );

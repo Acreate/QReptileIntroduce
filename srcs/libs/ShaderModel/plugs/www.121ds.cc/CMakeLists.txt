@@ -32,6 +32,7 @@ include_directories( ${UserHread_include_dir} )
 include_directories( ${HtmlTools_include_dir} )
 include_directories( ${IOStream_include_dir} )
 include_directories( ${QtExtendHttpNetWork_include_dir} )
+include_directories( ${QtExtendDB_include_dir} )
 set( ${project_name_include_dir}_include_dir ${CMAKE_CURRENT_LIST_DIR} ${CMAKE_CURRENT_LIST_DIR}/ PARENT_SCOPE )
 
 
@@ -51,10 +52,12 @@ target_link_libraries(
 	Qt${QT_VERSION_MAJOR}::Core
 	Qt${QT_VERSION_MAJOR}::Network
 	Qt${QT_VERSION_MAJOR}::Core5Compat
+	Qt${QT_VERSION_MAJOR}::Sql
 	NovelInfo
 	HtmlTools
 	IOStream
 	QtExtendHttpNetWork
+	QtExtendDB
 )
 
 
