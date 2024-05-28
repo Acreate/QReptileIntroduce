@@ -24,6 +24,32 @@ private:
 public:
 	NovelInfo( );
 	~NovelInfo( ) override;
+public: // - set
+
+	void setNovelName( const std::shared_ptr<QString> &novel_name ) { novelName = novel_name; }
+	void setInfo( const std::shared_ptr<QString> &info ) { this->info = info; }
+	void setUpdateTime( const std::shared_ptr<QString> &update_time ) { updateTime = update_time; }
+	void setFormat( const std::shared_ptr<QString> &format ) { this->format = format; }
+	void setLastRequestTime( const std::shared_ptr<QString> &last_request_time ) { lastRequestTime = last_request_time; }
+	void setLastRequestTimeFormat( const std::shared_ptr<QString> &last_request_time_format ) { lastRequestTimeFormat = last_request_time_format; }
+	void setAuthor( const std::shared_ptr<QString> &author ) { this->author = author; }
+	void setUrl( const std::shared_ptr<QString> &url ) { this->url = url; }
+	void setLastItem( const std::shared_ptr<QString> &last_item ) { lastItem = last_item; }
+	void setAdditionalData( const std::shared_ptr<QString> &additional_data ) { additionalData = additional_data; }
+	void setTypePageUrl( const std::shared_ptr<QString> &type_page_url ) { typePageUrl = type_page_url; }
+	void setTypeName( const std::shared_ptr<QString> &type_name ) { typeName = type_name; }
+	std::shared_ptr< QString > getNovelName1( ) const { return novelName; }
+	std::shared_ptr< QString > getInfo( ) const { return info; }
+	std::shared_ptr< QString > getUpdateTime( ) const { return updateTime; }
+	std::shared_ptr< QString > getFormat( ) const { return format; }
+	std::shared_ptr< QString > getLastRequestTime( ) const { return lastRequestTime; }
+	std::shared_ptr< QString > getLastRequestTimeFormat( ) const { return lastRequestTimeFormat; }
+	std::shared_ptr< QString > getAuthor( ) const { return author; }
+	std::shared_ptr< QString > getUrl( ) const { return url; }
+	std::shared_ptr< QString > getLastItem( ) const { return lastItem; }
+	std::shared_ptr< QString > getAdditionalData( ) const { return additionalData; }
+	std::shared_ptr< QString > getTypePageUrl( ) const { return typePageUrl; }
+	std::shared_ptr< QString > getTypeName( ) const { return typeName; }
 public: // - 继承
 	size_t getNovelName( interfacePlugsType::HtmlDocString *result_name ) override;
 	size_t getNovelInfo( interfacePlugsType::HtmlDocString *result_info ) override;

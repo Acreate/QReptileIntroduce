@@ -19,7 +19,7 @@ public:
 		, Url_Error_None // url 找不到异常
 		, DateTime_Error_Xpath// 时间 xpath 异常
 		, DateTime_Error_None// 时间 找不到异常
-		,DateTime_Error_Expire// 时间 超出限定
+		, DateTime_Error_Expire// 时间 超出限定
 	};
 private:
 	static QString timeForm; // 时间格式

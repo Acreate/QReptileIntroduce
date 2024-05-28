@@ -360,7 +360,6 @@ INovelInfo_Shared RequestNet::formHtmlGetUrlNovelInfo( const interfacePlugsType:
 }
 HtmlDocString RequestNet::formHtmlGetNext( const interfacePlugsType::HtmlDocString &type_name, const interfacePlugsType::HtmlDocString &url, const HtmlDocString &htmlText, const Vector_INovelInfoSPtr &saveNovelInfos, const Vector_INovelInfoSPtr &lastNovelInfos ) {
 	HtmlDocString result;
-	return result;
 	if( lastNovelInfos.size( ) == 0 ) // 当前页面没有获取到小说时候，直接返回
 		return result;
 	size_t quitMsg = 0;
@@ -431,13 +430,62 @@ void RequestNet::novelTypeEnd( const HtmlDocString &root_url, const HtmlDocStrin
 /// 分解列表数据<br/>
 ///	根据游离列表 src_vector 与永久列表 db_result 进行匹配解析<br/>
 /// updateList : src_vector 与 db_result 交集<br/>
-/// interList : src_vector 与 db_result 的超集部分<br/>
+/// interList : src_vector 与 db_result 的不同部分<br/>
 /// </summary>
 /// <param name="src_vector">游离列表</param>
 /// <param name="db_result">磁盘列表</param>
 /// <param name="updateList">更新列表</param>
 /// <param name="interList">插入列表</param>
 inline void separate_list( const interfacePlugsType::Vector_INovelInfoSPtr &src_vector, cylDB::IResultInfo_Shared &db_result, interfacePlugsType::Vector_INovelInfoSPtr &updateList, interfacePlugsType::Vector_INovelInfoSPtr &interList ) {
+	db_result->resetColIndex( );
+	auto currentRows = db_result->getCurrentRows( );
+	QStringList msg;
+	HtmlDocString url;
+	HtmlDocString compUrl;
+	auto srcVectorEnd = src_vector.end( );
+	while( currentRows->size( ) > 0 ) {
+		url = currentRows->at( 8 )->toString( ).toStdWString( );
+
+		auto iterator = src_vector.begin( );
+
+		for( ; iterator != srcVectorEnd; ++iterator )
+			if( iterator->get( )->getNovelUrl( &compUrl ) && url == compUrl ) {
+				auto end = updateList.end( );
+				if( std::find_if( updateList.begin( )
+					, end
+					, [&]( INovelInfo_Shared &info_shared ) ->bool {
+						if( info_shared->getNovelUrl( &url ) && url == compUrl )
+							return true;
+						return false;
+					} ) == end )
+					updateList.emplace_back( *iterator );
+				break;
+			}
+		if( !db_result->nextCol( ) )
+			break;
+		currentRows = db_result->getCurrentRows( );
+		msg.clear( );
+	}
+
+	if( updateList.size( ) == 0 ) {
+		interList = src_vector;
+		return;
+	}
+
+	// 查找 src_vector 所有元素，并且把不在 updateList 当中的元素存储到 interList
+	auto iterator = src_vector.begin( );
+
+	auto end = updateList.end( );
+	for( ; iterator != srcVectorEnd; ++iterator )
+		if( iterator->get( )->getNovelUrl( &compUrl ) )
+			if( std::find_if( updateList.begin( )
+				, end
+				, [&]( INovelInfo_Shared &info_shared ) ->bool {
+					if( info_shared->getNovelUrl( &url ) && url == compUrl )
+						return true;
+					return false;
+				} ) == end )
+				interList.emplace_back( *iterator );
 
 }
 /// <summary>
@@ -451,7 +499,7 @@ inline QVariantMap conver_str_sql_text( const QVariantMap &updateMap ) {
 	auto end = updateMap.end( );
 	QString form( R"("%1")" );
 	for( ; iterator != end; ++iterator )
-		result.insert( form.arg( iterator.key( ) ), QVariant( form.arg( iterator.value( ).toString( ) ) ) );
+		result.insert( iterator.key( ), QVariant( form.arg( iterator.value( ).toString( ) ) ) );
 	return result;
 
 }/// <summary>
@@ -498,19 +546,25 @@ void RequestNet::endHost( const interfacePlugsType::Vector_INovelInfoSPtr &saveN
 
 	auto dbInterface = cylDB::DBTools::linkDB( Cache_Path_Dir );
 	if( dbInterface->link( ) ) {
-		cylHtmlTools::HtmlWorkThread< bool * >::Current_Thread_Run currentThreadRun = [dbInterface,saveNovelInfos,this]( const cylHtmlTools::HtmlWorkThread< bool * > *html_work_thread, const std::thread *run_std_cpp_thread, std::mutex *html_work_thread_mutex, std::mutex *std_cpp_thread_mutex, bool *data, const time_t *startTime ) {
+		cylHtmlTools::HtmlWorkThread< bool * >::Current_Thread_Run currentThreadRun = [dbInterface,&saveNovelInfos,this]( const cylHtmlTools::HtmlWorkThread< bool * > *html_work_thread, const std::thread *run_std_cpp_thread, std::mutex *html_work_thread_mutex, std::mutex *std_cpp_thread_mutex, bool *data, const time_t *startTime ) {
 			QString dbName = this->rootUrl.host( );
 			QString tabName = dbName;
 			dbName.append( ".db" );
 			auto depositoryShared = dbInterface->openDepository( dbName );
-			if( depositoryShared->open( ) ) {
+			if( depositoryShared ) {
+				if( !depositoryShared->open( ) ) {
+					auto lastError = depositoryShared->getLastError( );
+					OStream::anyDebugOut( thisOStream, lastError.text( ), __FILE__, __LINE__, __FUNCTION__ );
+					return;
+				}
 				bool hasTab = depositoryShared->hasTab( tabName );
 
 				if( !hasTab )
 					if( generate_db_tab( dbInterface, depositoryShared, tabName, thisOStream ) )
 						return;
 
-				auto allItem = depositoryShared->findItems( tabName );
+				QStringList tabFieldNames = { "rootUrl", "novelName", "info", "updateTime", "format", "lastRequestTime", "lastRequestTimeFormat", "author", "url", "lastItem", "additionalData", "typePageUrl", "typeName" };
+				auto allItem = depositoryShared->findItems( tabName, tabFieldNames );
 
 				interfacePlugsType::Vector_INovelInfoSPtr updateList; // 更新列表
 				interfacePlugsType::Vector_INovelInfoSPtr interList; // 插入列表
@@ -552,7 +606,6 @@ void RequestNet::endHost( const interfacePlugsType::Vector_INovelInfoSPtr &saveN
 					updateMap.clear( );
 					where.clear( );
 				}
-				QStringList tabNames = { "rootUrl", "novelName", "info", "updateTime", "format", "lastRequestTime", "lastRequestTimeFormat", "author", "url", "lastItem", "additionalData", "typePageUrl", "typeName" };
 				QStringList tabValues;
 				for( auto &novel : interList ) {
 					novel->getNovelName( &novelName );
@@ -581,12 +634,11 @@ void RequestNet::endHost( const interfacePlugsType::Vector_INovelInfoSPtr &saveN
 						<< QString::fromStdWString( novelAdditionalData )
 						<< QString::fromStdWString( novelTypePageUrl )
 						<< QString::fromStdWString( novelTypeName );
-					if( !depositoryShared->addItem( tabName, tabNames, conver_str_sql_text( tabValues ) ) )
-						OStream::anyDebugOut( thisOStream, "无法更新正确的小说内容", __FILE__, __LINE__, __FUNCTION__ );
+					if( !depositoryShared->addItem( tabName, tabFieldNames, conver_str_sql_text( tabValues ) ) )
+						OStream::anyDebugOut( thisOStream, "无法插入正确的小说内容", __FILE__, __LINE__, __FUNCTION__ );
 					tabValues.clear( );
 				}
-
-
+				depositoryShared->close( );
 			}
 
 		};

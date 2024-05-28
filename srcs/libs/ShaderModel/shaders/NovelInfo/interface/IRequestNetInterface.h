@@ -96,7 +96,7 @@ namespace interfacePlugsType {
 		/// <param name="saveNovelInfos">已经存储的小说列表</param>
 		/// <param name="networkReplayNovel">当前获取的小说页面内容</param>
 		/// <returns>小说信息对象指针</returns>
-		virtual INovelInfo_Shared formHtmlGetUrlNovelInfo(  const HtmlDocString &request_url, const HtmlDocString &htmlText, const Vector_INovelInfoSPtr &saveNovelInfos, const INovelInfo_Shared &networkReplayNovel ) = 0;
+		virtual INovelInfo_Shared formHtmlGetUrlNovelInfo( const HtmlDocString &request_url, const HtmlDocString &htmlText, const Vector_INovelInfoSPtr &saveNovelInfos, const INovelInfo_Shared &networkReplayNovel ) = 0;
 		/// <summary>
 		/// 基于请求实现后进行下一次请求的判定
 		/// 返回有效的链接对象表示继续请求，无效对象则退出请求
