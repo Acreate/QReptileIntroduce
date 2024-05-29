@@ -4,6 +4,7 @@
 #include <QGenericPlugin>
 #include <QDateTime>
 #include "../auto_generate_files/macro/cmake_to_c_cpp_header_macro.h"
+#include "HttpNetWork/TimeTools.h"
 #include "interface/IRequestNetInterface.h"
 #include "nameSpace/cylHtmlTools.h"
 using interfacePlugsType::IRequestNetInterface;
@@ -157,7 +158,7 @@ public: // 实现解析
 	/// <summary>
 	/// 结束该网站请求时被调用
 	/// </summary>
-	void endHost( const interfacePlugsType::Vector_INovelInfoSPtr &saveNovelInfos ) override;
+	void endHost( const interfacePlugsType::Vector_INovelInfoSPtr &saveNovelInfos, const std::function< bool( const std::chrono::system_clock::time_point::duration & ) > &run ) override;
 private:
 	OStream *oStream;
 	IStream *iStream;

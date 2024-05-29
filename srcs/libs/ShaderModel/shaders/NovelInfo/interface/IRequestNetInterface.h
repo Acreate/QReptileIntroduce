@@ -6,6 +6,8 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <functional>
+#include <chrono>
 
 #include "../nameSpace/interfacePlugsType.h"
 class IStream;
@@ -125,7 +127,9 @@ namespace interfacePlugsType {
 		/// <summary>
 		/// 结束该网站请求时被调用
 		/// </summary>
-		virtual void endHost( const Vector_INovelInfoSPtr &saveNovelInfos ) = 0;
+		/// <param name="saveNovelInfos">请求到的所有小说信息</param>
+		/// <param name="run">返回 true 表示刷新时间</param>
+		virtual void endHost( const Vector_INovelInfoSPtr &saveNovelInfos, const std::function< bool( const std::chrono::system_clock::time_point::duration & ) > &run ) = 0;
 		/// <summary>
 		/// 设置父类
 		/// </summary>

@@ -283,6 +283,7 @@ QDateTime RequestNet::currentTime;
 
 RequestNet::RequestNet( QObject *parent ): QObject( parent ), rootUrl( GET_URL ), oStream( nullptr ), iStream( nullptr ), thisOStream( nullptr ), typeUrlMap( nullptr ) {
 	cylHttpNetWork::NetworkRequest::initTools( );
+	cylHttpNetWork::NetworkRequest::setHostUrlRequestInterval( rootUrl.host(  ), 2000 ); // 设置请求间隔
 }
 
 RequestNet::~RequestNet( ) {
@@ -660,7 +661,7 @@ bool RequestNet::isRequestNovelInfoUrl( const interfacePlugsType::INovelInfoPtr 
 }
 void RequestNet::novelTypeEnd( const HtmlDocString &root_url, const HtmlDocString &type_name, const HtmlDocString &url, const interfacePlugsType::Vector_INovelInfoSPtr &saveNovelInfos ) {
 }
-void RequestNet::endHost( const interfacePlugsType::Vector_INovelInfoSPtr &saveNovelInfos ) {
+void RequestNet::endHost( const interfacePlugsType::Vector_INovelInfoSPtr &saveNovelInfos, const std::function< bool( const std::chrono::system_clock::time_point::duration & ) > &run ) {
 
 	auto dbInterface = cylDB::DBTools::linkDB( Cache_Path_Dir );
 	if( dbInterface->link( ) ) {
@@ -776,8 +777,12 @@ void RequestNet::endHost( const interfacePlugsType::Vector_INovelInfoSPtr &saveN
 		bool has = true;
 		cylHtmlTools::HtmlWorkThread< bool * > thread( nullptr, currentThreadRun, nullptr, &has );
 		thread.start( );
-		while( thread.isRun( ) )
+		auto nowTimeDuration = cylHttpNetWork::TimeTools::getNowTimeDuration( );
+		while( thread.isRun( ) ) {
+			if( run( cylHttpNetWork::TimeTools::getNowTimeDuration( ) - nowTimeDuration ) ) 
+				nowTimeDuration = cylHttpNetWork::TimeTools::getNowTimeDuration( );
 			qApp->processEvents( );
+		}
 	}
 
 }
