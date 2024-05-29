@@ -90,6 +90,7 @@ list( APPEND target_update_sub_dir_list
 	"RequestDefinition"
 	"Request"
 	"RequestNetPlugin"
+	"NovelInfo"
 )
 
 foreach( plug_dir ${plug_path_list} )

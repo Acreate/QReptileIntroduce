@@ -1,4 +1,4 @@
-CMAKE_MINIMUM_REQUIRED( VERSION 3.19 )
+﻿CMAKE_MINIMUM_REQUIRED( VERSION 3.19 )
 
 macro( m_set_env bin_ptah install_path )
 	SET( PROJECT_BINARY_DIR "${bin_ptah}" CACHE STRING "" FORCE )
