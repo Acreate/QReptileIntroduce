@@ -20,6 +20,7 @@
 #include <DB/dbInterface/i_resultInfo/I_ResultInfo.h>
 #include <DB/dbInterface/i_tabInfo/I_TabInfo.h>
 #include <DB/dbInterface/I_DB.h>
+#include <QSqlQuery>
 
 #include "../NovelInfo/NovelInfo.h"
 #include "dateTime/DateTime.h"
@@ -359,7 +360,7 @@ INovelInfo_Shared RequestNet::formHtmlGetUrlNovelInfo( const interfacePlugsType:
 	return result;
 }
 HtmlDocString RequestNet::formHtmlGetNext( const interfacePlugsType::HtmlDocString &type_name, const interfacePlugsType::HtmlDocString &url, const HtmlDocString &htmlText, const Vector_INovelInfoSPtr &saveNovelInfos, const Vector_INovelInfoSPtr &lastNovelInfos ) {
-	HtmlDocString result;
+	HtmlDocString result; // todo : 下一页
 	if( lastNovelInfos.size( ) == 0 ) // 当前页面没有获取到小说时候，直接返回
 		return result;
 	size_t quitMsg = 0;
@@ -541,7 +542,32 @@ inline bool generate_db_tab( const cylDB::DB_Shared &dbInterface, const cylDB::D
 		OStream::anyDebugOut( thisOStream, "无法创建正确的 db 文件", __FILE__, __LINE__, __FUNCTION__ );
 	return hasTab;
 }
+/// <summary>
+/// 更新命令拼接
+/// </summary>
+/// <param name="cmd">起始拼接对象</param>
+/// <param name="append_map">拼接对象映射</param>
+/// <returns>拼接个数</returns>
+inline QString append_map_update( const QString &cmd, const QVariantMap &append_map ) {
+	QString result;
+	auto iterator = append_map.begin( );
+	auto end = append_map.end( );
+	if( iterator == end )
+		return result;
+	result = cmd;
+	do {
+		result.append( " `" );
+		result.append( iterator.key( ) );
+		result.append( "` =" );
+		result.append( iterator.value( ).toString( ) );
+		++iterator;
+		if( iterator == end )
+			break;
+		result.append( ", " );
+	} while( true );
 
+	return result;
+}
 void RequestNet::endHost( const interfacePlugsType::Vector_INovelInfoSPtr &saveNovelInfos ) {
 
 	auto dbInterface = cylDB::DBTools::linkDB( Cache_Path_Dir );
@@ -573,6 +599,7 @@ void RequestNet::endHost( const interfacePlugsType::Vector_INovelInfoSPtr &saveN
 					separate_list( saveNovelInfos, allItem, updateList, interList );
 				} else
 					interList = saveNovelInfos; // 数据库不存在数据的时候，全部拷贝到插入列表
+
 				// 开始更新
 				HtmlDocString rootUrl = this->rootUrl.toString( ).toStdWString( ),
 					novelName,
@@ -587,8 +614,10 @@ void RequestNet::endHost( const interfacePlugsType::Vector_INovelInfoSPtr &saveN
 					novelAdditionalData,
 					novelTypePageUrl,
 					novelTypeName;
-				QString where;
-				QVariantMap updateMap;
+				QString cmd = R"(UPDATE `)" + tabName + R"(` SET `updateTime`=:updateTime, `lastRequestTime`=:lastRequestTime, `additionalData`=:additionalData, `lastItem`=:lastItem  WHERE `url`=:url;)";
+				bool transaction = depositoryShared->transaction( );
+				std::shared_ptr< QSqlQuery > sqlQuery = depositoryShared->generateSqlQuery( );
+				sqlQuery.get( )->prepare( cmd );
 				for( auto &novel : updateList ) {
 					novel->getNovelUrl( &novelUrl );
 					novel->getNovelUpdateTime( &novelUpdateTime );
@@ -596,17 +625,22 @@ void RequestNet::endHost( const interfacePlugsType::Vector_INovelInfoSPtr &saveN
 					novel->getNovelLastRequestGetTime( &novelLastRequestTime );
 					void *ptr = &novelAuthor;
 					novel->getNovelAttach( ptr );
-					updateMap.insert( "updateTime", QString::fromStdWString( novelUpdateTime ) );
-					updateMap.insert( "lastRequestTime", QString::fromStdWString( novelLastRequestTime ) );
-					updateMap.insert( "lastItem", QString::fromStdWString( novelLastItem ) );
-					updateMap.insert( "additionalData", QString::fromStdWString( novelAuthor ) );
-					where.append( "url=\"" ).append( QString::fromStdWString( novelUrl ) ).append( "\"" );
-					if( !depositoryShared->updateItem( tabName, conver_str_sql_text( updateMap ), where ) )
+					sqlQuery->bindValue( ":updateTime", QString::fromStdWString( novelUpdateTime ) );
+					sqlQuery->bindValue( ":lastRequestTime", QString::fromStdWString( novelLastRequestTime ) );
+					sqlQuery->bindValue( ":lastItem", QString::fromStdWString( novelLastItem ) );
+					sqlQuery->bindValue( ":additionalData", QString::fromStdWString( novelAuthor ) );
+					sqlQuery->bindValue( ":url", QString::fromStdWString( novelUrl ) );
+					if( !depositoryShared->exec( sqlQuery.get( ) ) )
 						OStream::anyDebugOut( thisOStream, "无法更新正确的小说内容", __FILE__, __LINE__, __FUNCTION__ );
-					updateMap.clear( );
-					where.clear( );
 				}
+				if( transaction )
+					depositoryShared->commit( );
+				transaction = depositoryShared->transaction( );
+				auto rootQStringUrl = QString::fromStdWString( rootUrl );
+				cmd = R"(INSERT INTO `)" + tabName + R"(`( `rootUrl`, `novelName`, `info`, `updateTime`, `format`, `lastRequestTime`, `lastRequestTimeFormat`, `author`, `url`, `lastItem`, `additionalData`, `typePageUrl`, `typeName`  ) VALUES ( :rootUrl,:novelName,:info,:updateTime,:format,:lastRequestTime,:lastRequestTimeFormat,:author,:url,:lastItem,:additionalData,:typePageUrl,:typeName  );)";
+				sqlQuery.get( )->prepare( cmd );
 				QStringList tabValues;
+				sqlQuery->bindValue( ":rootUrl", rootQStringUrl );
 				for( auto &novel : interList ) {
 					novel->getNovelName( &novelName );
 					novel->getNovelInfo( &novelInfo );
@@ -621,24 +655,27 @@ void RequestNet::endHost( const interfacePlugsType::Vector_INovelInfoSPtr &saveN
 					novel->getNovelAttach( ptr );
 					novel->getNovelUrlAtPageLocation( &novelTypePageUrl );
 					novel->getNovelTypeName( &novelTypeName );
-					tabValues << QString::fromStdWString( rootUrl )
-						<< QString::fromStdWString( novelName )
-						<< QString::fromStdWString( novelInfo )
-						<< QString::fromStdWString( novelUpdateTime )
-						<< QString::fromStdWString( novelFormat )
-						<< QString::fromStdWString( novelLastRequestTime )
-						<< QString::fromStdWString( novelLastRequestTimeFormat )
-						<< QString::fromStdWString( novelAuthor )
-						<< QString::fromStdWString( novelUrl )
-						<< QString::fromStdWString( novelLastItem )
-						<< QString::fromStdWString( novelAdditionalData )
-						<< QString::fromStdWString( novelTypePageUrl )
-						<< QString::fromStdWString( novelTypeName );
-					if( !depositoryShared->addItem( tabName, tabFieldNames, conver_str_sql_text( tabValues ) ) )
+
+					sqlQuery->bindValue( ":novelName", QString::fromStdWString( novelName ) );
+					sqlQuery->bindValue( ":info", QString::fromStdWString( novelInfo ) );
+					sqlQuery->bindValue( ":updateTime", QString::fromStdWString( novelUpdateTime ) );
+					sqlQuery->bindValue( ":format", QString::fromStdWString( novelFormat ) );
+					sqlQuery->bindValue( ":lastRequestTime", QString::fromStdWString( novelLastRequestTime ) );
+					sqlQuery->bindValue( ":lastRequestTimeFormat", QString::fromStdWString( novelLastRequestTimeFormat ) );
+					sqlQuery->bindValue( ":author", QString::fromStdWString( novelAuthor ) );
+					sqlQuery->bindValue( ":url", QString::fromStdWString( novelUrl ) );
+					sqlQuery->bindValue( ":lastItem", QString::fromStdWString( novelLastItem ) );
+					sqlQuery->bindValue( ":additionalData", QString::fromStdWString( novelAdditionalData ) );
+					sqlQuery->bindValue( ":typePageUrl", QString::fromStdWString( novelTypePageUrl ) );
+					sqlQuery->bindValue( ":typeName", QString::fromStdWString( novelTypeName ) );
+					if( !depositoryShared->exec( sqlQuery.get( ) ) )
 						OStream::anyDebugOut( thisOStream, "无法插入正确的小说内容", __FILE__, __LINE__, __FUNCTION__ );
-					tabValues.clear( );
 				}
-				depositoryShared->close( );
+
+				if( transaction )
+					depositoryShared->commit( );
+				sqlQuery.reset( );
+				auto close = depositoryShared->close( );
 			}
 
 		};
