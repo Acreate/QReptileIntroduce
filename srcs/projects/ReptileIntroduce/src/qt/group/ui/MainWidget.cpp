@@ -102,59 +102,72 @@ void MainWidget::initComponentLayout( ) {
 }
 void MainWidget::initComponentConnect( ) {
 	connect( dateTimeThread, &DateTimeThread::updateDateTimeStr, this, &MainWidget::updateDateTimeStrFunction, Qt::QueuedConnection );
-	connect( selectPathWidget, &FileSelectPathWidget::editorOver, [&]( const QString &newFilePath ) {
-		updateSettingFileInfo( newFilePath );
-	} );
-	connect( selectPathWidget, &FileSelectPathWidget::setFilePathFinish, this, [&]( const QString &filePath ) {
-		updateSettingFileInfo( filePath );
-	} );
-	connect( display, &DisplayWidget::menuActionClick, [=]( const QString &xpath ) {
-		qDebug( ) << xpath;
-	} );
-	connect( display, &DisplayWidget::changeDisplayFont, [=]( QFont &font ) {
-		progressSetting->setValue( settingGroupDrawplayFont, {
-				{ settingGroupFontFamily
-					, font.family( ) }
-				, { settingGroupFontPointSize
-					, font.pointSizeF( ) }
-				, { settingGroupFontWeightSize
-					, font.weight( ) }
-				, { settingGroupFontItalic
-					, font.italic( ) }
-				, { settingGroupFontBold
-					, font.bold( ) }
-				, { settingGroupFontStrikeOut
-					, font.strikeOut( ) }
-				, { settingGroupFontUnderline
-					, font.underline( ) }
-				, { settingGroupFontStyle
-					, font.style( ) }
-			}
-		);
-		progressSetting->sync( );
-	} );
-	connect( display, &DisplayWidget::changeMenuFont, [=]( QFont &font ) {
-		progressSetting->setValue( settingGroupMenuFont, {
-				{ settingGroupFontFamily
-					, font.family( ) }
-				, { settingGroupFontPointSize
-					, font.pointSizeF( ) }
-				, { settingGroupFontWeightSize
-					, font.weight( ) }
-				, { settingGroupFontItalic
-					, font.italic( ) }
-				, { settingGroupFontBold
-					, font.bold( ) }
-				, { settingGroupFontStrikeOut
-					, font.strikeOut( ) }
-				, { settingGroupFontUnderline
-					, font.underline( ) }
-				, { settingGroupFontStyle
-					, font.style( ) }
-			}
-		);
-		progressSetting->sync( );
-	} );
+	connect( selectPathWidget
+		, &FileSelectPathWidget::editorOver
+		, [&]( const QString &newFilePath ) {
+			updateSettingFileInfo( newFilePath );
+		} );
+	connect( selectPathWidget
+		, &FileSelectPathWidget::setFilePathFinish
+		, this
+		, [&]( const QString &filePath ) {
+			updateSettingFileInfo( filePath );
+		} );
+	connect( display
+		, &DisplayWidget::menuActionClick
+		, [=]( const QString &xpath ) {
+			qDebug( ) << xpath;
+		} );
+	connect( display
+		, &DisplayWidget::changeDisplayFont
+		, [=]( QFont &font ) {
+			progressSetting->setValue( settingGroupDrawplayFont
+				, {
+					{ settingGroupFontFamily
+						, font.family( ) }
+					, { settingGroupFontPointSize
+						, font.pointSizeF( ) }
+					, { settingGroupFontWeightSize
+						, font.weight( ) }
+					, { settingGroupFontItalic
+						, font.italic( ) }
+					, { settingGroupFontBold
+						, font.bold( ) }
+					, { settingGroupFontStrikeOut
+						, font.strikeOut( ) }
+					, { settingGroupFontUnderline
+						, font.underline( ) }
+					, { settingGroupFontStyle
+						, font.style( ) }
+				}
+			);
+			progressSetting->sync( );
+		} );
+	connect( display
+		, &DisplayWidget::changeMenuFont
+		, [=]( QFont &font ) {
+			progressSetting->setValue( settingGroupMenuFont
+				, {
+					{ settingGroupFontFamily
+						, font.family( ) }
+					, { settingGroupFontPointSize
+						, font.pointSizeF( ) }
+					, { settingGroupFontWeightSize
+						, font.weight( ) }
+					, { settingGroupFontItalic
+						, font.italic( ) }
+					, { settingGroupFontBold
+						, font.bold( ) }
+					, { settingGroupFontStrikeOut
+						, font.strikeOut( ) }
+					, { settingGroupFontUnderline
+						, font.underline( ) }
+					, { settingGroupFontStyle
+						, font.style( ) }
+				}
+			);
+			progressSetting->sync( );
+		} );
 }
 
 template< typename TKey, typename TValue >
@@ -229,7 +242,8 @@ void MainWidget::initComponentOver( ) {
 		::setFont< QString, QVariant >( iterator, end, font );
 	} else {
 		font = this->font( );
-		progressSetting->setValue( settingGroupDrawplayFont, {
+		progressSetting->setValue( settingGroupDrawplayFont
+			, {
 				{ settingGroupFontFamily
 					, font.family( ) }
 				, { settingGroupFontPointSize
@@ -259,7 +273,8 @@ void MainWidget::initComponentOver( ) {
 		::setFont< QString, QVariant >( iterator, end, font );
 	} else {
 		font = this->font( );
-		progressSetting->setValue( settingGroupDrawplayFont, {
+		progressSetting->setValue( settingGroupDrawplayFont
+			, {
 				{ settingGroupFontFamily
 					, font.family( ) }
 				, { settingGroupFontPointSize
@@ -422,11 +437,26 @@ void MainWidget::loadingPlug( ) {
 				IRequestNetInterface *interfaceExtend = requestNetInterfaceExtend;
 				if( interfaceExtend->getRootUrl( &outUrl ) )
 					*display << QString( tr( u8"获取url : %1" ) ).arg( QString::fromStdWString( outUrl ) ) << '\n';
-				outUrl.clear( );
 				interfaceExtend->setInterfaceParent( this );
 				QObject *object = iterator.key( );
-				plugs.insert( filePtah, QSharedPointer< NovelNetJob >{ new NovelNetJob( display, object, requestNetInterfaceExtend ) } );
+				NovelNetJob *novelNetJob = new NovelNetJob( display, object, requestNetInterfaceExtend );
+				QSharedPointer< NovelNetJob > netJob{ novelNetJob };
+				plugs.insert( filePtah, netJob );
 				display->flush( );
+				auto menu = display->getPlugMenu( requestNetInterfaceExtend );
+				menu->setTitle( QUrl( QString::fromStdWString( outUrl ) ).host( ).append( " 选项" ) );
+				Action *requestBtn = new Action;
+				requestBtn->setText( "开始获取任务" );
+				connect( requestBtn
+					, &QAction::triggered
+					, [=]( ) {
+						netJob->start( );
+						*display << QString( u8"%1:(%2 %3)" ).arg( netJob->getUrl( ) ).arg( __FILE__ ).arg( __LINE__ ) << '\n';
+						display->flush( );
+					} );
+				menu->addAction( requestBtn );
+
+				outUrl.clear( );
 			}
 		}
 
@@ -442,12 +472,9 @@ void MainWidget::LoadWebInfo( ) {
 	auto end = plugs.end( );
 	std::string outUrl;
 	for( ; iterator != end; ++iterator ) {
-		qsizetype indexOf = iterator.key( ).indexOf( "www.121ds.cc" );
-		if( indexOf != -1 ) {
-			QSharedPointer< NovelNetJob > netJob = iterator.value( );
-			netJob->start( );
-			*display << QString( u8"%1:(%2 %3)" ).arg( netJob->getUrl( ) ).arg( __FILE__ ).arg( __LINE__ ) << '\n';
-			display->flush( );
-		}
+		QSharedPointer< NovelNetJob > netJob = iterator.value( );
+		netJob->start( );
+		*display << QString( u8"%1:(%2 %3)" ).arg( netJob->getUrl( ) ).arg( __FILE__ ).arg( __LINE__ ) << '\n';
+		display->flush( );
 	}
 }
