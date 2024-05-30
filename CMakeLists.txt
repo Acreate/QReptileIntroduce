@@ -88,9 +88,10 @@ get_path_cmake_dir_path( plug_path_list ${CMAKE_CURRENT_SOURCE_DIR}/srcs/libs/Sh
 set( target_update_sub_dir_list )
 list( APPEND target_update_sub_dir_list
 	"RequestDefinition"
-	"Request"
+	"RequestNet"
 	"RequestNetPlugin"
 	"NovelInfo"
+	"instance_function"
 )
 
 foreach( plug_dir ${plug_path_list} )

@@ -1,6 +1,6 @@
 ﻿#include "RequestNetPlugin.h"
 
-#include "../Request/RequestNet.h"
+#include "../RequestNet/RequestNet.h"
 RequestNetPlugin::RequestNetPlugin( QObject *parent ): QGenericPlugin( parent ) {
 }
 RequestNetPlugin::~RequestNetPlugin( ) {

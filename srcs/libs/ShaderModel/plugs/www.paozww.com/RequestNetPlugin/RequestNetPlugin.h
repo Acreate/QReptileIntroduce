@@ -3,7 +3,7 @@
 #pragma once
 
 #include <QGenericPlugin>
-#include "../Request/RequestNet.h"
+#include "../RequestNet/RequestNet.h"
 
 class RequestNetPlugin : public QGenericPlugin {
 	Q_OBJECT;
