@@ -54,12 +54,14 @@ qint64 OStream::outDebugLogFile( const QString &write_path, const QByteArray &wr
 QStringList OStream::anyDebugOut( OStream *os, const QString &msg, const QString &file_name, size_t line, const QString &call_fun_name, const QString &write_path, const QString &write_content ) {
 	QStringList anyDebugOut = OStream::anyDebugOut( os, msg, file_name, line, call_fun_name );
 	if( !write_path.isEmpty( ) ) {
-		QFile writeHtmlFile( write_path );
-		if( writeHtmlFile.open( QIODeviceBase::WriteOnly | QIODeviceBase::Text | QIODeviceBase::Truncate ) ) {
-			auto buff = anyDebugOut.join( "" );
-			buff = write_content + u8"\n" + buff;
-			writeHtmlFile.write( buff.toLocal8Bit( ) );
-			writeHtmlFile.close( );
+		if( Path::creatFilePath( write_path ) ) {
+			QFile writeHtmlFile( write_path );
+			if( writeHtmlFile.open( QIODeviceBase::WriteOnly | QIODeviceBase::Text | QIODeviceBase::Truncate ) ) {
+				auto buff = anyDebugOut.join( "" );
+				buff = write_content + u8"\n" + buff;
+				writeHtmlFile.write( buff.toLocal8Bit( ) );
+				writeHtmlFile.close( );
+			}
 		}
 	}
 	return anyDebugOut;
@@ -86,12 +88,14 @@ QStringList OStream::anyDebugOut( OStream *os, const QString &msg, const QString
 QStringList OStream::errorQDebugOut( const QString &msg, const QString &fileName, size_t line, const QString &call_fun_name, const QString &write_path, const QString &write_content ) {
 	QStringList msgList = OStream::errorQDebugOut( msg, fileName, line, call_fun_name );
 	if( !write_path.isEmpty( ) ) {
-		QFile writeHtmlFile( write_path );
-		if( writeHtmlFile.open( QIODeviceBase::WriteOnly | QIODeviceBase::Text | QIODeviceBase::Truncate ) ) {
-			auto buff = msgList.join( "" );
-			buff = write_content + u8"\n" + buff;
-			writeHtmlFile.write( buff.toLocal8Bit( ) );
-			writeHtmlFile.close( );
+		if( Path::creatFilePath( write_path ) ) {
+			QFile writeHtmlFile( write_path );
+			if( writeHtmlFile.open( QIODeviceBase::WriteOnly | QIODeviceBase::Text | QIODeviceBase::Truncate ) ) {
+				auto buff = msgList.join( "" );
+				buff = write_content + u8"\n" + buff;
+				writeHtmlFile.write( buff.toLocal8Bit( ) );
+				writeHtmlFile.close( );
+			}
 		}
 	}
 	return msgList;
@@ -136,6 +140,8 @@ QStringList OStream::errorQDebugOut( const QString &msg, const QString &fileName
 }
 QStringList OStream::errorQDebugOut( OStream *os, const QString &msg, const QString &fileName, size_t line, const QString &call_fun_name, const QString &write_path, const QString &write_content ) {
 	QStringList msgList = OStream::errorQDebugOut( os, msg, fileName, line, call_fun_name );
+	if( write_path.isEmpty( ) || !Path::creatFilePath( write_path ) )
+		return msgList;
 	QFile writeHtmlFile( write_path );
 	if( writeHtmlFile.open( QIODeviceBase::WriteOnly | QIODeviceBase::Text | QIODeviceBase::Truncate ) ) {
 		auto buff = msgList.join( "" );

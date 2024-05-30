@@ -93,7 +93,10 @@ QStringList Path::splitPath( const QString &path ) {
 bool Path::creatFilePath( const QString &path ) {
 	QFileInfo info( path );
 	if( info.exists( ) )
-		return true;
+		if( info.isFile( ) )
+			return true;
+		else
+			return false;
 	QDir targetDir = info.dir( );
 	QString dirPath = targetDir.absolutePath( );
 	if( !targetDir.exists( ) )
@@ -111,7 +114,10 @@ bool Path::creatFilePath( const QString &path ) {
 bool Path::creatDirPath( const QString &path ) {
 	QFileInfo info( path );
 	if( info.exists( ) )
-		return true;
+		if( info.isDir( ) )
+			return true;
+		else
+			return false;
 	return info.dir( ).mkpath( path );
 }
 bool Path::removePath( const QString &path ) {
