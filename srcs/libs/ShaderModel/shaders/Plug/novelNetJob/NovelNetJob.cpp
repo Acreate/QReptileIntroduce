@@ -441,10 +441,9 @@ void NovelNetJob::slots_requested_get_type_page_url_end( const QString &root_url
 void NovelNetJob::slots_requested_get_web_page_signals_end( const QUrl &url ) {
 	Vector_INovelInfoSPtr_Shared novelInfoSPtr( std::make_shared< Vector_INovelInfoSPtr >( ) );
 
-	auto mapIterator = typeNovelsMap.begin( );
-	auto mapEnd = typeNovelsMap.end( );
-
 	cylHtmlTools::HtmlWorkThread< bool * >::Current_Thread_Run currentThreadRun = [&]( const cylHtmlTools::HtmlWorkThread< bool * > *html_work_thread, const std::thread *run_std_cpp_thread, std::mutex *html_work_thread_mutex, std::mutex *std_cpp_thread_mutex, bool *data, const time_t *startTime ) {
+		auto mapIterator = typeNovelsMap.begin( );
+		auto mapEnd = typeNovelsMap.end( );
 		for( ; mapIterator != mapEnd; ++mapIterator )
 			for( auto &novel : *mapIterator->second )
 				novelInfoSPtr->emplace_back( novel );

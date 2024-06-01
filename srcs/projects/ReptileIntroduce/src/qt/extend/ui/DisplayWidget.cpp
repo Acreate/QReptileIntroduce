@@ -18,6 +18,7 @@
 #include "interface/IRequestNetInterface.h"
 #include "path/Dir.h"
 #include <htmls/htmlTools/XPath/XPath.h>
+#include <QMutex>
 using interfacePlugsType::IRequestNetInterface;
 using cylHtmlTools::XPath;
 #define q_connect_solts( type , signalPtr, signal, slotPtr, slot ) \
@@ -60,6 +61,7 @@ void DisplayWidget::initComponent( ) {
 	setDrawPlayFont = new Action( topMenu );
 	setMenuFont = new Action( topMenu );
 	clearDisplay = new Action( topMenu );
+	mutex = std::make_shared< QMutex >( );
 }
 void DisplayWidget::initProperty( ) {
 	topMenu->setTitle( tr( u8"绘制窗口" ) );
@@ -151,6 +153,7 @@ void DisplayWidget::slot_click_action( const Action *action ) {
 
 // todo : 绘制文字消息
 void DisplayWidget::native_slot_display( const QString &data ) {
+	QMutexLocker qlock( mutex.get( ) );
 	auto backImageRect = stringMsgImage->rect( );
 	int width = backImageRect.width( );
 	if( width == 0 )
@@ -202,8 +205,15 @@ void DisplayWidget::native_slot_display( const QString &data ) {
 	}
 	painter.end( );
 	size = this->msgList.size( );
-	if( size > strBuffMaxSize )
-		this->msgList = this->msgList.mid( size - strBuffMaxSize );
+	if( strBuffMaxSize < size ) {
+		QStringList qStringList;
+		auto index = size - strBuffMaxSize;
+		do {
+			qStringList.append( this->msgList.at( index ) );
+			++index;
+		} while( index < size );
+		this->msgList = qStringList;
+	}
 }
 void DisplayWidget::native_slot_display( const QArrayData &data ) {
 }

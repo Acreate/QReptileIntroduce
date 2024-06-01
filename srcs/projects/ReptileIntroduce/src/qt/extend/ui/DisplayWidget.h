@@ -7,6 +7,7 @@
 #include <nameSpace/interfacePlugsType.h>
 
 
+class QMutex;
 namespace cylHtmlTools {
 	class XPath;
 }
@@ -64,6 +65,8 @@ private: // 类成员变量
 	QImage *arrayDataMsgImage; // 数据数组
 	QImage *byteArrayMsgImage; // 二进制数据数组
 	Display_Type currentDisplayType; // 当前绘制类型
+private: // 线程
+	std::shared_ptr<QMutex> mutex;
 public:
 	DisplayWidget( QWidget *parent, Qt::WindowFlags flags = Qt::WindowFlags( ) );
 	~DisplayWidget( ) override;
