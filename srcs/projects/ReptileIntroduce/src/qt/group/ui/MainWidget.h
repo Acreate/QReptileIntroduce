@@ -108,6 +108,7 @@ public:
 	bool updateSettingFileInfo( const QString &filePath );
 private:
 	QMap< QString, QSharedPointer< NovelNetJob > > plugs;
+	QList<Action*> plugsActions;
 public slots: // 窗口子控件信号响应
 	/// <summary>
 	/// 时间响应信号

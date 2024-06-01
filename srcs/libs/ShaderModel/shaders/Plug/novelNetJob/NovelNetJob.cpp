@@ -126,12 +126,12 @@ void NovelNetJob::initObjProperty( ) {
 
 void NovelNetJob::initConnect( ) {
 
-	connect( this, &NovelNetJob::requesting_get_root_page_signals, this, &NovelNetJob::slots_requesting_get_root_page_signals );
-	connect( this, &NovelNetJob::requesting_get_type_page_url_signals, this, &NovelNetJob::slots_requesting_get_type_page_url_signals );
-	connect( this, &NovelNetJob::requesting_get_next_type_page_url_signals, this, &NovelNetJob::slots_requesting_get_next_type_page_url_signals );
-	connect( this, &NovelNetJob::requesting_get_novel_page_url_signals, this, &NovelNetJob::slots_requesting_get_novel_page_url_signals );
-	connect( this, &NovelNetJob::requested_get_type_page_url_end, this, &NovelNetJob::slots_requested_get_type_page_url_end );
-	connect( this, &NovelNetJob::requested_get_web_page_signals_end, this, &NovelNetJob::slots_requested_get_web_page_signals_end );
+	connect( this, &NovelNetJob::requesting_get_root_page_signals, this, &NovelNetJob::slots_requesting_get_root_page_signals, Qt::QueuedConnection );
+	connect( this, &NovelNetJob::requesting_get_type_page_url_signals, this, &NovelNetJob::slots_requesting_get_type_page_url_signals, Qt::QueuedConnection );
+	connect( this, &NovelNetJob::requesting_get_next_type_page_url_signals, this, &NovelNetJob::slots_requesting_get_next_type_page_url_signals, Qt::QueuedConnection );
+	connect( this, &NovelNetJob::requesting_get_novel_page_url_signals, this, &NovelNetJob::slots_requesting_get_novel_page_url_signals, Qt::QueuedConnection );
+	connect( this, &NovelNetJob::requested_get_type_page_url_end, this, &NovelNetJob::slots_requested_get_type_page_url_end, Qt::QueuedConnection );
+	connect( this, &NovelNetJob::requested_get_web_page_signals_end, this, &NovelNetJob::slots_requested_get_web_page_signals_end, Qt::QueuedConnection );
 
 }
 

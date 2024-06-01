@@ -450,12 +450,13 @@ void MainWidget::loadingPlug( ) {
 				connect( requestBtn
 					, &QAction::triggered
 					, [=]( ) {
-						netJob->start( );
 						*display << QString( u8"%1:(%2 %3)" ).arg( netJob->getUrl( ) ).arg( __FILE__ ).arg( __LINE__ ) << '\n';
 						display->flush( );
+						netJob->start( );
 					} );
 				menu->addAction( requestBtn );
-
+				// todo :: 加入按钮列表
+				plugsActions.append( requestBtn );
 				outUrl.clear( );
 			}
 		}
@@ -468,13 +469,9 @@ void MainWidget::loadingPlug( ) {
 	display->flush( );
 }
 void MainWidget::LoadWebInfo( ) {
-	auto iterator = plugs.begin( );
-	auto end = plugs.end( );
+	auto iterator = plugsActions.begin( );
+	auto end = plugsActions.end( );
 	std::string outUrl;
-	for( ; iterator != end; ++iterator ) {
-		QSharedPointer< NovelNetJob > netJob = iterator.value( );
-		netJob->start( );
-		*display << QString( u8"%1:(%2 %3)" ).arg( netJob->getUrl( ) ).arg( __FILE__ ).arg( __LINE__ ) << '\n';
-		display->flush( );
-	}
+	for( ; iterator != end; ++iterator )
+		emit ( *iterator )->trigger( );
 }
