@@ -385,7 +385,12 @@ void RequestNet::novelTypeEnd( const HtmlDocString &root_url, const HtmlDocStrin
 }
 void RequestNet::endHost( const interfacePlugsType::Vector_INovelInfoSPtr &saveNovelInfos, const std::function< bool( const std::chrono::system_clock::time_point::duration & ) > &run ) {
 
-	auto dbInterface = cylDB::DBTools::linkDB( Cache_Path_Dir );
+	QString linkPath( u8"%1%2" );
+	linkPath = linkPath.arg( Cache_Path_Dir ).arg( "dbs/" );
+	if( !QDir( linkPath ).mkpath( linkPath ) )
+		linkPath = Cache_Path_Dir;
+	auto dbInterface = cylDB::DBTools::linkDB( linkPath );
+
 	if( dbInterface->link( ) ) {
 		cylHtmlTools::HtmlWorkThread< bool * >::Current_Thread_Run currentThreadRun = [dbInterface,&saveNovelInfos,this]( const cylHtmlTools::HtmlWorkThread< bool * > *html_work_thread, const std::thread *run_std_cpp_thread, std::mutex *html_work_thread_mutex, std::mutex *std_cpp_thread_mutex, bool *data, const time_t *startTime ) {
 			QString dbName = this->rootUrl.host( );
@@ -401,7 +406,7 @@ void RequestNet::endHost( const interfacePlugsType::Vector_INovelInfoSPtr &saveN
 				bool hasTab = depositoryShared->hasTab( tabName );
 
 				if( !hasTab )
-					if( instance_function::generate_db_tab( dbInterface, depositoryShared, tabName, thisOStream ) )
+					if( !instance_function::generate_db_tab( dbInterface, depositoryShared, tabName, thisOStream ) )
 						return;
 
 				QStringList tabFieldNames = { "rootUrl", "novelName", "info", "updateTime", "format", "lastRequestTime", "lastRequestTimeFormat", "author", "url", "lastItem", "additionalData", "typePageUrl", "typeName" };

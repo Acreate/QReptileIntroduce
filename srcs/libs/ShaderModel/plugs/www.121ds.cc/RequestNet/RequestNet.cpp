@@ -119,7 +119,7 @@ Map_HtmlStrK_HtmlStrV * RequestNet::formHtmlGetTypeTheUrls( const interfacePlugs
 				}
 
 				htmlDoc->analysisBrotherNode( );
-				auto xpath = cylHtmlTools::XPath( QString( tr( u8R"(div[@class='hd']/ul/li/a)" ) ).toStdWString( ) );
+				auto xpath = cylHtmlTools::XPath( instance_function::NovelNodeXPathInfo::novels_root_get_type_xpath );
 
 				auto htmlNodeSPtrShared = htmlDoc->getHtmlNodeRoots( );
 				auto vectorHtmlNodeSPtrShared = xpath.buider( htmlNodeSPtrShared );
@@ -169,7 +169,7 @@ Vector_INovelInfoSPtr RequestNet::formHtmlGetTypePageNovels( const interfacePlug
 		return result;
 	}
 	htmlDoc->analysisBrotherNode( );
-	auto xpath = cylHtmlTools::XPath( QString( tr( u8R"(div[@class='cf' @id='sitebox' ]/dl)" ) ).toStdWString( ) );
+	auto xpath = cylHtmlTools::XPath( instance_function::NovelNodeXPathInfo::novels_type_get_novels_node_xpath );
 	auto htmlNodeSPtrShared = htmlDoc->getHtmlNodeRoots( );
 	auto vectorHtmlNodeSPtrShared = xpath.buider( htmlNodeSPtrShared );
 
@@ -333,7 +333,7 @@ HtmlDocString RequestNet::formHtmlGetNext( const interfacePlugsType::HtmlDocStri
 		if( !htmlDoc )
 			break;
 
-		auto xpath = cylHtmlTools::XPath( QString( tr( u8R"(div[@class="pages"]/ul/li/a[@class="none"])" ) ).toStdWString( ) );
+		auto xpath = cylHtmlTools::XPath( instance_function::NovelNodeXPathInfo::novels_type_get_type_next_xpath );
 		auto htmlNodes = htmlDoc->xpathRootNodes( xpath );
 		if( !htmlNodes ) {
 			quitMsg = 1;
@@ -391,9 +391,14 @@ bool RequestNet::isRequestNovelInfoUrl( const interfacePlugsType::INovelInfoPtr 
 }
 void RequestNet::novelTypeEnd( const HtmlDocString &root_url, const HtmlDocString &type_name, const HtmlDocString &url, const interfacePlugsType::Vector_INovelInfoSPtr &saveNovelInfos ) {
 }
-void RequestNet::endHost( const interfacePlugsType::Vector_INovelInfoSPtr &saveNovelInfos, const std::function< bool( const cylHttpNetWork::TimeTools::Time_Duration & ) > &run ) {
+void RequestNet::endHost( const interfacePlugsType::Vector_INovelInfoSPtr &saveNovelInfos, const std::function< bool( const std::chrono::system_clock::time_point::duration & ) > &run ) {
 
-	auto dbInterface = cylDB::DBTools::linkDB( Cache_Path_Dir );
+	QString linkPath( u8"%1%2" );
+	linkPath = linkPath.arg( Cache_Path_Dir ).arg( "dbs/" );
+	if( !QDir( linkPath ).mkpath( linkPath ) )
+		linkPath = Cache_Path_Dir;
+	auto dbInterface = cylDB::DBTools::linkDB( linkPath );
+
 	if( dbInterface->link( ) ) {
 		cylHtmlTools::HtmlWorkThread< bool * >::Current_Thread_Run currentThreadRun = [dbInterface,&saveNovelInfos,this]( const cylHtmlTools::HtmlWorkThread< bool * > *html_work_thread, const std::thread *run_std_cpp_thread, std::mutex *html_work_thread_mutex, std::mutex *std_cpp_thread_mutex, bool *data, const time_t *startTime ) {
 			QString dbName = this->rootUrl.host( );
@@ -409,7 +414,7 @@ void RequestNet::endHost( const interfacePlugsType::Vector_INovelInfoSPtr &saveN
 				bool hasTab = depositoryShared->hasTab( tabName );
 
 				if( !hasTab )
-					if( instance_function::generate_db_tab( dbInterface, depositoryShared, tabName, thisOStream ) )
+					if( !instance_function::generate_db_tab( dbInterface, depositoryShared, tabName, thisOStream ) )
 						return;
 
 				QStringList tabFieldNames = { "rootUrl", "novelName", "info", "updateTime", "format", "lastRequestTime", "lastRequestTimeFormat", "author", "url", "lastItem", "additionalData", "typePageUrl", "typeName" };
@@ -418,9 +423,9 @@ void RequestNet::endHost( const interfacePlugsType::Vector_INovelInfoSPtr &saveN
 				interfacePlugsType::Vector_INovelInfoSPtr updateList; // 更新列表
 				interfacePlugsType::Vector_INovelInfoSPtr interList; // 插入列表
 				// 分解-插入/更新 列表
-				if( allItem )
+				if( allItem ) {
 					instance_function::separate_list( saveNovelInfos, allItem, updateList, interList );
-				else
+				} else
 					interList = saveNovelInfos; // 数据库不存在数据的时候，全部拷贝到插入列表
 
 				// 开始更新
@@ -437,7 +442,7 @@ void RequestNet::endHost( const interfacePlugsType::Vector_INovelInfoSPtr &saveN
 					novelAdditionalData,
 					novelTypePageUrl,
 					novelTypeName;
-				QString cmd = R"(UPDATE `)" + tabName + R"(` SET `updateTime`=:updateTime, `lastRequestTime`=:lastRequestTime, `additionalData`=:additionalData, `lastItem`=:lastItem , `format`=:format  WHERE `url`=:url;)";
+				QString cmd = R"(UPDATE `)" + tabName + R"(` SET `updateTime`=:updateTime, `format`=:format, `lastRequestTime`=:lastRequestTime, `additionalData`=:additionalData, `lastItem`=:lastItem  WHERE `url`=:url;)";
 				bool transaction = depositoryShared->transaction( );
 				std::shared_ptr< QSqlQuery > sqlQuery = depositoryShared->generateSqlQuery( );
 				sqlQuery.get( )->prepare( cmd );
@@ -502,6 +507,7 @@ void RequestNet::endHost( const interfacePlugsType::Vector_INovelInfoSPtr &saveN
 				sqlQuery.reset( );
 				auto close = depositoryShared->close( );
 			}
+
 		};
 		bool has = true;
 		cylHtmlTools::HtmlWorkThread< bool * > thread( nullptr, currentThreadRun, nullptr, &has );

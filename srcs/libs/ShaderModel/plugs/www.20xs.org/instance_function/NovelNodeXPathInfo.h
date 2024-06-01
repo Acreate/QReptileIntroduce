@@ -1,10 +1,24 @@
 ﻿#ifndef NOVELNODEXPATHINFO_H_H_HEAD__FILE__
 #define NOVELNODEXPATHINFO_H_H_HEAD__FILE__
 #pragma once
-
+#include <QString>
+#include <QObject>
+#include <htmlString/HtmlStringTools.h>
 namespace instance_function {
 	// todo : 小说相关而的 xpath
 	struct NovelNodeXPathInfo {
+		/// <summary>
+		/// 从小说页面获取小说
+		/// </summary>
+		static cylHtmlTools::HtmlString novels_type_get_novels_node_xpath;
+		/// <summary>
+		/// 从首页获取类型
+		/// </summary>
+		static cylHtmlTools::HtmlString novels_root_get_type_xpath;
+		/// <summary>
+		/// 从小说页面当中获取下一页
+		/// </summary>
+		static cylHtmlTools::HtmlString novels_type_get_type_next_xpath;
 		/// <summary>
 		/// 从类型页面 url 小说信息列表遍历中获取小说名称的 xpath
 		/// </summary>

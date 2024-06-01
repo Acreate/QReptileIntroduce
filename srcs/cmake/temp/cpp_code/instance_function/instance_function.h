@@ -11,6 +11,19 @@ namespace instance_function {
 		QUrl url( QString::fromStdWString( request_url ) );
 		QString wirteLogFilePath( u8"%2%3%1%4%5%6" );
 		wirteLogFilePath = wirteLogFilePath.arg( QDir::separator( ) ).arg( Cache_Path_Dir ).arg( url.host( ) ).arg( "DateTime_Error_None_" ).arg( QDateTime::currentDateTime( ).toString( u8"yyyy MM DD _ hh-mm-ss" ) ).arg( u8".html" );
+
+
+		QFileInfo fileInfo( wirteLogFilePath );
+		auto dir = fileInfo.dir( );
+		if( !dir.exists( ) )
+			if( !dir.mkpath( dir.absolutePath( ) ) ) {
+				qDebug( ) << u8"无法创建文件 ==============================" ;
+				qDebug( ) << u8"无法创建文件 : " << dir.absolutePath( ).toStdString( ).c_str( );
+				qDebug( ) << u8"无法创建文件 ==============================" ;
+				return;
+			}
+
+
 		QFile file( wirteLogFilePath );
 		if( file.open( QIODeviceBase::WriteOnly | QIODeviceBase::Text | QIODeviceBase::Truncate ) ) {
 			QString wirte( u8R"(<!-- %1 -->\n)" );

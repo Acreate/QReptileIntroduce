@@ -4,6 +4,7 @@
 #include <QGenericPlugin>
 #include <QDateTime>
 #include "../auto_generate_files/macro/cmake_to_c_cpp_header_macro.h"
+#include "HttpNetWork/TimeTools.h"
 #include "interface/IRequestNetInterface.h"
 #include "nameSpace/cylHtmlTools.h"
 using interfacePlugsType::IRequestNetInterface;
@@ -24,16 +25,6 @@ public:
 	};
 private:
 	static QString timeForm; // 时间格式
-	/// <summary>
-	/// 从原始(currentTime)格式获取字符串时候的格式化字符串
-	/// <code>
-	///		// currentTime 当前时间
-	///		auto timeArgForm = currentTime.toString( orgCurrentFormToUpdateTimeForm );
-	///		// .... *html_string_shared 作为小说页面获取到的小说字符串指针对象
-	///		auto newTime = timeArgForm..arg( QString::fromStdWString( *html_string_shared );
-	/// </code>
-	/// </summary>
-	static QString orgCurrentFormToUpdateTimeForm; 
 	static QDateTime currentTime; // 请求时间
 	static QString currentTimeForm; // 当前请求时间的格式
 	static int expireDay; // 过期-日
@@ -167,8 +158,6 @@ public: // 实现解析
 	/// <summary>
 	/// 结束该网站请求时被调用
 	/// </summary>
-	/// <param name="saveNovelInfos">请求到的所有小说信息</param>
-	/// <param name="run">返回 true 表示刷新时间</param>
 	void endHost( const interfacePlugsType::Vector_INovelInfoSPtr &saveNovelInfos, const std::function< bool( const std::chrono::system_clock::time_point::duration & ) > &run ) override;
 private:
 	OStream *oStream;

@@ -36,7 +36,7 @@ QDateTime RequestNet::currentTime;
 
 RequestNet::RequestNet( QObject *parent ): QObject( parent ), rootUrl( GET_URL ), oStream( nullptr ), iStream( nullptr ), thisOStream( nullptr ), typeUrlMap( nullptr ) {
 	cylHttpNetWork::NetworkRequest::initTools( );
-	cylHttpNetWork::NetworkRequest::setHostUrlRequestInterval( rootUrl.host(  ), 2000 ); // 设置请求间隔
+	cylHttpNetWork::NetworkRequest::setHostUrlRequestInterval( rootUrl.host( ), 2000 ); // 设置请求间隔
 }
 
 RequestNet::~RequestNet( ) {
@@ -118,7 +118,7 @@ Map_HtmlStrK_HtmlStrV * RequestNet::formHtmlGetTypeTheUrls( const interfacePlugs
 				}
 
 				htmlDoc->analysisBrotherNode( );
-				auto xpath = cylHtmlTools::XPath( QString( tr( u8R"(div[@class="nav"]/ul/li/a)" ) ).toStdWString( ) );
+				auto xpath = cylHtmlTools::XPath( instance_function::NovelNodeXPathInfo::novels_root_get_type_xpath );
 
 				auto htmlNodeSPtrShared = htmlDoc->getHtmlNodeRoots( );
 				auto vectorHtmlNodeSPtrShared = xpath.buider( htmlNodeSPtrShared );
@@ -167,7 +167,7 @@ Vector_INovelInfoSPtr RequestNet::formHtmlGetTypePageNovels( const interfacePlug
 		return result;
 	}
 	htmlDoc->analysisBrotherNode( );
-	auto xpath = cylHtmlTools::XPath( QString( tr( u8R"(div[@class="l"]/ul/li/)" ) ).toStdWString( ) );
+	auto xpath = cylHtmlTools::XPath( instance_function::NovelNodeXPathInfo::novels_type_get_novels_node_xpath );
 	auto htmlNodeSPtrShared = htmlDoc->getHtmlNodeRoots( );
 	Vector_HtmlNodeSPtr_Shared vectorHtmlNodeSPtrShared = xpath.buider( htmlNodeSPtrShared );
 	instance_function::NovelNodeXPathInfo novelNodeXPathInfo;
@@ -356,7 +356,7 @@ HtmlDocString RequestNet::formHtmlGetNext( const interfacePlugsType::HtmlDocStri
 		if( !htmlDoc )
 			break;
 
-		auto xpath = cylHtmlTools::XPath( QString( tr( u8R"(div[@class="pagelink" @id="pagelink"]/a)" ) ).toStdWString( ) );
+		auto xpath = cylHtmlTools::XPath( instance_function::NovelNodeXPathInfo::novels_type_get_type_next_xpath );
 		auto htmlNodes = htmlDoc->xpathRootNodes( xpath );
 		if( !htmlNodes ) {
 			quitMsg = 1;
@@ -416,7 +416,12 @@ void RequestNet::novelTypeEnd( const HtmlDocString &root_url, const HtmlDocStrin
 }
 void RequestNet::endHost( const interfacePlugsType::Vector_INovelInfoSPtr &saveNovelInfos, const std::function< bool( const std::chrono::system_clock::time_point::duration & ) > &run ) {
 
-	auto dbInterface = cylDB::DBTools::linkDB( Cache_Path_Dir );
+	QString linkPath( u8"%1%2" );
+	linkPath = linkPath.arg( Cache_Path_Dir ).arg( "dbs/" );
+	if( !QDir( linkPath ).mkpath( linkPath ) )
+		linkPath = Cache_Path_Dir;
+	auto dbInterface = cylDB::DBTools::linkDB( linkPath );
+
 	if( dbInterface->link( ) ) {
 		cylHtmlTools::HtmlWorkThread< bool * >::Current_Thread_Run currentThreadRun = [dbInterface,&saveNovelInfos,this]( const cylHtmlTools::HtmlWorkThread< bool * > *html_work_thread, const std::thread *run_std_cpp_thread, std::mutex *html_work_thread_mutex, std::mutex *std_cpp_thread_mutex, bool *data, const time_t *startTime ) {
 			QString dbName = this->rootUrl.host( );
@@ -432,7 +437,7 @@ void RequestNet::endHost( const interfacePlugsType::Vector_INovelInfoSPtr &saveN
 				bool hasTab = depositoryShared->hasTab( tabName );
 
 				if( !hasTab )
-					if( instance_function::generate_db_tab( dbInterface, depositoryShared, tabName, thisOStream ) )
+					if( !instance_function::generate_db_tab( dbInterface, depositoryShared, tabName, thisOStream ) )
 						return;
 
 				QStringList tabFieldNames = { "rootUrl", "novelName", "info", "updateTime", "format", "lastRequestTime", "lastRequestTimeFormat", "author", "url", "lastItem", "additionalData", "typePageUrl", "typeName" };
@@ -532,7 +537,7 @@ void RequestNet::endHost( const interfacePlugsType::Vector_INovelInfoSPtr &saveN
 		thread.start( );
 		auto nowTimeDuration = cylHttpNetWork::TimeTools::getNowTimeDuration( );
 		while( thread.isRun( ) ) {
-			if( run( cylHttpNetWork::TimeTools::getNowTimeDuration( ) - nowTimeDuration ) ) 
+			if( run( cylHttpNetWork::TimeTools::getNowTimeDuration( ) - nowTimeDuration ) )
 				nowTimeDuration = cylHttpNetWork::TimeTools::getNowTimeDuration( );
 			qApp->processEvents( );
 		}
