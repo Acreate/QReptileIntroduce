@@ -3,9 +3,26 @@
 #pragma once
 
 #include "./NovelNodeXPathInfo.h"
-
+#include "../auto_generate_files/macro/cmake_to_c_cpp_header_env.h"
 namespace instance_function {
 	struct NovelNodeXPathInfo;
+	inline void write_file_log( QString msg, const interfacePlugsType::HtmlDocString &request_url, const cylHtmlTools::HtmlString &htmlText ) {
+		///////////// 写入文件
+		QUrl url( QString::fromStdWString( request_url ) );
+		QString wirteLogFilePath( u8"%2%3%1%4%5%6" );
+		wirteLogFilePath = wirteLogFilePath.arg( QDir::separator( ) ).arg( Cache_Path_Dir ).arg( url.host( ) ).arg( "DateTime_Error_None_" ).arg( QDateTime::currentDateTime( ).toString( u8"yyyy MM DD _ hh-mm-ss" ) ).arg( u8".html" );
+		QFile file( wirteLogFilePath );
+		if( file.open( QIODeviceBase::WriteOnly | QIODeviceBase::Text | QIODeviceBase::Truncate ) ) {
+			QString wirte( u8R"(<!-- %1 -->\n)" );
+			QStringList msgs;
+			msgs.append( wirte.arg( msg ) );
+			msgs.append( wirte.arg( QString::fromStdWString( request_url ) ) );
+			msgs.append( QString::fromStdWString( htmlText ) );
+			wirte = msgs.join( '\n' );
+			file.write( wirte.toLatin1( ) );
+			file.close( );
+		}
+	}
 	/// <summary>
 	/// 根据错误信息输出异常
 	/// </summary>
@@ -32,6 +49,8 @@ namespace instance_function {
 				errorMsg = errorMsg.arg( *novelInfoBuffPtr->getQStringSPtrUrl( ) ).arg( *novelInfoBuffPtr->getQStringSPtrName( ) ).arg( quitMsg ).arg( xpath.getHtmlString( ) ) + includeNodeContent;
 				auto msg = QString( "%1 : %2 : %3" ).arg( type_name ).arg( request_url ).arg( errorMsg );
 				OStream::anyDebugOut( thisOStream, msg );
+				///////////// 写入文件
+				write_file_log( msg, request_url, htmlText );
 				break;
 			}
 			case RequestNet::Novel_Xpath_Analysis_Error::DateTime_Error_Xpath : {
@@ -39,6 +58,8 @@ namespace instance_function {
 				errorMsg = errorMsg.arg( *novelInfoBuffPtr->getQStringSPtrUrl( ) ).arg( *novelInfoBuffPtr->getQStringSPtrName( ) ).arg( quitMsg ).arg( xpath.getHtmlString( ) ) + includeNodeContent;
 				auto msg = QString( "%1 : %2 : %3" ).arg( type_name ).arg( request_url ).arg( errorMsg );
 				OStream::anyDebugOut( thisOStream, msg );
+				///////////// 写入文件
+				write_file_log( msg, request_url, htmlText );
 				break;
 			}
 			case RequestNet::Novel_Xpath_Analysis_Error::Name_Error_None : {
@@ -46,6 +67,8 @@ namespace instance_function {
 				errorMsg = errorMsg.arg( *novelInfoBuffPtr->getQStringSPtrUrl( ) ).arg( quitMsg ).arg( xpath.getHtmlString( ) ) + includeNodeContent;
 				auto msg = QString( "%1 : %2 : %3" ).arg( type_name ).arg( request_url ).arg( errorMsg );
 				OStream::anyDebugOut( thisOStream, msg );
+				///////////// 写入文件
+				write_file_log( msg, request_url, htmlText );
 				break;
 			}
 			case RequestNet::Novel_Xpath_Analysis_Error::Name_Error_Xpath : {
@@ -53,6 +76,8 @@ namespace instance_function {
 				errorMsg = errorMsg.arg( *novelInfoBuffPtr->getQStringSPtrUrl( ) ).arg( quitMsg ).arg( xpath.getHtmlString( ) ) + includeNodeContent;
 				auto msg = QString( "%1 : %2 : %3" ).arg( type_name ).arg( request_url ).arg( errorMsg );
 				OStream::anyDebugOut( thisOStream, msg );
+				///////////// 写入文件
+				write_file_log( msg, request_url, htmlText );
 				break;
 			}
 			case RequestNet::Novel_Xpath_Analysis_Error::Url_Error_Xpath : {
@@ -60,6 +85,8 @@ namespace instance_function {
 				errorMsg = errorMsg.arg( quitMsg ).arg( xpath.getHtmlString( ) ) + includeNodeContent;
 				auto msg = QString( "%1 : %2 : %3" ).arg( type_name ).arg( request_url ).arg( errorMsg );
 				OStream::anyDebugOut( thisOStream, msg );
+				///////////// 写入文件
+				write_file_log( msg, request_url, htmlText );
 				break;
 			}
 			case RequestNet::Novel_Xpath_Analysis_Error::Url_Error_None : {
@@ -67,6 +94,8 @@ namespace instance_function {
 				errorMsg = errorMsg.arg( quitMsg ).arg( xpath.getHtmlString( ) ) + includeNodeContent;
 				auto msg = QString( "%1 : %2 : %3" ).arg( type_name ).arg( request_url ).arg( errorMsg );
 				OStream::anyDebugOut( thisOStream, msg );
+				///////////// 写入文件
+				write_file_log( msg, request_url, htmlText );
 				break;
 			}
 			case RequestNet::Novel_Xpath_Analysis_Error::None :
@@ -76,8 +105,8 @@ namespace instance_function {
 				cylHtmlTools::HtmlNode *element = extent;
 				errorMsg = errorMsg.arg( QString::fromStdWString( *element->getIncludeNodeContent( ) ) ).arg( xpath.getHtmlString( ) ) + includeNodeContent;
 				auto msg = QString( "%1 : %2 : %3" ).arg( type_name ).arg( request_url ).arg( errorMsg );
-				auto path = QString( Cache_Path_Dir ).append( QDir::separator( ) ).append( type_name ).append( u8".html" );
-				OStream::anyDebugOut( thisOStream, msg, __FILE__, __LINE__, __FUNCTION__, path, QString::fromStdWString( htmlText ) );
+				///////////// 写入文件
+				write_file_log( msg, request_url, htmlText );
 			}
 		}
 	}
