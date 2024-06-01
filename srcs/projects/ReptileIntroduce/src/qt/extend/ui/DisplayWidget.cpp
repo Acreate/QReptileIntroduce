@@ -59,12 +59,14 @@ void DisplayWidget::initComponent( ) {
 	widgetTopMneu = new Menu( this );
 	setDrawPlayFont = new Action( topMenu );
 	setMenuFont = new Action( topMenu );
+	clearDisplay = new Action( topMenu );
 }
 void DisplayWidget::initProperty( ) {
 	topMenu->setTitle( tr( u8"绘制窗口" ) );
 	fontMenu->setTitle( tr( u8"字体设置" ) );
 	setDrawPlayFont->setText( tr( u8"设置绘制字体" ) );
 	setMenuFont->setText( tr( u8"设置菜单字体" ) );
+	clearDisplay->setText( tr( u8"清除屏幕" ) );
 	plugTopMneu->setTitle( tr( u8"插件菜单" ) );
 	widgetTopMneu->setTitle( tr( u8"窗口菜单" ) );
 	objectImage->fill( QColor( 0, 0, 0, 0 ) );
@@ -82,6 +84,7 @@ void DisplayWidget::initComponentLayout( ) {
 	topMenuBar->addMenu( plugTopMneu );
 	topMenuBar->addMenu( widgetTopMneu );
 	topMenu->addMenu( fontMenu );
+	topMenu->addAction( clearDisplay );
 	fontMenu->addAction( setDrawPlayFont );
 	fontMenu->addAction( setMenuFont );
 	mainVLayout->setMenuBar( topMenuBar );
@@ -91,38 +94,53 @@ void DisplayWidget::initConnect( ) {
 
 	// 链接自身的槽
 	connect( this, &DisplayWidget::setType, this, &DisplayWidget::native_slot_setType );
-	connect( this, &DisplayWidget::changeDisplayFont, [=]( QFont &font ) {
-		msgFont = font;
-		updatDisplay< QString_Type >( );
+	connect( this
+		, &DisplayWidget::changeDisplayFont
+		, [=]( QFont &font ) {
+			msgFont = font;
+			updatDisplay< QString_Type >( );
 
-		update( );
-	} );
-	connect( this, &DisplayWidget::changeMenuFont, [=]( QFont &font ) {
-		this->topMenuBar->setFont( font );
-		this->topMenuBar->update( );
-		resizeEvent( nullptr );
-		update( );
-	} );
-	connect( this, &DisplayWidget::changeDisplayFontLineHeight, [=]( int64_t line_gain_space ) {
-		lineGainSpace = line_gain_space;
-	} );
+			update( );
+		} );
+	connect( this
+		, &DisplayWidget::changeMenuFont
+		, [=]( QFont &font ) {
+			this->topMenuBar->setFont( font );
+			this->topMenuBar->update( );
+			resizeEvent( nullptr );
+			update( );
+		} );
+	connect( this
+		, &DisplayWidget::changeDisplayFontLineHeight
+		, [=]( int64_t line_gain_space ) {
+			lineGainSpace = line_gain_space;
+		} );
 	// 重载的槽
 	q_connect_solts_thisPtr( const QObject &, &DisplayWidget::display, &DisplayWidget::native_slot_display );
 	q_connect_solts_thisPtr( const QString &, &DisplayWidget::display, &DisplayWidget::native_slot_display );
 	q_connect_solts_thisPtr( const QArrayData &, &DisplayWidget::display, &DisplayWidget::native_slot_display );
 	q_connect_solts_thisPtr( const QByteArray &, &DisplayWidget::display, &DisplayWidget::native_slot_display );
-	connect( setDrawPlayFont, &QAction::triggered, [this]( ) {
-		bool isOk = false;
-		QFont font = QFontDialog::getFont( &isOk, this->msgFont, this, tr( u8"选择一个显示在窗口的字体" ) );
-		if( isOk )
-			emit changeDisplayFont( font );
-	} );
-	connect( setMenuFont, &QAction::triggered, [this]( ) {
-		bool isOk = false;
-		QFont font = QFontDialog::getFont( &isOk, this->msgFont, this, tr( u8"选择一个显示在菜单的字体" ) );
-		if( isOk )
-			emit changeMenuFont( font );
-	} );
+	connect( setDrawPlayFont
+		, &QAction::triggered
+		, [this]( ) {
+			bool isOk = false;
+			QFont font = QFontDialog::getFont( &isOk, this->msgFont, this, tr( u8"选择一个显示在窗口的字体" ) );
+			if( isOk )
+				emit changeDisplayFont( font );
+		} );
+	connect( setMenuFont
+		, &QAction::triggered
+		, [this]( ) {
+			bool isOk = false;
+			QFont font = QFontDialog::getFont( &isOk, this->msgFont, this, tr( u8"选择一个显示在菜单的字体" ) );
+			if( isOk )
+				emit changeMenuFont( font );
+		} );
+	connect( clearDisplay
+		, &QAction::triggered
+		, [this]( ) {
+			clear( );
+		} );
 }
 void DisplayWidget::initOver( ) {
 
@@ -193,6 +211,10 @@ void DisplayWidget::native_slot_display( const QByteArray &data ) {
 }
 
 
+void DisplayWidget::clear( ) {
+	this->msgList = QStringList( );
+	updatDisplay( );
+}
 Menu * DisplayWidget::getMenu( QObject *object ) {
 	if( menuMap.contains( object ) )
 		return menuMap[ object ];

@@ -8,7 +8,9 @@ namespace interfacePlugsType {
 
 	public:
 		INovelInfo( ) = default;
-		virtual ~INovelInfo( ) { }
+		virtual ~INovelInfo( ) {
+			
+		}
 	public: //-纯虚函数
 		/// <summary>
 		/// 获取小数名称

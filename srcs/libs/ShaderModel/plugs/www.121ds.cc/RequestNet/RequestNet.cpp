@@ -186,15 +186,17 @@ Vector_INovelInfoSPtr RequestNet::formHtmlGetTypePageNovels( const interfacePlug
 			return QString::fromStdWString( *html_string_shared );
 		};
 	} else {
+		QUrl url( QString::fromStdWString( request_url ) );
 		auto msg = QString( "%1 : %2 : %3" ).arg( type_name ).arg( request_url ).arg( QString( u8" xpath 异常，登出" ) );
-		auto path = QString( Cache_Path_Dir ).append( QDir::separator( ) ).append( type_name ).append( u8".html" );
+		auto path = QString( Cache_Path_Dir ).append( QDir::separator( ) ).append( url.host( ) ).append( QDir::separator( ) ).append( u8"formHtmlGetTypePageNovels" ).append( QDateTime::currentDateTime( ).toString( "yyyy_MM_dd hh mm ss-" ) ).append( type_name ).append( u8".html" );
 		OStream::anyDebugOut( thisOStream, msg, __FILE__, __LINE__, __FUNCTION__, path, QString::fromStdWString( htmlText ) );
+
 		return result;
 	}
 	cylHtmlTools::HtmlWorkThread< bool * >::Current_Thread_Run currentThreadRun = [&vectorHtmlNodeSPtrShared,&saveNovelInfos,&result, &type_name,&xpath,&request_url,&htmlText,&novelNodeXPathInfo,this]( const cylHtmlTools::HtmlWorkThread< bool * > *html_work_thread, const std::thread *run_std_cpp_thread, std::mutex *html_work_thread_mutex, std::mutex *std_cpp_thread_mutex, bool *data, const time_t *startTime ) {
 		auto vectorIterator = vectorHtmlNodeSPtrShared->begin( );
 		auto vectorEnd = vectorHtmlNodeSPtrShared->end( );
-		std::shared_ptr< INovelInfo > novelInfoPtr = nullptr;
+		bool saveNovel = false;
 		Vector_HtmlNodeSPtr_Shared htmlNodes = nullptr;
 		HtmlString_Shared content = nullptr;
 		QString rootUrl = GET_URL;
@@ -286,21 +288,21 @@ Vector_INovelInfoSPtr RequestNet::formHtmlGetTypePageNovels( const interfacePlug
 				novelInfoBuffPtr->typePageUrl = std::make_shared< QString >( QString::fromStdWString( request_url ) );
 				novelInfoBuffPtr->typeName = std::make_shared< QString >( QString::fromStdWString( type_name ) );
 				// 成功则赋值
-				novelInfoPtr = novelInfoBuffPtr;
+				saveNovel = true;
 			} while( false );
-			if( !novelInfoPtr ) { // 为空，说明没有被赋值，也就是异常
-				instance_function::out_debug( quitMsg, vectorIterator->get( ), novelInfoBuffPtr.get( ), type_name, request_url, xpath, thisOStream, htmlText );
-				novelInfoBuffPtr->clear( ); // 重置
-			} else {
-				result.emplace_back( novelInfoPtr ); // 加入列表
+			if( saveNovel ) {
+				result.emplace_back( novelInfoBuffPtr ); // 加入列表
 				// 成功获取即可输出
 				QString outMsg( u8"[%1]小说(%2):url(%3) -> 解析成功 [%4]" );
 				++novelCount;
 				outMsg = outMsg.arg( *novelInfoBuffPtr->typeName ).arg( *novelInfoBuffPtr->novelName ).arg( *novelInfoBuffPtr->url ).arg( novelCount );
 				OStream::anyDebugOut( thisOStream, outMsg );
 				novelInfoBuffPtr = std::make_shared< NovelInfo >( );
+			} else { // 为空，说明没有被赋值，也就是异常
+				instance_function::out_debug( quitMsg, vectorIterator->get( ), novelInfoBuffPtr.get( ), type_name, request_url, xpath, thisOStream, htmlText );
+				novelInfoBuffPtr->clear( ); // 重置
 			}
-			novelInfoPtr.reset( ); // 重置
+			saveNovel = false; // 重置
 		}
 	};
 

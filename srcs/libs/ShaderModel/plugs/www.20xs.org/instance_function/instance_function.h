@@ -126,6 +126,7 @@ namespace instance_function {
 						updateList.emplace_back( insterItem );
 					interList.erase( iterator ); // 删除已经识别的项
 					insterItem = nullptr; // 对象赋空
+					urlEqu = false; // 重置标识位
 				}
 				break;
 			}

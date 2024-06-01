@@ -14,14 +14,56 @@
 #include <qguiapplication.h>
 #include <unordered_map>
 
+#include "../../../../../git/QtExtendDB/srcs/QtExtendDB/nameSpace/cylDB.h"
 #include "../ioFile/IOFile.h"
 #include "dateTime/DateTime.h"
 
 #include "interface/INovelInfo.h"
 #include "auto_generate_files/macro/cmake_to_c_cpp_header_env.h"
 #include "path/Dir.h"
+#include <DB/sqlite/sqliteResult/SQLiteResult.h>
 using namespace interfacePlugsType;
 
+/// <summary>
+/// 输出信息到文件
+/// </summary>
+/// <param name="nowTimeDuration">执行的开始点</param>
+/// <param name="oStream">可选输出流</param>
+/// <param name="networkReply">请求体</param>
+/// <param name="file">错误文件</param>
+/// <param name="call_function_name">调用函数名称</param>
+/// <param name="line">信息行数</param>
+/// <param name="write_root_path">写入的根目录</param>
+/// <param name="file_name">文件名称</param>
+/// <param name="file_suffix">后缀名称</param>
+inline void error_write_file( std::chrono::system_clock::time_point::duration &nowTimeDuration, OStream *oStream, QNetworkReply *networkReply, const QString &file, const QString &call_function_name, size_t line, const QString &write_root_path, const QString &file_name, const QString &file_suffix ) {
+	QDateTime currentDateTime = QDateTime::currentDateTime( );
+	QString currentTime = currentDateTime.toString( "yyyy_MM_dd hh-mm-ss" );
+	nowTimeDuration = cylHttpNetWork::TimeTools::getNowTimeDuration( ) - nowTimeDuration;
+	long long timeDurationToMilliseconds = cylHttpNetWork::TimeTools::getTimeDurationToMilliseconds( nowTimeDuration );
+	QString seconds( QString::number( timeDurationToMilliseconds / 1000 ) ); // 秒
+	QString msg;
+	auto url = networkReply->url( );
+	msg.append( "=========================		try : info" )
+		.append( "\n\t当前时间 : " ).append( currentTime ).append( "\n\t" )
+		.append( "\n\t执行时间 : " ).append( seconds ).append( "秒\n\t" )
+		.append( "\n\t错误文件 : " ).append( file ).append( "\n\t" )
+		.append( "\n\t信息位置 : " ).append( QString::number( line ) )
+		.append( "\n\t信息函数 : " ).append( __FUNCTION__ )
+		.append( "=========================		try : message" )
+		.append( "\n\t错误信息 : " ).append( getErrorQStr( networkReply->error( ) ) )
+		.append( u8"\n\t类型 : " ).append( "首页" ).append( u8"(" ).append( url.toString( ) ).append( ")" )
+		.append( "=========================" );
+	if( write_root_path.isEmpty( ) )
+		OStream::anyDebugOut( oStream, msg, file, line, call_function_name );
+	else {
+		QString errorWriteFilePath( u8R"(%2%1%3%1%4%1%5.%6)" );
+		QString host = url.host( );
+		QString timeForm = currentDateTime.toString( "yyyy-MM-dd" );
+		errorWriteFilePath = errorWriteFilePath.arg( QDir::separator( ) ).arg( write_root_path ).arg( host ).arg( timeForm ).arg( file_name ).arg( file_suffix );
+		OStream::anyDebugOut( oStream, msg, file, line, call_function_name, errorWriteFilePath, msg );
+	}
+}
 QString getNormalQString( const QString &q_string ) {
 	QString result;
 	qsizetype length = q_string.length( );
@@ -84,46 +126,6 @@ void NovelNetJob::initObjProperty( ) {
 
 void NovelNetJob::initConnect( ) {
 }
-/// <summary>
-/// 输出信息到文件
-/// </summary>
-/// <param name="nowTimeDuration">执行的开始点</param>
-/// <param name="oStream">可选输出流</param>
-/// <param name="networkReply">请求体</param>
-/// <param name="file">错误文件</param>
-/// <param name="call_function_name">调用函数名称</param>
-/// <param name="line">信息行数</param>
-/// <param name="write_root_path">写入的根目录</param>
-/// <param name="file_name">文件名称</param>
-/// <param name="file_suffix">后缀名称</param>
-inline void error_write_file( std::chrono::system_clock::time_point::duration &nowTimeDuration, OStream *oStream, QNetworkReply *networkReply, const QString &file, const QString &call_function_name, size_t line, const QString &write_root_path, const QString &file_name, const QString &file_suffix ) {
-	QDateTime currentDateTime = QDateTime::currentDateTime( );
-	QString currentTime = currentDateTime.toString( "yyyy_MM_dd hh-mm-ss" );
-	nowTimeDuration = cylHttpNetWork::TimeTools::getNowTimeDuration( ) - nowTimeDuration;
-	long long timeDurationToMilliseconds = cylHttpNetWork::TimeTools::getTimeDurationToMilliseconds( nowTimeDuration );
-	QString seconds( QString::number( timeDurationToMilliseconds / 1000 ) ); // 秒
-	QString msg;
-	auto url = networkReply->url( );
-	msg.append( "=========================		try : info" )
-		.append( "\n\t当前时间 : " ).append( currentTime ).append( "\n\t" )
-		.append( "\n\t执行时间 : " ).append( seconds ).append( "秒\n\t" )
-		.append( "\n\t错误文件 : " ).append( file ).append( "\n\t" )
-		.append( "\n\t信息位置 : " ).append( QString::number( line ) )
-		.append( "\n\t信息函数 : " ).append( __FUNCTION__ )
-		.append( "=========================		try : message" )
-		.append( "\n\t错误信息 : " ).append( getErrorQStr( networkReply->error( ) ) )
-		.append( u8"\n\t类型 : " ).append( "首页" ).append( u8"(" ).append( url.toString( ) ).append( ")" )
-		.append( "=========================" );
-	if( write_root_path.isEmpty( ) )
-		OStream::anyDebugOut( oStream, msg, file, line, call_function_name );
-	else {
-		QString errorWriteFilePath( u8R"(%2%1%3%1%4%1%5.%6)" );
-		QString host = url.host( );
-		QString timeForm = currentDateTime.toString( "yyyy-MM-dd" );
-		errorWriteFilePath = errorWriteFilePath.arg( QDir::separator( ) ).arg( write_root_path ).arg( host ).arg( timeForm ).arg( file_name ).arg( file_suffix );
-		OStream::anyDebugOut( oStream, msg, file, line, call_function_name, errorWriteFilePath, msg );
-	}
-}
 
 bool NovelNetJob::start( ) {
 	if( runStatus != 0 )
@@ -155,6 +157,7 @@ bool NovelNetJob::start( ) {
 			return 1;
 		} );
 	if( networkReply->error( ) == QNetworkReply::NoError ) {
+		this->typeNovelsMap.clear( );
 		auto requestConnect = root->first.get( );
 		auto url = networkReply->url( );
 		OStream::anyDebugOut( oStream, "开始获取 " + qUrl );

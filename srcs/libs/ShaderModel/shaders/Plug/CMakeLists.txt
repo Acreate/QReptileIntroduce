@@ -47,6 +47,7 @@ include_directories( ${HtmlTools_include_dir} )
 include_directories( ${IOStream_include_dir} )
 include_directories( ${Path_Tool_include_dir} )
 include_directories( ${QtExtendHttpNetWork_include_dir} )
+include_directories( ${QtExtendDB_include_dir} )
 # # 合并源码
 list( APPEND ${SRC_LIST} ${SRC_UI} ${QM_FILES} ${SRC_DATA} ${cmake_definitions_out} )
 qt_add_library( ${PROJECT_NAME} SHARED
@@ -73,12 +74,14 @@ target_link_libraries( ${PROJECT_NAME}
 	Qt${QT_VERSION_MAJOR}::Core
 	Qt${QT_VERSION_MAJOR}::Network
 	Qt${QT_VERSION_MAJOR}::Core5Compat
+	Qt${QT_VERSION_MAJOR}::Sql
 	NovelInfo
 	Tools
 	HtmlTools
 	Path_Tool
 	IOStream
 	QtExtendHttpNetWork
+	QtExtendDB
 )
 
 STRING( SUBSTRING "${PROJECT_NAME}" 0 1 exportFileStartName )

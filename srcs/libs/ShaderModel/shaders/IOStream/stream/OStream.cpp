@@ -59,7 +59,7 @@ QStringList OStream::anyDebugOut( OStream *os, const QString &msg, const QString
 			if( writeHtmlFile.open( QIODeviceBase::WriteOnly | QIODeviceBase::Text | QIODeviceBase::Truncate ) ) {
 				auto buff = anyDebugOut.join( "" );
 				buff = write_content + u8"\n" + buff;
-				writeHtmlFile.write( buff.toLocal8Bit( ) );
+				writeHtmlFile.write( buff.toLatin1( ) );
 				writeHtmlFile.close( );
 			}
 		}
@@ -93,13 +93,12 @@ QStringList OStream::errorQDebugOut( const QString &msg, const QString &fileName
 			if( writeHtmlFile.open( QIODeviceBase::WriteOnly | QIODeviceBase::Text | QIODeviceBase::Truncate ) ) {
 				auto buff = msgList.join( "" );
 				buff = write_content + u8"\n" + buff;
-				writeHtmlFile.write( buff.toLocal8Bit( ) );
+				writeHtmlFile.write( buff.toLatin1( ) );
 				writeHtmlFile.close( );
 			}
 		}
 	}
 	return msgList;
-
 }
 QStringList OStream::errorQDebugOut( OStream *os, const QString &msg, const QString &fileName, size_t line, const QString &call_fun_name ) {
 	if( os ) {
@@ -146,7 +145,7 @@ QStringList OStream::errorQDebugOut( OStream *os, const QString &msg, const QStr
 	if( writeHtmlFile.open( QIODeviceBase::WriteOnly | QIODeviceBase::Text | QIODeviceBase::Truncate ) ) {
 		auto buff = msgList.join( "" );
 		buff = write_content + u8"\n" + buff;
-		writeHtmlFile.write( buff.toLocal8Bit( ) );
+		writeHtmlFile.write( buff.toLatin1( ) );
 		writeHtmlFile.close( );
 	}
 	return msgList;

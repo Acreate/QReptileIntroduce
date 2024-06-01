@@ -46,6 +46,7 @@ private:
 	Menu *widgetTopMneu; // 窗口的顶级菜单
 	Action *setDrawPlayFont; // 绘制字体菜单
 	Action *setMenuFont; // 菜单字体菜单
+	Action *clearDisplay; // 清除显示内容
 private: // 绘制相关变量
 	/// <summary>
 	/// 缓存最大持有
@@ -83,6 +84,7 @@ private:
 	QMap< interfacePlugsType::IRequestNetInterface *, Menu * > menuPlugMap; // 保存插件菜单
 	QMap< QObject *, QSharedPointer< QString > > actionXpath; // 保存菜单的路径
 public:
+	void clear();
 	/// <summary>
 	/// 获取绑定对象的菜单<br/>
 	/// 当绑定对象不存在时，将会重新创建一个菜单

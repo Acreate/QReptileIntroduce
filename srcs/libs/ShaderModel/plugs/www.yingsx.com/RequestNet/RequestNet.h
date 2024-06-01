@@ -24,6 +24,16 @@ public:
 	};
 private:
 	static QString timeForm; // 时间格式
+	/// <summary>
+	/// 从原始(currentTime)格式获取字符串时候的格式化字符串
+	/// <code>
+	///		// currentTime 当前时间
+	///		auto timeArgForm = currentTime.toString( orgCurrentFormToUpdateTimeForm );
+	///		// .... *html_string_shared 作为小说页面获取到的小说字符串指针对象
+	///		auto newTime = timeArgForm..arg( QString::fromStdWString( *html_string_shared );
+	/// </code>
+	/// </summary>
+	static QString orgCurrentFormToUpdateTimeForm; 
 	static QDateTime currentTime; // 请求时间
 	static QString currentTimeForm; // 当前请求时间的格式
 	static int expireDay; // 过期-日
