@@ -22,6 +22,17 @@ namespace interfacePlugsType {
 		}
 	public:
 		/// <summary>
+		/// 设置写入路径
+		/// </summary>
+		/// <param name="path">路径</param>
+		virtual void setOutPath( HtmlDocString *path ) = 0;
+		/// <summary>
+		/// 获取写入路径
+		/// </summary>
+		/// <param name="path">返回的路径</param>
+		/// <returns>返回的大小</returns>
+		virtual size_t getOutPath(HtmlDocString* path) = 0;
+		/// <summary>
 		/// 获取建议请求间隔
 		/// </summary>
 		/// <returns>间隔-毫秒</returns>

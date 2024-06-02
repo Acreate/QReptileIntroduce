@@ -143,6 +143,7 @@ void NovelNetJob::initObj( ) {
 	this->networkAccessManager = new QNetworkAccessManager;
 }
 void NovelNetJob::initObjProperty( ) {
+	outPath = Cache_Path_Dir;
 	requestMaxCount = 1500;
 	requestMaxMilliseconds = 4 * 60 * 1000;
 	sepMs = interfaceThisPtr->getRequestInterval( );
@@ -187,12 +188,7 @@ void NovelNetJob::initObjProperty( ) {
 }
 
 void NovelNetJob::initConnect( ) {
-
 	connect( this, &NovelNetJob::requesting_get_root_page_signals, this, &NovelNetJob::slots_requesting_get_root_page_signals, Qt::QueuedConnection );
-	//connect( this, &NovelNetJob::requesting_get_type_page_url_signals, this, &NovelNetJob::slots_requesting_get_type_page_url_signals );
-	//connect( this, &NovelNetJob::requesting_get_next_type_page_url_signals, this, &NovelNetJob::slots_requesting_get_next_type_page_url_signals );
-	//connect( this, &NovelNetJob::requesting_get_novel_page_url_signals, this, &NovelNetJob::slots_requesting_get_novel_page_url_signals );
-	//connect( this, &NovelNetJob::requested_get_type_page_url_end, this, &NovelNetJob::slots_requested_get_type_page_url_end );
 	connect( this, &NovelNetJob::requested_get_web_page_signals_end, this, &NovelNetJob::slots_requested_get_web_page_signals_end, Qt::QueuedConnection );
 }
 
@@ -244,14 +240,14 @@ QNetworkReply * NovelNetJob::requestGet( const QUrl &url, const size_t requestMa
 		if( requestMaxCount ) {
 			++requestCount;
 			if( requestCount > requestMaxCount ) {
-				error_write_file( requestTime, oStream, networkReply, call_function_name, call_finle_path_name, call_line, error_msg + u8"-请求次数超出限制", Cache_Path_Dir, QDateTime::currentDateTime( ).toString( "hh-mm-ss" ), ".root_request.error.log" );
+				error_write_file( requestTime, oStream, networkReply, call_function_name, call_finle_path_name, call_line, error_msg + u8"-请求次数超出限制", outPath, QDateTime::currentDateTime( ).toString( "hh-mm-ss" ), ".root_request.error.log" );
 				break;
 			}
 		}
 		if( requestMaxMs ) {
 			auto compTime = getTimeDurationToMilliseconds( getCurrentTimePoint( ) - requestReplyTime );
 			if( compTime > requestMaxMs ) {
-				error_write_file( requestTime, oStream, networkReply, call_function_name, call_finle_path_name, call_line, error_msg + u8"-请求时间超出限制", Cache_Path_Dir, QDateTime::currentDateTime( ).toString( "hh-mm-ss" ), ".root_request.error.log" );
+				error_write_file( requestTime, oStream, networkReply, call_function_name, call_finle_path_name, call_line, error_msg + u8"-请求时间超出限制", outPath, QDateTime::currentDateTime( ).toString( "hh-mm-ss" ), ".root_request.error.log" );
 				break;
 			}
 		}
@@ -260,6 +256,7 @@ QNetworkReply * NovelNetJob::requestGet( const QUrl &url, const size_t requestMa
 	return nullptr;
 }
 QNetworkReply * NovelNetJob::requestGet( const QUrl &url, const size_t requestMaxCount, const size_t requestMaxMs, const QString &error_msg, const QString &error_file_append_base_name, const QString &call_finle_path_name, const QString &call_function_name, const size_t call_line ) {
+	auto instance = qApp;
 	auto requestReplyTime = getCurrentTimePoint( );
 	size_t requestCount = 0;
 	do {
@@ -272,22 +269,24 @@ QNetworkReply * NovelNetJob::requestGet( const QUrl &url, const size_t requestMa
 		if( requestMaxCount ) {
 			++requestCount;
 			if( requestCount > requestMaxCount ) {
-				error_write_file( requestTime, oStream, networkReply, call_function_name, call_finle_path_name, call_line, error_msg + u8"-请求次数超出限制", Cache_Path_Dir, QDateTime::currentDateTime( ).toString( "hh-mm-ss" ), ".root_request.error.log" );
+				error_write_file( requestTime, oStream, networkReply, call_function_name, call_finle_path_name, call_line, error_msg + u8"-请求次数超出限制", outPath, QDateTime::currentDateTime( ).toString( "hh-mm-ss" ), ".root_request.error.log" );
 				break;
 			}
 		}
 		if( requestMaxMs ) {
 			auto compTime = getTimeDurationToMilliseconds( getCurrentTimePoint( ) - requestReplyTime );
 			if( compTime > requestMaxMs ) {
-				error_write_file( requestTime, oStream, networkReply, call_function_name, call_finle_path_name, call_line, error_msg + u8"-请求时间超出限制", Cache_Path_Dir, QDateTime::currentDateTime( ).toString( "hh-mm-ss" ), ".root_request.error.log" );
+				error_write_file( requestTime, oStream, networkReply, call_function_name, call_finle_path_name, call_line, error_msg + u8"-请求时间超出限制", outPath, QDateTime::currentDateTime( ).toString( "hh-mm-ss" ), ".root_request.error.log" );
 				break;
 			}
 		}
-
+		instance->processEvents( );
 	} while( true ) ;
 	return nullptr;
 }
 bool NovelNetJob::start( ) {
+	auto basicString = outPath.toStdWString( );
+	interfaceThisPtr->setOutPath( &basicString );
 	QUrl url = this->networkRequest.url( );
 	QString qstrUrl = url.toString( );
 	interfaceThisPtr->initAfter( );
@@ -300,7 +299,7 @@ bool NovelNetJob::start( ) {
 	};
 	NetworkmanagerConnectFunction hasErrorRunCode = [this]( QNetworkReply *q_network_reply, const QString call_file_path_name, size_t call_line, const QString call_name ) {
 		auto qUrl = q_network_reply->url( );
-		error_write_file( requestTime, oStream, q_network_reply, call_name, call_file_path_name, call_line, u8"首页请求失败", Cache_Path_Dir, QDateTime::currentDateTime( ).toString( "hh-mm-ss" ), ".root_request.error.log" );
+		error_write_file( requestTime, oStream, q_network_reply, call_name, call_file_path_name, call_line, u8"首页请求失败", outPath, QDateTime::currentDateTime( ).toString( "hh-mm-ss" ), ".root_request.error.log" );
 		return false;
 	};
 	NetworkmanagerConnectFunction callFunction = [noErrorRunCode,hasErrorRunCode,this]( QNetworkReply *q_network_reply, const QString call_file_path_name, size_t call_line, const QString call_name ) {
@@ -444,7 +443,7 @@ void NovelNetJob::novelPageInfoRequestEnd( const QString &type_name, const QUrl 
 	QString writeFilePath( u8"%2%3%1%4%1%5%6" );
 	auto rootUrl = url.host( );
 	auto root_url = url.scheme( ) + "://" + rootUrl;
-	writeFilePath = writeFilePath.arg( QDir::separator( ) ).arg( Cache_Path_Dir ).arg( u8"txt_out" ).arg( rootUrl ).arg( type_name ).arg( u8".txt" );
+	writeFilePath = writeFilePath.arg( QDir::separator( ) ).arg( outPath ).arg( u8"txt_out" ).arg( rootUrl ).arg( type_name ).arg( u8".txt" );
 
 	Vector_INovelInfoSPtr_Shared infos = typeNovelsMap.at( type_name );
 
@@ -499,4 +498,5 @@ void NovelNetJob::slots_requested_get_web_page_signals_end( const QUrl &url ) {
 	OStream::anyDebugOut( oStream, msg );
 	typeNovelsMap.clear( );
 	releaseMemory( );
+	emit endJob( );
 }

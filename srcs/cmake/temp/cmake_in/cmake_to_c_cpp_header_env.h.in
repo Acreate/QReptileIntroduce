@@ -2,6 +2,8 @@
 #define CMAKE_TO_C_CPP_HEADER_ENV_H_H_HEAD__FILE__
 #pragma once
 
+#define qt_version u8"${QT_VERSION}"
+
 #define is_exe ${project_type_property_is_exe}
 
 #define Cmake_Project_Name u8"${Cmake_Project_Name}"

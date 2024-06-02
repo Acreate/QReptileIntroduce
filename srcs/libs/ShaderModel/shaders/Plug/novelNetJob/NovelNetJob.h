@@ -37,7 +37,8 @@ private: // - 流
 	OStream *oStream; // 输入流-程序输出到该流中，显示信息
 private: // 配置
 	QStringList getTypeNamelist; // 获取的小说类型列表
-private:  // 状态
+	QString outPath; // 写入路径
+
 private: //-静态成员
 	static QStringList userAgentHeaderList; // 所有的浏览器 UserAgentHeader
 public: //- 静态调用
@@ -102,6 +103,20 @@ public: // 类的独有属性
 	/// </summary>
 	/// <returns>url</returns>
 	QString getUrl( ) const;
+	/// <summary>
+	/// 设置写入路径
+	/// </summary>
+	/// <param name="path">写入路径</param>
+	void setPath( const QString &path ) {
+		outPath = path;
+	}
+	/// <summary>
+	/// 获取写入路径
+	/// </summary>
+	/// <returns></returns>
+	QString getPath( ) const {
+		return outPath;
+	}
 public: // - 小说网站的信息数据
 	/// <summary>
 	/// 类型与小说列表之间的映射
@@ -187,7 +202,7 @@ private:
 	/// <param name="type_name">页面类型</param>
 	/// <param name="url">终止 url</param>
 	/// <param name="current_page_index">终止下标</param>
-	void novelPageInfoRequestEnd( const QString &type_name, const QUrl &url, size_t current_page_index);
+	void novelPageInfoRequestEnd( const QString &type_name, const QUrl &url, size_t current_page_index );
 Q_SIGNALS: // - 获取被调用
 	/// <summary>
 	/// 请求一个根路径-获取被调用
@@ -200,6 +215,10 @@ Q_SIGNALS: // - 获取被调用
 	/// </summary>
 	/// <param name="url">小说的网站</param>
 	void requested_get_web_page_signals_end( const QUrl &url );
+	/// <summary>
+	/// 任务结束
+	/// </summary>
+	void endJob( );
 private slots: // 信号处理
 
 	/// <summary>

@@ -163,6 +163,7 @@ void MainWidget::initComponentConnect( ) {
 			);
 			progressSetting->sync( );
 		} );
+	connect( this, &MainWidget::startRequestNovel, this, &MainWidget::startNovelJob, Qt::QueuedConnection );
 }
 
 template< typename TKey, typename TValue >
@@ -440,7 +441,7 @@ void MainWidget::loadingPlug( ) {
 					, [=]( ) {
 						*display << QString( u8"%1:(%2 %3)" ).arg( netJob->getUrl( ) ).arg( __FILE__ ).arg( __LINE__ ) << '\n';
 						display->flush( );
-						netJob->start( );
+						emit startRequestNovel( novelNetJob );
 					} );
 				menu->addAction( requestBtn );
 				// todo :: 加入按钮列表
@@ -462,4 +463,7 @@ void MainWidget::LoadWebInfo( ) {
 	std::string outUrl;
 	for( ; iterator != end; ++iterator )
 		emit ( *iterator )->trigger( );
+}
+void MainWidget::startNovelJob( NovelNetJob *novelNetJob ) {
+	novelNetJob->start( );
 }

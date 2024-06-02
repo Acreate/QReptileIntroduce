@@ -14,7 +14,3 @@ _deps
 /.vs
 /_ReSharper.Caches
 
-*_macro.h
-*_env.h
-*_export.h
-

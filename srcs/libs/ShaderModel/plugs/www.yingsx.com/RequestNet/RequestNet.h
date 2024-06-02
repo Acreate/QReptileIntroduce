@@ -40,12 +40,30 @@ private:
 private:
 	QUrl rootUrl;
 	OStream *thisOStream;
+	QString outPath;
 
 	std::shared_ptr< interfacePlugsType::Map_HtmlStrK_HtmlStrV > typeUrlMap;
 public:
 	RequestNet( QObject *parent = nullptr );
 	~RequestNet( ) override;
 public: // 实现虚函数
+	/// <summary>
+	/// 设置写入路径
+	/// </summary>
+	/// <param name="path">路径</param>
+	void setOutPath( interfacePlugsType::HtmlDocString *path ) override {
+		outPath = QString::fromStdWString( *path );
+	}
+	/// <summary>
+	/// 获取写入路径
+	/// </summary>
+	/// <param name="path">返回的路径</param>
+	/// <returns>返回的大小</returns>
+	size_t getOutPath( interfacePlugsType::HtmlDocString *path ) override {
+		*path = outPath.toStdWString( );
+		return path->length( );
+	}
+
 	/// <summary>
 	/// 获取建议请求间隔
 	/// </summary>

@@ -20,7 +20,7 @@ public: // 静态函数调用
 	/// <param name="loadClassName">元数据类型名称</param>
 	/// <param name="methodName">元数据函数名称</param>
 	/// <returns>生成对应与指针的匹配映射</returns>
-	static std::pair< QObject *, interfacePlugsType::IRequestNetInterface * > getIRequestNetInterface( const QString &plugFilePath, const QString &name = tr( u8"LoadPlug" ), const QString &spec = tr( u8"getIRequestNetInterface" ), const QString &loadClassName = tr( u8"RequestNet" ), const QString &methodName = tr( u8"getRequestNetInterfaceExtendPatr" ) );
+	static std::pair< QObject *, interfacePlugsType::IRequestNetInterface * > getIRequestNetInterface( const QString &plugFilePath, const QString &name = tr( u8"LoadPlug" ), const QString &spec = tr( u8"getIRequestNetInterface" ), const QString &loadClassName = tr( u8"RequestNet" ), const QString &methodName = tr( u8"getRequestNetInterfacePatr" ) );
 	/// <summary>
 	/// 调用插件的生成函数
 	/// </summary>

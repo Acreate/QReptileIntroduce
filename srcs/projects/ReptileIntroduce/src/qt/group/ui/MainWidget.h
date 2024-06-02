@@ -106,7 +106,7 @@ public:
 	bool updateSettingFileInfo( const QString &filePath );
 private:
 	QMap< QString, QSharedPointer< NovelNetJob > > plugs;
-	QList<Action*> plugsActions;
+	QList< Action * > plugsActions;
 public slots: // 窗口子控件信号响应
 	/// <summary>
 	/// 时间响应信号
@@ -125,11 +125,21 @@ public slots: // 窗口子控件信号响应
 	/// 开始爬虫
 	/// </summary>
 	void LoadWebInfo( );
+	/// <summary>
+	/// 开始一个小说任务
+	/// </summary>
+	/// <param name="novelNetJob">小说任务对象指针</param>
+	void startNovelJob( NovelNetJob *novelNetJob );
 Q_SIGNALS:
 	/// <summary>
 	/// 当关联的 web 配置文件同步到该实例对象时候会触发该行为
 	/// </summary>
 	void changeOverWebComponentSetting( );
+	/// <summary>
+	/// 开始一个小说任务
+	/// </summary>
+	/// <param name="novelNetJob">小说任务对象指针</param>
+	void startRequestNovel( NovelNetJob *novelNetJob );
 };
 
 #endif // MAINWIDGET_H_H_HEAD__FILE__

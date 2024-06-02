@@ -9,7 +9,7 @@ namespace interfacePlugsType {
 	public:
 		INovelInfo( ) = default;
 		virtual ~INovelInfo( ) {
-			
+
 		}
 	public: //-纯虚函数
 		/// <summary>
@@ -91,7 +91,7 @@ namespace interfacePlugsType {
 		/// <param name="result_serializable_html_doc_string">字符串返回</param>
 		/// <returns>字符串大小</returns>
 		virtual size_t objToHtmlDocString( HtmlDocString *result_serializable_html_doc_string ) = 0;
-		
+
 	};
 }
 

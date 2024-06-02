@@ -34,7 +34,7 @@ QDateTime RequestNet::currentTime;
 
 
 RequestNet::RequestNet( QObject *parent ): QObject( parent ), rootUrl( GET_URL ), oStream( nullptr ), iStream( nullptr ), thisOStream( nullptr ), typeUrlMap( nullptr ) {
-
+	outPath = Cache_Path_Dir;
 }
 
 RequestNet::~RequestNet( ) {
@@ -70,8 +70,8 @@ size_t RequestNet::getScheme( HtmlDocString *outScheme ) {
 	return outScheme->length( );
 }
 size_t RequestNet::getRootUrl( HtmlDocString *outStr ) {
-	*outStr =rootUrl.url( ).toStdWString( );
-	return outStr->length(  );
+	*outStr = rootUrl.url( ).toStdWString( );
+	return outStr->length( );
 
 }
 void RequestNet::setHost( const HtmlDocString &host ) {
@@ -160,7 +160,7 @@ Vector_INovelInfoSPtr RequestNet::formHtmlGetTypePageNovels( const interfacePlug
 		auto typeNme = QString::fromStdWString( type_name );
 		auto msg = QString( "%1 : %2 : %3" ).arg( typeNme ).arg( request_url ).arg( QString( u8" HtmlDoc::parse 异常，登出" ) );
 		QUrl url( QString::fromStdWString( request_url ) );
-		instance_function::write_error_info_file( oStream, url, "formHtmlGetTypePageNovels", "parse", typeNme, ".html", __FILE__, __FUNCTION__, __LINE__, msg, msg );
+		instance_function::write_error_info_file( oStream, url, outPath, "formHtmlGetTypePageNovels", "parse", typeNme, ".html", __FILE__, __FUNCTION__, __LINE__, msg, msg );
 		return result;
 	}
 	htmlDoc->analysisBrotherNode( );
@@ -184,7 +184,7 @@ Vector_INovelInfoSPtr RequestNet::formHtmlGetTypePageNovels( const interfacePlug
 		auto typeNme = QString::fromStdWString( type_name );
 		auto msg = QString( "%1 : %2 : %3" ).arg( typeNme ).arg( request_url ).arg( QString( u8" xpath 异常，登出" ) );
 		QUrl url( QString::fromStdWString( request_url ) );
-		instance_function::write_error_info_file( oStream, url, "xpath", "parse", typeNme, ".html", __FILE__, __FUNCTION__, __LINE__, msg, msg );
+		instance_function::write_error_info_file( oStream, url, outPath, "xpath", "parse", typeNme, ".html", __FILE__, __FUNCTION__, __LINE__, msg, msg );
 		return result;
 	}
 	cylHtmlTools::HtmlWorkThread< bool * >::Current_Thread_Run currentThreadRun = [&vectorHtmlNodeSPtrShared,&saveNovelInfos,&result, &type_name,&xpath,&request_url,&htmlText,&novelNodeXPathInfo,this]( const cylHtmlTools::HtmlWorkThread< bool * > *html_work_thread, const std::thread *run_std_cpp_thread, std::mutex *html_work_thread_mutex, std::mutex *std_cpp_thread_mutex, bool *data, const time_t *startTime ) {
@@ -294,7 +294,7 @@ Vector_INovelInfoSPtr RequestNet::formHtmlGetTypePageNovels( const interfacePlug
 				auto typeNme = QString::fromStdWString( type_name );
 				auto msg = QString( "%1 : %2 : %3" ).arg( typeNme ).arg( request_url ).arg( errorInfo );
 				QUrl url( QString::fromStdWString( request_url ) );
-				instance_function::write_error_info_file( oStream, url, "novel_error", "parse", typeNme, ".html", __FILE__, __FUNCTION__, __LINE__, msg, msg );
+				instance_function::write_error_info_file( oStream, url, outPath, "novel_error", "parse", typeNme, ".html", __FILE__, __FUNCTION__, __LINE__, msg, msg );
 				novelInfoBuffPtr->clear( ); // 重置
 			}
 			saveNovel = false; // 重置
@@ -358,10 +358,10 @@ void RequestNet::novelTypeEnd( const HtmlDocString &root_url, const HtmlDocStrin
 }
 void RequestNet::endHost( const interfacePlugsType::Vector_INovelInfoSPtr &saveNovelInfos, const std::function< bool( const std::chrono::system_clock::time_point::duration & ) > &run ) {
 
-	QString linkPath( u8"%1%2" );
-	linkPath = linkPath.arg( Cache_Path_Dir ).arg( "dbs/" );
+	QString linkPath( u8"%1%2%3%2" );
+	linkPath = linkPath.arg( outPath ).arg( QDir::separator( ) ).arg( "dbs" );
 	if( !QDir( linkPath ).mkpath( linkPath ) )
-		linkPath = Cache_Path_Dir;
+		linkPath = outPath + QDir::separator( );
 	auto dbInterface = cylDB::DBTools::linkDB( linkPath );
 
 	if( dbInterface->link( ) ) {
@@ -423,7 +423,7 @@ void RequestNet::endHost( const interfacePlugsType::Vector_INovelInfoSPtr &saveN
 					sqlQuery->bindValue( ":additionalData", QString::fromStdWString( novelAuthor ) );
 					sqlQuery->bindValue( ":url", QString::fromStdWString( novelUrl ) );
 					if( !depositoryShared->exec( sqlQuery.get( ) ) )
-						instance_function::write_error_info_file( thisOStream, QUrl( " " ), "db_updateList", "db_error", "update", "db.log", __FILE__, __FUNCTION__, __LINE__, "无法更新正确的小说内容", "无法更新正确的小说内容" );
+						instance_function::write_error_info_file( thisOStream, QUrl( " " ), outPath, "db_updateList", "db_error", "update", "db.log", __FILE__, __FUNCTION__, __LINE__, "无法更新正确的小说内容", "无法更新正确的小说内容" );
 				}
 				if( transaction )
 					depositoryShared->commit( );
@@ -459,7 +459,7 @@ void RequestNet::endHost( const interfacePlugsType::Vector_INovelInfoSPtr &saveN
 					sqlQuery->bindValue( ":typePageUrl", QString::fromStdWString( novelTypePageUrl ) );
 					sqlQuery->bindValue( ":typeName", QString::fromStdWString( novelTypeName ) );
 					if( !depositoryShared->exec( sqlQuery.get( ) ) )
-						instance_function::write_error_info_file( thisOStream, QUrl( " " ), "db_interList", "db_error", "inster", "db.log", __FILE__, __FUNCTION__, __LINE__, "无法插入正确的小说内容", "无法插入正确的小说内容" );
+						instance_function::write_error_info_file( thisOStream, QUrl( " " ), outPath, "db_interList", "db_error", "inster", "db.log", __FILE__, __FUNCTION__, __LINE__, "无法插入正确的小说内容", "无法插入正确的小说内容" );
 				}
 
 				if( transaction )
