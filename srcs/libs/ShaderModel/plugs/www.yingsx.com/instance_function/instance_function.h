@@ -173,6 +173,7 @@ namespace instance_function {
 	/// </summary>
 	/// <param name="os">流，可选为nullptr</param>
 	/// <param name="url">错误的 url - 节选 host 为路径名</param>
+	/// <param name="dir_name">存储目录-中间目录，写入 路径宏（Cache_Path_Dir）跟后</param>
 	/// <param name="error_type">错误的类型 - 节点路径名</param>
 	/// <param name="error_novel_type_name">错误的小说类型名称 - 节选路径名</param>
 	/// <param name="error_file_suffix">文件路径后缀</param>
@@ -182,7 +183,7 @@ namespace instance_function {
 	/// <param name="error_info_text">错误信息</param>
 	/// <param name="error_write_info_content">错误内容</param>
 	/// <returns>成功写入文件返回 true</returns>
-	inline bool write_error_info_file( OStream *os, const QUrl &url, const QString &error_type, const QString &error_novel_type_name, const QString &error_file_suffix, const QString &error_call_path_file_name, const QString &error_file_call_function_name, const size_t error_file_call_function_line, const QString &error_info_text, const QString &error_write_info_content ) {
+	inline bool write_error_info_file( OStream *os, const QUrl &url, const QString &dir_name, const QString &error_type, const QString &error_novel_type_name, const QString &error_file_suffix, const QString &error_call_path_file_name, const QString &error_file_call_function_name, const size_t error_file_call_function_line, const QString &error_info_text, const QString &error_write_info_content ) {
 		QString currentTime = QDateTime::currentDateTime( ).toString( "yyyy_MM_dd hh mm ss" );
 
 		QString msg;
@@ -200,9 +201,11 @@ namespace instance_function {
 			.append( "\n-->" );
 		OStream::anyDebugOut( os, msg );
 		auto path = QString( Cache_Path_Dir ).append( QDir::separator( ) )
-											.append( u8"error_info_log_file_s" ).append( QDir::separator( ) )
+											.append( "write_error_info_file" ).append( QDir::separator( ) )
+											.append( dir_name ).append( QDir::separator( ) )
 											.append( url.host( ) ).append( QDir::separator( ) )
 											.append( error_type )
+											.append( '-' )
 											.append( currentTime )
 											.append( '-' )
 											.append( error_novel_type_name ).append( error_file_suffix );
@@ -215,7 +218,7 @@ namespace instance_function {
 		if( writeHtmlFile.open( QIODeviceBase::WriteOnly | QIODeviceBase::Text | QIODeviceBase::Truncate ) ) {
 			msg.append( '\n' );
 			msg.append( error_write_info_content );
-			writeHtmlFile.write( msg.toLatin1( ) );
+			writeHtmlFile.write( msg.toUtf8( ) );
 			writeHtmlFile.close( );
 		}
 		return true;

@@ -1,5 +1,7 @@
 ﻿#include "NovelInfo.h"
 #include <QString>
+
+#include "dateTime/DateTime.h"
 NovelInfo::NovelInfo( ) {
 	clear( );
 }
@@ -108,7 +110,7 @@ size_t NovelInfo::objToHtmlDocString( interfacePlugsType::HtmlDocString *result_
 			.arg( SHARED_PTR_TO_RESULT( author, "" ) )
 			.arg( SHARED_PTR_TO_RESULT( lastItem, "" ) )
 			.arg( SHARED_PTR_TO_RESULT( updateTime, "" ) )
-			.arg( SHARED_PTR_TO_RESULT( lastRequestTime, "" ) )
+			.arg( SHARED_PTR_TO_RESULT( lastRequestTime, QDateTime::currentDateTime( ).toString( "yyyy-MM-dd hh:mm:ss" ) ) )
 			.arg( SHARED_PTR_TO_RESULT( url, "" ) )
 			.arg( SHARED_PTR_TO_RESULT( info, "" ) )
 			.toStdWString( );

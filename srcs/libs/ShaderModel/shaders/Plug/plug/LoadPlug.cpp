@@ -56,8 +56,7 @@ IRequestNetInterface * LoadPlug::metaGetResult( QObject *outObj, const QString &
 	const QMetaObject *metaObject = outObj->metaObject( );
 	if( metaObject->className( ) == loadClassName ) {
 		IRequestNetInterface *res = nullptr;
-		QByteArray local8Bit = methodName.toLocal8Bit( );
-		std::string stdString = local8Bit.toStdString( );
+		std::string stdString = methodName.toStdString( );
 		const char *cStr = stdString.c_str( );
 		bool invokeMethod = metaObject->invokeMethod( outObj, cStr, Qt::DirectConnection, Q_RETURN_ARG( IRequestNetInterface *, res ) );
 		if( invokeMethod )

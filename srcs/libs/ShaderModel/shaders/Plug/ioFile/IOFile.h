@@ -46,7 +46,7 @@ public:
 		if( qsizetype == 0 )
 			return qsizetype;
 		if( qFile->open( QIODeviceBase::Text | QIODeviceBase::WriteOnly | QIODeviceBase::Truncate ) ) {
-			qsizetype = qFile->write( writeContent.toLocal8Bit( ) );
+			qsizetype = qFile->write( writeContent.toUtf8( ) );
 			qFile->close( );
 		}
 		return qsizetype;
@@ -68,7 +68,7 @@ public:
 			QString writeContents = QDateTime::currentDateTime( ).toString( u8"yyyy 连 MM 月 dd 日 hh:mm:ss\n" );
 			for( qsizetype index = 0; index < resultSize; ++index )
 				writeContents.append( jion_str ).append( QString( "\t%1 / %2\n" ).arg( index + 1 ).arg( resultSize ) ).append( writeContent.at( index ) );
-			qint64 write = qFile->write( writeContents.toLocal8Bit( ) );
+			qint64 write = qFile->write( writeContents.toUtf8( ) );
 			qFile->close( );
 			if( write == 0 )
 				return 0;
@@ -94,7 +94,7 @@ public:
 			fort = fort.arg( resultSize );
 			for( qsizetype index = 0; index < resultSize; ++index )
 				writeContents.append( fort.arg( u8"============" ).arg( index + 1 ) ).append( writeContent.at( index ) ).append( "\n" );
-			qint64 write = qFile->write( writeContents.toLocal8Bit( ) );
+			qint64 write = qFile->write( writeContents.toUtf8( ) );
 			qFile->close( );
 			if( write == 0 )
 				return 0;

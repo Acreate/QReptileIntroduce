@@ -346,7 +346,7 @@ IStream & DisplayWidget::operator>>( std::string &msg ) {
 		QString buff;
 		for( auto &qstr : msgList )
 			buff.append( qstr );
-		msg = buff.toLocal8Bit( ).toStdString( );
+		msg = buff.toUtf8( ).toStdString( );
 	} else
 		msg.clear( );
 	return *this;

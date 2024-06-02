@@ -89,6 +89,7 @@ size_t NovelInfo::getNovelTypeName( interfacePlugsType::HtmlDocString *result_ty
 	}
 	return 0;
 }
+#include <QDateTime>
 #define SHARED_PTR_TO_RESULT( shared_ptr , default) ((shared_ptr)? *(shared_ptr):(default))
 size_t NovelInfo::objToHtmlDocString( interfacePlugsType::HtmlDocString *result_serializable_html_doc_string ) {
 
@@ -108,7 +109,7 @@ size_t NovelInfo::objToHtmlDocString( interfacePlugsType::HtmlDocString *result_
 			.arg( SHARED_PTR_TO_RESULT( author, "" ) )
 			.arg( SHARED_PTR_TO_RESULT( lastItem, "" ) )
 			.arg( SHARED_PTR_TO_RESULT( updateTime, "" ) )
-			.arg( SHARED_PTR_TO_RESULT( lastRequestTime, "" ) )
+			.arg( SHARED_PTR_TO_RESULT( lastRequestTime, QDateTime::currentDateTime( ).toString( "yyyy-MM-dd hh:mm:ss" ) ) )
 			.arg( SHARED_PTR_TO_RESULT( url, "" ) )
 			.arg( SHARED_PTR_TO_RESULT( info, "" ) )
 			.toStdWString( );

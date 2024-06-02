@@ -19,6 +19,29 @@
 #include "path/Dir.h"
 #include <DB/sqlite/sqliteResult/SQLiteResult.h>
 #include <QMutex>
+
+
+#ifdef Q_OS_WIN // 提供内存释放功能
+#include <windows.h>
+#include <tlhelp32.h>
+#include <psapi.h>
+#pragma comment (lib,"psapi.lib")
+inline bool releaseMemory( ) {
+	HANDLE hProcess = OpenProcess( PROCESS_ALL_ACCESS, TRUE, GetCurrentProcessId( ) );
+	if( hProcess ) {
+		if( SetProcessWorkingSetSize( hProcess, -1, -1 ) )
+			EmptyWorkingSet( hProcess );//内存整理
+		CloseHandle( hProcess );
+		return true;
+	}
+	return false;
+}
+#else
+inline bool releaseMemory( ) {
+	return false;
+}
+#endif
+
 using namespace interfacePlugsType;
 
 /// <summary>
@@ -429,7 +452,10 @@ void NovelNetJob::novelPageInfoRequestEnd( const QString &type_name, const QUrl 
 	size_t writeQStringListToFile = ioFile.writeNoveInfoListToFile( );
 	OStream::anyDebugOut( oStream, QString( u8"================\n\t路径: (%1)\n\t写入数量 : [%2]\n\t类型计数 : [%3]\n================\n" ).arg( writeFilePath ).arg( writeQStringListToFile ).arg( typeCount ) );
 	interfaceThisPtr->novelTypeEnd( root_url.toStdWString( ), type_name.toStdWString( ), url.toString( ).toStdWString( ), *infos );
+	releaseMemory( );
 }
+
+
 void NovelNetJob::slots_requested_get_web_page_signals_end( const QUrl &url ) {
 	Vector_INovelInfoSPtr_Shared novelInfoSPtr( std::make_shared< Vector_INovelInfoSPtr >( ) );
 
@@ -472,4 +498,5 @@ void NovelNetJob::slots_requested_get_web_page_signals_end( const QUrl &url ) {
 	QString msg = QString( ).append( "请求 : (" ).append( url.scheme( ) ).append( u8"://" ).append( url.host( ) ).append( ") 结束 " );
 	OStream::anyDebugOut( oStream, msg );
 	typeNovelsMap.clear( );
+	releaseMemory( );
 }
