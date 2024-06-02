@@ -66,7 +66,11 @@ IRequestNetInterface * LoadPlug::metaGetResult( QObject *outObj, const QString &
 	return nullptr;
 }
 std::pair< QObject *, IRequestNetInterface * > LoadPlug::getIRequestNetInterface(
-	const QString &plugFilePath, const QString &name, const QString &spec, const QString &loadClassName, const QString &methodName
+	const QString &plugFilePath
+	, const QString &name
+	, const QString &spec
+	, const QString &loadClassName
+	, const QString &methodName
 ) {
 	QPluginLoader loader( plugFilePath );
 	QObject *instance = loader.instance( );
@@ -74,10 +78,12 @@ std::pair< QObject *, IRequestNetInterface * > LoadPlug::getIRequestNetInterface
 		QGenericPlugin *genericPlugin = qobject_cast< QGenericPlugin * >( instance );
 		if( genericPlugin ) {
 			QObject *object = genericPlugin->create( name, spec );
-			IRequestNetInterface *requestNetInterface = metaGetResult( object, loadClassName, methodName );
-			if( requestNetInterface ) {
-				requestNetInterface->setInterfaceParent( nullptr );
-				return { object, requestNetInterface };
+			if( object ) {
+				IRequestNetInterface *requestNetInterface = metaGetResult( object, loadClassName, methodName );
+				if( requestNetInterface ) {
+					requestNetInterface->setInterfaceParent( nullptr );
+					return { object, requestNetInterface };
+				}
 			}
 		}
 		instance->deleteLater( );

@@ -43,7 +43,6 @@ set( ${project_name_include_dir}_include_dir ${CMAKE_CURRENT_LIST_DIR}  PARENT_S
 include_directories( ${NovelInfo_include_dir} )
 include_directories( ${UserHread_include_dir} )
 include_directories( ${IOStream_include_dir} )
-include_directories( ${QtExtendHttpNetWork_include_dir} )
 include_directories( ${Path_include_dir} )
 # # 合并源码
 list( APPEND ${SRC_LIST} ${SRC_UI} ${QM_FILES} ${SRC_DATA} ${cmake_definitions_out} )
@@ -72,7 +71,6 @@ target_link_libraries( ${PROJECT_NAME}
 	NovelInfo
 	IOStream
 	Path_Tool
-	QtExtendHttpNetWork
 )
 
 STRING( SUBSTRING "${PROJECT_NAME}" 0 1 exportFileStartName )

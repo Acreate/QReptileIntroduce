@@ -37,13 +37,6 @@ private:
 	static QDateTime currentTime; // 请求时间
 	static QString currentTimeForm; // 当前请求时间的格式
 	static int expireDay; // 过期-日
-public:
-	/// <summary>
-	/// 获取小说的更新时间戳
-	/// </summary>
-	/// <param name="novel_info_ptr"></param>
-	/// <returns></returns>
-	QDateTime getNovelLastUpdateDateTime( interfacePlugsType::INovelInfoPtr &novel_info_ptr );
 private:
 	QUrl rootUrl;
 	OStream *thisOStream;
@@ -53,6 +46,11 @@ public:
 	RequestNet( QObject *parent = nullptr );
 	~RequestNet( ) override;
 public: // 实现虚函数
+	/// <summary>
+	/// 获取建议请求间隔
+	/// </summary>
+	/// <returns>间隔-毫秒</returns>
+	size_t getRequestInterval( ) override;
 	/// <summary>
 	/// 初始化之前，被动调用
 	/// 使用对象之前，应该调用该函数一次，并且它必须在 initBefore() 之前

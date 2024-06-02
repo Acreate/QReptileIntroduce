@@ -107,7 +107,6 @@ set( Cache_Path_Dir "${Project_Run_bin}write_cache/" )
 file( MAKE_DIRECTORY  ${Cache_Path_Dir} )
 
 
-get_path_cmake_dir_path( git_path_list ${CMAKE_CURRENT_SOURCE_DIR}/srcs/git/QtExtendHttpNetWork/srcs/QtExtendHttpNetWork "CMakeLists.txt" )
 get_path_cmake_dir_path( git_path_list ${CMAKE_CURRENT_SOURCE_DIR}/srcs/git/htmlcpp/srcs/HtmlTools "CMakeLists.txt" )
 get_path_cmake_dir_path( git_path_list ${CMAKE_CURRENT_SOURCE_DIR}/srcs/git/QtExtendDB/srcs/git/DataCheck/srcs/DataCheck "CMakeLists.txt" )
 get_path_cmake_dir_path( git_path_list ${CMAKE_CURRENT_SOURCE_DIR}/srcs/git/QtExtendDB/srcs/QtExtendDB "CMakeLists.txt" )

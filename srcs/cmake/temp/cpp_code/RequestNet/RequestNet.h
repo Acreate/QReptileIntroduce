@@ -2,9 +2,7 @@
 #define REQUESTNET_H_H_HEAD__FILE__
 #pragma once
 #include <QGenericPlugin>
-#include <QDateTime>
 #include "../auto_generate_files/macro/cmake_to_c_cpp_header_macro.h"
-#include "HttpNetWork/TimeTools.h"
 #include "interface/IRequestNetInterface.h"
 #include "nameSpace/cylHtmlTools.h"
 using interfacePlugsType::IRequestNetInterface;
@@ -44,6 +42,12 @@ public:
 	RequestNet( QObject *parent = nullptr );
 	~RequestNet( ) override;
 public: // 实现虚函数
+
+	/// <summary>
+	/// 获取建议请求间隔
+	/// </summary>
+	/// <returns>间隔-毫秒</returns>
+	size_t getRequestInterval( ) override;
 	/// <summary>
 	/// 初始化之前，被动调用
 	/// 使用对象之前，应该调用该函数一次，并且它必须在 initBefore() 之前
@@ -158,6 +162,8 @@ public: // 实现解析
 	/// <summary>
 	/// 结束该网站请求时被调用
 	/// </summary>
+	/// <param name="saveNovelInfos">请求到的所有小说信息</param>
+	/// <param name="run">返回 true 表示刷新时间</param>
 	void endHost( const interfacePlugsType::Vector_INovelInfoSPtr &saveNovelInfos, const std::function< bool( const std::chrono::system_clock::time_point::duration & ) > &run ) override;
 private:
 	OStream *oStream;

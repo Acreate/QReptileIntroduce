@@ -42,7 +42,6 @@ set( cmake_definitions_org "${cmake_definitions_tmp}/cmake_in/cmake_to_c_cpp_hea
 
 include_directories( ${UserHread_include_dir} )
 include_directories( ${IOStream_include_dir} )
-include_directories( ${QtExtendHttpNetWork_include_dir} )
 
 # # 合并源码
 list( APPEND ${SRC_LIST} ${SRC_UI} ${QM_FILES} ${SRC_DATA} ${cmake_definitions_out} )
@@ -67,7 +66,6 @@ target_link_libraries( ${PROJECT_NAME}
 	Qt${QT_VERSION_MAJOR}::Network
 	Qt${QT_VERSION_MAJOR}::Core5Compat
 	IOStream
-	QtExtendHttpNetWork
 )
 
 STRING( SUBSTRING "${PROJECT_NAME}" 0 1 exportFileStartName )

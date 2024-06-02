@@ -6,123 +6,6 @@
 #include "../auto_generate_files/macro/cmake_to_c_cpp_header_env.h"
 namespace instance_function {
 	struct NovelNodeXPathInfo;
-	inline void write_file_log( QString msg, const interfacePlugsType::HtmlDocString &request_url, const cylHtmlTools::HtmlString &htmlText ) {
-		///////////// 写入文件
-		QUrl url( QString::fromStdWString( request_url ) );
-		QString wirteLogFilePath( u8"%2%3%1%4%5%6" );
-		wirteLogFilePath = wirteLogFilePath.arg( QDir::separator( ) ).arg( Cache_Path_Dir ).arg( url.host( ) ).arg( "DateTime_Error_None_" ).arg( QDateTime::currentDateTime( ).toString( u8"yyyy MM DD _ hh-mm-ss" ) ).arg( u8".html" );
-		
-
-		QFileInfo fileInfo( wirteLogFilePath );
-		auto dir = fileInfo.dir( );
-		if( !dir.exists( ) )
-			if( !dir.mkpath( dir.absolutePath( ) ) ) {
-				qDebug( ) << u8"无法创建文件 ==============================" ;
-				qDebug( ) << u8"无法创建文件 : " << dir.absolutePath( ).toStdString( ).c_str( );
-				qDebug( ) << u8"无法创建文件 ==============================" ;
-				return;
-			}
-
-
-		QFile file( wirteLogFilePath );
-		if( file.open( QIODeviceBase::WriteOnly | QIODeviceBase::Text | QIODeviceBase::Truncate ) ) {
-			QString wirte( u8R"(<!-- %1 -->\n)" );
-			QStringList msgs;
-			msgs.append( wirte.arg( msg ) );
-			msgs.append( wirte.arg( QString::fromStdWString( request_url ) ) );
-			msgs.append( QString::fromStdWString( htmlText ) );
-			wirte = msgs.join( '\n' );
-			file.write( wirte.toLatin1( ) );
-			file.close( );
-		}
-	}
-	/// <summary>
-	/// 根据错误信息输出异常
-	/// </summary>
-	/// <param name="quitMsg">异常标识</param>
-	/// <param name="extent">节点</param>
-	/// <param name="novelInfoBuffPtr">小说指针</param>
-	/// <param name="type_name">小说类型</param>
-	/// <param name="request_url">请求页面</param>
-	/// <param name="thisOStream">附加输出流</param>
-	/// <param name="htmlText">html 页面</param>
-	inline void out_debug( RequestNet::Novel_Xpath_Analysis_Error quitMsg, cylHtmlTools::HtmlNode *extent, NovelInfo *novelInfoBuffPtr, const interfacePlugsType::HtmlDocString &type_name, const interfacePlugsType::HtmlDocString &request_url, cylHtmlTools::XPath &xpath, OStream *thisOStream, const cylHtmlTools::HtmlString &htmlText ) {
-		QString includeNodeContent( QString::fromStdWString( *extent->getIncludeNodeContent( ) ) );
-		includeNodeContent = u8"\n===========================\n" + includeNodeContent + u8"\n===========================\n";
-		switch( quitMsg ) {
-			case RequestNet::Novel_Xpath_Analysis_Error::DateTime_Error_Expire : {
-				QString errorMsg( u8" DateTime_Error_Expire 异常(过期)，登出:\n\turl (%1) -> 小说名称 (%2) => 退出代码(%3)" );
-				errorMsg = errorMsg.arg( *novelInfoBuffPtr->getQStringSPtrUrl( ) ).arg( *novelInfoBuffPtr->getQStringSPtrName( ) ).arg( quitMsg );
-				auto msg = QString( "%1 : %2 : %3" ).arg( type_name ).arg( request_url ).arg( errorMsg );
-				OStream::anyDebugOut( thisOStream, msg );
-				break;
-			}
-			case RequestNet::Novel_Xpath_Analysis_Error::DateTime_Error_None : {
-				QString errorMsg( u8" DateTime_Error_None 异常(日期找不到 xpath : \"%4\" )，登出:\n\turl (%1) -> 小说名称 (%2) => 退出代码(%3)" );
-				errorMsg = errorMsg.arg( *novelInfoBuffPtr->getQStringSPtrUrl( ) ).arg( *novelInfoBuffPtr->getQStringSPtrName( ) ).arg( quitMsg ).arg( xpath.getHtmlString( ) ) + includeNodeContent;
-				auto msg = QString( "%1 : %2 : %3" ).arg( type_name ).arg( request_url ).arg( errorMsg );
-				OStream::anyDebugOut( thisOStream, msg );
-				///////////// 写入文件
-				write_file_log( msg, request_url, htmlText );
-				break;
-			}
-			case RequestNet::Novel_Xpath_Analysis_Error::DateTime_Error_Xpath : {
-				QString errorMsg( u8" DateTime_Error_Xpath 异常(日期 xpath 错误,xpath : \"%4\" )，登出:\n\turl (%1) -> 小说名称 (%2) => 退出代码(%3)" );
-				errorMsg = errorMsg.arg( *novelInfoBuffPtr->getQStringSPtrUrl( ) ).arg( *novelInfoBuffPtr->getQStringSPtrName( ) ).arg( quitMsg ).arg( xpath.getHtmlString( ) ) + includeNodeContent;
-				auto msg = QString( "%1 : %2 : %3" ).arg( type_name ).arg( request_url ).arg( errorMsg );
-				OStream::anyDebugOut( thisOStream, msg );
-				///////////// 写入文件
-				write_file_log( msg, request_url, htmlText );
-				break;
-			}
-			case RequestNet::Novel_Xpath_Analysis_Error::Name_Error_None : {
-				QString errorMsg( u8" Name_Error_None 异常 xpath : \"%3\" ，登出:\n\turl (%1) -> 小说名称 (none) => 退出代码(%2)" );
-				errorMsg = errorMsg.arg( *novelInfoBuffPtr->getQStringSPtrUrl( ) ).arg( quitMsg ).arg( xpath.getHtmlString( ) ) + includeNodeContent;
-				auto msg = QString( "%1 : %2 : %3" ).arg( type_name ).arg( request_url ).arg( errorMsg );
-				OStream::anyDebugOut( thisOStream, msg );
-				///////////// 写入文件
-				write_file_log( msg, request_url, htmlText );
-				break;
-			}
-			case RequestNet::Novel_Xpath_Analysis_Error::Name_Error_Xpath : {
-				QString errorMsg( u8" Name_Error_Xpath 异常 xpath : \"%3\" ，登出:\n\turl (%1) -> 小说名称 (none) => 退出代码(%2)" );
-				errorMsg = errorMsg.arg( *novelInfoBuffPtr->getQStringSPtrUrl( ) ).arg( quitMsg ).arg( xpath.getHtmlString( ) ) + includeNodeContent;
-				auto msg = QString( "%1 : %2 : %3" ).arg( type_name ).arg( request_url ).arg( errorMsg );
-				OStream::anyDebugOut( thisOStream, msg );
-				///////////// 写入文件
-				write_file_log( msg, request_url, htmlText );
-				break;
-			}
-			case RequestNet::Novel_Xpath_Analysis_Error::Url_Error_Xpath : {
-				QString errorMsg( u8" Url_Error_Xpath 异常 xpath : \"%2\" ，登出 => 退出代码(%1)" );
-				errorMsg = errorMsg.arg( quitMsg ).arg( xpath.getHtmlString( ) ) + includeNodeContent;
-				auto msg = QString( "%1 : %2 : %3" ).arg( type_name ).arg( request_url ).arg( errorMsg );
-				OStream::anyDebugOut( thisOStream, msg );
-				///////////// 写入文件
-				write_file_log( msg, request_url, htmlText );
-				break;
-			}
-			case RequestNet::Novel_Xpath_Analysis_Error::Url_Error_None : {
-				QString errorMsg( u8" Url_Error_None 异常 xpath : \"%2\" ，登出 => 退出代码(%1)" );
-				errorMsg = errorMsg.arg( quitMsg ).arg( xpath.getHtmlString( ) ) + includeNodeContent;
-				auto msg = QString( "%1 : %2 : %3" ).arg( type_name ).arg( request_url ).arg( errorMsg );
-				OStream::anyDebugOut( thisOStream, msg );
-				///////////// 写入文件
-				write_file_log( msg, request_url, htmlText );
-				break;
-			}
-			case RequestNet::Novel_Xpath_Analysis_Error::None :
-				return;
-			default : {
-				QString errorMsg( u8" 未知异常 xpath : \"%2\" ，登出->\n=================\n%1\n=========\n" );
-				cylHtmlTools::HtmlNode *element = extent;
-				errorMsg = errorMsg.arg( QString::fromStdWString( *element->getIncludeNodeContent( ) ) ).arg( xpath.getHtmlString( ) ) + includeNodeContent;
-				auto msg = QString( "%1 : %2 : %3" ).arg( type_name ).arg( request_url ).arg( errorMsg );
-				///////////// 写入文件
-				write_file_log( msg, request_url, htmlText );
-			}
-		}
-	}
 	/// <summary>
 	/// 分解列表数据<br/>
 	///	根据游离列表 src_vector 与永久列表 db_result 进行匹配解析<br/>
@@ -256,6 +139,86 @@ namespace instance_function {
 		} while( true );
 
 		return result;
+	}
+	/// <summary>
+	/// 获取错误内容
+	/// </summary>
+	/// <param name="quitMsg">错误代码</param>
+	/// <param name="xpath">错误 xpath</param>
+	/// <returns>错误内容</returns>
+	inline QString get_error_info( RequestNet::Novel_Xpath_Analysis_Error quitMsg, const QString &xpath ) {
+		switch( quitMsg ) {
+			case RequestNet::Novel_Xpath_Analysis_Error::DateTime_Error_Expire :
+				return u8" DateTime_Error_Expire 异常 ( 过期 )";
+			case RequestNet::Novel_Xpath_Analysis_Error::DateTime_Error_None :
+				return u8" DateTime_Error_None 异常 ( 日期找不到 xpath : \"" + xpath + "\")";
+			case RequestNet::Novel_Xpath_Analysis_Error::DateTime_Error_Xpath :
+				return u8" DateTime_Error_Xpath 异常 ( 日期 xpath 错误,xpath : \"" + xpath + "\" )";
+			case RequestNet::Novel_Xpath_Analysis_Error::Name_Error_None :
+				return u8" Name_Error_None 异常 ( 名称错误, xpath : \"" + xpath + "\" )";
+			case RequestNet::Novel_Xpath_Analysis_Error::Name_Error_Xpath :
+				return u8" Name_Error_Xpath 异常 ( 名称 xpath 错误, xpath : \"" + xpath + "\" )";
+			case RequestNet::Novel_Xpath_Analysis_Error::Url_Error_Xpath :
+				return u8" Url_Error_Xpath 异常 ( url xpath 错误, xpath : \"" + xpath + "\" )";
+			case RequestNet::Novel_Xpath_Analysis_Error::Url_Error_None :
+				return u8" Url_Error_Xpath 异常 ( url 错误, xpath : \"" + xpath + "\" )";
+			case RequestNet::Novel_Xpath_Analysis_Error::None :
+				return "";
+			default :
+				return "none";
+		}
+	}
+	/// <summary>
+	/// 输出错误信息到指定文件
+	/// </summary>
+	/// <param name="os">流，可选为nullptr</param>
+	/// <param name="url">错误的 url - 节选 host 为路径名</param>
+	/// <param name="error_type">错误的类型 - 节点路径名</param>
+	/// <param name="error_novel_type_name">错误的小说类型名称 - 节选路径名</param>
+	/// <param name="error_file_suffix">文件路径后缀</param>
+	/// <param name="error_call_path_file_name">错误诞生的文件</param>
+	/// <param name="error_file_call_function_name">错误诞生的描述调用函数</param>
+	/// <param name="error_file_call_function_line">错误诞生的描述行号</param>
+	/// <param name="error_info_text">错误信息</param>
+	/// <param name="error_write_info_content">错误内容</param>
+	/// <returns>成功写入文件返回 true</returns>
+	inline bool write_error_info_file( OStream *os, const QUrl &url, const QString &error_type, const QString &error_novel_type_name, const QString &error_file_suffix, const QString &error_call_path_file_name, const QString &error_file_call_function_name, const size_t error_file_call_function_line, const QString &error_info_text, const QString &error_write_info_content ) {
+		QString currentTime = QDateTime::currentDateTime( ).toString( "yyyy_MM_dd hh mm ss" );
+
+		QString msg;
+		msg.append( "\n<!--" )
+			.append( "\n=========================		try : info" )
+			.append( u8"\n\t当前时间 : " ).append( currentTime ).append( "\n\t" )
+			.append( u8"\n\t错误文件 : " ).append( error_call_path_file_name ).append( "\n\t" )
+			.append( u8"\n\t信息位置 : " ).append( QString::number( error_file_call_function_line ) )
+			.append( u8"\n\t信息函数 : " ).append( error_file_call_function_name )
+			.append( "\n=========================		try : message" )
+			.append( u8"\n\t类型 : " ).append( u8"请求页面" ).append( u8"(" ).append( url.toString( ) ).append( ")" )
+			.append( "\n=========================		user : message" )
+			.append( u8"\n\t自由信息 : " ).append( error_info_text )
+			.append( "\n=========================" )
+			.append( "\n-->" );
+		OStream::anyDebugOut( os, msg );
+		auto path = QString( Cache_Path_Dir ).append( QDir::separator( ) )
+											.append( u8"error_info_log_file_s" ).append( QDir::separator( ) )
+											.append( url.host( ) ).append( QDir::separator( ) )
+											.append( error_type )
+											.append( currentTime )
+											.append( '-' )
+											.append( error_novel_type_name ).append( error_file_suffix );
+		QFileInfo fileInfo( path );
+		auto dir = fileInfo.dir( );
+		if( !dir.exists( ) )
+			if( !dir.mkpath( dir.absolutePath( ) ) )
+				return false;
+		QFile writeHtmlFile( fileInfo.absoluteFilePath( ) );
+		if( writeHtmlFile.open( QIODeviceBase::WriteOnly | QIODeviceBase::Text | QIODeviceBase::Truncate ) ) {
+			msg.append( '\n' );
+			msg.append( error_write_info_content );
+			writeHtmlFile.write( msg.toLatin1( ) );
+			writeHtmlFile.close( );
+		}
+		return true;
 	}
 }
 

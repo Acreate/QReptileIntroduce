@@ -31,7 +31,6 @@ include_directories( ${NovelInfo_include_dir} )
 include_directories( ${UserHread_include_dir} )
 include_directories( ${HtmlTools_include_dir} )
 include_directories( ${IOStream_include_dir} )
-include_directories( ${QtExtendHttpNetWork_include_dir} )
 include_directories( ${QtExtendDB_include_dir} )
 set( ${project_name_include_dir}_include_dir ${CMAKE_CURRENT_LIST_DIR} ${CMAKE_CURRENT_LIST_DIR}/ PARENT_SCOPE )
 
@@ -56,7 +55,6 @@ target_link_libraries(
 	NovelInfo
 	HtmlTools
 	IOStream
-	QtExtendHttpNetWork
 	QtExtendDB
 )
 

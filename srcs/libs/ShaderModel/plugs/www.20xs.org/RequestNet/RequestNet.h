@@ -42,6 +42,12 @@ public:
 	RequestNet( QObject *parent = nullptr );
 	~RequestNet( ) override;
 public: // 实现虚函数
+
+	/// <summary>
+	/// 获取建议请求间隔
+	/// </summary>
+	/// <returns>间隔-毫秒</returns>
+	size_t getRequestInterval( ) override;
 	/// <summary>
 	/// 初始化之前，被动调用
 	/// 使用对象之前，应该调用该函数一次，并且它必须在 initBefore() 之前

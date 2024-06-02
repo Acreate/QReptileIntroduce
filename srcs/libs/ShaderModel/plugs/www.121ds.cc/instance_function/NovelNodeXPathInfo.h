@@ -47,6 +47,8 @@ namespace instance_function {
 		/// </summary>
 		std::function< QString( cylHtmlTools::HtmlString_Shared &html_string_shared ) > normal_update_time_function;
 	};
+
+
 }
 
 #endif // NOVELNODEXPATHINFO_H_H_HEAD__FILE__

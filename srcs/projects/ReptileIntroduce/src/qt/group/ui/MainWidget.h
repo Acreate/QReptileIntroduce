@@ -94,8 +94,6 @@ private: // 程序配置-变量
 	/// 配置与路径的映射<br/>
 	/// </summary>
 	QMap< QString, Setting * > webSettingMap;
-private: // 定时调用
-	DateTimeThread *dateTimeThread;
 private: // ui 组件
 	FileSelectPathWidget *pathHint; // 提示语
 public:

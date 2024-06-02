@@ -5,7 +5,6 @@
 
 #include "../auto_generate_files/export/Plug_export.h"
 #include <nameSpace/interfacePlugsType.h>
-#include <nameSpace/httpNetWork.h>
 #include <interface/IRequestNetInterface.h>
 #include <QNetworkReply>
 #include <memory>
@@ -14,82 +13,77 @@
 
 #include "nameSpace/cylHtmlTools.h"
 
+class QMutex;
 class PLUG_EXPORT NovelNetJob : public QObject {
 	Q_OBJECT;
 public:
-	class PLUG_EXPORT NovelTypeNamePair {
-		using Type_Name_String_Shared = std::shared_ptr< QString >;
-		using Type_QUrl_Shared = std::shared_ptr< QUrl >;
-		Type_Name_String_Shared typeName; // 首页名称
-		Type_QUrl_Shared url; // 首页
-	public:
-		NovelTypeNamePair( const Type_Name_String_Shared &type_name, const Type_QUrl_Shared &url )
-			: typeName( type_name ), url( url ) { }
-		NovelTypeNamePair( const QString &type_name, const QUrl &url )
-			: typeName( std::make_shared< QString >( type_name ) ), url( std::make_shared< QUrl >( url ) ) { }
-		NovelTypeNamePair( const QString &type_name, const QString &url )
-			: typeName( std::make_shared< QString >( type_name ) ), url( std::make_shared< QUrl >( url ) ) { }
-		NovelTypeNamePair( ) : typeName( std::make_shared< QString >( ) ), url( std::make_shared< QUrl >( ) ) { }
-		virtual ~NovelTypeNamePair( ) { }
-	public: //- 属性
-		void setTypeName( const QString &type_name ) { *typeName = type_name; }
-		void setUrl( const QString &url ) { *this->url = url; }
-		QString getTypeName( ) const {
-			return *typeName;
-		}
-		QUrl getUrl( ) const {
-			return *url;
-		}
-	public: //- 比较
-		friend bool operator==( const NovelTypeNamePair &lhs, const NovelTypeNamePair &rhs ) {
-			if( lhs.typeName == rhs.typeName
-				&& lhs.url == rhs.url )
-				return true;
-			if( *lhs.typeName == *rhs.typeName
-				&& *lhs.url == *rhs.url )
-				return true;
-			return false;
-		}
-		friend bool operator!=( const NovelTypeNamePair &lhs, const NovelTypeNamePair &rhs ) { return !( lhs == rhs ); }
-	};
-public:
-	/// <summary>
-	/// std::shared_ptr< cylHttpNetWork::RequestConnect >
-	/// </summary>
-	using RequestConnect_Shared = std::shared_ptr< cylHttpNetWork::RequestConnect >;
-	/// <summary>
-	/// std::shared_ptr< cylHttpNetWork::Request >
-	/// </summary>
-	using Request_Shared = std::shared_ptr< cylHttpNetWork::Request >;
-	/// <summary>
-	///  std::pair< std::shared_ptr< cylHttpNetWork::RequestConnect >, std::shared_ptr< cylHttpNetWork::Request > >
-	/// </summary>
-	using Request_Pairt = std::pair< RequestConnect_Shared, Request_Shared >;
-	/// <summary>
-	/// std::shared_ptr< std::pair< std::shared_ptr< cylHttpNetWork::RequestConnect > ,std::shared_ptr< cylHttpNetWork::Request > 
-	///	>
-	/// </summary>
-	using Request_Pairt_Shared = std::shared_ptr< Request_Pairt >;
-	using NovelTypeNamePair_Shared = std::shared_ptr< NovelTypeNamePair >;
-	/// <summary>
-	/// std::unordered_map< Url_Pair, Request_Pairt_Shared >
-	/// </summary>
-	using Unordered_Map_Pairt = std::unordered_map< NovelTypeNamePair_Shared, Request_Pairt_Shared >;
-	using Unordered_Map_Pairt_Shared = std::shared_ptr< Unordered_Map_Pairt >;
+	using Duration = std::chrono::system_clock::time_point::duration;
+	using TimePoint = _CHRONO time_point< std::chrono::system_clock >;
+	using NetworkmanagerConnectFunction = std::function< bool( QNetworkReply *q_network_reply, const QString call_file_path_name, size_t call_line, const QString call_name ) >;
 private: // - 装饰指针
 	QObject *interfaceObjPtr; // 小说基于 qt 框架的指针
 	interfacePlugsType::IRequestNetInterface *interfaceThisPtr; // 小说的原始指针
 private: // - 网络
-	std::shared_ptr< cylHttpNetWork::NetworkAccessManager > networkAccessManager; // 请求管理对象
-	std::shared_ptr< cylHttpNetWork::NetworkRequest > networkRequest; // 请求模型
-	Request_Pairt_Shared root; // 首页的请求网络配对
+	QNetworkRequest networkRequest; // 请求模型
+	QNetworkAccessManager *networkAccessManager; // 网络请求体
 	int32_t typeCount; // 小说类型的数量
+	size_t sepMs; // 等待查询间隔
+	std::shared_ptr< QMutex > netMutex; // 锁
+	TimePoint requestTime; // 请求时间
+	size_t runStatus; // 记录对象的运行状态
+	int requestMaxCount; // 记录最大请求次数
+	int requestMaxMilliseconds; // 记录最大的请求时间
 private: // - 流
 	OStream *oStream; // 输入流-程序输出到该流中，显示信息
 private: // 配置
 	QStringList getTypeNamelist; // 获取的小说类型列表
-private: // 状态
-	size_t runStatus; // 记录对象的运行状态
+private:  // 状态
+private: //-静态成员
+	static QStringList userAgentHeaderList; // 所有的浏览器 UserAgentHeader
+public: //- 静态调用
+	/// <summary>
+	/// 等待 milliseconds 毫秒
+	/// </summary>
+	/// <param name="milliseconds">等待时间</param>
+	/// <returns>等待时间</returns>
+	static size_t waiteMilliseconds( const size_t &milliseconds );
+	/// <summary>
+	/// 获取一个随机的 UserAgentHeader
+	/// </summary>
+	/// <returns>UserAgentHeader 的字符串</returns>
+	static const QString & getRandomUserAgentHeader( ) {
+		qint64 qsizetype = userAgentHeaderList.size( );
+		qint64 size = abs( qsizetype - 1 );
+		if( size > 0 ) {
+			size_t index = rand( ) % size + 0.5;
+			if( index > qsizetype )
+				return userAgentHeaderList.last( );
+			return userAgentHeaderList[ index ];
+		}
+		return userAgentHeaderList[ 0 ];
+	}
+	/// <summary>
+	/// 获取当前时间的时间戳
+	/// </summary>
+	/// <returns></returns>
+	static Duration getCurrentTimeDuration( ) {
+		return std::chrono::system_clock::now( ).time_since_epoch( );
+	}
+	/// <summary>
+	/// 获取当前时间戳
+	/// </summary>
+	/// <returns>返回时间戳</returns>
+	static _CHRONO time_point< std::chrono::system_clock > getCurrentTimePoint( ) {
+		return std::chrono::system_clock::now( );
+	}
+	/// <summary>
+	/// 时间戳转换到毫秒
+	/// </summary>
+	/// <param name="time_duration">时间戳</param>
+	/// <returns>毫秒</returns>
+	static long long getTimeDurationToMilliseconds( const Duration &time_duration ) {
+		return std::chrono::duration_cast< std::chrono::milliseconds >( time_duration ).count( );
+	}
 public:
 	NovelNetJob( OStream *o_stream, QObject *interface_obj_ptr, interfacePlugsType::IRequestNetInterface *interface_this_ptr );
 	~NovelNetJob( ) override;
@@ -113,7 +107,58 @@ public: // - 小说网站的信息数据
 	/// 类型与小说列表之间的映射
 	/// </summary>
 	std::unordered_map< QString, interfacePlugsType::Vector_INovelInfoSPtr_Shared > typeNovelsMap;
-	std::unordered_map< QString, size_t > typeCountMap;
+private: //- 网络
+	/// <summary>
+	/// 请求一个 url 网络
+	/// </summary>
+	/// <param name="result">网络对象，如果为 nullptr，则重新创建</param>
+	/// <param name="network_request">参考请求体</param>
+	/// <param name="url">请求链接</param>
+	/// <param name="last_request_time_point">上次一的请求时间</param>
+	/// <param name="sep_ms">距离上一次调用允许下次调用的时间间隔</param>
+	/// <param name="callFunction">完成请求后调用函数</param>
+	/// <param name="call_finle_path_name">调用函数的文件路径名称</param>
+	/// <param name="call_function_name">调用函数的函数名称</param>
+	/// <param name="call_line">调用函数的行数</param>
+	/// <returns>应答体</returns>
+	QNetworkReply * requestUrl( QNetworkAccessManager *&result, const QNetworkRequest &network_request, const QUrl &url, TimePoint &last_request_time_point, size_t &sep_ms, const NetworkmanagerConnectFunction &callFunction, const QString &call_finle_path_name, const QString &call_function_name, const size_t call_line );
+	/// <summary>
+	/// 请求一个 url 网络
+	/// </summary>
+	/// <param name="result">网络对象，如果为 nullptr，则重新创建</param>
+	/// <param name="network_request">参考请求体</param>
+	/// <param name="url">请求链接</param>
+	/// <param name="last_request_time_point">上次一的请求时间</param>
+	/// <param name="sep_ms">距离上一次调用允许下次调用的时间间隔</param>
+	/// <returns>应答体</returns>
+	QNetworkReply * requestUrl( QNetworkAccessManager *&result, const QNetworkRequest &network_request, const QUrl &url, TimePoint &last_request_time_point, size_t &sep_ms );
+	/// <summary>
+	/// 发送 get 请求
+	/// </summary>
+	/// <param name="url">请求的 url</param>
+	/// <param name="requestMaxCount">最大请求次数，如果等于 0，则忽略次数</param>
+	/// <param name="requestMaxMs">最大请求时间，如果等于 0，则忽略时间</param>
+	/// <param name="error_msg">产生错误时候，写入的错误信息</param>
+	/// <param name="error_file_append_base_name">产生错误的时候，写入的文件的追加文件名</param>
+	/// <param name="call_function">回调函数</param>
+	/// <param name="call_finle_path_name">应该填入调用该函数的文件路径( __FILE__ )</param>
+	/// <param name="call_function_name">应该填入调用该函数的函数名( __FUNCTION__ )</param>
+	/// <param name="call_line">应该填入调用该函数的行数( __LINE__ )</param>
+	/// <returns>应答体</returns>
+	QNetworkReply * requestGet( const QUrl &url, const size_t requestMaxCount, const size_t requestMaxMs, const QString &error_msg, const QString &error_file_append_base_name, const NetworkmanagerConnectFunction &call_function, const QString &call_finle_path_name, const QString &call_function_name, const size_t call_line );
+	/// <summary>
+	/// 发送 get 请求
+	/// </summary>
+	/// <param name="url">请求的 url</param>
+	/// <param name="requestMaxCount">最大请求次数，如果等于 0，则忽略次数</param>
+	/// <param name="requestMaxMs">最大请求时间，如果等于 0，则忽略时间</param>
+	/// <param name="error_msg">产生错误时候，写入的错误信息</param>
+	/// <param name="error_file_append_base_name">产生错误的时候，写入的文件的追加文件名</param>
+	/// <param name="call_finle_path_name">应该填入调用该函数的文件路径( __FILE__ )</param>
+	/// <param name="call_function_name">应该填入调用该函数的函数名( __FUNCTION__ )</param>
+	/// <param name="call_line">应该填入调用该函数的行数( __LINE__ )</param>
+	/// <returns>应答体</returns>
+	QNetworkReply * requestGet( const QUrl &url, const size_t requestMaxCount, const size_t requestMaxMs, const QString &error_msg, const QString &error_file_append_base_name, const QString &call_finle_path_name, const QString &call_function_name, const size_t call_line );
 private:
 	/// <summary>
 	/// 存储小说到仓库
@@ -128,55 +173,28 @@ private:
 		, interfacePlugsType::Vector_INovelInfoSPtr_Shared &saveMapNovelInfos
 		, interfacePlugsType::INovelInfo_Shared &novel
 		, QString *result_msg );
+	/// <summary>
+	/// 请求页面信息，并且返回下一页。
+	/// </summary>
+	/// <param name="type_name">页面类型名称</param>
+	/// <param name="type_url">页面类型 url</param>
+	/// <param name="html_string">页面文本</param>
+	/// <returns>下一页的链接，失败返回空</returns>
+	QString getPageInfo( const QString &type_name, const QUrl &type_url, cylHtmlTools::HtmlString_Shared html_string );
+	/// <summary>
+	/// 类型页面小说请求终止
+	/// </summary>
+	/// <param name="type_name">页面类型</param>
+	/// <param name="url">终止 url</param>
+	/// <param name="current_page_index">终止下标</param>
+	void novelPageInfoRequestEnd( const QString &type_name, const QUrl &url, size_t current_page_index);
 Q_SIGNALS: // - 获取被调用
 	/// <summary>
 	/// 请求一个根路径-获取被调用
 	/// </summary>
 	/// <param name="url">链接</param>
-	/// <param name="request_connect">请求体</param>
-	void requesting_get_root_page_signals( const QUrl &url, cylHttpNetWork::RequestConnect *request_connect );
-	/// <summary>
-	/// 请求一个 type 类型的页面-首次获取被调用
-	/// </summary>
-	/// <param name="root_url">根链接</param>
-	/// <param name="type_name">小说类型</param>
-	/// <param name="url">小说页面链接</param>
-	/// <param name="html_string">网页内容</param>
-	void requesting_get_type_page_url_signals( const QString &root_url, const QString &type_name, const QUrl &url, cylHtmlTools::HtmlString_Shared html_string );
-	/// <summary>
-	/// 请求一个 type 类型的页面-会在获取下一页时候被调用
-	/// </summary>
-	/// <param name="root_url">根链接</param>
-	/// <param name="type">小说类型</param>
-	/// <param name="old_url">上一个页面</param>
-	/// <param name="url">小说页面链接</param>
-	/// <param name="old_page_index">上一个页数</param>
-	/// <param name="current_page_index">当前页数</param>
-	/// <param name="saveMapNovelInfos">已经保存的小说列表</param>
-	/// <param name="novel_s_ptr_shared">已经获取的小说</param>
-	void requesting_get_next_type_page_url_signals( const QString &root_url, const QString &type, const QUrl &old_url, const QUrl &url, size_t old_page_index, size_t current_page_index, const interfacePlugsType::Vector_INovelInfoSPtr_Shared saveMapNovelInfos, const interfacePlugsType::Vector_INovelInfoSPtr_Shared novel_s_ptr_shared );
-	/// <summary>
-	/// 请求小说页面
-	/// </summary>
-	/// <param name="root_url">根链接</param>
-	/// <param name="type">小说类型</param>
-	/// <param name="type_page_url">小说页面链接</param>
-	/// <param name="novelName">小说名称</param>
-	/// <param name="url">小说url</param>
-	/// <param name="novel_s_ptr_shared">已经获取到的小说列表</param>
-	/// <param name="html_txt">获取到的小说文本</param>
-	/// <param name="novel_info_shared">从小说页面解析到的小说</param>
-	void requesting_get_novel_page_url_signals( const QString &root_url, const QString &type, const QString &type_page_url, const QString &novelName, const QUrl &url, const interfacePlugsType::Vector_INovelInfoSPtr_Shared novel_s_ptr_shared, const QString &html_txt, interfacePlugsType::INovelInfo_Shared novel_info_shared );
-
-	/// <summary>
-	/// 页面请求结束
-	/// </summary>
-	/// <param name="root_url">根链接</param>
-	/// <param name="type">类型名称</param>
-	/// <param name="url">链接</param>
-	/// <param name="current_page_index">结束的当前下标</param>
-	/// <param name="novel_s_ptr_shared">获取到的小说列表</param>
-	void requested_get_type_page_url_end( const QString &root_url, const QString &type, const QUrl &url, size_t current_page_index, const interfacePlugsType::Vector_INovelInfoSPtr_Shared novel_s_ptr_shared );
+	/// <param name="qnetwork_reply">请求体</param>
+	void requesting_get_root_page_signals( const QUrl &url, QNetworkReply *qnetwork_reply );
 	/// <summary>
 	/// 小说网站请求结束
 	/// </summary>
@@ -188,50 +206,8 @@ private slots: // 信号处理
 	/// 请求一个根路径-获取被调用
 	/// </summary>
 	/// <param name="url">链接</param>
-	/// <param name="request_connect">请求体</param>
-	void slots_requesting_get_root_page_signals( const QUrl &url, cylHttpNetWork::RequestConnect *request_connect );
-
-	/// <summary>
-	/// 请求一个 type 类型的页面-首次获取被调用
-	/// </summary>
-	/// <param name="root_url">根链接</param>
-	/// <param name="type_name">小说类型</param>
-	/// <param name="type_url">小说页面链接</param>
-	/// <param name="html_string">网页内容</param>
-	void slots_requesting_get_type_page_url_signals( const QString &root_url, const QString &type_name, const QUrl &type_url, cylHtmlTools::HtmlString_Shared html_string );
-	/// <summary>
-	/// 请求下一页时调用该链接
-	/// </summary>
-	/// <param name="root_url">网站首页</param>
-	/// <param name="type_name">类型名称</param>
-	/// <param name="old_url">上一页链接</param>
-	/// <param name="url">当前也链接</param>
-	/// <param name="old_page_index">上一页下标</param>
-	/// <param name="current_page_index">当前页下标</param>
-	/// <param name="saveMapNovelInfos">已经保存的小说列表</param>
-	/// <param name="novel_s_ptr_shared">小说列表</param>
-	void slots_requesting_get_next_type_page_url_signals( const QString &root_url, const QString &type_name, const QUrl &old_url, const QUrl &url, size_t old_page_index, size_t current_page_index, const interfacePlugsType::Vector_INovelInfoSPtr_Shared &saveMapNovelInfos, const interfacePlugsType::Vector_INovelInfoSPtr_Shared &novel_s_ptr_shared );
-	/// <summary>
-	/// 请求小说页面
-	/// </summary>
-	/// <param name="root_url">根链接</param>
-	/// <param name="type">小说类型</param>
-	/// <param name="type_page_url">小说页面链接</param>
-	/// <param name="novelName">小说名称</param>
-	/// <param name="url">小说url</param>
-	/// <param name="novel_s_ptr_shared">已经获取到的小说列表</param>
-	/// <param name="html_txt">获取到的小说文本</param>
-	/// <param name="novel_info_shared">从小说页面解析到的信息</param>
-	void slots_requesting_get_novel_page_url_signals( const QString &root_url, const QString &type, const QString &type_page_url, const QString &novelName, const QUrl &url, const interfacePlugsType::Vector_INovelInfoSPtr_Shared novel_s_ptr_shared, const QString &html_txt, interfacePlugsType::INovelInfo_Shared novel_info_shared );
-	/// <summary>
-	/// 小说类型结束会调用该函数
-	/// </summary>
-	/// <param name="root_url">根链接</param>
-	/// <param name="type_name">类型名称</param>
-	/// <param name="url">类型链接</param>
-	/// <param name="current_page_index">当前下标</param>
-	/// <param name="novel_s_ptr_shared">小说列表</param>
-	void slots_requested_get_type_page_url_end( const QString &root_url, const QString &type_name, const QUrl &url, size_t current_page_index, const interfacePlugsType::Vector_INovelInfoSPtr_Shared &novel_s_ptr_shared );
+	/// <param name="qnetwork_reply">请求体</param>
+	void slots_requesting_get_root_page_signals( const QUrl &url, QNetworkReply *qnetwork_reply );
 	/// <summary>
 	/// 网站结束会调用该链接
 	/// </summary>

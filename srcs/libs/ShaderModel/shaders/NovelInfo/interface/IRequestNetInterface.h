@@ -22,6 +22,11 @@ namespace interfacePlugsType {
 		}
 	public:
 		/// <summary>
+		/// 获取建议请求间隔
+		/// </summary>
+		/// <returns>间隔-毫秒</returns>
+		virtual size_t getRequestInterval() = 0;
+		/// <summary>
 		/// 初始化之前，被动调用
 		/// 使用对象之前，应该调用该函数一次，并且它必须在 initBefore() 之前
 		/// </summary>

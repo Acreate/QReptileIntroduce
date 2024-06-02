@@ -1,7 +1,4 @@
 ﻿#include "NovelNetJob.h"
-#include <HttpNetWork/RequestConnect.h>
-#include <HttpNetWork/Request.h>
-#include <HttpNetWork/NetworkRequest.h>
 #include <stream/OStream.h>
 
 #include "htmls/htmlDoc/HtmlDoc.h"
@@ -10,7 +7,6 @@
 #include "htmls/htmlTools/HtmlWorkThread/HtmlWorkThread.h"
 #include "htmls/HtmlNode/HtmlNode.h"
 #include "thread/FileThread.h"
-#include <HttpNetWork/NetworkAccessManager.h>
 #include <qguiapplication.h>
 #include <unordered_map>
 
@@ -22,6 +18,7 @@
 #include "auto_generate_files/macro/cmake_to_c_cpp_header_env.h"
 #include "path/Dir.h"
 #include <DB/sqlite/sqliteResult/SQLiteResult.h>
+#include <QMutex>
 using namespace interfacePlugsType;
 
 /// <summary>
@@ -33,34 +30,37 @@ using namespace interfacePlugsType;
 /// <param name="file">错误文件</param>
 /// <param name="call_function_name">调用函数名称</param>
 /// <param name="line">信息行数</param>
+/// <param name="append_msg">写入信息</param>
 /// <param name="write_root_path">写入的根目录</param>
 /// <param name="file_name">文件名称</param>
 /// <param name="file_suffix">后缀名称</param>
-inline void error_write_file( std::chrono::system_clock::time_point::duration &nowTimeDuration, OStream *oStream, QNetworkReply *networkReply, const QString &file, const QString &call_function_name, size_t line, const QString &write_root_path, const QString &file_name, const QString &file_suffix ) {
+inline void error_write_file( const _CHRONO time_point< std::chrono::system_clock > &nowTimeDuration, OStream *oStream, QNetworkReply *networkReply, const QString &file, const QString &call_function_name, size_t line, const QString &append_msg, const QString &write_root_path, const QString &file_name, const QString &file_suffix ) {
 	QDateTime currentDateTime = QDateTime::currentDateTime( );
 	QString currentTime = currentDateTime.toString( "yyyy_MM_dd hh-mm-ss" );
-	nowTimeDuration = cylHttpNetWork::TimeTools::getNowTimeDuration( ) - nowTimeDuration;
-	long long timeDurationToMilliseconds = cylHttpNetWork::TimeTools::getTimeDurationToMilliseconds( nowTimeDuration );
+	auto currentTimeDuration = std::chrono::system_clock::now( ) - nowTimeDuration;
+	long long timeDurationToMilliseconds = std::chrono::duration_cast< std::chrono::milliseconds >( currentTimeDuration ).count( );
 	QString seconds( QString::number( timeDurationToMilliseconds / 1000 ) ); // 秒
 	QString msg;
 	auto url = networkReply->url( );
-	msg.append( "=========================		try : info" )
-		.append( "\n\t当前时间 : " ).append( currentTime ).append( "\n\t" )
-		.append( "\n\t执行时间 : " ).append( seconds ).append( "秒\n\t" )
-		.append( "\n\t错误文件 : " ).append( file ).append( "\n\t" )
-		.append( "\n\t信息位置 : " ).append( QString::number( line ) )
-		.append( "\n\t信息函数 : " ).append( __FUNCTION__ )
-		.append( "=========================		try : message" )
-		.append( "\n\t错误信息 : " ).append( getErrorQStr( networkReply->error( ) ) )
-		.append( u8"\n\t类型 : " ).append( "首页" ).append( u8"(" ).append( url.toString( ) ).append( ")" )
-		.append( "=========================" );
+	msg.append( "\n=========================		try : info" )
+		.append( u8"\n\t当前时间 : " ).append( currentTime ).append( "\n\t" )
+		.append( u8"\n\t执行时间 : " ).append( seconds ).append( "秒\n\t" )
+		.append( u8"\n\t错误文件 : " ).append( file ).append( "\n\t" )
+		.append( u8"\n\t信息位置 : " ).append( QString::number( line ) )
+		.append( u8"\n\t信息函数 : " ).append( __FUNCTION__ )
+		.append( "\n=========================		try : message" )
+		.append( u8"\n\t错误信息 : " ).append( getErrorQStr( networkReply->error( ) ) )
+		.append( u8"\n\t类型 : " ).append( u8"请求页面" ).append( u8"(" ).append( url.toString( ) ).append( ")" )
+		.append( "\n=========================		user : message" )
+		.append( u8"\n\t自由信息 : " ).append( append_msg )
+		.append( "\n=========================" );
 	if( write_root_path.isEmpty( ) )
 		OStream::anyDebugOut( oStream, msg, file, line, call_function_name );
 	else {
-		QString errorWriteFilePath( u8R"(%2%1%3%1%4%1%5.%6)" );
+		QString errorWriteFilePath( u8R"(%2%1%3%1%4%1%5%1%6.%7)" );
 		QString host = url.host( );
 		QString timeForm = currentDateTime.toString( "yyyy-MM-dd" );
-		errorWriteFilePath = errorWriteFilePath.arg( QDir::separator( ) ).arg( write_root_path ).arg( host ).arg( timeForm ).arg( file_name ).arg( file_suffix );
+		errorWriteFilePath = errorWriteFilePath.arg( QDir::separator( ) ).arg( write_root_path ).arg( u8"log_write_file_s" ).arg( host ).arg( timeForm ).arg( file_name ).arg( file_suffix );
 		OStream::anyDebugOut( oStream, msg, file, line, call_function_name, errorWriteFilePath, msg );
 	}
 }
@@ -81,7 +81,31 @@ QString getNormalQString( const QString &q_string ) {
 	delete buff;
 	return result;
 }
-
+QStringList NovelNetJob::userAgentHeaderList = {
+	QObject::tr( u8"Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3440.106 Safari/537.36" )
+	, QObject::tr( u8"Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.99 Safari/537.36" )
+	, QObject::tr( u8"Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.186 Safari/537.36" )
+	, QObject::tr( u8"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/62.0.3202.62 Safari/537.36" )
+	, QObject::tr( u8"Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/45.0.2454.101 Safari/537.36" )
+	, QObject::tr( u8"Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 6.0)" )
+	, QObject::tr( u8"Mozilla/5.0 (Macintosh; U; PPC Mac OS X 10.5; en-US; rv:1.9.2.15) Gecko/20110303 Firefox/3.6.15" )
+	, QObject::tr( u8"Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36" )
+};
+size_t NovelNetJob::waiteMilliseconds( const size_t &milliseconds ) {
+	if( milliseconds == 0 )
+		return milliseconds;
+	auto point = std::chrono::system_clock::now( );
+	auto timePoint = std::chrono::system_clock::now( );
+	do {
+		auto duration = timePoint - point;
+		auto nowPoint = getTimeDurationToMilliseconds( duration );
+		if( nowPoint > milliseconds )
+			break;
+		qApp->processEvents( );
+		timePoint = std::chrono::system_clock::now( );
+	} while( true );
+	return milliseconds;
+}
 NovelNetJob::NovelNetJob( OStream *o_stream, QObject *interface_obj_ptr, IRequestNetInterface *interface_this_ptr ): interfaceObjPtr( interface_obj_ptr ), interfaceThisPtr( interface_this_ptr ), oStream( o_stream ) {
 	initObj( );
 	initObjProperty( );
@@ -92,19 +116,20 @@ NovelNetJob::~NovelNetJob( ) {
 	interfaceObjPtr->deleteLater( );
 }
 void NovelNetJob::initObj( ) {
-	networkAccessManager = std::make_shared< cylHttpNetWork::NetworkAccessManager >( this );
-	networkRequest = std::make_shared< cylHttpNetWork::NetworkRequest >( );
-	root = std::make_shared< std::pair< RequestConnect_Shared, Request_Shared > >( );
-	root->first = std::make_shared< cylHttpNetWork::RequestConnect >( );
-	root->second = std::make_shared< cylHttpNetWork::Request >( networkAccessManager.get( ), root->first.get( ) );
+	netMutex = std::make_shared< QMutex >( );
+	this->networkAccessManager = new QNetworkAccessManager;
 }
 void NovelNetJob::initObjProperty( ) {
+	requestMaxCount = 1500;
+	requestMaxMilliseconds = 4 * 60 * 1000;
+	sepMs = interfaceThisPtr->getRequestInterval( );
+	requestTime = NovelNetJob::getCurrentTimePoint( );
 	interfaceThisPtr->setOStream( oStream );
-	QString agentHeader = networkRequest->getRandomUserAgentHeader( );
-	networkRequest->setHeader( QNetworkRequest::UserAgentHeader, agentHeader );
-	QSslConfiguration sslConfiguration = networkRequest->sslConfiguration( );
+	QString agentHeader = getRandomUserAgentHeader( );
+	networkRequest.setHeader( QNetworkRequest::UserAgentHeader, agentHeader );
+	QSslConfiguration sslConfiguration = networkRequest.sslConfiguration( );
 	sslConfiguration.setPeerVerifyMode( QSslSocket::VerifyNone );
-	networkRequest->setSslConfiguration( sslConfiguration );
+	networkRequest.setSslConfiguration( sslConfiguration );
 	typeCount = 0;
 	QString ingFile( u8"%1%2%3%2%4%5" );
 	ingFile = ingFile.arg( Project_Plug_bin ).arg( QDir::separator( ) ).arg( u8"ini" ).arg( u8"get_type" ).arg( u8".txt" );
@@ -122,59 +147,148 @@ void NovelNetJob::initObjProperty( ) {
 		}
 	}
 	runStatus = 0;
+	HtmlDocString resultUrl;
+	size_t size = interfaceThisPtr->getRootUrl( &resultUrl );
+	QString qUrl = QString::fromStdWString( resultUrl );
+	if( size == 0 )
+		return;
+	this->networkRequest.setUrl( qUrl );
+	QUrl url = this->networkRequest.url( );
+	QString qstrUrl = url.toString( );
+	if( OStream::hasDefaultOStream( qstrUrl ) == false )
+		OStream::setDefaultOStream( qstrUrl, oStream );
+	networkRequest.setHeader( QNetworkRequest::UserAgentHeader, getRandomUserAgentHeader( ) );
+	QSslConfiguration configuration = networkRequest.sslConfiguration( );
+	sslConfiguration.setPeerVerifyMode( QSslSocket::VerifyNone );
+	networkRequest.setSslConfiguration( configuration );
 }
 
 void NovelNetJob::initConnect( ) {
 
 	connect( this, &NovelNetJob::requesting_get_root_page_signals, this, &NovelNetJob::slots_requesting_get_root_page_signals, Qt::QueuedConnection );
-	connect( this, &NovelNetJob::requesting_get_type_page_url_signals, this, &NovelNetJob::slots_requesting_get_type_page_url_signals, Qt::QueuedConnection );
-	connect( this, &NovelNetJob::requesting_get_next_type_page_url_signals, this, &NovelNetJob::slots_requesting_get_next_type_page_url_signals, Qt::QueuedConnection );
-	connect( this, &NovelNetJob::requesting_get_novel_page_url_signals, this, &NovelNetJob::slots_requesting_get_novel_page_url_signals, Qt::QueuedConnection );
-	connect( this, &NovelNetJob::requested_get_type_page_url_end, this, &NovelNetJob::slots_requested_get_type_page_url_end, Qt::QueuedConnection );
+	//connect( this, &NovelNetJob::requesting_get_type_page_url_signals, this, &NovelNetJob::slots_requesting_get_type_page_url_signals );
+	//connect( this, &NovelNetJob::requesting_get_next_type_page_url_signals, this, &NovelNetJob::slots_requesting_get_next_type_page_url_signals );
+	//connect( this, &NovelNetJob::requesting_get_novel_page_url_signals, this, &NovelNetJob::slots_requesting_get_novel_page_url_signals );
+	//connect( this, &NovelNetJob::requested_get_type_page_url_end, this, &NovelNetJob::slots_requested_get_type_page_url_end );
 	connect( this, &NovelNetJob::requested_get_web_page_signals_end, this, &NovelNetJob::slots_requested_get_web_page_signals_end, Qt::QueuedConnection );
-
 }
 
+QNetworkReply * NovelNetJob::requestUrl( QNetworkAccessManager *&result, const QNetworkRequest &network_request, const QUrl &url, TimePoint &last_request_time_point, size_t &sep_ms, const NetworkmanagerConnectFunction &callFunction, const QString &call_finle_path_name, const QString &call_function_name, const size_t call_line ) {
+	auto newRequestTime = getCurrentTimePoint( );
+	auto commonType = newRequestTime - last_request_time_point;
+	auto milliseconds = getTimeDurationToMilliseconds( commonType );
+	if( milliseconds < sep_ms )
+		waiteMilliseconds( sep_ms - milliseconds );
+	last_request_time_point = getCurrentTimePoint( );
+	if( result == nullptr )
+		result = new QNetworkAccessManager;
+	auto networkRequest = network_request;
+	networkRequest.setUrl( url );
+	QNetworkReply *networkReply = result->get( networkRequest );
+	while( !networkReply->isRunning( ) )
+		waiteMilliseconds( 20 );
+	while( !networkReply->isFinished( ) )
+		waiteMilliseconds( 200 );
+	callFunction( networkReply, __FILE__, __LINE__, __FUNCTION__ );
+	return networkReply;
+}
+QNetworkReply * NovelNetJob::requestUrl( QNetworkAccessManager *&result, const QNetworkRequest &network_request, const QUrl &url, TimePoint &last_request_time_point, size_t &sep_ms ) {
+	auto newRequestTime = getCurrentTimePoint( );
+	auto commonType = newRequestTime - last_request_time_point;
+	auto milliseconds = getTimeDurationToMilliseconds( commonType );
+	if( milliseconds < sep_ms )
+		waiteMilliseconds( sep_ms - milliseconds );
+	last_request_time_point = getCurrentTimePoint( );
+	if( result == nullptr )
+		result = new QNetworkAccessManager;
+	auto networkRequest = network_request;
+	networkRequest.setUrl( url );
+	QNetworkReply *networkReply = result->get( networkRequest );
+	while( !networkReply->isRunning( ) )
+		waiteMilliseconds( 20 );
+	while( !networkReply->isFinished( ) )
+		waiteMilliseconds( 200 );
+	return networkReply;
+}
+QNetworkReply * NovelNetJob::requestGet( const QUrl &url, const size_t requestMaxCount, const size_t requestMaxMs, const QString &error_msg, const QString &error_file_append_base_name, const NetworkmanagerConnectFunction &call_function, const QString &call_finle_path_name, const QString &call_function_name, const size_t call_line ) {
+	auto requestReplyTime = getCurrentTimePoint( );
+	size_t requestCount = 0;
+	do {
+		auto networkReply = requestUrl( this->networkAccessManager, this->networkRequest, url, this->requestTime, this->sepMs, call_function, call_finle_path_name, call_function_name, call_line );
+		if( networkReply->error( ) == QNetworkReply::NoError )
+			return networkReply;
+		this->networkRequest.setHeader( QNetworkRequest::UserAgentHeader, getRandomUserAgentHeader( ) );
+		if( requestMaxCount ) {
+			++requestCount;
+			if( requestCount > requestMaxCount ) {
+				error_write_file( requestTime, oStream, networkReply, call_function_name, call_finle_path_name, call_line, error_msg + u8"-请求次数超出限制", Cache_Path_Dir, QDateTime::currentDateTime( ).toString( "hh-mm-ss" ), ".root_request.error.log" );
+				break;
+			}
+		}
+		if( requestMaxMs ) {
+			auto compTime = getTimeDurationToMilliseconds( getCurrentTimePoint( ) - requestReplyTime );
+			if( compTime > requestMaxMs ) {
+				error_write_file( requestTime, oStream, networkReply, call_function_name, call_finle_path_name, call_line, error_msg + u8"-请求时间超出限制", Cache_Path_Dir, QDateTime::currentDateTime( ).toString( "hh-mm-ss" ), ".root_request.error.log" );
+				break;
+			}
+		}
+
+	} while( true ) ;
+	return nullptr;
+}
+QNetworkReply * NovelNetJob::requestGet( const QUrl &url, const size_t requestMaxCount, const size_t requestMaxMs, const QString &error_msg, const QString &error_file_append_base_name, const QString &call_finle_path_name, const QString &call_function_name, const size_t call_line ) {
+	auto requestReplyTime = getCurrentTimePoint( );
+	size_t requestCount = 0;
+	do {
+		auto networkReply = requestUrl( this->networkAccessManager, this->networkRequest, url, this->requestTime, this->sepMs );
+		if( networkReply->error( ) == QNetworkReply::NoError ) {
+			interfaceThisPtr->initBefore( );
+			return networkReply;
+			break;
+		}
+		if( requestMaxCount ) {
+			++requestCount;
+			if( requestCount > requestMaxCount ) {
+				error_write_file( requestTime, oStream, networkReply, call_function_name, call_finle_path_name, call_line, error_msg + u8"-请求次数超出限制", Cache_Path_Dir, QDateTime::currentDateTime( ).toString( "hh-mm-ss" ), ".root_request.error.log" );
+				break;
+			}
+		}
+		if( requestMaxMs ) {
+			auto compTime = getTimeDurationToMilliseconds( getCurrentTimePoint( ) - requestReplyTime );
+			if( compTime > requestMaxMs ) {
+				error_write_file( requestTime, oStream, networkReply, call_function_name, call_finle_path_name, call_line, error_msg + u8"-请求时间超出限制", Cache_Path_Dir, QDateTime::currentDateTime( ).toString( "hh-mm-ss" ), ".root_request.error.log" );
+				break;
+			}
+		}
+
+	} while( true ) ;
+	return nullptr;
+}
 bool NovelNetJob::start( ) {
-	if( runStatus != 0 )
-		return false;
-	HtmlDocString resultUrl;
-	size_t size = interfaceThisPtr->getRootUrl( &resultUrl );
-	QString qUrl = QString::fromStdWString( resultUrl );
-	if( size == 0 )
-		return false;
-	qDebug( ) << networkAccessManager->supportedSchemes( );
-	qDebug( ) << QSslSocket::sslLibraryBuildVersionString( );
-	if( OStream::hasDefaultOStream( qUrl ) == false )
-		OStream::setDefaultOStream( qUrl, oStream );
+	QUrl url = this->networkRequest.url( );
+	QString qstrUrl = url.toString( );
 	interfaceThisPtr->initAfter( );
-	interfaceThisPtr->initBefore( );
-	runStatus = 1;
-	cylHttpNetWork::Request *request = root->second.get( );
-	std::chrono::system_clock::time_point::duration nowTimeDuration = cylHttpNetWork::TimeTools::getNowTimeDuration( );
-	request->netGetWork( qUrl, *networkRequest );
-	size_t line = __LINE__;
-	std::string stdString = qUrl.toStdString( );
-	auto networkReply = request->getNetworkReply( 150
-		, 3 * 60 * 1000
-		, 2000
-		, [qUrl,stdString,this]( cylHttpNetWork::RequestConnect *request_connect, cylHttpNetWork::NetworkRequest *network_request ) {
-			QString msg = ( QStringList( ) << "\t:" << __FUNCTION__ << " 正在请求 : " << stdString.c_str( ) ).join( ' ' );
-			OStream::anyDebugOut( oStream, msg );
-			network_request->setHeader( QNetworkRequest::UserAgentHeader, cylHttpNetWork::NetworkRequest::getRandomUserAgentHeader( ) );
-			return 1;
-		} );
-	if( networkReply->error( ) == QNetworkReply::NoError ) {
+	OStream::anyDebugOut( oStream, "开始获取 " + qstrUrl );
+	NetworkmanagerConnectFunction noErrorRunCode = [this]( QNetworkReply *q_network_reply, const QString call_file_path_name, size_t call_line, const QString call_name ) {
 		typeCount = 0;
 		this->typeNovelsMap.clear( );
-		auto requestConnect = root->first.get( );
-		auto url = networkReply->url( );
-		OStream::anyDebugOut( oStream, "开始获取 " + qUrl );
-		emit requesting_get_root_page_signals( url, requestConnect );
-		return true;
-	} else
-		error_write_file( nowTimeDuration, oStream, networkReply, __FILE__, __FUNCTION__, line, Cache_Path_Dir, QDateTime::currentDateTime( ).toString( "hh-mm-ss" ), ".root_request.error.log" );
-	return false;
+		emit requesting_get_root_page_signals( q_network_reply->url( ), q_network_reply );
+		return false;
+	};
+	NetworkmanagerConnectFunction hasErrorRunCode = [this]( QNetworkReply *q_network_reply, const QString call_file_path_name, size_t call_line, const QString call_name ) {
+		auto qUrl = q_network_reply->url( );
+		error_write_file( requestTime, oStream, q_network_reply, call_name, call_file_path_name, call_line, u8"首页请求失败", Cache_Path_Dir, QDateTime::currentDateTime( ).toString( "hh-mm-ss" ), ".root_request.error.log" );
+		return false;
+	};
+	NetworkmanagerConnectFunction callFunction = [noErrorRunCode,hasErrorRunCode,this]( QNetworkReply *q_network_reply, const QString call_file_path_name, size_t call_line, const QString call_name ) {
+		if( q_network_reply->error( ) == QNetworkReply::NoError )
+			return noErrorRunCode( q_network_reply, call_file_path_name, call_line, call_name );
+		else
+			return hasErrorRunCode( q_network_reply, call_file_path_name, call_line, call_name );
+	};
+	auto networkReply = requestGet( url, requestMaxCount, requestMaxMilliseconds, u8"首页请求失败", u8".root_request.error.log", callFunction, __FILE__, __FUNCTION__, __LINE__ );
+	this->interfaceThisPtr->initBefore( );
+	return networkReply;
 }
 QString NovelNetJob::getUrl( ) const {
 	HtmlDocString resultUrl;
@@ -183,11 +297,9 @@ QString NovelNetJob::getUrl( ) const {
 		return QString::fromStdWString( resultUrl );
 	return "";
 }
-void NovelNetJob::slots_requesting_get_root_page_signals( const QUrl &url, cylHttpNetWork::RequestConnect *request_connect ) {
-
-	auto networkReply = request_connect->getNetworkReply( );
+void NovelNetJob::slots_requesting_get_root_page_signals( const QUrl &url, QNetworkReply *request_connect ) {
 	QString rootUrl = url.scheme( ) + u8"://" + url.host( );
-	QString htmlText( networkReply->readAll( ) );
+	QString htmlText( request_connect->readAll( ) );
 	if( htmlText.isEmpty( ) )
 		return;
 	auto mapHtmlStrKHtmlStrV = interfaceThisPtr->formHtmlGetTypeTheUrls( rootUrl.toStdWString( ), htmlText.toStdWString( ) );
@@ -197,11 +309,11 @@ void NovelNetJob::slots_requesting_get_root_page_signals( const QUrl &url, cylHt
 		OStream::anyDebugOut( oStream, msg, __FILE__, __LINE__, __FUNCTION__ );
 		return;
 	}
-
+	this->typeNovelsMap.clear( );
 	///////////////// 类型请求
 	auto iterator = mapHtmlStrKHtmlStrV->begin( ); // 类型遍历
 	auto end = mapHtmlStrKHtmlStrV->end( ); // 类型结束
-	std::unordered_map< cylHttpNetWork::Request *, std::pair< QString, QString > > requests;
+	std::unordered_map< QString, QString > requests;
 	do {
 		QString typeName = getNormalQString( QString::fromStdWString( iterator->first ) );
 		auto getTypeNamelistIterator = getTypeNamelist.begin( ); // 根据配置文件当中的可查找遍历类型名称来实现列表获取
@@ -210,11 +322,9 @@ void NovelNetJob::slots_requesting_get_root_page_signals( const QUrl &url, cylHt
 			if( *getTypeNamelistIterator == typeName )
 				break;
 		if( getTypeNamelistIterator != getTypeNamelistEnd ) {
-			QString typeUrl = QString::fromStdWString( iterator->second );
-			auto requestConnect = new cylHttpNetWork::RequestConnect;
-			auto request = new cylHttpNetWork::Request( networkAccessManager.get( ), requestConnect );
-			auto makePair = std::make_pair( typeName, typeUrl );
-			requests.emplace( request, makePair ); // 等待处理
+			requests.emplace( typeName, QString::fromStdWString( iterator->second ) ); // 等待处理
+			this->typeNovelsMap.emplace( typeName, std::make_shared< Vector_INovelInfoSPtr >( ) );
+			++typeCount;
 		}
 		++iterator;
 	} while( iterator != end );
@@ -223,41 +333,34 @@ void NovelNetJob::slots_requesting_get_root_page_signals( const QUrl &url, cylHt
 	QMap< cylHtmlTools::HtmlString_Shared, std::pair< QString, QString > > emitMap;
 	auto requestVectorIterator = requests.begin( );
 	auto requestVectorEnd = requests.end( );
+	size_t pageIndex = 0;
 	do {
-		cylHttpNetWork::Request *request = requestVectorIterator->first;
-		auto pair = requestVectorIterator->second;
-		auto nowTimeDuration = cylHttpNetWork::TimeTools::getNowTimeDuration( );
-		size_t line = __LINE__;
-		auto stdString = pair.second.toStdString( );
-		request->netGetWork( pair.second, *networkRequest ); // 发送请求
-		networkReply = request->getNetworkReply( 15
-			, 3 * 60 * 1000
-			, 2000
-			, [pair, stdString,this]( cylHttpNetWork::RequestConnect *request_connect, cylHttpNetWork::NetworkRequest *network_request ) {
-				QString msg = ( QStringList( ) << "\t:" << __FUNCTION__ << " 正在请求 : " << stdString.c_str( ) ).join( ' ' );
-				OStream::anyDebugOut( oStream, msg );
-				network_request->setHeader( QNetworkRequest::UserAgentHeader, cylHttpNetWork::NetworkRequest::getRandomUserAgentHeader( ) );
-				return 1;
-			} );
-		if( networkReply->error( ) == QNetworkReply::NoError ) { // 没有错误
-			++typeCount;
-			QString msg;
-			msg.append( u8"发现 : " )
-				.append( pair.first ).append( "[" ).append( pair.second ).append( "](" )
-				.append( QString::number( typeCount ) ).append( ")" );
-			OStream::anyDebugOut( oStream, msg );
-			auto htmlString = std::make_shared< cylHtmlTools::HtmlString >( QString( networkReply->readAll( ) ).toStdWString( ) );
-			emitMap.insert( htmlString, pair );
-			request->getRequestConnect( )->deleteLater( );
-			request->deleteLater( );
-		} else  // 存在错误
-			error_write_file( nowTimeDuration, oStream, networkReply, __FILE__, __FUNCTION__, line,Cache_Path_Dir, QDateTime::currentDateTime( ).toString( "hh-mm-ss" ), ".type_request.error.log" );
+		auto typeNmae = requestVectorIterator->first;
+		auto qUrl = requestVectorIterator->second;
+		auto networkReply = requestGet( qUrl, requestMaxCount, requestMaxMilliseconds, u8"类型页面请求失败", u8".type_request.error.log", __FILE__, __FUNCTION__, __LINE__ );
+		if( !networkReply )
+			continue;
+		++pageIndex;
+		OStream::anyDebugOut( oStream, u8"发现 " + typeNmae + "(" + qUrl + ")" + "[" + QString::number( typeCount ) + "]" );
+		auto readAll = networkReply->readAll( );
+		auto html = std::make_shared< cylHtmlTools::HtmlString >( QString( readAll ).toStdWString( ) );
+		auto newQUrl = getPageInfo( typeNmae, qUrl, html );
+		while( !newQUrl.isEmpty( ) ) {
+			qUrl = newQUrl;
+			networkReply = requestGet( qUrl, requestMaxCount, requestMaxMilliseconds, u8"下一页类型请求失败", u8".type_request_next.error.log", __FILE__, __FUNCTION__, __LINE__ );
+			if( !networkReply )
+				break; // 请求失败，则终止
+			++pageIndex;
+			readAll = networkReply->readAll( );
+			html = std::make_shared< cylHtmlTools::HtmlString >( QString( readAll ).toStdWString( ) );
+			newQUrl = getPageInfo( typeNmae, qUrl, html );
+		}
+		// 小说类型页面终止
+		novelPageInfoRequestEnd( typeNmae, qUrl, pageIndex );
+		--typeCount;
 		++requestVectorIterator;
 	} while( requestVectorIterator != requestVectorEnd );
-	auto mapBegin = emitMap.begin( );
-	auto mapEnd = emitMap.end( );
-	for( ; mapBegin != mapEnd; ++mapBegin )
-		emit requesting_get_type_page_url_signals( rootUrl, mapBegin.value( ).first, mapBegin.value( ).second, mapBegin.key( ) );
+	emit slots_requested_get_web_page_signals_end( rootUrl );
 }
 
 interfacePlugsType::INovelInfo_Shared NovelNetJob::saveToStoreNovels(
@@ -265,169 +368,60 @@ interfacePlugsType::INovelInfo_Shared NovelNetJob::saveToStoreNovels(
 	, interfacePlugsType::Vector_INovelInfoSPtr_Shared &saveMapNovelInfos
 	, interfacePlugsType::INovelInfo_Shared &novel
 	, QString *result_msg ) {
-	INovelInfo_Shared formHtmlGetUrlNovelInfo = nullptr;
-	NovelTypeNamePair_Shared urlPair( std::make_shared< NovelTypeNamePair >( ) );
-	HtmlDocString buffStr;
-	novel->getNovelUrl( &buffStr );
-	QString novelUrl = QString::fromStdWString( buffStr );
-	novel->getNovelName( &buffStr );
-	QString novelName = QString::fromStdWString( buffStr );
-	auto requestConnect = new cylHttpNetWork::RequestConnect;
-	auto request = new cylHttpNetWork::Request( networkAccessManager.get( ), requestConnect );
-	request->netGetWork( novelUrl, *networkRequest );
-
-	auto nowTimeDuration = cylHttpNetWork::TimeTools::getNowTimeDuration( );
-	size_t line = __LINE__;
-	auto stdString = novelUrl.toStdString( );
-	auto reply = request->getNetworkReply( 15
-		, 3 * 60 * 1000
-		, 2000
-		, [novelUrl,stdString,this]( cylHttpNetWork::RequestConnect *request_connect, cylHttpNetWork::NetworkRequest *network_request ) {
-			QString msg = ( QStringList( ) << "\t:" << __FUNCTION__ << " 正在请求 : " << stdString.c_str( ) ).join( ' ' );
-			OStream::anyDebugOut( oStream, msg );
-			network_request->setHeader( QNetworkRequest::UserAgentHeader, cylHttpNetWork::NetworkRequest::getRandomUserAgentHeader( ) );
-			return 1;
-		} );
-	if( reply->error( ) != QNetworkReply::NoError ) { // 异常则跳过这次获取
-		*result_msg = getErrorQStr( reply->error( ) );
-		result_msg->append( u8"\n小说地址:" ).append( novelUrl );
-		error_write_file( nowTimeDuration, oStream, reply, __FILE__, __FUNCTION__, line,Cache_Path_Dir, QDateTime::currentDateTime( ).toString( "hh-mm-ss" ), ".saveToStoreNovels.error.log" );
-		return formHtmlGetUrlNovelInfo;
-	}
-
-	// 解析小说
-	auto readAll = reply->readAll( );
-	if( readAll.size( ) == 0 ) { // 异常则跳过这次获取
-		*result_msg = u8"没有找到正确的内容";
-		result_msg->append( u8"\t小说地址:" ).append( novelUrl );
-		return formHtmlGetUrlNovelInfo;
-	}
-	QString htmlText( readAll );
-
-
-	auto url = reply->url( );
-	auto rootUrl = url.scheme( ) + "://" + url.host( );
-	HtmlDocString name, typeName, typePageUrl;
-
-	novel->getNovelName( &name );
-	novel->getNovelTypeName( &typeName );
-	novel->getNovelUrlAtPageLocation( &typePageUrl );
-	request->deleteLater( ); // 释放
-	requestConnect->deleteLater( ); // 释放
-	formHtmlGetUrlNovelInfo = interfaceThisPtr->formHtmlGetUrlNovelInfo( novelUrl.toStdWString( ), htmlText.toStdWString( ), *saveMapNovelInfos, novel );
-
-	emit requesting_get_novel_page_url_signals( rootUrl, QString::fromStdWString( typeName ), QString::fromStdWString( typePageUrl ), QString::fromStdWString( name ), url, saveMapNovelInfos, htmlText, formHtmlGetUrlNovelInfo );
-
-	if( formHtmlGetUrlNovelInfo ) // 返回非 nullptr 则存储
-		requestedGetVectorINovelInfoSPtrShared->emplace_back( novel ); // 存储已知小说
-	else
-		*result_msg = u8"获取到的小说为空";
-	return formHtmlGetUrlNovelInfo;
+	return nullptr;
 }
 
 
-void NovelNetJob::slots_requesting_get_type_page_url_signals( const QString &root_url, const QString &type_name, const QUrl &type_url, cylHtmlTools::HtmlString_Shared html_string ) {
-	size_t count = 0;
-	if( this->typeCountMap.count( type_name ) )
-		count = this->typeCountMap.at( type_name );
-
+QString NovelNetJob::getPageInfo( const QString &type_name, const QUrl &type_url, cylHtmlTools::HtmlString_Shared html_string ) {
 	Vector_INovelInfoSPtr_Shared requestedGetVectorINovelInfoSPtrShared( std::make_shared< interfacePlugsType::Vector_INovelInfoSPtr >( ) );
 	// 存储获取的小说
 	auto iterator = this->typeNovelsMap.begin( );
 	auto end = this->typeNovelsMap.end( );
 	Vector_INovelInfoSPtr_Shared saveMapNovelInfos = nullptr;
 	for( ; iterator != end; ++iterator )
-		if( iterator->first == type_name ) { // 这是已经被调用了
+		if( iterator->first == type_name ) {
 			saveMapNovelInfos = iterator->second;
 			break;
 		}
-	if( iterator == end ) { // 这是首次调用
-		saveMapNovelInfos = std::make_shared< interfacePlugsType::Vector_INovelInfoSPtr >( );
-		this->typeNovelsMap.emplace( type_name, saveMapNovelInfos );
-	}
 
 	QString typePageUrl = type_url.toString( );
 	auto novelInfos = interfaceThisPtr->formHtmlGetTypePageNovels( type_name.toStdWString( ), typePageUrl.toStdWString( ), *html_string, *saveMapNovelInfos, nullptr );
 	QString resultMsg;
-	do {
-		if( novelInfos.size( ) == 0 )
-			break;
-		// 没有小说则终止
-		for( auto &novel : novelInfos ) {
-			if( interfaceThisPtr->isRequestNovelInfoUrl( novel.get( ) ) ) {				// 如果小说需要到详情页申请，则临时存储
-				auto resultINovelShared = saveToStoreNovels( requestedGetVectorINovelInfoSPtrShared, saveMapNovelInfos, novel, &resultMsg );
-				if( !resultINovelShared.get( ) )  // 存在错误消息，即没有存储
-					OStream::anyDebugOut( oStream, resultMsg );
-			} else
-				requestedGetVectorINovelInfoSPtrShared->emplace_back( novel ); // 存储已知小说
-		}
-		auto requestedGetVectorIterator = requestedGetVectorINovelInfoSPtrShared->begin( );
-		auto requestedGetVectorEnd = requestedGetVectorINovelInfoSPtrShared->end( );
-		if( requestedGetVectorIterator != requestedGetVectorEnd ) {
-			auto vectorPtr = saveMapNovelInfos.get( );
-			for( ; requestedGetVectorIterator != requestedGetVectorEnd; ++requestedGetVectorIterator )
-				vectorPtr->emplace_back( *requestedGetVectorIterator );
-		}
-
-		auto formHtmlGetNext = interfaceThisPtr->formHtmlGetNext( type_name.toStdWString( ), typePageUrl.toStdWString( ), *html_string, *saveMapNovelInfos, *requestedGetVectorINovelInfoSPtrShared );
-		if( formHtmlGetNext.empty( ) )
-			break;
-		QUrl nextUrl( QString::fromStdWString( formHtmlGetNext ) );
-		++count;
-		this->typeCountMap.emplace( type_name, count );
-		size_t index = count + 1;
-		emit requesting_get_next_type_page_url_signals( root_url, type_name, type_url, nextUrl, count, index, saveMapNovelInfos, requestedGetVectorINovelInfoSPtrShared );
-		return;  // 正常执行完毕
-	} while( false );
-
-	// 没有使用 return 返回，则表示终止调用
-	emit requested_get_type_page_url_end( getUrl( ), type_name, type_url, count, requestedGetVectorINovelInfoSPtrShared );
-}
-void NovelNetJob::slots_requesting_get_next_type_page_url_signals( const QString &root_url, const QString &type_name, const QUrl &old_url, const QUrl &url, size_t old_page_index, size_t current_page_index, const interfacePlugsType::Vector_INovelInfoSPtr_Shared &saveMapNovelInfos, const interfacePlugsType::Vector_INovelInfoSPtr_Shared &novel_s_ptr_shared ) {
-	if( novel_s_ptr_shared->size( ) == 0 ) {
-		emit requested_get_type_page_url_end( root_url, type_name, old_url, old_page_index, novel_s_ptr_shared );
-		return;
+	if( novelInfos.size( ) == 0 ) // 没有小说则终止
+		return "";
+	// 鉴定小说
+	for( auto &novel : novelInfos ) {
+		if( interfaceThisPtr->isRequestNovelInfoUrl( novel.get( ) ) ) {				// 如果小说需要到详情页申请，则临时存储
+			auto resultINovelShared = saveToStoreNovels( requestedGetVectorINovelInfoSPtrShared, saveMapNovelInfos, novel, &resultMsg );
+			if( !resultINovelShared.get( ) )  // 存在错误消息，即没有存储
+				OStream::anyDebugOut( oStream, resultMsg );
+			else
+				requestedGetVectorINovelInfoSPtrShared->emplace_back( resultINovelShared );
+		} else
+			requestedGetVectorINovelInfoSPtrShared->emplace_back( novel ); // 存储已知小说
 	}
-	auto requestConnect = new cylHttpNetWork::RequestConnect;
-	auto request = new cylHttpNetWork::Request( networkAccessManager.get( ), requestConnect );
-	auto stdString = url.toString( ).toStdString( );
-	request->netGetWork( url, *networkRequest );
-	auto reply = request->getNetworkReply( 15
-		, 3 * 60 * 1000
-		, 2000
-		, [url,stdString,this]( cylHttpNetWork::RequestConnect *request_connect, cylHttpNetWork::NetworkRequest *network_request ) {
-			QString msg = ( QStringList( ) << "\t:" << __FUNCTION__ << " 正在请求 : " << stdString.c_str( ) ).join( ' ' );
-			OStream::anyDebugOut( oStream, msg );
-			network_request->setHeader( QNetworkRequest::UserAgentHeader, cylHttpNetWork::NetworkRequest::getRandomUserAgentHeader( ) );
-			return 1;
-		} );
-	if( reply->error( ) != QNetworkReply::NoError ) { // 异常则跳过这次获取
-		auto msg = getErrorQStr( reply->error( ) );
-		msg.append( u8"\n类型 : " ).append( type_name ).append( u8"(" ).append( url.toString( ) ).append( ")" );
-		OStream::anyDebugOut( oStream, msg, __FILE__, __LINE__, __FUNCTION__ );
-		requestConnect->deleteLater( );
-		request->deleteLater( );
-		return;
+	auto requestedGetVectorIterator = requestedGetVectorINovelInfoSPtrShared->begin( );
+	auto requestedGetVectorEnd = requestedGetVectorINovelInfoSPtrShared->end( );
+	if( requestedGetVectorIterator != requestedGetVectorEnd ) {
+		auto vectorPtr = saveMapNovelInfos.get( );
+		for( ; requestedGetVectorIterator != requestedGetVectorEnd; ++requestedGetVectorIterator )
+			vectorPtr->emplace_back( *requestedGetVectorIterator );
 	}
-	QString string( reply->readAll( ) );
-	auto stdWString = string.toStdWString( );
-	auto htmlString = std::make_shared< cylHtmlTools::HtmlString >( stdWString );
-	emit requesting_get_type_page_url_signals( root_url, type_name, url, htmlString );
-	requestConnect->deleteLater( );
-	request->deleteLater( );
-}
-void NovelNetJob::slots_requesting_get_novel_page_url_signals( const QString &root_url, const QString &type, const QString &type_page_url, const QString &novelName, const QUrl &url, const interfacePlugsType::Vector_INovelInfoSPtr_Shared novel_s_ptr_shared, const QString &html_txt, interfacePlugsType::INovelInfo_Shared novel_info_shared ) {
-
+	auto formHtmlGetNext = interfaceThisPtr->formHtmlGetNext( type_name.toStdWString( ), typePageUrl.toStdWString( ), *html_string, *saveMapNovelInfos, *requestedGetVectorINovelInfoSPtrShared );
+	if( formHtmlGetNext.empty( ) )
+		return "";
+	return QString::fromStdWString( formHtmlGetNext );  // 正常执行完毕
 }
 
-void NovelNetJob::slots_requested_get_type_page_url_end( const QString &root_url, const QString &type_name, const QUrl &url, size_t current_page_index, const interfacePlugsType::Vector_INovelInfoSPtr_Shared &novel_s_ptr_shared ) {
 
-	--typeCount;
+void NovelNetJob::novelPageInfoRequestEnd( const QString &type_name, const QUrl &url, size_t current_page_index ) {
 	qDebug( ) << u8"-----------------------";
 	qDebug( ) << type_name << "(" << url.toString( ) << ") 请求结束";
 	qDebug( ) << u8"-----------------------";
 	QString writeFilePath( u8"%2%3%1%4%1%5%6" );
-	writeFilePath = writeFilePath.arg( QDir::separator( ) ).arg( Cache_Path_Dir ).arg( url.host( ) ).arg( u8"txt_out" ).arg( type_name ).arg( u8".txt" );
+	auto rootUrl = url.host( );
+	auto root_url = url.scheme( ) + "://" + rootUrl;
+	writeFilePath = writeFilePath.arg( QDir::separator( ) ).arg( Cache_Path_Dir ).arg( u8"txt_out" ).arg( rootUrl ).arg( type_name ).arg( u8".txt" );
 
 	Vector_INovelInfoSPtr_Shared infos = typeNovelsMap.at( type_name );
 
@@ -435,8 +429,6 @@ void NovelNetJob::slots_requested_get_type_page_url_end( const QString &root_url
 	size_t writeQStringListToFile = ioFile.writeNoveInfoListToFile( );
 	OStream::anyDebugOut( oStream, QString( u8"================\n\t路径: (%1)\n\t写入数量 : [%2]\n\t类型计数 : [%3]\n================\n" ).arg( writeFilePath ).arg( writeQStringListToFile ).arg( typeCount ) );
 	interfaceThisPtr->novelTypeEnd( root_url.toStdWString( ), type_name.toStdWString( ), url.toString( ).toStdWString( ), *infos );
-	if( typeCount == 0 )
-		emit requested_get_web_page_signals_end( root_url );
 }
 void NovelNetJob::slots_requested_get_web_page_signals_end( const QUrl &url ) {
 	Vector_INovelInfoSPtr_Shared novelInfoSPtr( std::make_shared< Vector_INovelInfoSPtr >( ) );
@@ -451,9 +443,9 @@ void NovelNetJob::slots_requested_get_web_page_signals_end( const QUrl &url ) {
 	bool has = true;
 	cylHtmlTools::HtmlWorkThread< bool * > thread( nullptr, currentThreadRun, nullptr, &has );
 	thread.start( );
-	auto nowTimeDuration = cylHttpNetWork::TimeTools::getNowTimeDuration( );
+	auto nowTimeDuration = NovelNetJob::getCurrentTimeDuration( );
 	while( thread.isRun( ) ) {
-		long long timeDurationToMilliseconds = cylHttpNetWork::TimeTools::getTimeDurationToMilliseconds( cylHttpNetWork::TimeTools::getNowTimeDuration( ) - nowTimeDuration );
+		long long timeDurationToMilliseconds = getTimeDurationToMilliseconds( getCurrentTimeDuration( ) - nowTimeDuration );
 		if( timeDurationToMilliseconds > 2000 ) {
 			auto msg = QString( "===========" )
 						.append( "\n\t" ).append( "正在合并小说列表" )
@@ -461,13 +453,13 @@ void NovelNetJob::slots_requested_get_web_page_signals_end( const QUrl &url ) {
 						.append( "\n\t" ).append( QString::number( __LINE__ ) )
 						.append( "\n\t" ).append( "===========" );
 			OStream::anyDebugOut( oStream, msg );
-			nowTimeDuration = cylHttpNetWork::TimeTools::getNowTimeDuration( );
+			nowTimeDuration = getCurrentTimeDuration( );
 		}
 		qApp->processEvents( );
 	}
 	interfaceThisPtr->endHost( *novelInfoSPtr
-		, [this]( const cylHttpNetWork::TimeTools::Time_Duration &duration ) {
-			if( cylHttpNetWork::TimeTools::getTimeDurationToMilliseconds( duration ) < 2000 )
+		, [this]( const Duration &duration ) {
+			if( getTimeDurationToMilliseconds( duration ) < 2000 )
 				return false;
 			auto msg = QString( "===========" )
 						.append( "\n\t" ).append( "正在存储数据库" )

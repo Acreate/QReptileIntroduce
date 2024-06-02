@@ -4,9 +4,9 @@
 #include <QPushButton>
 #include <QPlainTextEdit>
 
-#include <Thread/DateTimeThread.h>
 #include <plug/LoadPlug.h>
 #include <DebugInfo.h>
+#include <QThread>
 #include <QFileDialog>
 #include <QInputDialog>
 #include <QMenu>
@@ -51,7 +51,6 @@ const QString MainWidget::settingGroupFontStyle = tr( u8"字体风格" ); // 字
 const QChar MainWidget::settingPathSep = tr( u8";" )[ 0 ];
 
 void MainWidget::initMumberPtrMemory( ) {
-	dateTimeThread = new DateTimeThread;
 	progressSetting = new Setting( this );
 	translator = new QTranslator( this );
 	selectPathWidget = new FileSelectPathWidget( this );
@@ -59,9 +58,6 @@ void MainWidget::initMumberPtrMemory( ) {
 	LoadWebInfoBtn = new Action;
 }
 void MainWidget::initComponentPropertys( ) {
-	dateTimeThread->setParent( this );
-
-
 	setWindowTitle( tr( u8"小说阅读" ) );
 	// 窗口捕获鼠标
 	setMouseTracking( true );
@@ -101,7 +97,6 @@ void MainWidget::initComponentLayout( ) {
 
 }
 void MainWidget::initComponentConnect( ) {
-	connect( dateTimeThread, &DateTimeThread::updateDateTimeStr, this, &MainWidget::updateDateTimeStrFunction, Qt::QueuedConnection );
 	connect( selectPathWidget
 		, &FileSelectPathWidget::editorOver
 		, [&]( const QString &newFilePath ) {
@@ -217,8 +212,6 @@ void setFont( typename QMap< TKey, TValue >::Iterator &iterator, typename QMap< 
 }
 
 void MainWidget::initComponentOver( ) {
-	//// 线程开始
-	dateTimeThread->start( );
 	emit selectPathWidget->setPath( QDir( qApp->applicationDirPath( ) ).relativeFilePath( progressSetting->getFilePath( ) ) );
 	fromDisplayWidgetMenu = display->getMenu( this );
 	fromDisplayWidgetMenu->setTitle( windowTitle( ) );
@@ -311,16 +304,11 @@ MainWidget::MainWidget( QWidget *parent, Qt::WindowFlags fg ) : QWidget( parent,
 	initComponentOver( );
 }
 MainWidget::~MainWidget( ) {
-	dateTimeThread->requestInterruption( );
 	progressSetting->sync( );
 
 	delete progressSetting;
 	delete translator;
 
-	while( dateTimeThread->isRunning( ) && !dateTimeThread->isFinished( ) )
-		QThread::usleep( 20 );
-
-	QThread::usleep( 20 );
 }
 
 void MainWidget::mouseMoveEvent( QMouseEvent *event ) {
