@@ -49,79 +49,103 @@ int main( int argc, char *argv[ ] ) {
 
 	QString description = u8"小说爬虫命令行版本";
 	auto argParser = cylStd::ArgParser::parser( argc, argv );
+	qDebug( ) << u8"输出命令行参数";
+	qDebug( ) << version.toStdString( ).c_str( );
+	auto map = argParser->getPairs( );
+	for( auto &it : map ) {
+		qDebug( ) << u8"名称:" << it.first;
+		for( auto &value : *it.second )
+			qDebug( ) << u8"\t值:" << value;
+	}
+	qDebug( ) << "------------";
 	QString path = qApp->applicationDirPath( ) + QDir::separator( ) + "cmd_download_novels_info" + QDir::separator( );
-	if( argParser->getOptionValues( "-h" ).size( ) > 0 )
+	if( argParser->getOptionValues( "-h" ) )
 		qDebug( ) << "========="
 			"\n\t"
 			u8"帮助:"
 			"\n"
-			"-l" "\t\t" u8"插件路径[,插件路径1[,插件路径2[,...]]]""\t" u8"加载文件到该程序";
-	"-s" "\t\t" u8"插件路径[,插件路径1[,插件路径2[,...]]]""\t" u8"开始该文件的工作程序";
-	"-as" "\t\t" u8"开始所有已加载的插件工作程序";
-	"-p" "\t\t" u8"指定输出的路径";
+			"-l" "\t\t" u8"插件路径[,插件路径1[,插件路径2[,...]]]""\t" u8"加载文件到该程序"
+			"\n"
+			"-s" "\t\t" u8"插件路径[,插件路径1[,插件路径2[,...]]]""\t" u8"开始该文件的工作程序"
+			"\n"
+			"-as" "\t\t" u8"开始所有已加载的插件工作程序"
+			"\n"
+			"-p" "\t\t" u8"指定输出的路径"
+			"\n"
+			"-url" "\t\t" u8"输出加载的插件指向的网络"
+			"\n"
+			"=========";
 	auto pathValues = argParser->getOptionValues( "-p" );
-	if( pathValues.size( ) > 1 )
-		path = QString::fromStdString( pathValues[ 0 ] );
+	if( pathValues )
+		path = QString::fromStdString( pathValues->at( 0 ) );
 	auto optionValues = argParser->getOptionValues( "-l" );
 	std::unordered_map< QString, std::shared_ptr< NovelNetJob > > novelNetJobs;
 	size_t count = 0;
-	for( auto &value : optionValues ) {
+	for( auto &value : *optionValues ) {
 		auto absoluteFilePath = QFileInfo( QString::fromStdString( value ) ).absoluteFilePath( );
 		auto pair = LoadPlug::getIRequestNetInterface( absoluteFilePath );
 		if( pair.second ) {
 			auto novelNetJob = std::make_shared< NovelNetJob >( nullptr, pair.first, pair.second );
-			novelNetJobs.emplace( absoluteFilePath, novelNetJob );
-			qDebug( ) << value.c_str( ) << " 加载成功";
-		} else
-			qDebug( ) << value.c_str( ) << " 加载失败";
-	}
-	if( argParser->getOptionValues( "-as" ).size( ) > 0 ) {
-		auto end = novelNetJobs.end( );
-		auto iterator = novelNetJobs.begin( );
-		count = novelNetJobs.size( );
-		for( ; iterator != end; ++iterator ) {
-			iterator->second->setPath( path );
-			QObject::connect( iterator->second.get( )
+			QObject::connect( novelNetJob.get( )
 				, &NovelNetJob::endJob
 				, [&]( ) {
 					--count;
 					if( count == 0 )
 						qApp->exit( 0 );
 				} );
-		}
-	} else {
-		auto runPaths = argParser->getOptionValues( "-s" );
-		if( runPaths.size( ) > 0 ) {
-			std::vector< std::shared_ptr< NovelNetJob > > runJobs;
-			auto end = novelNetJobs.end( );
-			for( auto startPath : runPaths ) {
-				auto absoluteFilePath = QFileInfo( QString::fromStdString( startPath ) ).absoluteFilePath( );
-				auto iterator = novelNetJobs.begin( );
-				for( ; iterator != end; ++iterator )
-					if( iterator->first == absoluteFilePath ) {
-						iterator->second->setPath( path );
-						QObject::connect( iterator->second.get( )
-							, &NovelNetJob::endJob
-							, [&]( ) {
-								--count;
-								if( count == 0 )
-									qApp->exit( 0 );
-							} );
-						if( std::find_if( runJobs.begin( )
-							, runJobs.end( )
-							, [=]( const std::vector< std::shared_ptr< NovelNetJob > >::iterator &it ) {
-								if( *it == iterator->second )
-									return true;
-								return false;
-							} ) != runJobs.end( ) )
-							runJobs.emplace_back( iterator->second );
-					}
-			}
-			count = runJobs.size( );
-			for( auto nodeJob : runJobs )
-				nodeJob->start( );
+			novelNetJobs.emplace( absoluteFilePath, novelNetJob );
+			qDebug( ) << value.c_str( ) << "[" << absoluteFilePath << "] 加载成功";
 		} else
-			instance->exit( 0 );
+			qDebug( ) << value.c_str( ) << "[" << absoluteFilePath << "] 加载失败";
+	}
+	if( novelNetJobs.size( ) == 0 ) {
+		qDebug( ) << " 没有正确加载的插件";
+		return -1;
+	} else {
+		if( argParser->getOptionValues( "-url" ) ) {
+			auto end = novelNetJobs.end( );
+			auto iterator = novelNetJobs.begin( );
+			qDebug( ) << u8"输出 url:\n";
+			for( ; iterator != end; ++iterator )
+				qDebug( ) << iterator->second->getUrl( ).toStdString( ).c_str( );
+			qDebug( ) << u8"\nurl 输出完毕\n";
+
+		}
+		if( argParser->getOptionValues( "-as" ) ) {
+			auto end = novelNetJobs.end( );
+			auto iterator = novelNetJobs.begin( );
+			count = novelNetJobs.size( );
+			for( ; iterator != end; ++iterator ) {
+				iterator->second->setPath( path );
+				iterator->second->start( );
+			}
+		} else {
+			auto runPaths = argParser->getOptionValues( "-s" );
+			if( runPaths ) {
+				std::vector< std::shared_ptr< NovelNetJob > > runJobs;
+				auto end = novelNetJobs.end( );
+				for( auto startPath : *runPaths ) {
+					auto absoluteFilePath = QFileInfo( QString::fromStdString( startPath ) ).absoluteFilePath( );
+					auto iterator = novelNetJobs.begin( );
+					for( ; iterator != end; ++iterator )
+						if( iterator->first == absoluteFilePath ) {
+							iterator->second->setPath( path );
+							if( std::find_if( runJobs.begin( )
+								, runJobs.end( )
+								, [=]( std::shared_ptr< NovelNetJob > it ) {
+									if( it == iterator->second )
+										return true;
+									return false;
+								} ) == runJobs.end( ) )
+								runJobs.emplace_back( iterator->second );
+						}
+				}
+				count = runJobs.size( );
+				for( auto nodeJob : runJobs )
+					nodeJob->start( );
+			} else
+				return 0;
+		}
 	}
 
 	return instance->exec( );
