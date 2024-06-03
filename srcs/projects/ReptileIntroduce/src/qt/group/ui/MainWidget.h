@@ -109,7 +109,9 @@ public:
 	/// <returns>成功返回 true</returns>
 	bool updateSettingFileInfo( const QString &filePath );
 private:
-	QVector< QString > plugs; // 存储插件
+	QMap< QString, QPair< QProcess *, Action * > > plugs; // 存储插件
+	qsizetype runCount; // 当前运行任务个数
+	qsizetype runMaxCount; // 最大允许运行任务个数
 	QString cmdExe; // cmd 命令行工具
 public slots: // 窗口子控件信号响应
 	/// <summary>

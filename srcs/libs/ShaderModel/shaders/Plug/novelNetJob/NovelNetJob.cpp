@@ -315,9 +315,10 @@ bool NovelNetJob::start( ) {
 QString NovelNetJob::getUrl( ) const {
 	HtmlDocString resultUrl;
 	size_t size = interfaceThisPtr->getRootUrl( &resultUrl );
-	if( size )
-		return QString::fromStdWString( resultUrl );
-	return "";
+	if( size == 0 )
+		return "";
+	cylHtmlTools::HtmlStringTools::removeBothSpace( resultUrl );
+	return QString::fromStdWString( resultUrl );
 }
 void NovelNetJob::slots_requesting_get_root_page_signals( const QUrl &url, QNetworkReply *request_connect ) {
 	QString rootUrl = url.scheme( ) + u8"://" + url.host( );

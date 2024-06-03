@@ -236,16 +236,15 @@ Menu * DisplayWidget::getMenu( QObject *object ) {
 	return objMenu;
 }
 
-Menu * DisplayWidget::getPlugMenu( IRequestNetInterface *object ) {
-	if( menuPlugMap.contains( object ) )
-		return menuPlugMap[ object ];
+Menu * DisplayWidget::getPlugMenu( QString url ) {
+	url = QUrl( url ).host( );
+	if( menuPlugMap.contains( url ) )
+		return menuPlugMap[ url ];
 	auto objMenu = new Menu( this );
 	connect( objMenu, &Menu::click, this, &DisplayWidget::slot_click_action );
-	interfacePlugsType::HtmlDocString url;
-	object->getRootUrl( &url );
-	objMenu->setTitle( QString::fromStdWString( url ) );
+	objMenu->setTitle( url );
 	plugTopMneu->addMenu( objMenu );
-	menuPlugMap.insert( object, objMenu );
+	menuPlugMap.insert( url, objMenu );
 	return objMenu;
 }
 QFont DisplayWidget::getDisplayFont( ) const {

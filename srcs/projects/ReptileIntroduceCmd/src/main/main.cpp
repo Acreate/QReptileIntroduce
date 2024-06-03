@@ -42,6 +42,11 @@ QString getBuilderInfo( ) {
 }
 #include <iostream>
 int main( int argc, char *argv[ ] ) {
+	std::locale locale( "zh_CN.UTF8" );
+	std::locale::global( locale );
+	std::cout.imbue( locale );
+	std::wcout.imbue( locale );
+
 	QCoreApplication application( argc, argv );
 	auto *instance = qApp;
 	QString compilerString = getBuilderInfo( );

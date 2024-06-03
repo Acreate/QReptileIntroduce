@@ -350,7 +350,7 @@ void RequestNet::endHost( const interfacePlugsType::Vector_INovelInfoSPtr &saveN
 
 	QString linkPath( u8"%1%2%3%2" );
 	linkPath = linkPath.arg( outPath ).arg( QDir::separator( ) ).arg( "dbs" );
-	if( !QDir( linkPath ).mkpath( linkPath ) )
+	if( !QDir( ).mkpath( linkPath ) )
 		linkPath = outPath + QDir::separator( );
 	auto dbInterface = cylDB::DBTools::linkDB( linkPath );
 

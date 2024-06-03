@@ -63,6 +63,8 @@ void MainWidget::initMumberPtrMemory( ) {
 	loadWebInfoBtn = new Action;
 }
 void MainWidget::initComponentPropertys( ) {
+	runCount = 0;
+	runMaxCount = 4;
 	setWindowTitle( tr( u8"小说阅读" ) );
 	// 窗口捕获鼠标
 	setMouseTracking( true );
@@ -415,6 +417,13 @@ void MainWidget::loadingPlug( ) {
 			emit display->display( QString( tr( u8"没有发现配置文件的(%1-%2)值内容" ) ).arg( settingGroupProcess ).arg( settingGroupProcessPath ) );
 			return;
 		}
+		info.setFile( variant );
+		if( info.exists( ) )
+			cmdExe = variant;
+	}
+	if( cmdExe.isEmpty( ) ) {
+		emit display->display( QString( tr( u8"没有发现配置文件的(%1-%2)值内容" ) ).arg( settingGroupProcess ).arg( settingGroupProcessPath ) );
+		return;
 	}
 	auto variant = progressSetting->getValue( settingGroupPlugIniPathKeyMerge ).toString( );
 	if( variant.isEmpty( ) ) {
@@ -433,37 +442,85 @@ void MainWidget::loadingPlug( ) {
 			QString filePtah = file.getCurrentFilePtah( );
 			auto process = new QProcess( this );
 			connect( process
+				, &QProcess::finished
+				, [=]( ) {
+					process->deleteLater( );
+				} );
+			connect( process
 				, &QProcess::readyReadStandardOutput
 				, [process,filePtah,this]( ) {
 					QString msg( process->readAll( ) );
 					qDebug( ) << msg.toStdString( ).c_str( );
-					process->deleteLater( );
-					plugs.append( filePtah );
+					*display << msg.toStdString( ).c_str( ) << '\n';
+					msg = msg.trimmed( );
+					display->flush( );
+					auto requestProcess = new QProcess( this );
+					connect( requestProcess
+						, &QProcess::finished
+						, [=]( ) {
+							--runCount;
+							auto iterator = plugs.begin( );
+							auto end = plugs.end( );
+							for( ; iterator != end; ++iterator )
+								if( iterator->first == requestProcess ) {
+									QString endMsg( u8"任务 : [%1] 结束" );
+									endMsg = endMsg.arg( iterator.key( ) );
+									auto stdString = endMsg.toStdString( );
+									auto cStr = stdString.c_str( );
+									qDebug( ) << cStr;
+									*display << cStr << '\n';
+									display->flush( );
+									iterator->second->setEnabled( true );
+									break;
+								}
+							if( runCount == 0 )
+								loadWebInfoBtn->setEnabled( true );
+						} );
+					connect( requestProcess
+						, &QProcess::readyReadStandardOutput
+						, [process,filePtah,requestProcess,this]( ) {
+							QString msg( requestProcess->readAll( ) );
+							msg = msg.trimmed( );
+							auto stdString = msg.toStdString( );
+							auto cStr = stdString.c_str( );
+							qDebug( ) << cStr;
+						} );
+					loadWebInfoBtn->setEnabled( true );
+					Menu *menu = display->getPlugMenu( msg );
+					menu->setTitle( msg );
+					Action *startBtn = new Action;
+					startBtn->setText( u8"开始任务" );
+					menu->addAction( startBtn );
+					plugs.insert( filePtah, QPair< QProcess *, Action * >( requestProcess, startBtn ) );
+					connect( startBtn
+						, &QAction::triggered
+						, [=]( ) {
+							startBtn->setEnabled( false );
+							while( runMaxCount < runCount )
+								qApp->processEvents( );
+							++runCount;
+							plugs[ filePtah ].first->start( cmdExe, { "-l", filePtah, "-s", filePtah, "-p", "cmd_novel_requet_info" } );
+							*display << '[' << filePtah.toStdString( ).c_str( ) << u8"]:任务开始" << '\n';
+							display->flush( );
+						} );
 				} );
-			process->start( cmdExe, { "-l", filePtah } );
+			process->start( cmdExe, { "-l", filePtah, "-url" } );
 		}
 
 	}
-	if( plugs.size( ) == 0 )
-		loadWebInfoBtn->setEnabled( false );
-	else
-		loadWebInfoBtn->setEnabled( true );
+	loadWebInfoBtn->setEnabled( false );
 	display->flush( );
 }
+// todo : 开始所有任务
 void MainWidget::loadWebInfo( ) {
+	loadWebInfoBtn->setEnabled( false );
 	auto iterator = plugs.begin( );
 	auto end = plugs.end( );
 	std::string outUrl;
 	for( ; iterator != end; ++iterator ) {
-		auto process = new QProcess( this );
-		connect( process
-			, &QProcess::readyReadStandardOutput
-			, [process,this]( ) {
-				QString msg( process->readAll( ) );
-				qDebug( ) << msg.toStdString( ).c_str( );
-				process->deleteLater( );
-			} );
-		process->start( cmdExe, { "-l", *iterator } );
+		Action *action = iterator.value( ).second;
+		if( action->isEnabled( ) )
+			emit action->trigger( );
 	}
 }
 void MainWidget::setCmdPathInfo( ) {

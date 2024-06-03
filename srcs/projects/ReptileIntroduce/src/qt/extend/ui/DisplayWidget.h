@@ -66,7 +66,7 @@ private: // 类成员变量
 	QImage *byteArrayMsgImage; // 二进制数据数组
 	Display_Type currentDisplayType; // 当前绘制类型
 private: // 线程
-	std::shared_ptr<QMutex> mutex;
+	std::shared_ptr< QMutex > mutex;
 public:
 	DisplayWidget( QWidget *parent, Qt::WindowFlags flags = Qt::WindowFlags( ) );
 	~DisplayWidget( ) override;
@@ -84,10 +84,10 @@ private slots:
 	void slot_click_action( const Action *action );
 private:
 	QMap< QObject *, Menu * > menuMap; // 保存主要菜单
-	QMap< interfacePlugsType::IRequestNetInterface *, Menu * > menuPlugMap; // 保存插件菜单
+	QMap< QString, Menu * > menuPlugMap; // 保存插件菜单
 	QMap< QObject *, QSharedPointer< QString > > actionXpath; // 保存菜单的路径
 public:
-	void clear();
+	void clear( );
 	/// <summary>
 	/// 获取绑定对象的菜单<br/>
 	/// 当绑定对象不存在时，将会重新创建一个菜单
@@ -99,9 +99,9 @@ public:
 	/// 获取插件绑定对象的菜单<br/>
 	/// 当绑定对象不存在时，将会重新创建一个菜单
 	/// </summary>
-	/// <param name="object">绑定插件对象</param>
+	/// <param name="url">绑定 url 地址</param>
 	/// <returns>插件对象的菜单</returns>
-	Menu * getPlugMenu( interfacePlugsType::IRequestNetInterface *object );
+	Menu * getPlugMenu( QString url );
 	/// <summary>
 	/// 获取字体
 	/// </summary>
