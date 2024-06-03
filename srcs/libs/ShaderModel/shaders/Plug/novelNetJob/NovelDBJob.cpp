@@ -15,6 +15,7 @@
 #include <htmls/htmlTools/HtmlWorkThread/HtmlWorkThread.h>
 #include <qguiapplication.h>
 #include <QUrl>
+#include <mutex>
 #include "../ioFile/IOFile.h"
 #include "../novelBase/NovelBase.h"
 
@@ -218,11 +219,11 @@ namespace instance_function {
 }
 
 
-interfacePlugsType::Vector_INovelInfoSPtr_Shared NovelDBJob::sort( const interfacePlugsType::Vector_INovelInfoSPtr_Shared &infos ) {
+interfacePlugsType::Vector_INovelInfoSPtr NovelDBJob::sort( const interfacePlugsType::Vector_INovelInfoSPtr &infos ) {
 	std::list< interfacePlugsType::INovelInfo_Shared > result;
 	interfacePlugsType::HtmlDocString timeLeft;
 	interfacePlugsType::HtmlDocString timeRight;
-	for( auto &novelSPtr : *infos ) {
+	for( auto &novelSPtr : infos ) {
 		if( novelSPtr.get( )->getNovelUpdateTime( &timeLeft ) ) {
 			auto iterator = result.begin( ), end = result.end( );
 			for( ; iterator != end; ++iterator )
@@ -232,13 +233,13 @@ interfacePlugsType::Vector_INovelInfoSPtr_Shared NovelDBJob::sort( const interfa
 			result.insert( iterator, novelSPtr );
 		}
 	}
-	return std::make_shared< interfacePlugsType::Vector_INovelInfoSPtr >( result.begin( ), result.end( ) );
+	return interfacePlugsType::Vector_INovelInfoSPtr( result.begin( ), result.end( ) );
 }
-interfacePlugsType::Vector_INovelInfoSPtr_Shared NovelDBJob::identical( const interfacePlugsType::Vector_INovelInfoSPtr_Shared &infos ) {
+interfacePlugsType::Vector_INovelInfoSPtr NovelDBJob::identical( const interfacePlugsType::Vector_INovelInfoSPtr &infos ) {
 	std::list< interfacePlugsType::INovelInfo_Shared > result;
 	interfacePlugsType::HtmlDocString urlLeft;
 	interfacePlugsType::HtmlDocString urlRight;
-	for( auto &novelSPtr : *infos ) {
+	for( auto &novelSPtr : infos ) {
 		if( novelSPtr.get( )->getNovelUrl( &urlLeft ) ) {
 			auto iterator = result.begin( ), end = result.end( );
 			for( ; iterator != end; ++iterator )
@@ -249,9 +250,9 @@ interfacePlugsType::Vector_INovelInfoSPtr_Shared NovelDBJob::identical( const in
 				result.emplace_back( novelSPtr );
 		}
 	}
-	return std::make_shared< interfacePlugsType::Vector_INovelInfoSPtr >( result.begin( ), result.end( ) );
+	return interfacePlugsType::Vector_INovelInfoSPtr( result.begin( ), result.end( ) );
 }
-size_t NovelDBJob::writeDb( OStream *thisOStream, const QString &outPath, const QUrl &url, const interfacePlugsType::Vector_INovelInfoSPtr &saveNovelInfos, const std::function< bool( const std::chrono::system_clock::time_point::duration & ) > &run ) {
+size_t NovelDBJob::writeDB( OStream *thisOStream, const QString &outPath, const QUrl &url, const interfacePlugsType::Vector_INovelInfoSPtr &saveNovelInfos, const std::function< bool( const std::chrono::system_clock::time_point::duration & ) > &run ) {
 	QString linkPath( u8"%1%2%3%2" );
 	linkPath = linkPath.arg( outPath ).arg( QDir::separator( ) ).arg( "dbs" );
 	if( !QDir( ).mkpath( linkPath ) )
@@ -384,62 +385,120 @@ size_t NovelDBJob::writeDb( OStream *thisOStream, const QString &outPath, const 
 
 	return result;
 }
-interfacePlugsType::Vector_INovelInfoSPtr_Shared NovelDBJob::readDb( OStream *thisOStream, const QString &outPath, const QUrl &url, const std::function< bool( const std::chrono::system_clock::time_point::duration & ) > &run ) {
+interfacePlugsType::Vector_INovelInfoSPtr_Shared NovelDBJob::readDB( OStream *thisOStream, const QString &outPath, const std::function< bool( const std::chrono::system_clock::time_point::duration & ) > &run ) {
 	interfacePlugsType::Vector_INovelInfoSPtr_Shared result( std::make_shared< interfacePlugsType::Vector_INovelInfoSPtr >( ) );
-	QString linkPath( u8"%1%2%3%2" );
-	linkPath = linkPath.arg( outPath ).arg( QDir::separator( ) ).arg( "dbs" );
-	if( !QDir( ).mkpath( linkPath ) )
-		linkPath = outPath + QDir::separator( );
+	std::vector< QString > dbNames; // 存储所有db
+	QString linkPath; // 存储根目录
+	// 判定文件夹还是文件
+	QFileInfo path( outPath );
+	if( path.isDir( ) ) { // 文件夹
+		linkPath = path.absoluteFilePath( ) + QDir::separator( );;
+		QDir dir( linkPath );
+		QFileInfoList entryInfoList = dir.entryInfoList( QDir::Files );
+		for( auto &fileInfo : entryInfoList )
+			if( fileInfo.suffix( ) == "db" )
+				dbNames.emplace_back( fileInfo.fileName( ) );
+	} else { // 文件
+		linkPath = path.dir( ).absolutePath( ) + QDir::separator( );;
+		dbNames.emplace_back( path.fileName( ) );
+	}
+
 	auto dbInterface = cylDB::DBTools::linkDB( linkPath );
 	if( dbInterface->link( ) ) {
-		cylHtmlTools::HtmlWorkThread< bool * >::Current_Thread_Run currentThreadRun = [
-				dbInterface, url, outPath, run, thisOStream,
-				&result
-			]( const cylHtmlTools::HtmlWorkThread< bool * > *html_work_thread, const std::thread *run_std_cpp_thread, std::mutex *html_work_thread_mutex, std::mutex *std_cpp_thread_mutex, bool *data, const time_t *startTime ) {
-			QString dbName = url.host( );
-			QString tabName = dbName;
-			dbName.append( ".db" );
-			auto depositoryShared = dbInterface->openDepository( dbName );
-			if( depositoryShared ) {
-				if( !depositoryShared->open( ) ) {
-					auto lastError = depositoryShared->getLastError( );
-					OStream::anyDebugOut( thisOStream, lastError.text( ), __FILE__, __LINE__, __FUNCTION__ );
-					return;
-				}
-				bool hasTab = depositoryShared->hasTab( tabName );
+		std::mutex *mutex = new std::mutex; // 返回列表对象操作锁
 
-				if( !hasTab )
-					if( !instance_function::generate_db_tab( dbInterface, depositoryShared, tabName, thisOStream ) )
+		std::vector< cylHtmlTools::HtmlWorkThread< bool * > * > threaVector; // 线程池
+		for( auto &dbFile : dbNames ) {
+			cylHtmlTools::HtmlWorkThread< bool * >::Current_Thread_Run currentThreadRun = [
+					dbInterface, outPath, run, thisOStream,mutex,
+					&result,&dbFile
+				]( const cylHtmlTools::HtmlWorkThread< bool * > *html_work_thread, const std::thread *run_std_cpp_thread, std::mutex *html_work_thread_mutex, std::mutex *std_cpp_thread_mutex, bool *data, const time_t *startTime ) {
+
+				QString tabName = dbFile.mid( 0, dbFile.length( ) - 3 );
+				auto depositoryShared = dbInterface->openDepository( dbFile );
+				if( depositoryShared ) {
+					if( !depositoryShared->open( ) ) {
+						auto lastError = depositoryShared->getLastError( );
+						OStream::anyDebugOut( thisOStream, lastError.text( ), __FILE__, __LINE__, __FUNCTION__ );
 						return;
+					}
+					bool hasTab = depositoryShared->hasTab( tabName );
 
-				auto allItem = depositoryShared->findItems( tabName, tabFieldNames );
-				if( !allItem )
-					return;
-				
-			}
+					if( !hasTab )
+						if( !instance_function::generate_db_tab( dbInterface, depositoryShared, tabName, thisOStream ) )
+							return;
 
-		};
-		bool has = true;
-		cylHtmlTools::HtmlWorkThread< bool * > thread( nullptr, currentThreadRun, nullptr, &has );
-		thread.start( );
-		auto currentTime = std::chrono::system_clock::now( ).time_since_epoch( );
-		auto instance = qApp;
-		while( thread.isRun( ) ) {
-			auto epoch = std::chrono::system_clock::now( ).time_since_epoch( );
-			auto duration = currentTime - epoch;
-			run( duration );
-			currentTime = epoch;
-			instance->processEvents( );
+					auto allItem = depositoryShared->findItems( tabName, tabFieldNames );
+					if( !allItem )
+						return;
+					interfacePlugsType::Vector_INovelInfoSPtr vectorINovelInfoSPtr;
+					allItem->resetColIndex( );
+					auto currentRows = allItem->getCurrentRows( );
+					while( currentRows->size( ) > 0 ) {
+						// QStringList NovelDBJob::tabFieldNames = { 0"rootUrl", 1"novelName", 2"info", 3"updateTime", 4"format", 5"lastRequestTime", 6"lastRequestTimeFormat", 7"author", 8"url", 9"lastItem", 10"additionalData", 11"typePageUrl", 12"typeName" };
+						// todo : 解析
+						NovelBase *novelBase = new NovelBase;
+						novelBase->rootUrl = currentRows->at( 0 )->toString( ).toStdWString( );
+						novelBase->novelName = currentRows->at( 1 )->toString( ).toStdWString( );
+						novelBase->info = currentRows->at( 2 )->toString( ).toStdWString( );
+						novelBase->updateTime = currentRows->at( 3 )->toString( ).toStdWString( );
+						novelBase->lastRequestTime = currentRows->at( 5 )->toString( ).toStdWString( );
+						novelBase->author = currentRows->at( 7 )->toString( ).toStdWString( );
+						novelBase->url = currentRows->at( 8 )->toString( ).toStdWString( );
+						novelBase->lastItem = currentRows->at( 9 )->toString( ).toStdWString( );
+						novelBase->typePageUrl = currentRows->at( 11 )->toString( ).toStdWString( );
+						novelBase->typeName = currentRows->at( 12 )->toString( ).toStdWString( );
+						vectorINovelInfoSPtr.emplace_back( std::shared_ptr< interfacePlugsType::INovelInfo >( novelBase ) );
+						if( !allItem->nextCol( ) )
+							break;
+						currentRows = allItem->getCurrentRows( );
+					}
+					mutex->lock( );
+					for( auto &novel : vectorINovelInfoSPtr )
+						result->emplace_back( novel );
+					mutex->unlock( );
+				}
+
+			};
+			bool has = true;
+			auto thread = new cylHtmlTools::HtmlWorkThread< bool * >( nullptr, currentThreadRun, nullptr, &has );
+			threaVector.emplace_back( thread );
+			thread->start( );
 		}
+		do {
+			cylHtmlTools::HtmlWorkThread< bool * > *deletePtr = nullptr;
+			auto iterator = threaVector.begin( );
+			auto end = threaVector.end( );
+			if( iterator == end )
+				break;
+			for( ; iterator != end; ++iterator ) {
+				deletePtr = *iterator;
+				auto currentTime = std::chrono::system_clock::now( ).time_since_epoch( );
+				auto instance = qApp;
+				if( deletePtr->isRun( ) ) {
+					auto epoch = std::chrono::system_clock::now( ).time_since_epoch( );
+					auto duration = currentTime - epoch;
+					run( duration );
+					currentTime = epoch;
+					instance->processEvents( );
+				} else
+					break;
+			}
+			if( iterator != end ) {
+				delete deletePtr;
+				threaVector.erase( iterator );
+			}
+		} while( true );
+		delete mutex;
 	}
 	if( result->size( ) )
 		return result;
 	return nullptr;
 }
 
-interfacePlugsType::Vector_INovelInfoSPtr_Shared NovelDBJob::writeFile( const QString &writeFilePath, const interfacePlugsType::Vector_INovelInfoSPtr_Shared &infos ) {
-	interfacePlugsType::Vector_INovelInfoSPtr_Shared result = identical( infos );
-	result = identical( result );
+interfacePlugsType::Vector_INovelInfoSPtr NovelDBJob::writeFile( const QString &writeFilePath, const interfacePlugsType::Vector_INovelInfoSPtr &infos ) {
+	interfacePlugsType::Vector_INovelInfoSPtr result = NovelDBJob::identical( infos );
+	result = NovelDBJob::sort( result );
 	IOFile ioFile( writeFilePath, result );
 	ioFile.writeNoveInfoListToFile( );
 	return result;

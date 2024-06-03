@@ -4,7 +4,6 @@
 RequestNetPlugin::RequestNetPlugin( QObject *parent ): QGenericPlugin( parent ) {
 }
 RequestNetPlugin::~RequestNetPlugin( ) {
-	
 }
 
 QObject *RequestNetPlugin::create( const QString &name, const QString &spec ) {

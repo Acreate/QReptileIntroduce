@@ -1,4 +1,7 @@
 ﻿#include "function.h"
+#include <string>
+#include <codecvt>
+#include <locale>
 QString getBuilderInfo( ) {
 
 	QString compilerString = "<unknown>";
@@ -32,4 +35,8 @@ QString getBuilderInfo( ) {
 	}
 #endif
 	return compilerString;
+}
+std::wstring conver( const std::string &str ) {
+	std::wstring_convert< std::codecvt_utf8_utf16< wchar_t > > converter;
+	return converter.from_bytes( str );
 }

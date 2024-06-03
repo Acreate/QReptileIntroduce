@@ -11,9 +11,9 @@
 
 class PLUG_EXPORT IOFile {
 	QFile *qFile;
-	interfacePlugsType::Vector_INovelInfoSPtr_Shared novelInfoSPtrShared;
+	interfacePlugsType::Vector_INovelInfoSPtr novelInfoSPtrShared;
 public:
-	IOFile( const QString &filePath, const interfacePlugsType::Vector_INovelInfoSPtr_Shared &novel_info_s_ptr_shared ) {
+	IOFile( const QString &filePath, const interfacePlugsType::Vector_INovelInfoSPtr &novel_info_s_ptr_shared ) {
 		novelInfoSPtrShared = novel_info_s_ptr_shared;
 		qFile = new QFile( filePath );
 	}
@@ -21,11 +21,10 @@ public:
 public:
 	QStringList getNovelInfoList( ) {
 		QStringList result;
-		auto element = novelInfoSPtrShared.get( );
-		if( !element || element->size( ) == 0 ) // 不存在，返回 空
+		if( novelInfoSPtrShared.size( ) == 0 ) // 不存在，返回 空
 			return result;
-		auto iterator = element->begin( );
-		auto end = element->end( );
+		auto iterator = novelInfoSPtrShared.begin( );
+		auto end = novelInfoSPtrShared.end( );
 		interfacePlugsType::HtmlDocString resultSerializableHtmlDocString;
 		do {
 			if( iterator->get( )->objToHtmlDocString( &resultSerializableHtmlDocString ) > 0 )

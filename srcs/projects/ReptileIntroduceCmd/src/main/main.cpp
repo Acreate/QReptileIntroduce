@@ -8,6 +8,8 @@
 #include "plug/LoadPlug.h"
 #include "./function.h"
 #include <iostream>
+
+#include "novelNetJob/NovelDBJob.h"
 int main( int argc, char *argv[ ] ) {
 	std::locale locale( "zh_CN.UTF8" );
 	std::locale::global( locale );
@@ -88,9 +90,7 @@ int main( int argc, char *argv[ ] ) {
 		}
 	}
 
-	if( novelNetJobs.size( ) == 0 ) {
-		return -1;
-	} else {
+	if( novelNetJobs.size( ) != 0 ) {
 		if( argParser->getOptionValues( "-url" ) ) {
 			auto end = novelNetJobs.end( );
 			auto iterator = novelNetJobs.begin( );
@@ -130,10 +130,23 @@ int main( int argc, char *argv[ ] ) {
 				count = runJobs.size( );
 				for( auto nodeJob : runJobs )
 					nodeJob->start( );
-			} else
-				return 0;
+			}
 		}
 	}
+	auto dbPaths = argParser->getOptionValues( "-rdb" ); // 是否存在导出
+	auto writeFilePaths = argParser->getOptionValues( "-w" ); // 是否存在导出
 
+	if( dbPaths && writeFilePaths ) {
+		interfacePlugsType::Vector_INovelInfoSPtr novelInfoS;
+		for( auto &str : *dbPaths ) {
+			auto novelInfoSPtrShared = NovelDBJob::readDB( nullptr
+				, QString::fromStdString( str )
+				, []( const std::chrono::time_point< std::chrono::system_clock >::duration &duration ) {
+					return true;
+				} );
+			novelInfoS.insert( novelInfoS.begin( ), novelInfoSPtrShared->begin( ), novelInfoSPtrShared->end( ) );
+		}
+		novelInfoS = NovelDBJob::identical( novelInfoS );
+	}
 	return instance->exec( );
 }

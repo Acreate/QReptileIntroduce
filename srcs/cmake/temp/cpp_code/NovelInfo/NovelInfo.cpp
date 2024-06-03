@@ -86,6 +86,6 @@ size_t NovelInfo::objToHtmlDocString( interfacePlugsType::HtmlDocString *result_
 void NovelInfo::clear( ) {
 	name = info = updateTime = format =
 		lastRequestTime = lastRequestTimeFormat =
-		author = url = lastItem = additionalData =
-		typePageUrl = nullptr;
+		author = url = lastItem = typePageUrl = L"";
+	additionalData = nullptr;
 }
