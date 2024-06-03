@@ -327,7 +327,7 @@ MainWidget::~MainWidget( ) {
 		process->kill( );
 		process->waitForFinished( );
 		process->deleteLater( );
-		std::cout << "结束: " << iterator.key(  ).toStdString(  ) << std::endl;
+		std::cout << u8"结束: " << iterator.key(  ).toStdString(  ) << std::endl;
 		iterator->second->deleteLater( );
 	}
 }

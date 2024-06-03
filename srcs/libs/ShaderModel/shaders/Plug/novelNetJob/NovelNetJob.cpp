@@ -19,6 +19,7 @@
 #include "path/Dir.h"
 #include <DB/sqlite/sqliteResult/SQLiteResult.h>
 #include <QMutex>
+#include "NovelDBJob.h"
 
 
 #ifdef Q_OS_WIN // 提供内存释放功能
@@ -447,10 +448,8 @@ void NovelNetJob::novelPageInfoRequestEnd( const QString &type_name, const QUrl 
 	writeFilePath = writeFilePath.arg( QDir::separator( ) ).arg( outPath ).arg( u8"txt_out" ).arg( rootUrl ).arg( type_name ).arg( u8".txt" );
 
 	Vector_INovelInfoSPtr_Shared infos = typeNovelsMap.at( type_name );
-
-	IOFile ioFile( writeFilePath, infos );
-	size_t writeQStringListToFile = ioFile.writeNoveInfoListToFile( );
-	OStream::anyDebugOut( oStream, QString( u8"================\n\t路径: (%1)\n\t写入数量 : [%2]\n\t类型计数 : [%3]\n================\n" ).arg( writeFilePath ).arg( writeQStringListToFile ).arg( typeCount ) );
+	auto novelInfos = NovelDBJob::writeFile( writeFilePath, infos );
+	OStream::anyDebugOut( oStream, QString( u8"================\n\t路径: (%1)\n\t写入数量 : [%2]\n\t类型计数 : [%3]\n================\n" ).arg( writeFilePath ).arg( novelInfos->size( ) ).arg( typeCount ) );
 	interfaceThisPtr->novelTypeEnd( root_url.toStdWString( ), type_name.toStdWString( ), url.toString( ).toStdWString( ), *infos );
 	releaseMemory( );
 }
@@ -483,17 +482,19 @@ void NovelNetJob::slots_requested_get_web_page_signals_end( const QUrl &url ) {
 		}
 		qApp->processEvents( );
 	}
+	auto run = [this]( const Duration &duration ) {
+		if( getTimeDurationToMilliseconds( duration ) < 2000 )
+			return false;
+		auto msg = QString( "===========" )
+					.append( "\n\t" ).append( "正在存储数据库" )
+					.append( "\n\t" ).append( __FILE__ )
+					.append( "\n\t" ).append( QString::number( __LINE__ ) )
+					.append( "\n\t" ).append( "===========" );
+		return true;
+	};
+	NovelDBJob::writeDb( oStream, outPath, url, *novelInfoSPtr, run );
 	interfaceThisPtr->endHost( *novelInfoSPtr
-		, [this]( const Duration &duration ) {
-			if( getTimeDurationToMilliseconds( duration ) < 2000 )
-				return false;
-			auto msg = QString( "===========" )
-						.append( "\n\t" ).append( "正在存储数据库" )
-						.append( "\n\t" ).append( __FILE__ )
-						.append( "\n\t" ).append( QString::number( __LINE__ ) )
-						.append( "\n\t" ).append( "===========" );
-			return true;
-		} );
+		, run );
 	runStatus = 0; // 可以重新运行
 	QString msg = QString( ).append( "请求 : (" ).append( url.scheme( ) ).append( u8"://" ).append( url.host( ) ).append( ") 结束 " );
 	OStream::anyDebugOut( oStream, msg );

@@ -26,7 +26,8 @@ include_directories( ${IOStream_include_dir} )
 include_directories( ${HtmlTools_include_dir} )
 include_directories( ${Plug_include_dir} )
 include_directories( ${Path_Tool_include_dir} )
-include_directories( ${argParser_Tool_include_dir} )
+include_directories( ${argParser_include_dir} )
+include_directories( ${QtExtendDB_include_dir} )
 
 set( cmake_definitions_out "${CMAKE_CURRENT_LIST_DIR}/src/${cmake_auto_sub_dir_name}/macro/cmake_to_c_cpp_header_env.h" )
 
@@ -74,6 +75,7 @@ call_qt_deploy( ${PROJECT_NAME}
 	Plug
 	IOStream
 	argParser
+	QtExtendDB
 )
 set_target_properties( ${PROJECT_NAME} PROPERTIES
 	WIN32_EXECUTABLE FALSE

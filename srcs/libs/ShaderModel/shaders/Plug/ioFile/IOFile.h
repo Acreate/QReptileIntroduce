@@ -13,7 +13,7 @@ class PLUG_EXPORT IOFile {
 	QFile *qFile;
 	interfacePlugsType::Vector_INovelInfoSPtr_Shared novelInfoSPtrShared;
 public:
-	IOFile( const QString &filePath, interfacePlugsType::Vector_INovelInfoSPtr_Shared novel_info_s_ptr_shared ) {
+	IOFile( const QString &filePath, const interfacePlugsType::Vector_INovelInfoSPtr_Shared &novel_info_s_ptr_shared ) {
 		novelInfoSPtrShared = novel_info_s_ptr_shared;
 		qFile = new QFile( filePath );
 	}

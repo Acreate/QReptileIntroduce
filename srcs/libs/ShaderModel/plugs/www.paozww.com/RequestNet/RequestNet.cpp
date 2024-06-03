@@ -219,13 +219,11 @@ Vector_INovelInfoSPtr RequestNet::formHtmlGetTypePageNovels( const interfacePlug
 				auto second = begin->second;
 				auto newSecond = second.substr( 1, second.length( ) - 2 );
 				QString urlLastStr = QString::fromStdWString( newSecond );
-				novelInfoBuffPtr->url = std::make_shared< QString >( QString( u8"%1%2" ).arg( rootUrl ).arg( urlLastStr ) );
+				novelInfoBuffPtr->url = QString( u8"%1%2" ).arg( rootUrl ).arg( urlLastStr ).toStdWString( );
 				//////////// 名称 xpath
 				auto contentText = element->getNodeIncludeContentText( );
 				if( contentText )
-					novelInfoBuffPtr->novelName = std::make_shared< QString >( QString::fromStdWString( *contentText ) );
-				else
-					novelInfoBuffPtr->novelName = std::make_shared< QString >( QString::fromStdWString( L"" ) );
+					novelInfoBuffPtr->name = *contentText;
 
 				//////////// 更新时间 xpath
 				xpath = cylHtmlTools::XPath( novelNodeXPathInfo.formTypePageGetNovelUpdateTimeXpath );
@@ -247,14 +245,14 @@ Vector_INovelInfoSPtr RequestNet::formHtmlGetTypePageNovels( const interfacePlug
 					quitMsg = DateTime_Error_Expire; // xpath 异常 : 更新时间 找不到
 					break;
 				}
-				novelInfoBuffPtr->updateTime = std::make_shared< QString >( fromStdWString );
+				novelInfoBuffPtr->updateTime = fromStdWString.toStdWString( );
 				//////////// 作者 xpath
 				xpath = cylHtmlTools::XPath( novelNodeXPathInfo.formTypePageGetNovelAuthorXpath );
 				htmlNodes = vectorIterator->get( )->xpath( xpath );
 				if( htmlNodes ) {
 					auto author = htmlNodes->at( 0 ).get( )->getNodeIncludeContentText( );
 					if( author )
-						novelInfoBuffPtr->author = std::make_shared< QString >( QString::fromStdWString( *author ) );
+						novelInfoBuffPtr->author = *author;
 				}
 				//////////// 最后更新项目 xpath
 				xpath = cylHtmlTools::XPath( novelNodeXPathInfo.formTypePageGetNovelLastUpdateItemXpath );
@@ -262,11 +260,11 @@ Vector_INovelInfoSPtr RequestNet::formHtmlGetTypePageNovels( const interfacePlug
 				if( htmlNodes ) {
 					auto lastItem = htmlNodes->at( 0 ).get( )->getNodeIncludeContentText( );
 					if( lastItem )
-						novelInfoBuffPtr->lastItem = std::make_shared< QString >( QString::fromStdWString( *lastItem ) );
+						novelInfoBuffPtr->lastItem = *lastItem;
 				}
-				novelInfoBuffPtr->format = std::make_shared< QString >( RequestNet::timeForm );
-				novelInfoBuffPtr->typePageUrl = std::make_shared< QString >( QString::fromStdWString( request_url ) );
-				novelInfoBuffPtr->typeName = std::make_shared< QString >( QString::fromStdWString( type_name ) );
+				novelInfoBuffPtr->format = RequestNet::timeForm.toStdWString( );
+				novelInfoBuffPtr->typePageUrl = request_url;
+				novelInfoBuffPtr->typeName = type_name;
 				// 成功则赋值
 				novelInfoPtr = novelInfoBuffPtr;
 			} while( false );
@@ -275,7 +273,7 @@ Vector_INovelInfoSPtr RequestNet::formHtmlGetTypePageNovels( const interfacePlug
 				// 成功获取即可输出
 				QString outMsg( u8"[%1]小说(%2):url(%3) -> 解析成功 [%4]" );
 				++novelCount;
-				outMsg = outMsg.arg( *novelInfoBuffPtr->typeName ).arg( *novelInfoBuffPtr->novelName ).arg( *novelInfoBuffPtr->url ).arg( novelCount );
+				outMsg = outMsg.arg( novelInfoBuffPtr->typeName ).arg( novelInfoBuffPtr->name ).arg( novelInfoBuffPtr->url ).arg( novelCount );
 				OStream::anyDebugOut( thisOStream, outMsg );
 				novelInfoBuffPtr = std::make_shared< NovelInfo >( );
 
@@ -347,128 +345,6 @@ bool RequestNet::isRequestNovelInfoUrl( const interfacePlugsType::INovelInfoPtr 
 void RequestNet::novelTypeEnd( const HtmlDocString &root_url, const HtmlDocString &type_name, const HtmlDocString &url, const interfacePlugsType::Vector_INovelInfoSPtr &saveNovelInfos ) {
 }
 void RequestNet::endHost( const interfacePlugsType::Vector_INovelInfoSPtr &saveNovelInfos, const std::function< bool( const std::chrono::system_clock::time_point::duration & ) > &run ) {
-
-	QString linkPath( u8"%1%2%3%2" );
-	linkPath = linkPath.arg( outPath ).arg( QDir::separator( ) ).arg( "dbs" );
-	if( !QDir( ).mkpath( linkPath ) )
-		linkPath = outPath + QDir::separator( );
-	auto dbInterface = cylDB::DBTools::linkDB( linkPath );
-
-	if( dbInterface->link( ) ) {
-		cylHtmlTools::HtmlWorkThread< bool * >::Current_Thread_Run currentThreadRun = [dbInterface,&saveNovelInfos,this]( const cylHtmlTools::HtmlWorkThread< bool * > *html_work_thread, const std::thread *run_std_cpp_thread, std::mutex *html_work_thread_mutex, std::mutex *std_cpp_thread_mutex, bool *data, const time_t *startTime ) {
-			QString dbName = this->rootUrl.host( );
-			QString tabName = dbName;
-			dbName.append( ".db" );
-			auto depositoryShared = dbInterface->openDepository( dbName );
-			if( depositoryShared ) {
-				if( !depositoryShared->open( ) ) {
-					auto lastError = depositoryShared->getLastError( );
-					OStream::anyDebugOut( thisOStream, lastError.text( ), __FILE__, __LINE__, __FUNCTION__ );
-					return;
-				}
-				bool hasTab = depositoryShared->hasTab( tabName );
-
-				if( !hasTab )
-					if( !instance_function::generate_db_tab( dbInterface, depositoryShared, tabName, thisOStream ) )
-						return;
-				QStringList tabFieldNames = { "rootUrl", "novelName", "info", "updateTime", "format", "lastRequestTime", "lastRequestTimeFormat", "author", "url", "lastItem", "additionalData", "typePageUrl", "typeName" };
-				auto allItem = depositoryShared->findItems( tabName, tabFieldNames );
-
-				interfacePlugsType::Vector_INovelInfoSPtr updateList; // 更新列表
-				interfacePlugsType::Vector_INovelInfoSPtr interList; // 插入列表
-				// 分解-插入/更新 列表
-				if( allItem ) {
-					instance_function::separate_list( saveNovelInfos, allItem, updateList, interList );
-				} else
-					interList = saveNovelInfos; // 数据库不存在数据的时候，全部拷贝到插入列表
-
-				QString requestTime = RequestNet::currentTime.toString( currentTimeForm );
-				// 开始更新
-				HtmlDocString rootUrl = this->rootUrl.toString( ).toStdWString( ),
-					novelName,
-					novelInfo,
-					novelUpdateTime,
-					novelFormat,
-					novelAuthor,
-					novelUrl,
-					novelLastItem,
-					novelAdditionalData,
-					novelTypePageUrl,
-					novelTypeName;
-				QString cmd = R"(UPDATE `)" + tabName + R"(` SET `updateTime`=:updateTime, `lastRequestTime`=:lastRequestTime, `additionalData`=:additionalData, `lastItem`=:lastItem , `format`=:format  WHERE `url`=:url;)";
-				bool transaction = depositoryShared->transaction( );
-				std::shared_ptr< QSqlQuery > sqlQuery = depositoryShared->generateSqlQuery( );
-				sqlQuery.get( )->prepare( cmd );
-				for( auto &novel : updateList ) {
-					novel->getNovelUrl( &novelUrl );
-					novel->getNovelUpdateTime( &novelUpdateTime );
-					novel->getNovelUpdateTimeFormat( &novelFormat );
-					void *ptr = &novelAuthor;
-					novel->getNovelAttach( ptr );
-					sqlQuery->bindValue( ":updateTime", QString::fromStdWString( novelUpdateTime ) );
-					sqlQuery->bindValue( ":format", QString::fromStdWString( novelFormat ) );
-					sqlQuery->bindValue( ":lastRequestTime", requestTime );
-					sqlQuery->bindValue( ":lastItem", QString::fromStdWString( novelLastItem ) );
-					sqlQuery->bindValue( ":additionalData", QString::fromStdWString( novelAuthor ) );
-					sqlQuery->bindValue( ":url", QString::fromStdWString( novelUrl ) );
-					if( !depositoryShared->exec( sqlQuery.get( ) ) )
-						instance_function::write_error_info_file( thisOStream, QUrl( " " ), outPath, "db_updateList", "db_error", "update", "db.log", __FILE__, __FUNCTION__, __LINE__, "无法更新正确的小说内容", "无法更新正确的小说内容" );
-				}
-				if( transaction )
-					depositoryShared->commit( );
-				transaction = depositoryShared->transaction( );
-				auto rootQStringUrl = QString::fromStdWString( rootUrl );
-				cmd = R"(INSERT INTO `)" + tabName + R"(`( `rootUrl`, `novelName`, `info`, `updateTime`, `format`, `lastRequestTime`, `lastRequestTimeFormat`, `author`, `url`, `lastItem`, `additionalData`, `typePageUrl`, `typeName`  ) VALUES ( :rootUrl,:novelName,:info,:updateTime,:format,:lastRequestTime,:lastRequestTimeFormat,:author,:url,:lastItem,:additionalData,:typePageUrl,:typeName  );)";
-				sqlQuery.get( )->prepare( cmd );
-				QStringList tabValues;
-				sqlQuery->bindValue( ":rootUrl", rootQStringUrl );
-				for( auto &novel : interList ) {
-					novel->getNovelName( &novelName );
-					novel->getNovelInfo( &novelInfo );
-					novel->getNovelUpdateTime( &novelUpdateTime );
-					novel->getNovelUpdateTimeFormat( &novelFormat );
-					novel->getNovelAuthor( &novelAuthor );
-					novel->getNovelUrl( &novelUrl );
-					novel->getNovelLastItem( &novelLastItem );
-					void *ptr = &novelAuthor;
-					novel->getNovelAttach( ptr );
-					novel->getNovelUrlAtPageLocation( &novelTypePageUrl );
-					novel->getNovelTypeName( &novelTypeName );
-
-					sqlQuery->bindValue( ":novelName", QString::fromStdWString( novelName ) );
-					sqlQuery->bindValue( ":info", QString::fromStdWString( novelInfo ) );
-					sqlQuery->bindValue( ":updateTime", QString::fromStdWString( novelUpdateTime ) );
-					sqlQuery->bindValue( ":format", QString::fromStdWString( novelFormat ) );
-					sqlQuery->bindValue( ":lastRequestTime", requestTime );
-					sqlQuery->bindValue( ":lastRequestTimeFormat", currentTimeForm );
-					sqlQuery->bindValue( ":author", QString::fromStdWString( novelAuthor ) );
-					sqlQuery->bindValue( ":url", QString::fromStdWString( novelUrl ) );
-					sqlQuery->bindValue( ":lastItem", QString::fromStdWString( novelLastItem ) );
-					sqlQuery->bindValue( ":additionalData", QString::fromStdWString( novelAdditionalData ) );
-					sqlQuery->bindValue( ":typePageUrl", QString::fromStdWString( novelTypePageUrl ) );
-					sqlQuery->bindValue( ":typeName", QString::fromStdWString( novelTypeName ) );
-					if( !depositoryShared->exec( sqlQuery.get( ) ) )
-						instance_function::write_error_info_file( thisOStream, QUrl( " " ), outPath, "db_interList", "db_error", "inster", "db.log", __FILE__, __FUNCTION__, __LINE__, "无法插入正确的小说内容", "无法插入正确的小说内容" );
-				}
-				if( transaction )
-					depositoryShared->commit( );
-				sqlQuery.reset( );
-				auto close = depositoryShared->close( );
-			}
-		};
-
-		bool has = true;
-		cylHtmlTools::HtmlWorkThread< bool * > thread( nullptr, currentThreadRun, nullptr, &has );
-		thread.start( );
-		auto currentTime = std::chrono::system_clock::now( ).time_since_epoch( );
-		while( thread.isRun( ) ) {
-			auto epoch = std::chrono::system_clock::now( ).time_since_epoch( );
-			auto duration = currentTime - epoch;
-			run( duration );
-			currentTime = epoch;
-			qApp->processEvents( );
-		}
-	}
 
 }
 OStream * RequestNet::setOStream( OStream *o_stream ) {
