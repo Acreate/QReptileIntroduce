@@ -9,7 +9,7 @@
 #include "thread/FileThread.h"
 #include <qguiapplication.h>
 #include <unordered_map>
-
+#include <iostream>
 #include "../../../../../git/QtExtendDB/srcs/QtExtendDB/nameSpace/cylDB.h"
 #include "../ioFile/IOFile.h"
 #include "dateTime/DateTime.h"
@@ -437,10 +437,10 @@ QString NovelNetJob::getPageInfo( const QString &type_name, const QUrl &type_url
 
 
 void NovelNetJob::novelPageInfoRequestEnd( const QString &type_name, const QUrl &url, size_t current_page_index ) {
-	qDebug( ) << u8"-----------------------";
-	qDebug( ) << type_name << "(" << url.toString( ) << ") 请求结束";
-	qDebug( ) << u8"-----------------------";
-	QString writeFilePath( u8"%2%3%1%4%1%5%6" );
+	std::cout << u8"-----------------------" << std::endl;
+	std::cout << type_name.toStdString( ) << "(" << url.toString( ).toStdString( ) << ") 请求结束" << std::endl;
+	std::cout << u8"-----------------------" << std::endl;
+	QString writeFilePath( u8"%2%1%3%1%4%1%5%6" );
 	auto rootUrl = url.host( );
 	auto root_url = url.scheme( ) + "://" + rootUrl;
 	writeFilePath = writeFilePath.arg( QDir::separator( ) ).arg( outPath ).arg( u8"txt_out" ).arg( rootUrl ).arg( type_name ).arg( u8".txt" );

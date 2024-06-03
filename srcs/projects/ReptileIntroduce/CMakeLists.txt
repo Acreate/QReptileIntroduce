@@ -79,6 +79,7 @@ call_qt_deploy( ${PROJECT_NAME}
 set_target_properties( ${PROJECT_NAME} PROPERTIES
 	WIN32_EXECUTABLE FALSE
 )
+add_dependencies(${PROJECT_NAME}  ReptileIntroduceCmd)
 unset(SRC_LIST)
 unset(SRC_UI)
 unset(SRC_UI)

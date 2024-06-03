@@ -1,4 +1,5 @@
 ﻿#include "MainWidget.h"
+#include "MainWidget.h"
 #include <QTranslator>
 #include <QTimer>
 #include <QPushButton>
@@ -29,6 +30,7 @@
 #include "novelNetJob/NovelNetJob.h"
 #include <nameSpace/interfacePlugsType.h>
 #include <interface/IRequestNetInterface.h>
+#include <QProcess>
 using interfacePlugsType::IRequestNetInterface;
 const QString MainWidget::settingGroupWork = tr( u8"工作" );
 const QString MainWidget::settingGroupWeb = tr( u8"网络" );
@@ -48,6 +50,8 @@ const QString MainWidget::settingGroupFontBold = tr( u8"加粗" );
 const QString MainWidget::settingGroupFontStrikeOut = tr( u8"划线" ); // 划线
 const QString MainWidget::settingGroupFontUnderline = tr( u8"下划线" ); // 下划线
 const QString MainWidget::settingGroupFontStyle = tr( u8"字体风格" ); // 字体风格
+const QString MainWidget::settingGroupProcess = tr( u8"子进程" ); // 程序组
+const QString MainWidget::settingGroupProcessPath = tr( u8"执行文件" ); // 程序路径
 const QChar MainWidget::settingPathSep = tr( u8";" )[ 0 ];
 
 void MainWidget::initMumberPtrMemory( ) {
@@ -55,7 +59,8 @@ void MainWidget::initMumberPtrMemory( ) {
 	translator = new QTranslator( this );
 	selectPathWidget = new FileSelectPathWidget( this );
 	display = new DisplayWidget( this );
-	LoadWebInfoBtn = new Action;
+	setCmdPathBtn = new Action;
+	loadWebInfoBtn = new Action;
 }
 void MainWidget::initComponentPropertys( ) {
 	setWindowTitle( tr( u8"小说阅读" ) );
@@ -224,9 +229,12 @@ void MainWidget::initComponentOver( ) {
 	loadPlug->setText( tr( u8"加载插件" ) );
 	fromDisplayWidgetMenu->addAction( loadPlug );
 	connect( loadPlug, &QAction::triggered, this, &MainWidget::loadingPlug );
-	LoadWebInfoBtn->setText( tr( u8"开始任务" ) );
-	fromDisplayWidgetMenu->addAction( LoadWebInfoBtn );
-	connect( LoadWebInfoBtn, &QAction::triggered, this, &MainWidget::LoadWebInfo );
+	setCmdPathBtn->setText( tr( u8"设置 cmd 路径" ) );
+	fromDisplayWidgetMenu->addAction( setCmdPathBtn );
+	connect( setCmdPathBtn, &QAction::triggered, this, &MainWidget::setCmdPathInfo );
+	loadWebInfoBtn->setText( tr( u8"开始任务" ) );
+	fromDisplayWidgetMenu->addAction( loadWebInfoBtn );
+	connect( loadWebInfoBtn, &QAction::triggered, this, &MainWidget::loadWebInfo );
 
 	auto map = progressSetting->getAllInfo( settingGroupDrawplayFont );
 	QFont font;
@@ -351,6 +359,7 @@ bool MainWidget::updateSettingFileInfo( const QString &filePath ) {
 	}
 	return false;
 }
+
 void MainWidget::updateDateTimeStrFunction( const QString &currentDateTimeStr ) {
 
 }
@@ -397,7 +406,16 @@ void MainWidget::showSelectPlugPathDialog( ) {
 	}
 	loadingPlug( );
 }
+// todo : 加载路径插件
 void MainWidget::loadingPlug( ) {
+	QFileInfo info( cmdExe );
+	if( !info.exists( ) ) {
+		auto variant = progressSetting->getValue( settingGroupProcess, settingGroupProcessPath ).toString( );
+		if( variant.isEmpty( ) ) {
+			emit display->display( QString( tr( u8"没有发现配置文件的(%1-%2)值内容" ) ).arg( settingGroupProcess ).arg( settingGroupProcessPath ) );
+			return;
+		}
+	}
 	auto variant = progressSetting->getValue( settingGroupPlugIniPathKeyMerge ).toString( );
 	if( variant.isEmpty( ) ) {
 		emit display->display( QString( tr( u8"没有发现配置文件的(%1)值内容" ) ).arg( settingGroupPlugIniPathKeyMerge ) );
@@ -408,61 +426,106 @@ void MainWidget::loadingPlug( ) {
 		emit display->display( QString( tr( u8"配置文件的(%1)值内容异常，切分过后不存在路径" ) ).arg( settingGroupPlugIniPathKeyMerge ) );
 		return;
 	}
+	plugs.clear( );
 	for( auto &plugSelectPath : stringList ) {
 		auto pathInfo = Path::getPathInfo( plugSelectPath );
 		for( auto &file : pathInfo.second ) {
 			QString filePtah = file.getCurrentFilePtah( );
-			if( plugs.contains( filePtah ) )
-				continue;
-			LoadPlug load( filePtah );
-			auto requestNetInterfaceExtends = load.loadPlugs( );
-			if( requestNetInterfaceExtends.size( ) == 0 )
-				continue;
-			auto iterator = requestNetInterfaceExtends.begin( );
-			auto end = requestNetInterfaceExtends.end( );
-			interfacePlugsType::HtmlDocString outUrl;
-			for( ; iterator != end; ++iterator ) {
-				IRequestNetInterface *requestNetInterfaceExtend = iterator.value( );
-				IRequestNetInterface *interfaceExtend = requestNetInterfaceExtend;
-				if( interfaceExtend->getRootUrl( &outUrl ) )
-					*display << QString( tr( u8"获取url : %1" ) ).arg( QString::fromStdWString( outUrl ) ) << '\n';
-				interfaceExtend->setInterfaceParent( this );
-				QObject *object = iterator.key( );
-				NovelNetJob *novelNetJob = new NovelNetJob( display, object, requestNetInterfaceExtend );
-				QSharedPointer< NovelNetJob > netJob{ novelNetJob };
-				plugs.insert( filePtah, netJob );
-				display->flush( );
-				auto menu = display->getPlugMenu( requestNetInterfaceExtend );
-				menu->setTitle( QUrl( QString::fromStdWString( outUrl ) ).host( ).append( " 选项" ) );
-				Action *requestBtn = new Action;
-				requestBtn->setText( "开始获取任务" );
-				connect( requestBtn
-					, &QAction::triggered
-					, [=]( ) {
-						*display << QString( u8"%1:(%2 %3)" ).arg( netJob->getUrl( ) ).arg( __FILE__ ).arg( __LINE__ ) << '\n';
-						display->flush( );
-						emit startRequestNovel( novelNetJob );
-					} );
-				menu->addAction( requestBtn );
-				// todo :: 加入按钮列表
-				plugsActions.append( requestBtn );
-				outUrl.clear( );
-			}
+			auto process = new QProcess( this );
+			connect( process
+				, &QProcess::readyReadStandardOutput
+				, [process,filePtah,this]( ) {
+					QString msg( process->readAll( ) );
+					qDebug( ) << msg.toStdString( ).c_str( );
+					process->deleteLater( );
+					plugs.append( filePtah );
+				} );
+			process->start( cmdExe, { "-l", filePtah } );
 		}
 
 	}
 	if( plugs.size( ) == 0 )
-		LoadWebInfoBtn->setEnabled( false );
+		loadWebInfoBtn->setEnabled( false );
 	else
-		LoadWebInfoBtn->setEnabled( true );
+		loadWebInfoBtn->setEnabled( true );
 	display->flush( );
 }
-void MainWidget::LoadWebInfo( ) {
-	auto iterator = plugsActions.begin( );
-	auto end = plugsActions.end( );
+void MainWidget::loadWebInfo( ) {
+	auto iterator = plugs.begin( );
+	auto end = plugs.end( );
 	std::string outUrl;
-	for( ; iterator != end; ++iterator )
-		emit ( *iterator )->trigger( );
+	for( ; iterator != end; ++iterator ) {
+		auto process = new QProcess( this );
+		connect( process
+			, &QProcess::readyReadStandardOutput
+			, [process,this]( ) {
+				QString msg( process->readAll( ) );
+				qDebug( ) << msg.toStdString( ).c_str( );
+				process->deleteLater( );
+			} );
+		process->start( cmdExe, { "-l", *iterator } );
+	}
+}
+void MainWidget::setCmdPathInfo( ) {
+	QString plugSelectPath;
+	if( cmdExe.isEmpty( ) ) {
+		plugSelectPath = progressSetting->getValue( settingGroupProcess, settingGroupProcessPath ).toString( );
+		if( plugSelectPath.isEmpty( ) )
+			plugSelectPath = qApp->applicationDirPath( );
+	} else
+		plugSelectPath = cmdExe;
+	do {
+		auto openFileName = QFileDialog::getOpenFileName( this, tr( u8"选择一个插件路径" ), plugSelectPath, tr( "exe(*.exe);;dll(*.dll;;a(*.a);;o(*.o));;all (*.exe *.dll *.a *.o)" ) );
+		if( openFileName.isEmpty( ) ) {
+			if( QMessageBox::question( this, tr( u8"路径异常" ), tr( u8"需要重新选择路径吗？" ) ) == QMessageBox::Ok )
+				continue;
+			return;
+		} else {
+			QProcess process;
+			connect( &process
+				, &QProcess::readyReadStandardError
+				, [&]( ) {
+					auto byteArray = process.readAll( );
+					if( byteArray.size( ) > 0 ) {
+						QString msg( byteArray );
+						qDebug( ) << byteArray;
+						if( msg.indexOf( qApp->applicationName( ) ) != 0 )
+							openFileName.clear( );
+					}
+				} );
+			connect( &process
+				, &QProcess::readyReadStandardOutput
+				, [&]( ) {
+					auto byteArray = process.readAll( );
+					if( byteArray.size( ) > 0 ) {
+						QString msg( byteArray );
+						qDebug( ) << byteArray;
+						if( msg.indexOf( qApp->applicationName( ) ) != 0 )
+							openFileName.clear( );
+					}
+				} );
+			connect( &process
+				, &QProcess::finished
+				, [&]( int exitCode, QProcess::ExitStatus exitStatus ) {
+					qDebug( ) << u8"exeit";
+				} );
+			process.start( openFileName, { "-name" } );
+
+			while( !process.waitForStarted( ) )
+				qApp->processEvents( );
+			while( !process.waitForFinished( ) )
+				qApp->processEvents( );
+			if( openFileName.isEmpty( ) ) {
+				if( QMessageBox::question( this, tr( u8"路径异常" ), tr( u8"需要重新选择路径吗？" ) ) == QMessageBox::Ok )
+					continue;
+				return;
+			}
+		}
+		openFileName = QDir( qApp->applicationDirPath( ) ).relativeFilePath( openFileName );
+		cmdExe = openFileName;
+		break;
+	} while( true );
+	progressSetting->setValue( settingGroupProcess, settingGroupProcessPath, cmdExe );
 }
 void MainWidget::startNovelJob( NovelNetJob *novelNetJob ) {
 	novelNetJob->start( );

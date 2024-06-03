@@ -19,7 +19,7 @@ public:
 	/// <returns>写入数量</returns>
 	static qint64 outDebugLogFile( const QString &write_path, const QByteArray &write_content, QString file_base_name, QString error_type = u8"normal", QString dir_name = "", QString file_suffix = u8".log" );
 	/// <summary>
-	/// 同步流输出，使用指定 OStream 与 qdebu() 输出信息
+	/// 同步流输出，使用指定 OStream 与 qdebug() 输出信息
 	/// 如果 writePath 正确，那么将会写入内容。
 	/// </summary>
 	/// <param name="os">输出</param>
@@ -32,7 +32,7 @@ public:
 	static QStringList anyDebugOut( OStream *os, const QString &msg, const QString &file_name, size_t line, const QString &call_fun_name, const QString &write_path, const QString &write_content );
 
 	/// <summary>
-	/// 同步流输出，使用指定 OStream 与 qdebu() 输出信息
+	/// 同步流输出，使用指定 OStream 与 qdebug() 输出信息
 	/// 如果 writePath 正确，那么将会写入内容。
 	/// </summary>
 	/// <param name="os">输出</param>

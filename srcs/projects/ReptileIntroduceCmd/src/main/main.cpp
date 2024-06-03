@@ -40,6 +40,7 @@ QString getBuilderInfo( ) {
 #endif
 	return compilerString;
 }
+#include <iostream>
 int main( int argc, char *argv[ ] ) {
 	QCoreApplication application( argc, argv );
 	auto *instance = qApp;
@@ -49,18 +50,23 @@ int main( int argc, char *argv[ ] ) {
 
 	QString description = u8"小说爬虫命令行版本";
 	auto argParser = cylStd::ArgParser::parser( argc, argv );
-	qDebug( ) << u8"输出命令行参数";
-	qDebug( ) << version.toStdString( ).c_str( );
-	auto map = argParser->getPairs( );
-	for( auto &it : map ) {
-		qDebug( ) << u8"名称:" << it.first;
-		for( auto &value : *it.second )
-			qDebug( ) << u8"\t值:" << value;
+	if( argParser->getOptionValues( "-v" ) ) {
+		std::cout << u8"输出命令行参数" << std::endl << version.toStdString( ).c_str( ) << std::endl;
+		auto map = argParser->getPairs( );
+		for( auto &it : map ) {
+			std::cout << u8"名称:" << it.first << std::endl;
+			for( auto &value : *it.second )
+				std::cout << u8"\t值:" << value << std::endl;
+		}
+		std::cout << "------------";
 	}
-	qDebug( ) << "------------";
+
 	QString path = qApp->applicationDirPath( ) + QDir::separator( ) + "cmd_download_novels_info" + QDir::separator( );
+	if( argParser->getOptionValues( "-name" ) )
+		std::cout << instance->applicationName( ).toStdString( ).c_str( ) << std::endl;
+
 	if( argParser->getOptionValues( "-h" ) )
-		qDebug( ) << "========="
+		std::cout << "========="
 			"\n\t"
 			u8"帮助:"
 			"\n"
@@ -74,41 +80,50 @@ int main( int argc, char *argv[ ] ) {
 			"\n"
 			"-url" "\t\t" u8"输出加载的插件指向的网络"
 			"\n"
-			"=========";
+			"=========" << std::endl;
 	auto pathValues = argParser->getOptionValues( "-p" );
 	if( pathValues )
 		path = QString::fromStdString( pathValues->at( 0 ) );
 	auto optionValues = argParser->getOptionValues( "-l" );
 	std::unordered_map< QString, std::shared_ptr< NovelNetJob > > novelNetJobs;
 	size_t count = 0;
-	for( auto &value : *optionValues ) {
-		auto absoluteFilePath = QFileInfo( QString::fromStdString( value ) ).absoluteFilePath( );
-		auto pair = LoadPlug::getIRequestNetInterface( absoluteFilePath );
-		if( pair.second ) {
-			auto novelNetJob = std::make_shared< NovelNetJob >( nullptr, pair.first, pair.second );
-			QObject::connect( novelNetJob.get( )
-				, &NovelNetJob::endJob
-				, [&]( ) {
-					--count;
-					if( count == 0 )
-						qApp->exit( 0 );
-				} );
-			novelNetJobs.emplace( absoluteFilePath, novelNetJob );
-			qDebug( ) << value.c_str( ) << "[" << absoluteFilePath << "] 加载成功";
-		} else
-			qDebug( ) << value.c_str( ) << "[" << absoluteFilePath << "] 加载失败";
+	if( optionValues ) {
+		for( auto &value : *optionValues ) {
+			auto absoluteFilePath = QFileInfo( QString::fromStdString( value ) ).absoluteFilePath( );
+			auto mapEnd = novelNetJobs.end( );
+			if( std::find_if( novelNetJobs.begin( )
+				, mapEnd
+				, [&]( const std::pair< QString, std::shared_ptr< NovelNetJob > > &pair ) {
+					if( pair.first == absoluteFilePath )
+						return true;
+					return false;
+				} ) == mapEnd ) {
+
+				auto pair = LoadPlug::getIRequestNetInterface( absoluteFilePath );
+				if( pair.second ) {
+					auto novelNetJob = std::make_shared< NovelNetJob >( nullptr, pair.first, pair.second );
+					QObject::connect( novelNetJob.get( )
+						, &NovelNetJob::endJob
+						, [&]( ) {
+							--count;
+							if( count == 0 )
+								qApp->exit( 0 );
+						} );
+
+					novelNetJobs.emplace( absoluteFilePath, novelNetJob );
+				}
+			}
+		}
 	}
+
 	if( novelNetJobs.size( ) == 0 ) {
-		qDebug( ) << " 没有正确加载的插件";
 		return -1;
 	} else {
 		if( argParser->getOptionValues( "-url" ) ) {
 			auto end = novelNetJobs.end( );
 			auto iterator = novelNetJobs.begin( );
-			qDebug( ) << u8"输出 url:\n";
 			for( ; iterator != end; ++iterator )
-				qDebug( ) << iterator->second->getUrl( ).toStdString( ).c_str( );
-			qDebug( ) << u8"\nurl 输出完毕\n";
+				std::cout << iterator->second->getUrl( ).toStdString( ).c_str( ) << std::endl;
 
 		}
 		if( argParser->getOptionValues( "-as" ) ) {

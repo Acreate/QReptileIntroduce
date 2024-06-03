@@ -25,6 +25,7 @@ class DateTimeThread;
 class RequestConnect;
 class NovelInfoWidget;
 class QTranslator;
+class QProcess;
 class MainWidget : public QWidget {
 	Q_OBJECT;;
 private:
@@ -35,7 +36,8 @@ private: // 布局组件
 private: // 显示组件
 	FileSelectPathWidget *selectPathWidget; // 路径选择组件
 	DisplayWidget *display; // 信息显示组件
-	Action *LoadWebInfoBtn; // 开始请求按键
+	Action *loadWebInfoBtn; // 开始请求按键
+	Action *setCmdPathBtn; // 设置子进程的路径按钮
 public:
 	MainWidget( QWidget *parent = nullptr, Qt::WindowFlags fg = Qt::WindowFlags( ) );
 	~MainWidget( ) override;
@@ -86,6 +88,8 @@ public: // 程序配置-名称
 	static const QString settingGroupFontStrikeOut; // 划线
 	static const QString settingGroupFontUnderline; // 下划线
 	static const QString settingGroupFontStyle; // 字体风格
+	static const QString settingGroupProcess;// 调用的程序组配置
+	static const QString settingGroupProcessPath;// 调用的程序路径
 
 
 	static const QChar settingPathSep; // 路径分隔符
@@ -105,8 +109,8 @@ public:
 	/// <returns>成功返回 true</returns>
 	bool updateSettingFileInfo( const QString &filePath );
 private:
-	QMap< QString, QSharedPointer< NovelNetJob > > plugs;
-	QList< Action * > plugsActions;
+	QVector< QString > plugs; // 存储插件
+	QString cmdExe; // cmd 命令行工具
 public slots: // 窗口子控件信号响应
 	/// <summary>
 	/// 时间响应信号
@@ -124,7 +128,11 @@ public slots: // 窗口子控件信号响应
 	/// <summary>
 	/// 开始爬虫
 	/// </summary>
-	void LoadWebInfo( );
+	void loadWebInfo( );
+	/// <summary>
+	/// 设置cmd路径
+	/// </summary>
+	void setCmdPathInfo( );
 	/// <summary>
 	/// 开始一个小说任务
 	/// </summary>

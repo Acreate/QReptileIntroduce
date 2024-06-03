@@ -2,7 +2,7 @@
 #include <QDebug>
 #include <QDir>
 #include <QFile>
-
+#include <iostream>
 #include "path/Dir.h"
 #include "path/Path.h"
 OStream::UN_Map_Iterator_Template< OStream::QString_Shared, OStream::OStream_Ptr > OStream::defaultOStreamMap;
@@ -78,7 +78,7 @@ QStringList OStream::anyDebugOut( OStream *os, const QString &msg, const QString
 	msgList << u8"============================================";
 	buff = msgList.join( "\n" );
 	auto errorMessage = buff.toStdString( );
-	qDebug( ) << errorMessage.c_str( );
+	std::cout << errorMessage.c_str( ) << std::endl;
 	if( os ) {
 		*os << errorMessage << "\n";
 		os->flush( );
@@ -134,7 +134,7 @@ QStringList OStream::errorQDebugOut( const QString &msg, const QString &fileName
 	buff = msgList.join( "\n" );
 	std::string string = buff.toStdString( );
 	const char *cStr = string.c_str( );
-	qDebug( ) << cStr;
+	std::cout << cStr << std::endl;
 	return msgList;
 }
 QStringList OStream::errorQDebugOut( OStream *os, const QString &msg, const QString &fileName, size_t line, const QString &call_fun_name, const QString &write_path, const QString &write_content ) {
@@ -155,7 +155,7 @@ void OStream::anyDebugOut( OStream *os, const QString &msg ) {
 		*os << msg << "\n";
 		os->flush( );
 	}
-	qDebug( ) << msg.toStdString( ).c_str( );
+	std::cout << msg.toStdString( ).c_str( ) << std::endl;
 }
 
 void OStream::errorQDebugOut( OStream *os, const QString &msg ) {
@@ -166,5 +166,5 @@ void OStream::errorQDebugOut( OStream *os, const QString &msg ) {
 		OStream::errorQDebugOut( msg );
 }
 void OStream::errorQDebugOut( const QString &msg ) {
-	qDebug( ) << msg.toStdString( ).c_str( );
+	std::cout << msg.toStdString( ).c_str( ) << std::endl;
 }

@@ -37,7 +37,6 @@ RequestNet::RequestNet( QObject *parent ): QObject( parent ), rootUrl( GET_URL )
 }
 
 RequestNet::~RequestNet( ) {
-	qDebug( ) << "RequestNet::~RequestNet( " << IRequestNetInterface_iid << ")";
 }
 size_t RequestNet::getRequestInterval( ) {
 	return 1000;
