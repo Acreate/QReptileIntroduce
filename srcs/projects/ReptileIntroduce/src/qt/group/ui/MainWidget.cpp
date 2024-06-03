@@ -3,6 +3,7 @@
 #include <QTranslator>
 #include <QTimer>
 #include <QPushButton>
+#include <iostream>
 #include <QPlainTextEdit>
 
 #include <plug/LoadPlug.h>
@@ -319,7 +320,16 @@ MainWidget::~MainWidget( ) {
 
 	delete progressSetting;
 	delete translator;
-
+	auto iterator = plugs.begin( );
+	auto end = plugs.end( );
+	for( ; iterator != end; ++iterator ) {
+		QProcess *process = iterator->first;
+		process->kill( );
+		process->waitForFinished( );
+		process->deleteLater( );
+		std::cout << "结束: " << iterator.key(  ).toStdString(  ) << std::endl;
+		iterator->second->deleteLater( );
+	}
 }
 
 void MainWidget::mouseMoveEvent( QMouseEvent *event ) {
