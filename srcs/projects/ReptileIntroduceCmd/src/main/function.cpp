@@ -46,7 +46,7 @@ std::vector< QString > readIngoreNameFiles( std::vector< cylStd::ArgParser::Stri
 	std::vector< QString > nameKeys;
 	QFile readFile;
 	for( auto &path : paths )
-		for( auto &fileInfo : Path::getPathInfo( QString::fromStdString( path ) ).second )
+		for( auto &fileInfo : Path::getPathInfo( QString::fromLocal8Bit( path ) ).second )
 			if( ( readFile.setFileName( fileInfo.getCurrentFilePtah( ) ), readFile.open( QIODeviceBase::ReadOnly | QIODeviceBase::Text ) ) )
 				for( auto str : readFile.readAll( ).split( '\n' ) )
 					for( auto appendObj : str.split( ' ' ) )

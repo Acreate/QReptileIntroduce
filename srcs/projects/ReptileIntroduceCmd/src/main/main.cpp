@@ -95,8 +95,6 @@ int main( int argc, char *argv[ ] ) {
 						, &NovelNetJob::endJob
 						, [&]( ) {
 							--count;
-							if( count == 0 )
-								qApp->exit( 0 );
 						} );
 
 					novelNetJobs.emplace( absoluteFilePath, novelNetJob );
@@ -105,27 +103,23 @@ int main( int argc, char *argv[ ] ) {
 		}
 	}
 
+	std::unordered_map< QString, std::shared_ptr< NovelNetJob > > runJobs;
 	if( novelNetJobs.size( ) != 0 ) {
 		if( argParser->getOptionValues( "-url" ) ) {
 			auto end = novelNetJobs.end( );
 			auto iterator = novelNetJobs.begin( );
 			for( ; iterator != end; ++iterator )
 				std::cout << iterator->second->getUrl( ).toStdString( ).c_str( ) << std::endl;
-
 		}
 		if( argParser->getOptionValues( "-as" ) ) {
 			auto end = novelNetJobs.end( );
 			auto iterator = novelNetJobs.begin( );
 			count = novelNetJobs.size( );
-			for( ; iterator != end; ++iterator ) {
-				iterator->second->setPath( path );
-				iterator->second->setInPath( typeFilePath );
-				iterator->second->start( );
-			}
+			for( ; iterator != end; ++iterator )
+				runJobs.emplace( iterator->first, iterator->second );
 		} else {
 			auto runPaths = argParser->getOptionValues( "-s" );
 			if( runPaths ) {
-				std::vector< std::shared_ptr< NovelNetJob > > runJobs;
 				auto end = novelNetJobs.end( );
 				for( auto startPath : *runPaths ) {
 					auto absoluteFilePath = QFileInfo( QString::fromStdString( startPath ) ).absoluteFilePath( );
@@ -135,26 +129,42 @@ int main( int argc, char *argv[ ] ) {
 							iterator->second->setPath( path );
 							if( std::find_if( runJobs.begin( )
 								, runJobs.end( )
-								, [=]( std::shared_ptr< NovelNetJob > it ) {
-									if( it == iterator->second )
+								, [=]( std::pair< QString, std::shared_ptr< NovelNetJob > > it ) {
+									if( it.second == iterator->second )
 										return true;
 									return false;
 								} ) == runJobs.end( ) )
-								runJobs.emplace_back( iterator->second );
+								runJobs.emplace( iterator->first, iterator->second );
 						}
 				}
-				count = runJobs.size( );
-				for( auto nodeJob : runJobs )
-					nodeJob->start( );
 			}
 		}
+	}
+	count = runJobs.size( );
+	if( count > 0 )
+		for( auto nodeJob : runJobs ) {
+			nodeJob.second->setPath( path );
+			nodeJob.second->setInPath( typeFilePath );
+			nodeJob.second->start( );
+		}
+
+	auto currentTime = std::chrono::system_clock::now( );
+	while( count != 0 ) {
+		instance->processEvents( );
+		auto cur = std::chrono::system_clock::now( );
+		auto sep = cur - currentTime;
+		auto second = std::chrono::duration_cast< std::chrono::seconds >( sep ).count( );
+		if( second < 2 )
+			continue;
+		std::cout << u8"正在获取网络页面数据 ..." << std::endl;
+		currentTime = cur;
+
 	}
 	auto dbPaths = argParser->getOptionValues( "-rdb" ); // 是否存在导出
 	auto writeFilePaths = argParser->getOptionValues( "-w" ); // 是否存在导出
 
 	if( dbPaths && writeFilePaths ) {
 		std::cout << u8"检测到 -rdb 与 -w 选项" << std::endl;
-		auto currentTime = std::chrono::system_clock::now( );
 		interfacePlugsType::Vector_INovelInfoSPtr novelInfoS;
 		for( auto &str : *dbPaths ) {
 			std::cout << u8"检测路径 " << str << std::endl;
@@ -163,28 +173,38 @@ int main( int argc, char *argv[ ] ) {
 				, [&currentTime]( ) {
 					auto cur = std::chrono::system_clock::now( );
 					auto sep = cur - currentTime;
-					auto count = std::chrono::duration_cast< std::chrono::seconds >( sep ).count( );
-					if( count < 2 )
+					auto second = std::chrono::duration_cast< std::chrono::seconds >( sep ).count( );
+					if( second < 2 )
 						return;
 					std::cout << "正在读取数据库" << std::endl;
 					currentTime = cur;
 				} );
 			if( novelInfoSPtrShared ) {
 				std::cout << u8"剔除相同小说 " << str << std::endl;
-				*novelInfoSPtrShared = NovelDBJob::identical( *novelInfoSPtrShared );
+				*novelInfoSPtrShared = NovelDBJob::identical( *novelInfoSPtrShared
+					, [&currentTime]( ) {
+						auto cur = std::chrono::system_clock::now( );
+						auto sep = cur - currentTime;
+						auto second = std::chrono::duration_cast< std::chrono::seconds >( sep ).count( );
+						if( second < 2 )
+							return;
+						std::cout << "正在剔除相同小说" << std::endl;
+						currentTime = cur;
+					} );
 				std::cout << u8"剔除相同小说完毕 " << str << std::endl;
 				novelInfoS.insert( novelInfoS.begin( ), novelInfoSPtrShared->begin( ), novelInfoSPtrShared->end( ) );
 			}
 		}
 		std::cout << u8"数据库读取完毕" << std::endl;
-		std::cout << u8"检测 -in 与 -inf 选项" << std::endl;
 		// 忽略选项
 		std::vector< QString > ignoreNames;
 		auto inNameKeys = argParser->getOptionValues( "-in" ); // 忽略名称
 		auto inNameFiles = argParser->getOptionValues( "-inf" ); // 忽略文件路径
-		if( inNameKeys )
+		if( inNameKeys ) {
+			std::cout << u8"检测 -in 选项" << std::endl;
 			for( auto str : *inNameKeys )
 				ignoreNames.emplace_back( QString::fromLocal8Bit( str ) );
+		}
 
 		ignoreNames = vectorStrAdjustSubStr( ignoreNames );
 		if( inNameFiles ) {
@@ -207,19 +227,46 @@ int main( int argc, char *argv[ ] ) {
 				, [&currentTime]( ) {
 					auto cur = std::chrono::system_clock::now( );
 					auto sep = cur - currentTime;
-					auto count = std::chrono::duration_cast< std::chrono::seconds >( sep ).count( );
-					if( count < 2 )
+					auto second = std::chrono::duration_cast< std::chrono::seconds >( sep ).count( );
+					if( second < 2 )
 						return;
 					std::cout << "正在删除子字符串关键字" << std::endl;
 					currentTime = cur;
 				} );
 		}
-
-		auto novelHostMap = NovelDBJob::decompose( novelInfoS );
-		for( auto &str : *writeFilePaths )
+		std::cout << "开始分解小说到域名" << std::endl;
+		auto novelHostMap = NovelDBJob::decompose( novelInfoS
+			, [&currentTime]( ) {
+				auto cur = std::chrono::system_clock::now( );
+				auto sep = cur - currentTime;
+				auto second = std::chrono::duration_cast< std::chrono::seconds >( sep ).count( );
+				if( second < 2 )
+					return;
+				std::cout << "正在分解小说到域名" << std::endl;
+				currentTime = cur;
+			} );
+		std::cout << "开始写入小说到文件" << std::endl;
+		for( auto &str : *writeFilePaths ) {
 			for( auto iterator = novelHostMap.begin( ), end = novelHostMap.end( ); iterator != end; ++iterator )
-				for( auto vit = iterator->second->begin( ), ven = iterator->second->end( ); vit != ven; ++vit )
-					NovelDBJob::writeFile( QString::fromStdString( str ), iterator->first, vit->first, *vit->second );
+				for( auto vit = iterator->second->begin( ), ven = iterator->second->end( ); vit != ven; ++vit ) {
+					QString writePath;
+					writePath.append( str ).append( QDir::separator( ) ).append( iterator->first );
+					std::cout << "\t写入目录 " << writePath.toStdString( ).c_str( ) << std::endl;
+					NovelDBJob::writeFile( QString::fromStdString( str )
+						, iterator->first
+						, vit->first
+						, *vit->second
+						, [&currentTime]( ) {
+							auto cur = std::chrono::system_clock::now( );
+							auto sep = cur - currentTime;
+							auto second = std::chrono::duration_cast< std::chrono::seconds >( sep ).count( );
+							if( second < 2 )
+								return;
+							std::cout << "正在写入文件" << std::endl;
+							currentTime = cur;
+						} );
+				}
+		}
 
 	}
 	return 0;

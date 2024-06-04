@@ -291,6 +291,7 @@ Vector_INovelInfoSPtr RequestNet::formHtmlGetTypePageNovels( const interfacePlug
 	};
 
 	cylHtmlTools::HtmlWorkThread thread( nullptr, currentThreadRun, nullptr );
+	thread.start(  );
 	while( thread.isRun( ) )
 		qApp->processEvents( );
 	return result;

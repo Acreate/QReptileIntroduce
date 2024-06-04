@@ -35,15 +35,17 @@ public:// - 静态方法
 	/// 剔除相同
 	/// </summary>
 	/// <param name="infos">剔除列表</param>
+	/// <param name="run">正在工作时，调用该函数</param>
 	/// <returns>剔除完毕的列表</returns>
-	static NovelInfoVector identical( const NovelInfoVector &infos );
+	static NovelInfoVector identical( const NovelInfoVector &infos, const std::function< void( ) > &run );
 	/// <summary>
 	/// 分解列表<br/>
 	///	网站域名为 key - 网页类型与小说列表组成的 pair 成为 value
 	/// </summary>
 	/// <param name="infos">分解列表</param>
+	/// <param name="call_back">当进行工作时候回调该函数</param>
 	/// <returns>分解返回</returns>
-	static NovelHostMap decompose( const NovelInfoVector &infos );
+	static NovelHostMap decompose( const NovelInfoVector &infos, const std::function< void( ) > &call_back );
 	/// <summary>
 	/// 写入数据库
 	/// </summary>
@@ -67,8 +69,9 @@ public:// - 静态方法
 	/// </summary>
 	/// <param name="writeFilePath">写入路径</param>
 	/// <param name="infos">待写入列表</param>
+	/// <param name="run">线程工作当中时，会调用该函数</param>
 	/// <returns>写入列表-完成排序</returns>
-	static NovelInfoVector writeFile( const QString &writeFilePath, const NovelInfoVector &infos );
+	static NovelInfoVector writeFile( const QString &writeFilePath, const NovelInfoVector &infos, const std::function< void( ) > &run );
 
 	/// <summary>
 	/// 写入小说
@@ -76,8 +79,9 @@ public:// - 静态方法
 	/// <param name="root_path">根路径</param>
 	/// <param name="novel_host">网站域名-子目录</param>
 	/// <param name="infos">写入小说</param>
+	/// <param name="run">线程工作当中时，会调用该函数</param>
 	/// <returns>已经排序的小说</returns>
-	static NovelInfoVector writeFile( const QString &root_path, const QString &novel_host, const NovelInfoVector &infos );
+	static NovelInfoVector writeFile( const QString &root_path, const QString &novel_host, const NovelInfoVector &infos, const std::function< void( ) > &run );
 	/// <summary>
 	/// 写入小说
 	/// </summary>
@@ -85,8 +89,9 @@ public:// - 静态方法
 	/// <param name="novel_host">网站域名-次目录</param>
 	/// <param name="novel_type">小说类型-次目录下的文件名</param>
 	/// <param name="infos">写入小说</param>
+	/// <param name="run">线程工作当中时，会调用该函数</param>
 	/// <returns>已经排序的小说</returns>
-	static NovelInfoVector writeFile( const QString &root_path, const QString &novel_host, const QString &novel_type, const NovelInfoVector &infos );
+	static NovelInfoVector writeFile( const QString &root_path, const QString &novel_host, const QString &novel_type, const NovelInfoVector &infos, const std::function< void( ) > &run );
 	/// <summary>
 	/// 删除列表当中指定子名称的列表( aa 与 关键字 a， 结果为删除 aa 名称小说) 
 	/// </summary>

@@ -235,21 +235,33 @@ NovelDBJob::NovelInfoVector NovelDBJob::sort( const NovelInfoVector &infos ) {
 	auto resultVector = NovelDBJob::NovelInfoVector( result.begin( ), result.end( ) );
 	return resultVector;
 }
-NovelDBJob::NovelInfoVector NovelDBJob::identical( const NovelInfoVector &infos ) {
+NovelDBJob::NovelInfoVector NovelDBJob::identical( const NovelInfoVector &infos, const std::function< void( ) > &run ) {
 	std::list< interfacePlugsType::INovelInfo_Shared > result;
-	interfacePlugsType::HtmlDocString urlLeft;
-	interfacePlugsType::HtmlDocString urlRight;
-	for( auto &novelSPtr : infos ) {
-		if( novelSPtr.get( )->getNovelUrl( &urlLeft ) ) {
-			auto iterator = result.begin( ), end = result.end( );
-			for( ; iterator != end; ++iterator )
-				if( iterator->get( )->getNovelUrl( &urlRight ) )
-					if( urlLeft == urlRight )
-						break;
-			if( iterator == end )
-				result.emplace_back( novelSPtr );
+
+	cylHtmlTools::HtmlWorkThread thread;
+	thread.setCurrentThreadRun( [&infos,&result]( ) {
+		interfacePlugsType::HtmlDocString urlLeft;
+		interfacePlugsType::HtmlDocString urlRight;
+		for( auto &novelSPtr : infos ) {
+			if( novelSPtr.get( )->getNovelUrl( &urlLeft ) ) {
+				auto iterator = result.begin( ), end = result.end( );
+				for( ; iterator != end; ++iterator )
+					if( iterator->get( )->getNovelUrl( &urlRight ) )
+						if( urlLeft == urlRight )
+							break;
+				if( iterator == end )
+					result.emplace_back( novelSPtr );
+			}
 		}
+
+	} );
+	thread.start( );
+	auto instance = qApp;
+	while( thread.isRun( ) ) {
+		instance->processEvents( );
+		run( );
 	}
+
 	auto resultVector = NovelDBJob::NovelInfoVector( result.begin( ), result.end( ) );
 	return resultVector;
 }
@@ -312,10 +324,20 @@ inline void insterNovelHostMap( NovelDBJob::NovelHostMap &inster_map, const inte
 	insterNovelHostMap( inster_map, url.host( ), novel_info_shared );
 }
 
-NovelDBJob::NovelHostMap NovelDBJob::decompose( const NovelInfoVector &infos ) {
+NovelDBJob::NovelHostMap NovelDBJob::decompose( const NovelInfoVector &infos, const std::function< void( ) > &call_back ) {
 	NovelDBJob::NovelHostMap result;
-	for( auto &inoveShared : infos )
-		insterNovelHostMap( result, inoveShared );
+	cylHtmlTools::HtmlWorkThread thread;
+	thread.setCurrentThreadRun( [&infos,&result]( ) {
+
+		for( auto &inoveShared : infos )
+			insterNovelHostMap( result, inoveShared );
+	} );
+	thread.start( );
+	auto instance = qApp;
+	while( thread.isRun( ) ) {
+		instance->processEvents( );
+		call_back( );
+	}
 	return result;
 }
 size_t NovelDBJob::writeDB( OStream *thisOStream, const QString &outPath, const QUrl &url, const NovelInfoVector &saveNovelInfos, const std::function< bool( const std::chrono::system_clock::time_point::duration & ) > &run ) {
@@ -562,24 +584,33 @@ NovelDBJob::NovelInfoVector_Shared NovelDBJob::readDB( OStream *thisOStream, con
 	return nullptr;
 }
 
-NovelDBJob::NovelInfoVector NovelDBJob::writeFile( const QString &writeFilePath, const NovelInfoVector &infos ) {
-	NovelInfoVector result = NovelDBJob::identical( infos );
-	result = NovelDBJob::sort( result );
-	IOFile ioFile( writeFilePath, result );
-	ioFile.writeNoveInfoListToFile( );
+NovelDBJob::NovelInfoVector NovelDBJob::writeFile( const QString &writeFilePath, const NovelInfoVector &infos, const std::function< void( ) > &run ) {
+	NovelInfoVector result = NovelDBJob::identical( infos, run );
+	cylHtmlTools::HtmlWorkThread thread;
+	thread.setCurrentThreadRun( [&result,writeFilePath ]( ) {
+		result = NovelDBJob::sort( result );
+		IOFile ioFile( writeFilePath, result );
+		ioFile.writeNoveInfoListToFile( );
+	} );
+	thread.start( );
+	auto instance = qApp;
+	while( thread.isRun( ) ) {
+		instance->processEvents( );
+		run( );
+	}
 	return result;
 }
-NovelDBJob::NovelInfoVector NovelDBJob::writeFile( const QString &root_path, const QString &novel_host, const NovelInfoVector &infos ) {
-	NovelInfoVector result = NovelDBJob::identical( infos );
+NovelDBJob::NovelInfoVector NovelDBJob::writeFile( const QString &root_path, const QString &novel_host, const NovelInfoVector &infos, const std::function< void( ) > &run ) {
+	NovelInfoVector result = NovelDBJob::identical( infos, run );
 	QString writeFilePath( u8"%1%2%3" );
 	writeFilePath = writeFilePath.arg( root_path ).arg( QDir::separator( ) ).arg( novel_host );
-	return writeFile( writeFilePath, infos );
+	return writeFile( writeFilePath, infos, run );
 }
-NovelDBJob::NovelInfoVector NovelDBJob::writeFile( const QString &root_path, const QString &novel_host, const QString &novel_type, const NovelInfoVector &infos ) {
-	NovelInfoVector result = NovelDBJob::identical( infos );
+NovelDBJob::NovelInfoVector NovelDBJob::writeFile( const QString &root_path, const QString &novel_host, const QString &novel_type, const NovelInfoVector &infos, const std::function< void( ) > &run ) {
+	NovelInfoVector result = NovelDBJob::identical( infos, run );
 	QString writeFilePath( u8"%1%2%3%2%4.txt" );
 	writeFilePath = writeFilePath.arg( root_path ).arg( QDir::separator( ) ).arg( novel_host ).arg( novel_type );
-	return writeFile( writeFilePath, infos );
+	return writeFile( writeFilePath, infos, run );
 }
 
 NovelDBJob::NovelInfoVector NovelDBJob::removeSubName( const NovelInfoVector &infos, const std::vector< interfacePlugsType::HtmlDocString > &remove_name_s ) {
