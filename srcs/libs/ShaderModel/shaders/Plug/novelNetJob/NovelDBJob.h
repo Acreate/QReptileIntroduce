@@ -61,7 +61,7 @@ public:// - 静态方法
 	/// <param name="outPath">目标根目录</param>
 	/// <param name="run">线程工作当中时，会调用该函数</param>
 	/// <returns>写入个数</returns>
-	static NovelInfoVector_Shared readDB( OStream *thisOStream, const QString &outPath, const std::function< bool( const std::chrono::system_clock::time_point::duration & ) > &run );
+	static NovelInfoVector_Shared readDB( OStream *thisOStream, const QString &outPath, const std::function< void( ) > &run );
 	/// <summary>
 	/// 写入小说列表
 	/// </summary>
@@ -87,6 +87,21 @@ public:// - 静态方法
 	/// <param name="infos">写入小说</param>
 	/// <returns>已经排序的小说</returns>
 	static NovelInfoVector writeFile( const QString &root_path, const QString &novel_host, const QString &novel_type, const NovelInfoVector &infos );
+	/// <summary>
+	/// 删除列表当中指定子名称的列表( aa 与 关键字 a， 结果为删除 aa 名称小说) 
+	/// </summary>
+	/// <param name="infos">校验列表</param>
+	/// <param name="remove_name_s">提供关键字的列表</param>
+	/// <returns>删除完毕的列表</returns>
+	static NovelInfoVector removeSubName( const NovelInfoVector &infos, const std::vector< interfacePlugsType::HtmlDocString > &remove_name_s );
+	/// <summary>
+	/// 删除列表当中指定子名称的列表( aa 与 关键字 a， 结果为删除 aa 名称小说) 
+	/// </summary>
+	/// <param name="infos">校验列表</param>
+	/// <param name="remove_name_s">提供关键字的列表</param>
+	/// <param name="call_function">工作时候会调用该函数</param>
+	/// <returns>删除完毕的列表</returns>
+	static NovelInfoVector removeSubName( const NovelInfoVector &infos, const std::unordered_map< size_t, std::shared_ptr< std::vector< interfacePlugsType::HtmlDocString > > > &remove_name_s, const std::function< void( ) > &call_function );
 };
 
 

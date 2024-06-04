@@ -37,7 +37,8 @@ private: // - 流
 	OStream *oStream; // 输入流-程序输出到该流中，显示信息
 private: // 配置
 	QStringList getTypeNamelist; // 获取的小说类型列表
-	QString outPath; // 写入路径
+	QString outPath; // 输出路径
+	QString inPath; // 输入路径
 
 private: //-静态成员
 	static QStringList userAgentHeaderList; // 所有的浏览器 UserAgentHeader
@@ -103,6 +104,10 @@ public: // 类的独有属性
 	/// </summary>
 	/// <returns>url</returns>
 	QString getUrl( ) const;
+
+	const QString & getInPath( ) const { return inPath; }
+	void setInPath( const QString &in_path ) { inPath = in_path; }
+
 	/// <summary>
 	/// 设置写入路径
 	/// </summary>

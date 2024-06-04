@@ -41,18 +41,18 @@ public: // - get
 	const interfacePlugsType::HtmlDocString & getUpdateTime( ) const { return updateTime; }
 	const interfacePlugsType::HtmlDocString & getUrl( ) const { return url; }
 
-	const QString & getQStringAuthor( ) const { return QString::fromStdWString( author ); }
-	const QString & getQStringFormat( ) const { return QString::fromStdWString( format ); }
-	const QString & getQStringInfo( ) const { return QString::fromStdWString( info ); }
-	const QString & getQStringLastItem( ) const { return QString::fromStdWString( lastItem ); }
-	const QString & getQStringLastRequestTime( ) const { return QString::fromStdWString( lastRequestTime ); }
-	const QString & getQStringLastRequestTimeFormat( ) const { return QString::fromStdWString( lastRequestTimeFormat ); }
-	const QString & getQStringName( ) const { return QString::fromStdWString( name ); }
-	const QString & getQStringRootUrl( ) const { return QString::fromStdWString( rootUrl ); }
-	const QString & getQStringTypeName( ) const { return QString::fromStdWString( typeName ); }
-	const QString & getQStringTypePageUrl( ) const { return QString::fromStdWString( typePageUrl ); }
-	const QString & getQStringUpdateTime( ) const { return QString::fromStdWString( updateTime ); }
-	const QString & getQStringUrl( ) const { return QString::fromStdWString( url ); }
+	QString getQStringAuthor( ) const { return QString::fromStdWString( author ); }
+	QString getQStringFormat( ) const { return QString::fromStdWString( format ); }
+	QString getQStringInfo( ) const { return QString::fromStdWString( info ); }
+	QString getQStringLastItem( ) const { return QString::fromStdWString( lastItem ); }
+	QString getQStringLastRequestTime( ) const { return QString::fromStdWString( lastRequestTime ); }
+	QString getQStringLastRequestTimeFormat( ) const { return QString::fromStdWString( lastRequestTimeFormat ); }
+	QString getQStringName( ) const { return QString::fromStdWString( name ); }
+	QString getQStringRootUrl( ) const { return QString::fromStdWString( rootUrl ); }
+	QString getQStringTypeName( ) const { return QString::fromStdWString( typeName ); }
+	QString getQStringTypePageUrl( ) const { return QString::fromStdWString( typePageUrl ); }
+	QString getQStringUpdateTime( ) const { return QString::fromStdWString( updateTime ); }
+	QString getQStringUrl( ) const { return QString::fromStdWString( url ); }
 public: // - set
 	void setAdditionalData( void *const additional_data ) { additionalData = additional_data; }
 	void setAuthor( const interfacePlugsType::HtmlDocString &author ) { this->author = author; }

@@ -89,53 +89,46 @@ Map_HtmlStrK_HtmlStrV * RequestNet::formHtmlGetTypeTheUrls( const interfacePlugs
 		HtmlStringTools::removeBothSpace( removeBothSpaceHtmlText );
 		if( removeBothSpaceHtmlText.size( ) == 0 )
 			break;
-		HtmlWorkThread< std::shared_ptr< HtmlString > > thread;
+		HtmlWorkThread thread;
 		auto stdWString( std::make_shared< HtmlString >( removeBothSpaceHtmlText ) );
 		auto result = std::make_shared< Map_HtmlStrK_HtmlStrV >( );
-		thread.setData( stdWString );
-		thread.setCurrentThreadRun( [&result,&stdWString, this,&url](
-			const HtmlWorkThread< std::shared_ptr< HtmlString > > *html_work_thread
-			, const std::thread *run_std_cpp_thread
-			, std::mutex *html_work_thread_mutex
-			, std::mutex *std_cpp_thread_mutex
-			, std::shared_ptr< HtmlString > &data
-			, const time_t *startTime ) {
-				auto htmlDoc = cylHtmlTools::HtmlDoc::parse( stdWString );
-				if( !htmlDoc.get( ) ) {
-					auto msg = QString( "%1 : %2" ).arg( QString::fromStdWString( url ) ).arg( QString( u8" HtmlDoc::parse 异常，登出" ) );
-					OStream::anyDebugOut( thisOStream, msg, __FILE__, __LINE__, __FUNCTION__ );
-					return;
-				}
+		thread.setCurrentThreadRun( [&result,&stdWString, this,&url]( ) {
+			auto htmlDoc = cylHtmlTools::HtmlDoc::parse( stdWString );
+			if( !htmlDoc.get( ) ) {
+				auto msg = QString( "%1 : %2" ).arg( QString::fromStdWString( url ) ).arg( QString( u8" HtmlDoc::parse 异常，登出" ) );
+				OStream::anyDebugOut( thisOStream, msg, __FILE__, __LINE__, __FUNCTION__ );
+				return;
+			}
 
-				htmlDoc->analysisBrotherNode( );
-				auto xpath = cylHtmlTools::XPath( instance_function::NovelNodeXPathInfo::novels_root_get_type_xpath );
+			htmlDoc->analysisBrotherNode( );
+			auto xpath = cylHtmlTools::XPath( instance_function::NovelNodeXPathInfo::novels_root_get_type_xpath );
 
-				auto htmlNodeSPtrShared = htmlDoc->getHtmlNodeRoots( );
-				auto vectorHtmlNodeSPtrShared = xpath.buider( htmlNodeSPtrShared );
-				if( !vectorHtmlNodeSPtrShared ) {
-					auto msg = QString( "%1 : %2 " ).arg( QString::fromStdWString( url ) ).arg( QString( u8" xpath 异常，登出" ) );
-					OStream::anyDebugOut( thisOStream, msg, __FILE__, __LINE__, __FUNCTION__ );
-					return;
+			auto htmlNodeSPtrShared = htmlDoc->getHtmlNodeRoots( );
+			auto vectorHtmlNodeSPtrShared = xpath.buider( htmlNodeSPtrShared );
+			if( !vectorHtmlNodeSPtrShared ) {
+				auto msg = QString( "%1 : %2 " ).arg( QString::fromStdWString( url ) ).arg( QString( u8" xpath 异常，登出" ) );
+				OStream::anyDebugOut( thisOStream, msg, __FILE__, __LINE__, __FUNCTION__ );
+				return;
+			}
+			auto vectorIterator = vectorHtmlNodeSPtrShared->begin( );
+			auto vectorEnd = vectorHtmlNodeSPtrShared->end( );
+			HtmlDocString hrefKey = L"href";
+			for( ; vectorIterator != vectorEnd; ++vectorIterator ) {
+				auto element = vectorIterator->get( );
+				auto unorderedMap = element->findAttribute( [&]( const HtmlString &first, const HtmlString &scen ) ->bool {
+					if( HtmlStringTools::equRemoveSpaceOverHtmlString( first, hrefKey ) )
+						return true;
+					return false;
+				} );
+				if( unorderedMap ) {
+					auto key = *element->getNodeIncludeContentText( );
+					auto value = unorderedMap->at( hrefKey );
+					QString qulr = QString( u8"%1%2" ).arg( GET_URL ).arg( value.substr( 1, value.size( ) - 2 ) );
+					value = qulr.toStdWString( );
+					result->emplace( key, value );
 				}
-				auto vectorIterator = vectorHtmlNodeSPtrShared->begin( );
-				auto vectorEnd = vectorHtmlNodeSPtrShared->end( );
-				HtmlDocString hrefKey = L"href";
-				for( ; vectorIterator != vectorEnd; ++vectorIterator ) {
-					auto element = vectorIterator->get( );
-					auto unorderedMap = element->findAttribute( [&]( const HtmlString &first, const HtmlString &scen ) ->bool {
-						if( HtmlStringTools::equRemoveSpaceOverHtmlString( first, hrefKey ) )
-							return true;
-						return false;
-					} );
-					if( unorderedMap ) {
-						auto key = *element->getNodeIncludeContentText( );
-						auto value = unorderedMap->at( hrefKey );
-						QString qulr = QString( u8"%1%2" ).arg( GET_URL ).arg( value.substr( 1, value.size( ) - 2 ) );
-						value = qulr.toStdWString( );
-						result->emplace( key, value );
-					}
-				}
-			} );
+			}
+		} );
 		thread.start( );
 		while( !thread.isFinish( ) )
 			qApp->processEvents( );
@@ -208,7 +201,7 @@ Vector_INovelInfoSPtr RequestNet::formHtmlGetTypePageNovels( const interfacePlug
 		}
 	}
 
-	cylHtmlTools::HtmlWorkThread< bool * >::Current_Thread_Run currentThreadRun = [&vectorHtmlNodeSPtrShared,&saveNovelInfos,&result, &type_name,&xpath,&request_url,&htmlText,&novelNodeXPathInfo,this]( const cylHtmlTools::HtmlWorkThread< bool * > *html_work_thread, const std::thread *run_std_cpp_thread, std::mutex *html_work_thread_mutex, std::mutex *std_cpp_thread_mutex, bool *data, const time_t *startTime ) {
+		std::function<void()> currentThreadRun = [&vectorHtmlNodeSPtrShared,&saveNovelInfos,&result, &type_name,&xpath,&request_url,&htmlText,&novelNodeXPathInfo,this]( ) {
 		auto vectorIterator = vectorHtmlNodeSPtrShared->begin( );
 		auto vectorEnd = vectorHtmlNodeSPtrShared->end( );
 		std::shared_ptr< INovelInfo > novelInfoPtr = nullptr;
@@ -321,7 +314,7 @@ Vector_INovelInfoSPtr RequestNet::formHtmlGetTypePageNovels( const interfacePlug
 		}
 	};
 	bool has = false;
-	cylHtmlTools::HtmlWorkThread< bool * > thread( nullptr, currentThreadRun, nullptr, &has );
+	cylHtmlTools::HtmlWorkThread thread( nullptr, currentThreadRun, nullptr );
 	thread.start( );
 	while( thread.isRun( ) )
 		qApp->processEvents( );

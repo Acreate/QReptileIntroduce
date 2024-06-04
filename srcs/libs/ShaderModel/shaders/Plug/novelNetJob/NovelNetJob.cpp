@@ -156,21 +156,7 @@ void NovelNetJob::initObjProperty( ) {
 	sslConfiguration.setPeerVerifyMode( QSslSocket::VerifyNone );
 	networkRequest.setSslConfiguration( sslConfiguration );
 	typeCount = 0;
-	QString ingFile( u8"%1%2%3%2%4%5" );
-	ingFile = ingFile.arg( Project_Plug_bin ).arg( QDir::separator( ) ).arg( u8"ini" ).arg( u8"get_type" ).arg( u8".txt" );
-	QFile qFile;
-	qFile.setFileName( ingFile );
-	if( qFile.open( QIODeviceBase::ReadOnly | QIODeviceBase::Text ) ) {
-		auto byteArray = qFile.readAll( );
-		QString fileContent( byteArray );
-		auto list = fileContent.split( "\n" );
-		for( auto &str : list ) {
-			auto normalQString = getNormalQString( str );
-			if( normalQString.isEmpty( ) )
-				continue;
-			getTypeNamelist << normalQString;
-		}
-	}
+
 	runStatus = 0;
 	HtmlDocString resultUrl;
 	size_t size = interfaceThisPtr->getRootUrl( &resultUrl );
@@ -286,6 +272,23 @@ QNetworkReply * NovelNetJob::requestGet( const QUrl &url, const size_t requestMa
 	return nullptr;
 }
 bool NovelNetJob::start( ) {
+
+	if( inPath.isEmpty( ) ) {
+		inPath.append( Project_Run_bin ).append( QDir::separator( ) ).append( "progress" ).append( QDir::separator( ) ).append( "ini" ).append( QDir::separator( ) ).append( "ReptileIntroduce.ini" );
+	}
+	QFile qFile;
+	qFile.setFileName( inPath );
+	if( qFile.open( QIODeviceBase::ReadOnly | QIODeviceBase::Text ) ) {
+		auto byteArray = qFile.readAll( );
+		QString fileContent( byteArray );
+		auto list = fileContent.split( "\n" );
+		for( auto &str : list ) {
+			auto normalQString = getNormalQString( str );
+			if( normalQString.isEmpty( ) )
+				continue;
+			getTypeNamelist << normalQString;
+		}
+	}
 	auto basicString = outPath.toStdWString( );
 	interfaceThisPtr->setOutPath( &basicString );
 	QUrl url = this->networkRequest.url( );
@@ -458,15 +461,14 @@ void NovelNetJob::novelPageInfoRequestEnd( const QString &type_name, const QUrl 
 void NovelNetJob::slots_requested_get_web_page_signals_end( const QUrl &url ) {
 	Vector_INovelInfoSPtr_Shared novelInfoSPtr( std::make_shared< Vector_INovelInfoSPtr >( ) );
 
-	cylHtmlTools::HtmlWorkThread< bool * >::Current_Thread_Run currentThreadRun = [&]( const cylHtmlTools::HtmlWorkThread< bool * > *html_work_thread, const std::thread *run_std_cpp_thread, std::mutex *html_work_thread_mutex, std::mutex *std_cpp_thread_mutex, bool *data, const time_t *startTime ) {
+	std::function< void( ) > currentThreadRun = [&]( ) {
 		auto mapIterator = typeNovelsMap.begin( );
 		auto mapEnd = typeNovelsMap.end( );
 		for( ; mapIterator != mapEnd; ++mapIterator )
 			for( auto &novel : *mapIterator->second )
 				novelInfoSPtr->emplace_back( novel );
 	};
-	bool has = true;
-	cylHtmlTools::HtmlWorkThread< bool * > thread( nullptr, currentThreadRun, nullptr, &has );
+	cylHtmlTools::HtmlWorkThread thread( nullptr, currentThreadRun, nullptr );
 	thread.start( );
 	auto nowTimeDuration = NovelNetJob::getCurrentTimeDuration( );
 	while( thread.isRun( ) ) {

@@ -24,6 +24,21 @@ int main( int argc, char *argv[ ] ) {
 
 	QString description = u8"小说爬虫命令行版本";
 	auto argParser = cylStd::ArgParser::parser( argc, argv );
+
+	QString typeFilePath;
+
+	auto novelTypeFile = argParser->getOptionValues( "-t" );
+	if( novelTypeFile )
+		for( auto &path : *novelTypeFile ) {
+			QFileInfo fileInfo( QString::fromStdString( path ) );
+			if( fileInfo.exists( ) && fileInfo.isFile( ) ) {
+				typeFilePath = fileInfo.absoluteFilePath( );
+				break;
+			}
+		}
+	if( typeFilePath.isEmpty( ) )
+		typeFilePath.append( Project_Run_bin ).append( QDir::separator( ) ).append( "progress" ).append( QDir::separator( ) ).append( "ini" ).append( QDir::separator( ) ).append( "ReptileIntroduce.ini" );
+
 	if( argParser->getOptionValues( "-v" ) ) {
 		std::cout << u8"输出命令行参数" << std::endl << version.toStdString( ).c_str( ) << std::endl;
 		auto map = argParser->getPairs( );
@@ -104,6 +119,7 @@ int main( int argc, char *argv[ ] ) {
 			count = novelNetJobs.size( );
 			for( ; iterator != end; ++iterator ) {
 				iterator->second->setPath( path );
+				iterator->second->setInPath( typeFilePath );
 				iterator->second->start( );
 			}
 		} else {
@@ -137,16 +153,68 @@ int main( int argc, char *argv[ ] ) {
 	auto writeFilePaths = argParser->getOptionValues( "-w" ); // 是否存在导出
 
 	if( dbPaths && writeFilePaths ) {
+		std::cout << u8"检测到 -rdb 与 -w 选项" << std::endl;
+		auto currentTime = std::chrono::system_clock::now( );
 		interfacePlugsType::Vector_INovelInfoSPtr novelInfoS;
 		for( auto &str : *dbPaths ) {
+			std::cout << u8"检测路径 " << str << std::endl;
 			auto novelInfoSPtrShared = NovelDBJob::readDB( nullptr
 				, QString::fromStdString( str )
-				, []( const std::chrono::time_point< std::chrono::system_clock >::duration &duration ) {
-					return true;
+				, [&currentTime]( ) {
+					auto cur = std::chrono::system_clock::now( );
+					auto sep = cur - currentTime;
+					auto count = std::chrono::duration_cast< std::chrono::seconds >( sep ).count( );
+					if( count < 2 )
+						return;
+					std::cout << "正在读取数据库" << std::endl;
+					currentTime = cur;
 				} );
-			novelInfoS.insert( novelInfoS.begin( ), novelInfoSPtrShared->begin( ), novelInfoSPtrShared->end( ) );
+			if( novelInfoSPtrShared ) {
+				std::cout << u8"剔除相同小说 " << str << std::endl;
+				*novelInfoSPtrShared = NovelDBJob::identical( *novelInfoSPtrShared );
+				std::cout << u8"剔除相同小说完毕 " << str << std::endl;
+				novelInfoS.insert( novelInfoS.begin( ), novelInfoSPtrShared->begin( ), novelInfoSPtrShared->end( ) );
+			}
 		}
-		novelInfoS = NovelDBJob::identical( novelInfoS );
+		std::cout << u8"数据库读取完毕" << std::endl;
+		std::cout << u8"检测 -in 与 -inf 选项" << std::endl;
+		// 忽略选项
+		std::vector< QString > ignoreNames;
+		auto inNameKeys = argParser->getOptionValues( "-in" ); // 忽略名称
+		auto inNameFiles = argParser->getOptionValues( "-inf" ); // 忽略文件路径
+		if( inNameKeys )
+			for( auto str : *inNameKeys )
+				ignoreNames.emplace_back( QString::fromLocal8Bit( str ) );
+
+		ignoreNames = vectorStrAdjustSubStr( ignoreNames );
+		if( inNameFiles ) {
+			std::cout << u8"检测到 -nnf 选项，正在读取文件内容" << std::endl;
+			auto getBuff = readIngoreNameFiles( *inNameFiles );
+			ignoreNames.insert( ignoreNames.end( ), getBuff.begin( ), getBuff.end( ) );
+		}
+		if( ignoreNames.size( ) > 0 ) {
+			std::cout << u8"发现存在子字符串过滤功能被启用。" << std::endl;
+			std::cout << u8"检测有效过滤子字符串" << std::endl;
+			ignoreNames = vectorStrAdjustSubStr( ignoreNames );
+			std::cout << u8"转换子字符串" << std::endl;
+			auto wIgnoreNames = converToWString( ignoreNames );
+			std::cout << u8"子字符串转换到长度映射表" << std::endl;
+			auto lenKeyMap = vectorStrToLenKeyMap( wIgnoreNames );
+			std::cout << u8"小说匹配长度映射表。并且删除匹配小说" << std::endl;
+			currentTime = std::chrono::system_clock::now( );
+			novelInfoS = NovelDBJob::removeSubName( novelInfoS
+				, lenKeyMap
+				, [&currentTime]( ) {
+					auto cur = std::chrono::system_clock::now( );
+					auto sep = cur - currentTime;
+					auto count = std::chrono::duration_cast< std::chrono::seconds >( sep ).count( );
+					if( count < 2 )
+						return;
+					std::cout << "正在删除子字符串关键字" << std::endl;
+					currentTime = cur;
+				} );
+		}
+
 		auto novelHostMap = NovelDBJob::decompose( novelInfoS );
 		for( auto &str : *writeFilePaths )
 			for( auto iterator = novelHostMap.begin( ), end = novelHostMap.end( ); iterator != end; ++iterator )
