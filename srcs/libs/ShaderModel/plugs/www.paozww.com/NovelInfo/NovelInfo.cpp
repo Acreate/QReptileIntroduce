@@ -55,7 +55,7 @@ size_t NovelInfo::getNovelTypeName( interfacePlugsType::HtmlDocString *result_ty
 	*result_type_name = typeName;
 	return result_type_name->size( );
 }
-#define SHARED_PTR_TO_RESULT( shared_ptr , default) ((shared_ptr.empty(  ))? ( QString::fromStdWString(shared_ptr  )):(default))
+#define SHARED_PTR_TO_RESULT( shared_ptr , default) (((shared_ptr).empty(  ))? (default):( QString::fromStdWString(shared_ptr  )))
 size_t NovelInfo::objToHtmlDocString( interfacePlugsType::HtmlDocString *result_serializable_html_doc_string ) {
 
 	QString result(

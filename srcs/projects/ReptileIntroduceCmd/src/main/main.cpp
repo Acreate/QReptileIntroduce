@@ -147,6 +147,13 @@ int main( int argc, char *argv[ ] ) {
 			novelInfoS.insert( novelInfoS.begin( ), novelInfoSPtrShared->begin( ), novelInfoSPtrShared->end( ) );
 		}
 		novelInfoS = NovelDBJob::identical( novelInfoS );
+		auto novelHostMap = NovelDBJob::decompose( novelInfoS );
+		for( auto &str : *writeFilePaths )
+			for( auto iterator = novelHostMap.begin( ), end = novelHostMap.end( ); iterator != end; ++iterator )
+				for( auto vit = iterator->second->begin( ), ven = iterator->second->end( ); vit != ven; ++vit )
+					NovelDBJob::writeFile( QString::fromStdString( str ), iterator->first, vit->first, *vit->second );
+
 	}
+	return 0;
 	return instance->exec( );
 }

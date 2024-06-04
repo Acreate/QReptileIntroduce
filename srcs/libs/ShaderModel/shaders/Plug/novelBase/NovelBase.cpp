@@ -49,7 +49,7 @@ size_t NovelBase::getNovelTypeName( interfacePlugsType::HtmlDocString *result_ty
 	return result_type_name->size( );
 }
 
-#define SHARED_PTR_TO_RESULT( shared_ptr , default) ((shared_ptr.empty(  ))? ( QString::fromStdWString(shared_ptr  )):(default))
+#define SHARED_PTR_TO_RESULT( shared_ptr , default) (((shared_ptr).empty(  ))? (default):( QString::fromStdWString(shared_ptr  )))
 size_t NovelBase::objToHtmlDocString( interfacePlugsType::HtmlDocString *result_serializable_html_doc_string ) {
 
 	QString result(
