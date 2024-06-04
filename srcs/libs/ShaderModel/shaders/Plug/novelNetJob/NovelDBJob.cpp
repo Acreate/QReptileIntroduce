@@ -679,7 +679,7 @@ NovelDBJob::NovelInfoVector NovelDBJob::removeSubName( const NovelInfoVector &in
 						break;
 					auto &&sharedPtr = remove_name_s.at( key );
 					for( auto &str : *sharedPtr )
-						if( cylHtmlTools::HtmlStringTools::findNextHtmlStringPotion( &name, name.length( ), &str, str.length( ) ) )
+						if( cylHtmlTools::HtmlStringTools::findNextHtmlStringPotion( &name, 0, &str ) )
 							return; // 小说当属匹配当前子字符串
 				}
 				writeMutex->lock( );

@@ -47,7 +47,6 @@ endif()
 
 copy_dir_path( ${PROJECT_NAME} "${CMAKE_CURRENT_LIST_DIR}/res/ini/progress/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/progress/" )
 copy_dir_path( ${PROJECT_NAME} "${CMAKE_CURRENT_LIST_DIR}/res/ini/web/txt" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/plugs/ini/" )
-copy_dir_path( ${PROJECT_NAME} "${CMAKE_CURRENT_LIST_DIR}/res/writeFile" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/writeFile/" )
 
 # 设置变量
 set( Cmake_Project_Name "${PROJECT_NAME}" )
