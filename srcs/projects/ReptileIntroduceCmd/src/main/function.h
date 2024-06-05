@@ -59,5 +59,21 @@ std::unordered_map< size_t, std::shared_ptr< std::vector< std::wstring > > > vec
 std::vector< std::wstring > converToWString( std::vector< QString > &str_vector );
 std::unordered_map< size_t, std::shared_ptr< std::vector< std::wstring > > > vectorStrToLenKeyMap( std::vector< std::wstring > &str_vector );
 
+/// <summary>
+/// 检测元素是否存在列表当中
+/// </summary>
+/// <typeparam name="t_value_type">列表元素类型</typeparam>
+/// <param name="vector">检测列表</param>
+/// <param name="value">检测值</param>
+/// <returns>存在返回 true</returns>
+template< class t_value_type >
+inline bool findVector( const std::vector< t_value_type > &vector, const t_value_type &value ) {
+	auto begin = vector.begin( );
+	auto end = vector.end( );
+	for( ; begin != end; ++begin )
+		if( value == *begin )
+			return true;
+	return false;
+}
 
 #endif // FUNCTION_H_H_HEAD__FILE__

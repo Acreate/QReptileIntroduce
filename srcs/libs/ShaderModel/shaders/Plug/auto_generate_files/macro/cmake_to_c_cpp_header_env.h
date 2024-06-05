@@ -11,7 +11,7 @@
 #define Project_Plug_bin u8"D:/userCodes/qt/QReptileIntroduce/builder/Debug_x64_MSVC/plugs"
 #define Cmake_Executable_Suffix u8".exe"
 #define Cmake_Shared_Library_Suffix u8".dll"
-#define project_type u8"STATIC_LIBRARY"
+#define project_type u8"SHARED_LIBRARY"
 
 #define Cache_Path_Dir u8"D:/userCodes/qt/QReptileIntroduce/builder/Debug_x64_MSVC/write_cache/"
 

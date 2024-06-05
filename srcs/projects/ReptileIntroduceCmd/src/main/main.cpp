@@ -8,6 +8,8 @@
 #include "plug/LoadPlug.h"
 #include "./function.h"
 #include <iostream>
+#include <QProcess>
+#include <QSharedMemory>
 
 #include "novelNetJob/NovelDBJob.h"
 int main( int argc, char *argv[ ] ) {
@@ -17,7 +19,8 @@ int main( int argc, char *argv[ ] ) {
 	std::wcout.imbue( locale );
 
 	QCoreApplication application( argc, argv );
-	auto *instance = qApp;
+	auto *instance = qApp;// 指定一个键，这个键用来标识共享内存区域
+
 	QString compilerString = getBuilderInfo( );
 
 	QString version = QString( "\nqt 版本 %1\n编译版本 %2\n程序位数: %3 " ).arg( qVersion( ) ).arg( compilerString ).arg( QString::number( QSysInfo::WordSize ) );
@@ -26,6 +29,9 @@ int main( int argc, char *argv[ ] ) {
 	auto argParser = cylStd::ArgParser::parser( argc, argv );
 
 	QString typeFilePath;
+
+	if( argParser->getOptionValues( "-name" ) )
+		std::cout << instance->applicationName( ).toStdString( ).c_str( ) << std::endl;
 
 	auto novelTypeFile = argParser->getOptionValues( "-t" );
 	if( novelTypeFile )
@@ -36,8 +42,10 @@ int main( int argc, char *argv[ ] ) {
 				break;
 			}
 		}
+	QString appPathDir = instance->applicationDirPath( );
+	QString appPath = instance->applicationFilePath( );
 	if( typeFilePath.isEmpty( ) )
-		typeFilePath.append( Project_Run_bin ).append( QDir::separator( ) ).append( "progress" ).append( QDir::separator( ) ).append( "ini" ).append( QDir::separator( ) ).append( "ReptileIntroduce.ini" );
+		typeFilePath.append( appPathDir ).append( QDir::separator( ) ).append( "progress" ).append( QDir::separator( ) ).append( "ini" ).append( QDir::separator( ) ).append( "ReptileIntroduce.ini" );
 
 	if( argParser->getOptionValues( "-v" ) ) {
 		std::cout << u8"输出命令行参数" << std::endl << version.toStdString( ).c_str( ) << std::endl;
@@ -49,10 +57,6 @@ int main( int argc, char *argv[ ] ) {
 		}
 		std::cout << "------------";
 	}
-
-	QString path = qApp->applicationDirPath( ) + QDir::separator( ) + "cmd_download_novels_info" + QDir::separator( );
-	if( argParser->getOptionValues( "-name" ) )
-		std::cout << instance->applicationName( ).toStdString( ).c_str( ) << std::endl;
 
 	if( argParser->getOptionValues( "-h" ) )
 		std::cout << "========="
@@ -69,87 +73,104 @@ int main( int argc, char *argv[ ] ) {
 			"\n"
 			"-url" "\t\t" u8"输出加载的插件指向的网络"
 			"\n"
+			"-name" "\t\t" u8"输出程序名称"
+			"\n"
 			"=========" << std::endl;
 	auto pathValues = argParser->getOptionValues( "-p" );
+	QString path = appPathDir + QDir::separator( ) + "cmd_download_novels_info" + QDir::separator( );
 	if( pathValues )
 		path = QString::fromStdString( pathValues->at( 0 ) );
-	auto optionValues = argParser->getOptionValues( "-l" );
-	std::unordered_map< QString, std::shared_ptr< NovelNetJob > > novelNetJobs;
-	size_t count = 0;
-	if( optionValues ) {
-		for( auto &value : *optionValues ) {
-			auto absoluteFilePath = QFileInfo( QString::fromStdString( value ) ).absoluteFilePath( );
-			auto mapEnd = novelNetJobs.end( );
-			if( std::find_if( novelNetJobs.begin( )
-				, mapEnd
-				, [&]( const std::pair< QString, std::shared_ptr< NovelNetJob > > &pair ) {
-					if( pair.first == absoluteFilePath )
-						return true;
-					return false;
-				} ) == mapEnd ) {
+	auto loadPathOption = argParser->getOptionValues( "-l" );
+	std::vector< QString > novelPlugPath;
 
-				auto pair = LoadPlug::getIRequestNetInterface( absoluteFilePath );
-				if( pair.second ) {
-					auto novelNetJob = std::make_shared< NovelNetJob >( nullptr, pair.first, pair.second );
-					QObject::connect( novelNetJob.get( )
-						, &NovelNetJob::endJob
-						, [&]( ) {
-							--count;
-						} );
+	if( loadPathOption ) {
+		auto startOption = argParser->getOptionValues( "-s" );
+		auto allStartOption = argParser->getOptionValues( "-as" );
+		if( allStartOption ) // 全部加载
+			for( auto &value : *loadPathOption ) {
+				auto absoluteFilePath = QFileInfo( QString::fromStdString( value ) ).absoluteFilePath( );
+				if( !findVector( novelPlugPath, absoluteFilePath ) )
+					novelPlugPath.emplace_back( absoluteFilePath ); // 存储
+			}
+		else if( startOption ) { // 选择加载
+			std::vector< QString > paths; // 全路径保存
+			auto startIterator = startOption->begin( );
+			auto startEnd = startOption->end( );
+			for( ; startIterator != startEnd; ++startIterator ) {
+				QFileInfo info( QString::fromLocal8Bit( *startIterator ) );
+				auto absPath = info.absoluteFilePath( );
+				if( !findVector( paths, absPath ) )
+					paths.emplace_back( absPath );
 
-					novelNetJobs.emplace( absoluteFilePath, novelNetJob );
+				for( auto &value : *loadPathOption ) {
+					auto absoluteFilePath = QFileInfo( QString::fromStdString( value ) ).absoluteFilePath( );
+					if( findVector( paths, absoluteFilePath ) && !findVector( novelPlugPath, absoluteFilePath ) )
+						// 不存在选择路径当中，需要直接跳过
+						novelPlugPath.emplace_back( absoluteFilePath ); // 存储
 				}
 			}
 		}
 	}
-
-	std::unordered_map< QString, std::shared_ptr< NovelNetJob > > runJobs;
-	if( novelNetJobs.size( ) != 0 ) {
-		if( argParser->getOptionValues( "-url" ) ) {
-			auto end = novelNetJobs.end( );
-			auto iterator = novelNetJobs.begin( );
-			for( ; iterator != end; ++iterator )
-				std::cout << iterator->second->getUrl( ).toStdString( ).c_str( ) << std::endl;
-		}
-		if( argParser->getOptionValues( "-as" ) ) {
-			auto end = novelNetJobs.end( );
-			auto iterator = novelNetJobs.begin( );
-			count = novelNetJobs.size( );
-			for( ; iterator != end; ++iterator )
-				runJobs.emplace( iterator->first, iterator->second );
-		} else {
-			auto runPaths = argParser->getOptionValues( "-s" );
-			if( runPaths ) {
-				auto end = novelNetJobs.end( );
-				for( auto startPath : *runPaths ) {
-					auto absoluteFilePath = QFileInfo( QString::fromStdString( startPath ) ).absoluteFilePath( );
-					auto iterator = novelNetJobs.begin( );
-					for( ; iterator != end; ++iterator )
-						if( iterator->first == absoluteFilePath ) {
-							iterator->second->setPath( path );
-							if( std::find_if( runJobs.begin( )
-								, runJobs.end( )
-								, [=]( std::pair< QString, std::shared_ptr< NovelNetJob > > it ) {
-									if( it.second == iterator->second )
-										return true;
-									return false;
-								} ) == runJobs.end( ) )
-								runJobs.emplace( iterator->first, iterator->second );
-						}
-				}
+	size_t count = novelPlugPath.size( );
+	auto urlOption = argParser->getOptionValues( "-url" );
+	if( count ) { // 除了收割爬虫，其他爬虫均有子程序进行
+		QStringList cmd;
+		for( size_t index = 1; index < count; ++index ) {
+			// 加载插件
+			QString plugFilePath = novelPlugPath.at( index );
+			auto subProcess = new QProcess;
+			if( urlOption )
+				cmd.append( " -url " );
+			cmd.append( " -l " );
+			cmd.append( plugFilePath );
+			cmd.append( " -s " );
+			cmd.append( plugFilePath );
+			if( pathValues ) {
+				cmd.append( " -p " );
+				cmd.append( path );
 			}
+			if( novelTypeFile ) {
+				cmd.append( " -t " );
+				cmd.append( typeFilePath );
+			}
+			QObject::connect( subProcess
+				, &QProcess::readyReadStandardOutput
+				, [=]( ) {
+					QString msg( subProcess->readAll( ) );
+					std::cout << msg.toStdString( ) << std::endl;
+				} );
+
+			QObject::connect( subProcess
+				, &QProcess::finished
+				, [=,&count]( ) {
+					subProcess->deleteLater( );
+					--count;
+				} );
+
+			subProcess->start( appPath, cmd );
+			cmd.clear( );
+
+		}
+
+		// 加载第一个插件
+		QString plugFilePath = novelPlugPath.front( );
+		auto interface = LoadPlug::getIRequestNetInterface( plugFilePath );
+		if( interface.second ) {
+			NovelNetJob *novelNetJob = new NovelNetJob( nullptr, interface.first, interface.second );
+			if( argParser->getOptionValues( "-url" ) )
+				std::cout << novelNetJob->getUrl( ).toStdString( ) << std::endl;
+			QObject::connect( novelNetJob
+				, &NovelNetJob::endJob
+				, [&count] {
+					--count;
+				} );
+			novelNetJob->setPath( path );
+			novelNetJob->setInPath( typeFilePath );
+			novelNetJob->start( );
 		}
 	}
-	count = runJobs.size( );
-	if( count > 0 )
-		for( auto nodeJob : runJobs ) {
-			nodeJob.second->setPath( path );
-			nodeJob.second->setInPath( typeFilePath );
-			nodeJob.second->start( );
-		}
-
 	auto currentTime = std::chrono::system_clock::now( );
-	while( count != 0 ) {
+	while( count ) {
 		instance->processEvents( );
 		auto cur = std::chrono::system_clock::now( );
 		auto sep = cur - currentTime;
@@ -267,8 +288,6 @@ int main( int argc, char *argv[ ] ) {
 						} );
 				}
 		}
-
 	}
-	return 0;
 	return instance->exec( );
 }
