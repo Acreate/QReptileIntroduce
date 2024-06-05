@@ -149,7 +149,6 @@ int main( int argc, char *argv[ ] ) {
 
 			subProcess->start( appPath, cmd );
 			cmd.clear( );
-
 		}
 
 		// 加载第一个插件
@@ -179,7 +178,6 @@ int main( int argc, char *argv[ ] ) {
 			continue;
 		std::cout << u8"正在获取网络页面数据 ..." << std::endl;
 		currentTime = cur;
-
 	}
 	auto dbPaths = argParser->getOptionValues( "-rdb" ); // 是否存在导出
 	auto writeFilePaths = argParser->getOptionValues( "-w" ); // 是否存在导出
@@ -289,5 +287,7 @@ int main( int argc, char *argv[ ] ) {
 				}
 		}
 	}
-	return instance->exec( );
+
+	//return instance->exec( );
+	return 0;
 }
