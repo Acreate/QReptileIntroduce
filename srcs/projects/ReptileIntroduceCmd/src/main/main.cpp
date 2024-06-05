@@ -242,35 +242,69 @@ int main( int argc, char *argv[ ] ) {
 
 	auto currentTime = std::chrono::system_clock::now( );
 	std::unordered_map< size_t, std::shared_ptr< std::vector< std::wstring > > > lenSubStrKeyMap;
-	// 忽略选项
-	std::vector< QString > ignoreNames;
-	auto inNameKeys = argParser->getOptionValues( "-in" ); // 忽略名称
-	auto inNameFiles = argParser->getOptionValues( "-inf" ); // 忽略文件路径
-	if( inNameKeys ) {
-		std::cout << u8"检测 -in 选项" << std::endl;
-		for( auto str : *inNameKeys )
-			ignoreNames.emplace_back( QString::fromLocal8Bit( str ) );
-	}
+	cylHtmlTools::HtmlWorkThread ingSubNameThread( nullptr
+		, [&]( ) {
+			// 忽略选项
+			std::vector< QString > ignoreSubNames;
+			auto inNameKeys = argParser->getOptionValues( "-isn" ); // 忽略名称
+			auto inNameFiles = argParser->getOptionValues( "-isnf" ); // 忽略文件路径
+			if( inNameKeys ) {
+				std::cout << u8"检测 -isn 选项" << std::endl;
+				for( auto str : *inNameKeys )
+					ignoreSubNames.emplace_back( QString::fromLocal8Bit( str ) );
+			}
 
-	ignoreNames = vectorStrAdjustSubStr( ignoreNames );
-	if( inNameFiles ) {
-		std::cout << u8"检测到 -inf 选项，正在读取文件内容" << std::endl;
-		auto getBuff = readIngoreNameFiles( *inNameFiles );
-		ignoreNames.insert( ignoreNames.end( ), getBuff.begin( ), getBuff.end( ) );
-	}
-	if( ignoreNames.size( ) > 0 ) {
-		std::cout << u8"发现存在子字符串过滤功能被启用。" << std::endl;
-		std::cout << u8"检测有效过滤子字符串" << std::endl;
-		ignoreNames = vectorStrAdjustSubStr( ignoreNames );
-		std::cout << u8"转换子字符串" << std::endl;
-		auto wIgnoreNames = converToWString( ignoreNames );
-		std::cout << u8"子字符串转换到长度映射表" << std::endl;
-		lenSubStrKeyMap = vectorStrToLenKeyMap( wIgnoreNames );
-		std::cout << u8"小说匹配长度映射表。并且删除匹配小说" << std::endl;
-		currentTime = std::chrono::system_clock::now( );
+			ignoreSubNames = vectorStrAdjustSubStr( ignoreSubNames );
+			if( inNameFiles ) {
+				std::cout << u8"检测到 -isnf 选项，正在读取文件内容" << std::endl;
+				auto getBuff = readIngoreNameFiles( *inNameFiles );
+				ignoreSubNames.insert( ignoreSubNames.end( ), getBuff.begin( ), getBuff.end( ) );
+			}
+			if( ignoreSubNames.size( ) > 0 ) {
+				std::cout << u8"发现存在子字符串过滤功能被启用。" << std::endl;
+				std::cout << u8"检测有效过滤子字符串" << std::endl;
+				ignoreSubNames = vectorStrAdjustSubStr( ignoreSubNames );
+				std::cout << u8"转换子字符串" << std::endl;
+				auto wIgnoreNames = converToWString( ignoreSubNames );
+				std::cout << u8"子字符串转换到长度映射表" << std::endl;
+				lenSubStrKeyMap = vectorStrToLenKeyMap( wIgnoreNames );
+				std::cout << u8"小说匹配长度映射表。并且删除匹配小说" << std::endl;
+				currentTime = std::chrono::system_clock::now( );
 
-	}
+			}
 
+		}
+		, nullptr );
+	ingSubNameThread.start( ); // 忽略文件读取线程
+
+	std::unordered_map< size_t, std::shared_ptr< std::vector< QString > > > lenEquStrKeyMap;
+	cylHtmlTools::HtmlWorkThread ingEquNameThread( nullptr
+		, [&]( ) {
+			// 忽略选项
+			std::vector< QString > ignoreEquNames;
+			auto inEquNameKeys = argParser->getOptionValues( "-ien" ); // 忽略名称
+			auto inEquNameFiles = argParser->getOptionValues( "-ienf" ); // 忽略文件路径
+			if( inEquNameKeys ) {
+				std::cout << u8"检测 -ien 选项" << std::endl;
+				for( auto str : *inEquNameKeys )
+					ignoreEquNames.emplace_back( QString::fromLocal8Bit( str ) );
+			}
+
+			ignoreEquNames = vectorStrAdjustSubStr( ignoreEquNames );
+			if( inEquNameFiles ) {
+				std::cout << u8"检测到 -ienf 选项，正在读取文件内容" << std::endl;
+				auto getBuff = readIngoreNameFiles( *inEquNameFiles );
+				ignoreEquNames.insert( ignoreEquNames.end( ), getBuff.begin( ), getBuff.end( ) );
+			}
+			if( ignoreEquNames.size( ) > 0 ) {
+				std::cout << u8"发现存在符串过滤功能被启用。" << std::endl;
+				std::cout << u8"去掉重复字符串" << std::endl;
+				ignoreEquNames = vectorStrduplicate( ignoreEquNames );
+				lenEquStrKeyMap = vectorStrToLenKeyMap( ignoreEquNames );
+			}
+		}
+		, nullptr );
+	ingEquNameThread.start( ); // 忽略文件读取线程
 
 	while( thread.isRun( ) )
 		instance->processEvents( );
@@ -290,7 +324,7 @@ int main( int argc, char *argv[ ] ) {
 					auto second = std::chrono::duration_cast< std::chrono::seconds >( sep ).count( );
 					if( second < 2 )
 						return;
-					std::cout << "正在读取数据库" << std::endl;
+					std::cout << u8"正在读取数据库" << std::endl;
 					currentTime = cur;
 				} );
 			if( novelInfoSPtrShared ) {
@@ -302,7 +336,7 @@ int main( int argc, char *argv[ ] ) {
 		}
 		std::cout << u8"数据库读取完毕" << std::endl;
 
-		std::cout << "开始分解小说到域名" << std::endl;
+		std::cout << u8"开始分解小说到域名" << std::endl;
 		auto novelHostMap = NovelDBJob::decompose( novelInfoS
 			, [&currentTime]( ) {
 				auto cur = std::chrono::system_clock::now( );
@@ -310,9 +344,29 @@ int main( int argc, char *argv[ ] ) {
 				auto second = std::chrono::duration_cast< std::chrono::seconds >( sep ).count( );
 				if( second < 2 )
 					return;
-				std::cout << "正在分解小说到域名" << std::endl;
+				std::cout << u8"正在分解小说到域名" << std::endl;
 				currentTime = cur;
 			} );
+		while( ingSubNameThread.isRun( ) ) {
+			std::cout << u8"等待忽略选项完成" << std::endl;
+			instance->processEvents( );
+		}
+		while( ingEquNameThread.isRun( ) ) {
+			std::cout << u8"等待相等选项完成" << std::endl;
+			instance->processEvents( );
+		}
+		if( lenEquStrKeyMap.size( ) > 0 )
+			novelInfoS = NovelDBJob::removeEquName( novelInfoS
+				, lenSubStrKeyMap
+				, [&currentTime]( ) {
+					auto cur = std::chrono::system_clock::now( );
+					auto sep = cur - currentTime;
+					auto second = std::chrono::duration_cast< std::chrono::seconds >( sep ).count( );
+					if( second < 2 )
+						return;
+					std::cout << u8"正在删除匹配的符串关键字" << std::endl;
+					currentTime = cur;
+				} );
 		if( lenSubStrKeyMap.size( ) > 0 )
 			novelInfoS = NovelDBJob::removeSubName( novelInfoS
 				, lenSubStrKeyMap
@@ -322,10 +376,10 @@ int main( int argc, char *argv[ ] ) {
 					auto second = std::chrono::duration_cast< std::chrono::seconds >( sep ).count( );
 					if( second < 2 )
 						return;
-					std::cout << "正在删除子字符串关键字" << std::endl;
+					std::cout << u8"正在删除子字符串关键字" << std::endl;
 					currentTime = cur;
 				} );
-		std::cout << "开始写入小说到文件" << std::endl;
+		std::cout << u8"开始写入小说到文件" << std::endl;
 		std::vector< cylHtmlTools::HtmlWorkThread * > threads;
 		for( auto &str : *writeFilePaths ) {
 			for( auto iterator = novelHostMap.begin( ), end = novelHostMap.end( ); iterator != end; ++iterator )
@@ -333,7 +387,7 @@ int main( int argc, char *argv[ ] ) {
 					cylHtmlTools::HtmlWorkThread *writeThread = new cylHtmlTools::HtmlWorkThread;
 					QString writePath;
 					writePath.append( str ).append( QDir::separator( ) ).append( iterator->first );
-					std::cout << "\t写入目录 " << writePath.toStdString( ).c_str( ) << std::endl;
+					std::cout << u8"\t写入目录 " << writePath.toStdString( ).c_str( ) << std::endl;
 					writeThread->setCurrentThreadRun( [=]( ) {
 						NovelDBJob::writeFile( QString::fromStdString( str ), iterator->first, vit->first, *vit->second );
 					} );
@@ -360,7 +414,7 @@ int main( int argc, char *argv[ ] ) {
 				++begin;
 				if( second < 2 )
 					continue;
-				std::cout << "正在写入文件" << std::endl;
+				std::cout << u8"正在写入文件" << std::endl;
 				currentTime = cur;
 			} while( begin != end );
 		} while( true );

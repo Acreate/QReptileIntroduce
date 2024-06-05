@@ -705,3 +705,45 @@ NovelDBJob::NovelInfoVector NovelDBJob::removeSubName( const NovelInfoVector &in
 	overThreadsWork( threads, call_function );
 	return result;
 }
+NovelDBJob::NovelInfoVector NovelDBJob::removeEquName( const NovelInfoVector &infos, const std::unordered_map< size_t, std::shared_ptr< std::vector< interfacePlugsType::HtmlDocString > > > &remove_name_s, const std::function< void( ) > &call_function ) {
+	std::mutex *writeMutex = new std::mutex; // 数组写入锁
+	NovelDBJob::NovelInfoVector result;
+	std::vector< cylHtmlTools::HtmlWorkThread * > threads;
+	std::vector< size_t > mapLenKeyS; // 存储所有的 key
+	for( auto it = remove_name_s.begin( ), en = remove_name_s.end( ); it != en; ++it )
+		mapLenKeyS.emplace_back( it->first );
+	std::sort( mapLenKeyS.begin( ), mapLenKeyS.end( ) );
+
+	for( auto &node : infos ) {
+		cylHtmlTools::HtmlWorkThread *thread = new cylHtmlTools::HtmlWorkThread;
+		thread->setCurrentThreadRun( [
+				node,writeMutex
+				,&mapLenKeyS,&remove_name_s,&result
+			]( ) ->void {
+				// todo : ......
+				interfacePlugsType::HtmlDocString name;
+				if( !node->getNovelName( &name ) )
+					return;
+				size_t length = name.length( );
+				for( auto &key : mapLenKeyS ) {
+					if( length > key )
+						break;
+					if( length != key )
+						continue;
+					auto &&sharedPtr = remove_name_s.at( key );
+					for( auto &str : *sharedPtr )
+						if( cylHtmlTools::HtmlStringTools::equRemoveSpaceOverHtmlString( name, str ) )
+							return; // 小说当属匹配当前子字符串
+				}
+				writeMutex->lock( );
+				result.emplace_back( node );
+				writeMutex->unlock( );
+			} );
+		thread->start( );
+		threads.emplace_back( thread );
+		call_function( );
+		checkThreadsWork( threads, call_function, 8 );
+	}
+	overThreadsWork( threads, call_function );
+	return result;
+}

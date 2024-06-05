@@ -103,6 +103,14 @@ public:// - 静态方法
 	/// <param name="call_function">工作时候会调用该函数</param>
 	/// <returns>删除完毕的列表</returns>
 	static NovelInfoVector removeSubName( const NovelInfoVector &infos, const std::unordered_map< size_t, std::shared_ptr< std::vector< interfacePlugsType::HtmlDocString > > > &remove_name_s, const std::function< void( ) > &call_function );
+	/// <summary>
+	/// 删除列表当中指定名称的列表( aa 与 关键字 a， 保留 aa， 如果存在 a 名称， 则删除 a) 
+	/// </summary>
+	/// <param name="infos">校验列表</param>
+	/// <param name="remove_name_s">提供关键字的列表</param>
+	/// <param name="call_function">工作时候会调用该函数</param>
+	/// <returns>删除完毕的列表</returns>
+	static NovelInfoVector removeEquName( const NovelInfoVector &infos, const std::unordered_map< size_t, std::shared_ptr< std::vector< interfacePlugsType::HtmlDocString > > > &remove_name_s, const std::function< void( ) > &call_function );
 };
 
 
