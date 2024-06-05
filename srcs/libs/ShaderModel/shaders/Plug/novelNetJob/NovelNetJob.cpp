@@ -451,7 +451,7 @@ void NovelNetJob::novelPageInfoRequestEnd( const QString &type_name, const QUrl 
 	writeFilePath = writeFilePath.arg( QDir::separator( ) ).arg( outPath ).arg( u8"txt_out" ).arg( rootUrl ).arg( type_name ).arg( u8".txt" );
 
 	Vector_INovelInfoSPtr_Shared infos = typeNovelsMap.at( type_name );
-	auto novelInfos = NovelDBJob::writeFile( writeFilePath, *infos, []( ) { } );
+	auto novelInfos = NovelDBJob::writeFile( writeFilePath, *infos );
 	OStream::anyDebugOut( oStream, QString( u8"================\n\t路径: (%1)\n\t写入数量 : [%2]\n\t类型计数 : [%3]\n================\n" ).arg( writeFilePath ).arg( novelInfos.size( ) ).arg( typeCount ) );
 	interfaceThisPtr->novelTypeEnd( root_url.toStdWString( ), type_name.toStdWString( ), url.toString( ).toStdWString( ), *infos );
 	releaseMemory( );

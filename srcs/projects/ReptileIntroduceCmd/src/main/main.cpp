@@ -9,6 +9,7 @@
 #include "./function.h"
 #include <iostream>
 #include <QProcess>
+#include <htmls/htmlTools/HtmlWorkThread/HtmlWorkThread.h>
 #include <QSharedMemory>
 
 #include "novelNetJob/NovelDBJob.h"
@@ -82,16 +83,18 @@ int main( int argc, char *argv[ ] ) {
 		path = QString::fromStdString( pathValues->at( 0 ) );
 	auto loadPathOption = argParser->getOptionValues( "-l" );
 	std::vector< QString > novelPlugPath;
+	std::vector< QString > runPlugPath;
 
 	if( loadPathOption ) {
+		for( auto &value : *loadPathOption ) {
+			auto absoluteFilePath = QFileInfo( QString::fromStdString( value ) ).absoluteFilePath( );
+			if( !findVector( novelPlugPath, absoluteFilePath ) )
+				novelPlugPath.emplace_back( absoluteFilePath ); // 存储
+		}
 		auto startOption = argParser->getOptionValues( "-s" );
 		auto allStartOption = argParser->getOptionValues( "-as" );
 		if( allStartOption ) // 全部加载
-			for( auto &value : *loadPathOption ) {
-				auto absoluteFilePath = QFileInfo( QString::fromStdString( value ) ).absoluteFilePath( );
-				if( !findVector( novelPlugPath, absoluteFilePath ) )
-					novelPlugPath.emplace_back( absoluteFilePath ); // 存储
-			}
+			runPlugPath = novelPlugPath;
 		else if( startOption ) { // 选择加载
 			std::vector< QString > paths; // 全路径保存
 			auto startIterator = startOption->begin( );
@@ -101,30 +104,32 @@ int main( int argc, char *argv[ ] ) {
 				auto absPath = info.absoluteFilePath( );
 				if( !findVector( paths, absPath ) )
 					paths.emplace_back( absPath );
-
 				for( auto &value : *loadPathOption ) {
 					auto absoluteFilePath = QFileInfo( QString::fromStdString( value ) ).absoluteFilePath( );
-					if( findVector( paths, absoluteFilePath ) && !findVector( novelPlugPath, absoluteFilePath ) )
+					if( findVector( paths, absoluteFilePath ) && !findVector( runPlugPath, absoluteFilePath ) )
 						// 不存在选择路径当中，需要直接跳过
-						novelPlugPath.emplace_back( absoluteFilePath ); // 存储
+						runPlugPath.emplace_back( absoluteFilePath ); // 存储
 				}
 			}
 		}
 	}
-	size_t count = novelPlugPath.size( );
+	size_t count = 0;
 	auto urlOption = argParser->getOptionValues( "-url" );
-	if( count ) { // 除了收割爬虫，其他爬虫均有子程序进行
+	if( urlOption ) {
+		count = novelPlugPath.size( );
 		QStringList cmd;
 		for( size_t index = 1; index < count; ++index ) {
 			// 加载插件
 			QString plugFilePath = novelPlugPath.at( index );
 			auto subProcess = new QProcess;
-			if( urlOption )
-				cmd.append( " -url " );
+			cmd.append( " -url " );
+
 			cmd.append( " -l " );
 			cmd.append( plugFilePath );
-			cmd.append( " -s " );
-			cmd.append( plugFilePath );
+			if( findVector( runPlugPath, plugFilePath ) ) {
+				cmd.append( " -s " );
+				cmd.append( plugFilePath );
+			}
 			if( pathValues ) {
 				cmd.append( " -p " );
 				cmd.append( path );
@@ -156,8 +161,64 @@ int main( int argc, char *argv[ ] ) {
 		auto interface = LoadPlug::getIRequestNetInterface( plugFilePath );
 		if( interface.second ) {
 			NovelNetJob *novelNetJob = new NovelNetJob( nullptr, interface.first, interface.second );
-			if( argParser->getOptionValues( "-url" ) )
-				std::cout << novelNetJob->getUrl( ).toStdString( ) << std::endl;
+			std::cout << novelNetJob->getUrl( ).toStdString( ) << std::endl;
+			if( findVector( runPlugPath, plugFilePath ) ) {
+				QObject::connect( novelNetJob
+					, &NovelNetJob::endJob
+					, [&count] {
+						--count;
+					} );
+				novelNetJob->setPath( path );
+				novelNetJob->setInPath( typeFilePath );
+				novelNetJob->start( );
+			} else
+				--count;
+		}
+
+	} else { // 除了首个爬虫，其他爬虫均有子程序进行
+		count = runPlugPath.size( );
+		QStringList cmd;
+		for( size_t index = 1; index < count; ++index ) {
+			// 加载插件
+			QString plugFilePath = runPlugPath.at( index );
+			auto subProcess = new QProcess;
+			cmd.append( " -l " );
+			cmd.append( plugFilePath );
+
+
+			if( pathValues ) {
+				cmd.append( " -p " );
+				cmd.append( path );
+			}
+			if( novelTypeFile ) {
+				cmd.append( " -t " );
+				cmd.append( typeFilePath );
+			}
+			cmd.append( " -s " );
+			cmd.append( plugFilePath );
+			QObject::connect( subProcess
+				, &QProcess::readyReadStandardOutput
+				, [=]( ) {
+					QString msg( subProcess->readAll( ) );
+					std::cout << msg.toStdString( ) << std::endl;
+				} );
+
+			QObject::connect( subProcess
+				, &QProcess::finished
+				, [=,&count]( ) {
+					subProcess->deleteLater( );
+					--count;
+				} );
+
+			subProcess->start( appPath, cmd );
+			cmd.clear( );
+		}
+
+		// 加载第一个插件
+		QString plugFilePath = runPlugPath.front( );
+		auto interface = LoadPlug::getIRequestNetInterface( plugFilePath );
+		if( interface.second ) {
+			NovelNetJob *novelNetJob = new NovelNetJob( nullptr, interface.first, interface.second );
 			QObject::connect( novelNetJob
 				, &NovelNetJob::endJob
 				, [&count] {
@@ -168,17 +229,51 @@ int main( int argc, char *argv[ ] ) {
 			novelNetJob->start( );
 		}
 	}
+	cylHtmlTools::HtmlWorkThread thread;
+
+	thread.setCurrentThreadRun( [ &]( ) {
+		while( count ) {
+			instance->processEvents( );
+			std::this_thread::sleep_for( std::chrono::seconds( 2 ) ); // 休眠2秒
+			std::cout << u8"正在获取网络页面数据 ..." << std::endl;
+		}
+	} );
+	thread.start( );
+
 	auto currentTime = std::chrono::system_clock::now( );
-	while( count ) {
-		instance->processEvents( );
-		auto cur = std::chrono::system_clock::now( );
-		auto sep = cur - currentTime;
-		auto second = std::chrono::duration_cast< std::chrono::seconds >( sep ).count( );
-		if( second < 2 )
-			continue;
-		std::cout << u8"正在获取网络页面数据 ..." << std::endl;
-		currentTime = cur;
+	std::unordered_map< size_t, std::shared_ptr< std::vector< std::wstring > > > lenSubStrKeyMap;
+	// 忽略选项
+	std::vector< QString > ignoreNames;
+	auto inNameKeys = argParser->getOptionValues( "-in" ); // 忽略名称
+	auto inNameFiles = argParser->getOptionValues( "-inf" ); // 忽略文件路径
+	if( inNameKeys ) {
+		std::cout << u8"检测 -in 选项" << std::endl;
+		for( auto str : *inNameKeys )
+			ignoreNames.emplace_back( QString::fromLocal8Bit( str ) );
 	}
+
+	ignoreNames = vectorStrAdjustSubStr( ignoreNames );
+	if( inNameFiles ) {
+		std::cout << u8"检测到 -inf 选项，正在读取文件内容" << std::endl;
+		auto getBuff = readIngoreNameFiles( *inNameFiles );
+		ignoreNames.insert( ignoreNames.end( ), getBuff.begin( ), getBuff.end( ) );
+	}
+	if( ignoreNames.size( ) > 0 ) {
+		std::cout << u8"发现存在子字符串过滤功能被启用。" << std::endl;
+		std::cout << u8"检测有效过滤子字符串" << std::endl;
+		ignoreNames = vectorStrAdjustSubStr( ignoreNames );
+		std::cout << u8"转换子字符串" << std::endl;
+		auto wIgnoreNames = converToWString( ignoreNames );
+		std::cout << u8"子字符串转换到长度映射表" << std::endl;
+		lenSubStrKeyMap = vectorStrToLenKeyMap( wIgnoreNames );
+		std::cout << u8"小说匹配长度映射表。并且删除匹配小说" << std::endl;
+		currentTime = std::chrono::system_clock::now( );
+
+	}
+
+
+	while( thread.isRun( ) )
+		instance->processEvents( );
 	auto dbPaths = argParser->getOptionValues( "-rdb" ); // 是否存在导出
 	auto writeFilePaths = argParser->getOptionValues( "-w" ); // 是否存在导出
 
@@ -200,59 +295,13 @@ int main( int argc, char *argv[ ] ) {
 				} );
 			if( novelInfoSPtrShared ) {
 				std::cout << u8"剔除相同小说 " << str << std::endl;
-				*novelInfoSPtrShared = NovelDBJob::identical( *novelInfoSPtrShared
-					, [&currentTime]( ) {
-						auto cur = std::chrono::system_clock::now( );
-						auto sep = cur - currentTime;
-						auto second = std::chrono::duration_cast< std::chrono::seconds >( sep ).count( );
-						if( second < 2 )
-							return;
-						std::cout << "正在剔除相同小说" << std::endl;
-						currentTime = cur;
-					} );
+				*novelInfoSPtrShared = NovelDBJob::identical( *novelInfoSPtrShared );
 				std::cout << u8"剔除相同小说完毕 " << str << std::endl;
 				novelInfoS.insert( novelInfoS.begin( ), novelInfoSPtrShared->begin( ), novelInfoSPtrShared->end( ) );
 			}
 		}
 		std::cout << u8"数据库读取完毕" << std::endl;
-		// 忽略选项
-		std::vector< QString > ignoreNames;
-		auto inNameKeys = argParser->getOptionValues( "-in" ); // 忽略名称
-		auto inNameFiles = argParser->getOptionValues( "-inf" ); // 忽略文件路径
-		if( inNameKeys ) {
-			std::cout << u8"检测 -in 选项" << std::endl;
-			for( auto str : *inNameKeys )
-				ignoreNames.emplace_back( QString::fromLocal8Bit( str ) );
-		}
 
-		ignoreNames = vectorStrAdjustSubStr( ignoreNames );
-		if( inNameFiles ) {
-			std::cout << u8"检测到 -nnf 选项，正在读取文件内容" << std::endl;
-			auto getBuff = readIngoreNameFiles( *inNameFiles );
-			ignoreNames.insert( ignoreNames.end( ), getBuff.begin( ), getBuff.end( ) );
-		}
-		if( ignoreNames.size( ) > 0 ) {
-			std::cout << u8"发现存在子字符串过滤功能被启用。" << std::endl;
-			std::cout << u8"检测有效过滤子字符串" << std::endl;
-			ignoreNames = vectorStrAdjustSubStr( ignoreNames );
-			std::cout << u8"转换子字符串" << std::endl;
-			auto wIgnoreNames = converToWString( ignoreNames );
-			std::cout << u8"子字符串转换到长度映射表" << std::endl;
-			auto lenKeyMap = vectorStrToLenKeyMap( wIgnoreNames );
-			std::cout << u8"小说匹配长度映射表。并且删除匹配小说" << std::endl;
-			currentTime = std::chrono::system_clock::now( );
-			novelInfoS = NovelDBJob::removeSubName( novelInfoS
-				, lenKeyMap
-				, [&currentTime]( ) {
-					auto cur = std::chrono::system_clock::now( );
-					auto sep = cur - currentTime;
-					auto second = std::chrono::duration_cast< std::chrono::seconds >( sep ).count( );
-					if( second < 2 )
-						return;
-					std::cout << "正在删除子字符串关键字" << std::endl;
-					currentTime = cur;
-				} );
-		}
 		std::cout << "开始分解小说到域名" << std::endl;
 		auto novelHostMap = NovelDBJob::decompose( novelInfoS
 			, [&currentTime]( ) {
@@ -264,28 +313,57 @@ int main( int argc, char *argv[ ] ) {
 				std::cout << "正在分解小说到域名" << std::endl;
 				currentTime = cur;
 			} );
+		if( lenSubStrKeyMap.size( ) > 0 )
+			novelInfoS = NovelDBJob::removeSubName( novelInfoS
+				, lenSubStrKeyMap
+				, [&currentTime]( ) {
+					auto cur = std::chrono::system_clock::now( );
+					auto sep = cur - currentTime;
+					auto second = std::chrono::duration_cast< std::chrono::seconds >( sep ).count( );
+					if( second < 2 )
+						return;
+					std::cout << "正在删除子字符串关键字" << std::endl;
+					currentTime = cur;
+				} );
 		std::cout << "开始写入小说到文件" << std::endl;
+		std::vector< cylHtmlTools::HtmlWorkThread * > threads;
 		for( auto &str : *writeFilePaths ) {
 			for( auto iterator = novelHostMap.begin( ), end = novelHostMap.end( ); iterator != end; ++iterator )
 				for( auto vit = iterator->second->begin( ), ven = iterator->second->end( ); vit != ven; ++vit ) {
+					cylHtmlTools::HtmlWorkThread *writeThread = new cylHtmlTools::HtmlWorkThread;
 					QString writePath;
 					writePath.append( str ).append( QDir::separator( ) ).append( iterator->first );
 					std::cout << "\t写入目录 " << writePath.toStdString( ).c_str( ) << std::endl;
-					NovelDBJob::writeFile( QString::fromStdString( str )
-						, iterator->first
-						, vit->first
-						, *vit->second
-						, [&currentTime]( ) {
-							auto cur = std::chrono::system_clock::now( );
-							auto sep = cur - currentTime;
-							auto second = std::chrono::duration_cast< std::chrono::seconds >( sep ).count( );
-							if( second < 2 )
-								return;
-							std::cout << "正在写入文件" << std::endl;
-							currentTime = cur;
-						} );
+					writeThread->setCurrentThreadRun( [=]( ) {
+						NovelDBJob::writeFile( QString::fromStdString( str ), iterator->first, vit->first, *vit->second );
+					} );
+					threads.emplace_back( writeThread );
+					writeThread->start( );
 				}
 		}
+		do {
+			auto begin = threads.begin( );
+			auto end = threads.end( );
+			if( begin == end )
+				break;
+			do {
+				cylHtmlTools::HtmlWorkThread *writeThread = *begin;
+				if( writeThread->isFinish( ) ) {
+					threads.erase( begin );
+					delete writeThread;
+					break;
+				}
+				instance->processEvents( );
+				auto cur = std::chrono::system_clock::now( );
+				auto sep = cur - currentTime;
+				auto second = std::chrono::duration_cast< std::chrono::seconds >( sep ).count( );
+				++begin;
+				if( second < 2 )
+					continue;
+				std::cout << "正在写入文件" << std::endl;
+				currentTime = cur;
+			} while( begin != end );
+		} while( true );
 	}
 
 	//return instance->exec( );
