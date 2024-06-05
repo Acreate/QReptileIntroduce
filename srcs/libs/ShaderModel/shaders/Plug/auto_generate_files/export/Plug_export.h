@@ -9,10 +9,10 @@
 #  ifndef PLUG_EXPORT
 #    ifdef Plug_EXPORTS
         /* We are building this library */
-#      define PLUG_EXPORT __declspec(dllexport)
+#      define PLUG_EXPORT 
 #    else
         /* We are using this library */
-#      define PLUG_EXPORT __declspec(dllimport)
+#      define PLUG_EXPORT 
 #    endif
 #  endif
 
