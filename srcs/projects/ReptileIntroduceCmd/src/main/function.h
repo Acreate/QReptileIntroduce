@@ -1,9 +1,12 @@
 ﻿#ifndef FUNCTION_H_H_HEAD__FILE__
 #define FUNCTION_H_H_HEAD__FILE__
 #pragma once
+#include <iostream>
 #include <QString>
 
 #include "argParser/ArgParser.h"
+#include "htmls/htmlTools/HtmlWorkThread/HtmlWorkThread.h"
+#include "nameSpace/cylHtmlTools.h"
 /// <summary>
 /// 获取编译信息
 /// </summary>
@@ -40,24 +43,23 @@ std::vector< QString > vectorStrduplicate( std::vector< QString > &str_vector );
 /// <returns>排序结果</returns>
 std::vector< QString > vectorStrsort( std::vector< QString > &str_vector );
 /// <summary>
-/// 数组转换到以长度为 key 的映射列表
+/// 数组转换到以长度为 key 的映射列表 - QString 版本
 /// </summary>
 /// <param name="str_vector">转换数组</param>
 /// <returns>长度 map</returns>
-std::unordered_map< size_t, std::shared_ptr< std::vector< QString > > > vectorStrToLenKeyMap( std::vector< QString > &str_vector );
+std::unordered_map< size_t, std::shared_ptr< std::vector< QString > > > vectorStrToLenKeyMap( const std::vector< QString > &str_vector );
 /// <summary>
-/// 数组转换到以长度为 key 的映射列表
+/// 数组转换到以长度为 key 的映射列表 - wstring 版本
 /// </summary>
 /// <param name="str_vector">转换数组</param>
 /// <returns>长度 map</returns>
-std::unordered_map< size_t, std::shared_ptr< std::vector< std::wstring > > > vectorStrToLenKeyMap( std::vector< std::wstring > &str_vector );
+std::unordered_map< size_t, std::shared_ptr< std::vector< std::wstring > > > vectorStrToLenKeyMap( const std::vector< std::wstring > &str_vector );
 /// <summary>
 /// 字符串转换到宽字符
 /// </summary>
 /// <param name="str_vector">转换的字符串</param>
 /// <returns>宽字符列表</returns>
 std::vector< std::wstring > converToWString( std::vector< QString > &str_vector );
-std::unordered_map< size_t, std::shared_ptr< std::vector< std::wstring > > > vectorStrToLenKeyMap( std::vector< std::wstring > &str_vector );
 
 /// <summary>
 /// 检测元素是否存在列表当中
@@ -75,5 +77,38 @@ inline bool findVector( const std::vector< t_value_type > &vector, const t_value
 			return true;
 	return false;
 }
+
+inline void errorCout( const std::string &msg, const std::string &erro_file, const std::string &error_call, const size_t error_line ) {
+	std::cerr << "\n===============" << u8"\n\t错误文件: " << erro_file << u8"\n\t调用名称: " << error_call << u8"\n\t信息行数: " << error_line << u8"\n\t错误信息: " << msg << "\n===============" << std::endl;
+}
+inline void errorCout( const QString &msg, const QString &erro_file, const QString &error_call, const size_t error_line ) {
+	errorCout( msg.toStdString( ), erro_file.toStdString( ), error_call.toStdString( ), error_line );
+}
+
+/// <summary>
+/// 加载查找文件的配置
+/// </summary>
+/// <param name="find_key_option">关键字选项</param>
+/// <param name="find_key_files_option">关键字文件选项</param>
+/// <param name="result_thread">返回正在工作的线程</param>
+/// <param name="result_map">返回线程工作完成被赋值的映射</param>
+void loadFindKeyFiles( const std::shared_ptr< std::vector< cylStd::ArgParser::String > > &find_key_option, const std::shared_ptr< std::vector< cylStd::ArgParser::String > > &find_key_files_option, cylHtmlTools::HtmlWorkThread &result_thread, std::unordered_map< size_t, std::shared_ptr< std::vector< std::wstring > > > &result_map );
+/// <summary>
+/// 加载完全匹配忽略名称的配置
+/// </summary>
+/// <param name="ignore_equ_key_option">关键字选项</param>
+/// <param name="ignore_equ_key_files_option">关键字文件选项</param>
+/// <param name="result_thread">返回正在工作的线程</param>
+/// <param name="result_map">返回线程工作完成被赋值的映射</param>
+void loadingEquKeyFiles( const std::shared_ptr< std::vector< cylStd::ArgParser::String > > &ignore_equ_key_option, const std::shared_ptr< std::vector< cylStd::ArgParser::String > > &ignore_equ_key_files_option, cylHtmlTools::HtmlWorkThread &result_thread, std::unordered_map< size_t, std::shared_ptr< std::vector< std::wstring > > > &result_map );
+
+/// <summary>
+/// 加载子字符串匹配忽略名称的配置
+/// </summary>
+/// <param name="ignore_sub_key_option">关键字选项</param>
+/// <param name="ignore_sub_key_files_option">关键字文件选项</param>
+/// <param name="result_thread">返回正在工作的线程</param>
+/// <param name="result_map">返回线程工作完成被赋值的映射</param>
+void loadingSubKeyFiles( const std::shared_ptr< std::vector< cylStd::ArgParser::String > > &ignore_sub_key_option, const std::shared_ptr< std::vector< cylStd::ArgParser::String > > &ignore_sub_key_files_option, cylHtmlTools::HtmlWorkThread &result_thread, std::unordered_map< size_t, std::shared_ptr< std::vector< std::wstring > > > &result_map );
 
 #endif // FUNCTION_H_H_HEAD__FILE__

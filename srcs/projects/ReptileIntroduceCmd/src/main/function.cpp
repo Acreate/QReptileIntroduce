@@ -107,7 +107,7 @@ std::vector< QString > vectorStrsort( std::vector< QString > &str_vector ) {
 	}
 	return std::vector< QString >( result.begin( ), result.end( ) );
 }
-std::unordered_map< size_t, std::shared_ptr< std::vector< QString > > > vectorStrToLenKeyMap( std::vector< QString > &str_vector ) {
+std::unordered_map< size_t, std::shared_ptr< std::vector< QString > > > vectorStrToLenKeyMap( const std::vector< QString > &str_vector ) {
 	std::unordered_map< size_t, std::shared_ptr< std::vector< QString > > > result;
 	for( auto &str : str_vector ) {
 
@@ -129,7 +129,7 @@ std::unordered_map< size_t, std::shared_ptr< std::vector< QString > > > vectorSt
 	return result;
 }
 
-std::unordered_map< size_t, std::shared_ptr< std::vector< std::wstring > > > vectorStrToLenKeyMap( std::vector< std::wstring > &str_vector ) {
+std::unordered_map< size_t, std::shared_ptr< std::vector< std::wstring > > > vectorStrToLenKeyMap( const std::vector< std::wstring > &str_vector ) {
 	std::unordered_map< size_t, std::shared_ptr< std::vector< std::wstring > > > result;
 	for( auto &str : str_vector ) {
 
@@ -149,6 +149,71 @@ std::unordered_map< size_t, std::shared_ptr< std::vector< std::wstring > > > vec
 
 	}
 	return result;
+}
+void loadFindKeyFiles( const std::shared_ptr< std::vector< cylStd::ArgParser::String > > &find_key_option, const std::shared_ptr< std::vector< cylStd::ArgParser::String > > &find_key_files_option, cylHtmlTools::HtmlWorkThread &result_thread, std::unordered_map< size_t, std::shared_ptr< std::vector< std::wstring > > > &result_map ) {
+	result_thread.setCurrentThreadRun( [&]( ) {
+		if( !find_key_option && !find_key_files_option )
+			return;
+		std::vector< QString > findKeys;
+		if( find_key_option )
+			for( auto str : *find_key_option )
+				findKeys.emplace_back( QString::fromLocal8Bit( str ) );
+
+		findKeys = vectorStrAdjustSubStr( findKeys );
+		if( find_key_files_option ) {
+			auto getBuff = readIngoreNameFiles( *find_key_files_option );
+			findKeys.insert( findKeys.end( ), getBuff.begin( ), getBuff.end( ) );
+		}
+		if( findKeys.size( ) > 0 ) {
+			findKeys = vectorStrduplicate( findKeys );
+			result_map = vectorStrToLenKeyMap( converToWString( findKeys ) );
+		}
+	} );
+	result_thread.start( );
+}
+void loadingEquKeyFiles( const std::shared_ptr< std::vector< cylStd::ArgParser::String > > &ignore_equ_key_option, const std::shared_ptr< std::vector< cylStd::ArgParser::String > > &ignore_equ_key_files_option, cylHtmlTools::HtmlWorkThread &result_thread, std::unordered_map< size_t, std::shared_ptr< std::vector< std::wstring > > > &result_map ) {
+	if( !ignore_equ_key_option && !ignore_equ_key_files_option )
+		return;
+
+	result_thread.setCurrentThreadRun( [&]( ) {
+		std::vector< QString > findKeys;
+		if( ignore_equ_key_option )
+			for( auto str : *ignore_equ_key_option )
+				findKeys.emplace_back( QString::fromLocal8Bit( str ) );
+		findKeys = vectorStrAdjustSubStr( findKeys );
+		if( ignore_equ_key_files_option ) {
+			auto getBuff = readIngoreNameFiles( *ignore_equ_key_files_option );
+			findKeys.insert( findKeys.end( ), getBuff.begin( ), getBuff.end( ) );
+		}
+		if( findKeys.size( ) > 0 ) {
+			findKeys = vectorStrduplicate( findKeys );
+			result_map = vectorStrToLenKeyMap( converToWString( findKeys ) );
+		}
+	} );
+	result_thread.start( );
+}
+void loadingSubKeyFiles( const std::shared_ptr< std::vector< cylStd::ArgParser::String > > &ignore_sub_key_option, const std::shared_ptr< std::vector< cylStd::ArgParser::String > > &ignore_sub_key_files_option, cylHtmlTools::HtmlWorkThread &result_thread, std::unordered_map< size_t, std::shared_ptr< std::vector< std::wstring > > > &result_map ) {
+	if( !ignore_sub_key_option && !ignore_sub_key_files_option )
+		return;
+	// 忽略选项
+	std::vector< QString > ignoreSubNames;
+	if( ignore_sub_key_option ) {
+		std::cout << u8"检测 -isn 选项" << std::endl;
+		for( auto str : *ignore_sub_key_option )
+			ignoreSubNames.emplace_back( QString::fromLocal8Bit( str ) );
+	}
+
+	ignoreSubNames = vectorStrAdjustSubStr( ignoreSubNames );
+	if( ignore_sub_key_files_option ) {
+		auto getBuff = readIngoreNameFiles( *ignore_sub_key_files_option );
+		ignoreSubNames.insert( ignoreSubNames.end( ), getBuff.begin( ), getBuff.end( ) );
+	}
+	if( ignoreSubNames.size( ) > 0 ) {
+		ignoreSubNames = vectorStrAdjustSubStr( ignoreSubNames );
+		auto wIgnoreNames = converToWString( ignoreSubNames );
+		result_map = vectorStrToLenKeyMap( wIgnoreNames );
+	}
+	result_thread.start( );
 }
 
 

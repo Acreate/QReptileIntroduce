@@ -9,15 +9,19 @@
 #include "./function.h"
 #include <iostream>
 #include <QProcess>
+#include <QMutex>
+#include <QMutexLocker>
 #include <htmls/htmlTools/HtmlWorkThread/HtmlWorkThread.h>
 #include <QSharedMemory>
 
 #include "novelNetJob/NovelDBJob.h"
+#include "path/Path.h"
 int main( int argc, char *argv[ ] ) {
 	std::locale locale( "zh_CN.UTF8" );
 	std::locale::global( locale );
 	std::cout.imbue( locale );
 	std::wcout.imbue( locale );
+	QMutex qMutex;
 
 	QCoreApplication application( argc, argv );
 	auto *instance = qApp;// 指定一个键，这个键用来标识共享内存区域
@@ -45,6 +49,7 @@ int main( int argc, char *argv[ ] ) {
 		}
 	QString appPathDir = instance->applicationDirPath( );
 	QString appPath = instance->applicationFilePath( );
+	QString workPath = QDir::currentPath( );
 	if( typeFilePath.isEmpty( ) )
 		typeFilePath.append( appPathDir ).append( QDir::separator( ) ).append( "progress" ).append( QDir::separator( ) ).append( "ini" ).append( QDir::separator( ) ).append( "ReptileIntroduce.ini" );
 
@@ -70,7 +75,9 @@ int main( int argc, char *argv[ ] ) {
 			"\n"
 			"-as" "\t\t" u8"开始所有已加载的插件工作程序"
 			"\n"
-			"-p" "\t\t" u8"指定输出的路径"
+			"-p" "\t\t" u8"路径" "\t" u8"指定输出的路径"
+			"\n"
+			"-t" "\t\t" u8"路径" "\t" u8"指定获取的小说类型配置文件路径-单个类型为一行"
 			"\n"
 			"-url" "\t\t" u8"输出加载的插件指向的网络"
 			"\n"
@@ -78,18 +85,21 @@ int main( int argc, char *argv[ ] ) {
 			"\n"
 			"=========" << std::endl;
 	auto pathValues = argParser->getOptionValues( "-p" );
-	QString path = appPathDir + QDir::separator( ) + "cmd_download_novels_info" + QDir::separator( );
+	QString path = workPath + QDir::separator( ) + "cmd_download_novels_info" + QDir::separator( );
 	if( pathValues )
 		path = QString::fromStdString( pathValues->at( 0 ) );
 	auto loadPathOption = argParser->getOptionValues( "-l" );
 	std::vector< QString > novelPlugPath;
 	std::vector< QString > runPlugPath;
 
+	size_t count = 0;
 	if( loadPathOption ) {
 		for( auto &value : *loadPathOption ) {
-			auto absoluteFilePath = QFileInfo( QString::fromStdString( value ) ).absoluteFilePath( );
-			if( !findVector( novelPlugPath, absoluteFilePath ) )
-				novelPlugPath.emplace_back( absoluteFilePath ); // 存储
+			QString fromStdString = QString::fromStdString( value );
+			auto dirInfo = Path::getPathInfo( fromStdString );
+			for( auto &file : dirInfo.second )
+				if( !findVector( novelPlugPath, file.getCurrentFilePtah( ) ) )
+					novelPlugPath.emplace_back( file.getCurrentFilePtah( ) ); // 存储
 		}
 		auto startOption = argParser->getOptionValues( "-s" );
 		auto allStartOption = argParser->getOptionValues( "-as" );
@@ -112,202 +122,198 @@ int main( int argc, char *argv[ ] ) {
 				}
 			}
 		}
-	}
-	size_t count = 0;
-	auto urlOption = argParser->getOptionValues( "-url" );
-	if( urlOption ) {
-		count = novelPlugPath.size( );
-		QStringList cmd;
-		for( size_t index = 1; index < count; ++index ) {
-			// 加载插件
-			QString plugFilePath = novelPlugPath.at( index );
-			auto subProcess = new QProcess;
-			cmd.append( " -url " );
+		auto urlOption = argParser->getOptionValues( "-url" );
+		if( urlOption ) {
+			count = novelPlugPath.size( );
+			QStringList cmd;
+			for( size_t index = 1; index < count; ++index ) {
+				// 加载插件
+				QString plugFilePath = novelPlugPath.at( index );
+				auto subProcess = new QProcess;
+				cmd.append( " -url " );
 
-			cmd.append( " -l " );
-			cmd.append( plugFilePath );
-			if( findVector( runPlugPath, plugFilePath ) ) {
-				cmd.append( " -s " );
+				cmd.append( " -l " );
 				cmd.append( plugFilePath );
-			}
-			if( pathValues ) {
-				cmd.append( " -p " );
-				cmd.append( path );
-			}
-			if( novelTypeFile ) {
-				cmd.append( " -t " );
-				cmd.append( typeFilePath );
-			}
-			QObject::connect( subProcess
-				, &QProcess::readyReadStandardOutput
-				, [=]( ) {
-					QString msg( subProcess->readAll( ) );
-					std::cout << msg.toStdString( ) << std::endl;
-				} );
+				if( findVector( runPlugPath, plugFilePath ) ) {
+					cmd.append( " -s " );
+					cmd.append( plugFilePath );
+				}
+				if( pathValues ) {
+					cmd.append( " -p " );
+					cmd.append( path );
+				}
+				if( novelTypeFile ) {
+					cmd.append( " -t " );
+					cmd.append( typeFilePath );
+				}
+				QObject::connect( subProcess
+					, &QProcess::readyReadStandardOutput
+					, [=]( ) {
+						QString msg( subProcess->readAllStandardOutput( ) );
+						std::cout << msg.toStdString( ) << std::endl;
+					} );
 
-			QObject::connect( subProcess
-				, &QProcess::finished
-				, [=,&count]( ) {
-					subProcess->deleteLater( );
-					--count;
-				} );
+				QObject::connect( subProcess
+					, &QProcess::readyReadStandardError
+					, [=]( ) {
+						QString msg( subProcess->readAllStandardError( ) );
+						std::cerr << msg.toStdString( ) << std::endl;
+					} );
 
-			subProcess->start( appPath, cmd );
-			cmd.clear( );
-		}
-
-		// 加载第一个插件
-		QString plugFilePath = novelPlugPath.front( );
-		auto interface = LoadPlug::getIRequestNetInterface( plugFilePath );
-		if( interface.second ) {
-			NovelNetJob *novelNetJob = new NovelNetJob( nullptr, interface.first, interface.second );
-			std::cout << novelNetJob->getUrl( ).toStdString( ) << std::endl;
-			if( findVector( runPlugPath, plugFilePath ) ) {
-				QObject::connect( novelNetJob
-					, &NovelNetJob::endJob
-					, [&count] {
+				QObject::connect( subProcess
+					, &QProcess::finished
+					, [&,subProcess]( ) {
+						QMutexLocker lock( &qMutex );
+						subProcess->deleteLater( );
 						--count;
 					} );
-				novelNetJob->setPath( path );
-				novelNetJob->setInPath( typeFilePath );
-				novelNetJob->start( );
-			} else
+
+				subProcess->start( appPath, cmd );
+				cmd.clear( );
+			}
+
+			// 加载第一个插件
+			QString plugFilePath = novelPlugPath.front( );
+			QString error;
+			auto interface = LoadPlug::getIRequestNetInterface( plugFilePath, error );
+			if( interface.second ) {
+				NovelNetJob *novelNetJob = new NovelNetJob( nullptr, interface.first, interface.second );
+				std::cout << novelNetJob->getUrl( ).toStdString( ) << std::endl;
+				if( findVector( runPlugPath, plugFilePath ) ) {
+					QObject::connect( novelNetJob
+						, &NovelNetJob::endJob
+						, [&]( ) {
+							QMutexLocker lock( &qMutex );
+							--count;
+						} );
+					std::cout << novelNetJob->getUrl( ).toStdString( ).c_str( ) << std::endl;
+					if( pathValues )
+						novelNetJob->setPath( path );
+					if( novelTypeFile )
+						novelNetJob->setInPath( typeFilePath );
+					if( findVector( runPlugPath, plugFilePath ) )
+						novelNetJob->start( );
+				} else {
+					QMutexLocker lock( &qMutex );
+					--count;
+				}
+			} else {
+				QMutexLocker lock( &qMutex );
 				--count;
-		}
-
-	} else { // 除了首个爬虫，其他爬虫均有子程序进行
-		count = runPlugPath.size( );
-		QStringList cmd;
-		for( size_t index = 1; index < count; ++index ) {
-			// 加载插件
-			QString plugFilePath = runPlugPath.at( index );
-			auto subProcess = new QProcess;
-			cmd.append( " -l " );
-			cmd.append( plugFilePath );
-
-
-			if( pathValues ) {
-				cmd.append( " -p " );
-				cmd.append( path );
+				errorCout( error.toStdString( ), __FILE__, __FUNCTION__, __LINE__ );
 			}
-			if( novelTypeFile ) {
-				cmd.append( " -t " );
-				cmd.append( typeFilePath );
+		} else { // 除了首个爬虫，其他爬虫均有子程序进行
+			count = runPlugPath.size( );
+			QStringList cmd;
+			for( size_t index = 1; index < count; ++index ) {
+				// 加载插件
+				QString plugFilePath = runPlugPath.at( index );
+				auto subProcess = new QProcess;
+				cmd.append( " -l " );
+				cmd.append( plugFilePath );
+
+
+				if( pathValues ) {
+					cmd.append( " -p " );
+					cmd.append( path );
+				}
+				if( novelTypeFile ) {
+					cmd.append( " -t " );
+					cmd.append( typeFilePath );
+				}
+				cmd.append( " -s " );
+				cmd.append( plugFilePath );
+				QObject::connect( subProcess
+					, &QProcess::readyReadStandardOutput
+					, [=]( ) {
+						QString msg( subProcess->readAllStandardOutput( ) );
+						std::cout << msg.toStdString( ) << std::endl;
+					} );
+
+				QObject::connect( subProcess
+					, &QProcess::readyReadStandardError
+					, [=]( ) {
+						QString msg( subProcess->readAllStandardError( ) );
+						std::cerr << msg.toStdString( ) << std::endl;
+					} );
+
+				QObject::connect( subProcess
+					, &QProcess::finished
+					, [&,subProcess]( ) {
+						subProcess->deleteLater( );
+						QMutexLocker lock( &qMutex );
+						--count;
+					} );
+
+				subProcess->start( appPath, cmd );
+				cmd.clear( );
 			}
-			cmd.append( " -s " );
-			cmd.append( plugFilePath );
-			QObject::connect( subProcess
-				, &QProcess::readyReadStandardOutput
-				, [=]( ) {
-					QString msg( subProcess->readAll( ) );
-					std::cout << msg.toStdString( ) << std::endl;
-				} );
 
-			QObject::connect( subProcess
-				, &QProcess::finished
-				, [=,&count]( ) {
-					subProcess->deleteLater( );
+			// 加载第一个插件
+			QString plugFilePath = runPlugPath.front( );
+			if( findVector( runPlugPath, plugFilePath ) ) {
+				QString error;
+				auto interface = LoadPlug::getIRequestNetInterface( plugFilePath, error );
+				if( interface.second ) {
+					NovelNetJob *novelNetJob = new NovelNetJob( nullptr, interface.first, interface.second );
+					QObject::connect( novelNetJob
+						, &NovelNetJob::endJob
+						, [&] {
+							QMutexLocker lock( &qMutex );
+							--count;
+						} );
+					novelNetJob->setPath( path );
+					novelNetJob->setInPath( typeFilePath );
+					novelNetJob->start( );
+				} else {
+					QMutexLocker lock( &qMutex );
 					--count;
-				} );
-
-			subProcess->start( appPath, cmd );
-			cmd.clear( );
-		}
-
-		// 加载第一个插件
-		QString plugFilePath = runPlugPath.front( );
-		auto interface = LoadPlug::getIRequestNetInterface( plugFilePath );
-		if( interface.second ) {
-			NovelNetJob *novelNetJob = new NovelNetJob( nullptr, interface.first, interface.second );
-			QObject::connect( novelNetJob
-				, &NovelNetJob::endJob
-				, [&count] {
-					--count;
-				} );
-			novelNetJob->setPath( path );
-			novelNetJob->setInPath( typeFilePath );
-			novelNetJob->start( );
+					errorCout( error.toStdString( ), __FILE__, __FUNCTION__, __LINE__ );
+				}
+			} else {
+				QMutexLocker lock( &qMutex );
+				--count;
+			}
 		}
 	}
-	cylHtmlTools::HtmlWorkThread thread;
 
-	thread.setCurrentThreadRun( [ &]( ) {
-		while( count ) {
-			instance->processEvents( );
-			std::this_thread::sleep_for( std::chrono::seconds( 2 ) ); // 休眠2秒
-			std::cout << u8"正在获取网络页面数据 ..." << std::endl;
-		}
-	} );
-	thread.start( );
 
 	auto currentTime = std::chrono::system_clock::now( );
 	std::unordered_map< size_t, std::shared_ptr< std::vector< std::wstring > > > lenSubStrKeyMap;
-	cylHtmlTools::HtmlWorkThread ingSubNameThread( nullptr
-		, [&]( ) {
-			// 忽略选项
-			std::vector< QString > ignoreSubNames;
-			auto inNameKeys = argParser->getOptionValues( "-isn" ); // 忽略名称
-			auto inNameFiles = argParser->getOptionValues( "-isnf" ); // 忽略文件路径
-			if( inNameKeys ) {
-				std::cout << u8"检测 -isn 选项" << std::endl;
-				for( auto str : *inNameKeys )
-					ignoreSubNames.emplace_back( QString::fromLocal8Bit( str ) );
-			}
+	cylHtmlTools::HtmlWorkThread ingSubNameThread;
+	auto inNameKeys = argParser->getOptionValues( "-isn" ); // 忽略名称
+	auto inNameFiles = argParser->getOptionValues( "-isnf" ); // 忽略文件路径
+	loadingSubKeyFiles( inNameKeys, inNameFiles, ingSubNameThread, lenSubStrKeyMap );
 
-			ignoreSubNames = vectorStrAdjustSubStr( ignoreSubNames );
-			if( inNameFiles ) {
-				std::cout << u8"检测到 -isnf 选项，正在读取文件内容" << std::endl;
-				auto getBuff = readIngoreNameFiles( *inNameFiles );
-				ignoreSubNames.insert( ignoreSubNames.end( ), getBuff.begin( ), getBuff.end( ) );
-			}
-			if( ignoreSubNames.size( ) > 0 ) {
-				std::cout << u8"发现存在子字符串过滤功能被启用。" << std::endl;
-				std::cout << u8"检测有效过滤子字符串" << std::endl;
-				ignoreSubNames = vectorStrAdjustSubStr( ignoreSubNames );
-				std::cout << u8"转换子字符串" << std::endl;
-				auto wIgnoreNames = converToWString( ignoreSubNames );
-				std::cout << u8"子字符串转换到长度映射表" << std::endl;
-				lenSubStrKeyMap = vectorStrToLenKeyMap( wIgnoreNames );
-				std::cout << u8"小说匹配长度映射表。并且删除匹配小说" << std::endl;
-				currentTime = std::chrono::system_clock::now( );
+	std::unordered_map< size_t, std::shared_ptr< std::vector< std::wstring > > > lenEquStrKeyMap;
+	cylHtmlTools::HtmlWorkThread ingEquNameThread;
+	auto inEquNameKeys = argParser->getOptionValues( "-ien" ); // 忽略名称
+	auto inEquNameFiles = argParser->getOptionValues( "-ienf" ); // 忽略文件路径
+	loadingEquKeyFiles( inEquNameKeys, inEquNameFiles, ingEquNameThread, lenEquStrKeyMap ); // 处理完全匹配名称忽略文件
 
-			}
+	std::unordered_map< size_t, std::shared_ptr< std::vector< std::wstring > > > lenFindStrKeyMap; // 查找文件的映射
+	cylHtmlTools::HtmlWorkThread ingFindStrKeyThread;
+	auto findKeysOptions = argParser->getOptionValues( "-fk" ); // 小说查找名称
+	auto findNameFiles = argParser->getOptionValues( "-fkf" ); // 小说查找文件路径
+	loadFindKeyFiles( findKeysOptions, findNameFiles, ingFindStrKeyThread, lenFindStrKeyMap ); // 处理查找文件
 
-		}
-		, nullptr );
-	ingSubNameThread.start( ); // 忽略文件读取线程
-
-	std::unordered_map< size_t, std::shared_ptr< std::vector< QString > > > lenEquStrKeyMap;
-	cylHtmlTools::HtmlWorkThread ingEquNameThread( nullptr
-		, [&]( ) {
-			// 忽略选项
-			std::vector< QString > ignoreEquNames;
-			auto inEquNameKeys = argParser->getOptionValues( "-ien" ); // 忽略名称
-			auto inEquNameFiles = argParser->getOptionValues( "-ienf" ); // 忽略文件路径
-			if( inEquNameKeys ) {
-				std::cout << u8"检测 -ien 选项" << std::endl;
-				for( auto str : *inEquNameKeys )
-					ignoreEquNames.emplace_back( QString::fromLocal8Bit( str ) );
-			}
-
-			ignoreEquNames = vectorStrAdjustSubStr( ignoreEquNames );
-			if( inEquNameFiles ) {
-				std::cout << u8"检测到 -ienf 选项，正在读取文件内容" << std::endl;
-				auto getBuff = readIngoreNameFiles( *inEquNameFiles );
-				ignoreEquNames.insert( ignoreEquNames.end( ), getBuff.begin( ), getBuff.end( ) );
-			}
-			if( ignoreEquNames.size( ) > 0 ) {
-				std::cout << u8"发现存在符串过滤功能被启用。" << std::endl;
-				std::cout << u8"去掉重复字符串" << std::endl;
-				ignoreEquNames = vectorStrduplicate( ignoreEquNames );
-				lenEquStrKeyMap = vectorStrToLenKeyMap( ignoreEquNames );
-			}
-		}
-		, nullptr );
-	ingEquNameThread.start( ); // 忽略文件读取线程
-
-	while( thread.isRun( ) )
+	do {
 		instance->processEvents( );
+		QMutexLocker lock( &qMutex );
+		if( count ) {
+			auto cur = std::chrono::system_clock::now( );
+			auto sep = cur - currentTime;
+			auto second = std::chrono::duration_cast< std::chrono::seconds >( sep ).count( );
+			if( second > 2 ) {
+				std::cout << u8"准备工作进行当中 [" << count << "] ..." << std::endl;
+				currentTime = cur;
+			}
+			continue;
+		}
+		break;
+	} while( true );
+
+
 	auto dbPaths = argParser->getOptionValues( "-rdb" ); // 是否存在导出
 	auto writeFilePaths = argParser->getOptionValues( "-w" ); // 是否存在导出
 
@@ -353,6 +359,10 @@ int main( int argc, char *argv[ ] ) {
 		}
 		while( ingEquNameThread.isRun( ) ) {
 			std::cout << u8"等待相等选项完成" << std::endl;
+			instance->processEvents( );
+		}
+		while( ingFindStrKeyThread.isRun( ) ) {
+			std::cout << u8"等待查找选项完成" << std::endl;
 			instance->processEvents( );
 		}
 		if( lenEquStrKeyMap.size( ) > 0 )

@@ -66,6 +66,7 @@ IRequestNetInterface * LoadPlug::metaGetResult( QObject *outObj, const QString &
 }
 std::pair< QObject *, IRequestNetInterface * > LoadPlug::getIRequestNetInterface(
 	const QString &plugFilePath
+	, QString &result_error
 	, const QString &name
 	, const QString &spec
 	, const QString &loadClassName
@@ -87,6 +88,7 @@ std::pair< QObject *, IRequestNetInterface * > LoadPlug::getIRequestNetInterface
 		}
 		instance->deleteLater( );
 		loader.unload( );
-	}
+	} else
+		result_error = loader.errorString( );
 	return { };
 }

@@ -16,7 +16,7 @@ public:
 	File( const QString &currentFilePtah );
 	virtual ~File( );
 public:
-	QString getCurrentFilePtah( ) const {
+	const QString & getCurrentFilePtah( ) const {
 		return currentFilePtah;
 	}
 public:

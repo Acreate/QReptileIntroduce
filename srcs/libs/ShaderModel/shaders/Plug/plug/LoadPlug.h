@@ -15,12 +15,13 @@ public: // 静态函数调用
 	/// 根据路径生成插件对象
 	/// </summary>
 	/// <param name="plugFilePath">查找路径</param>
+	/// <param name="result_error">返回的错误信息</param>
 	/// <param name="name">传递到插件生成器的第一个参数</param>
 	/// <param name="spec">传递到插件生成器的第二个参数</param>
 	/// <param name="loadClassName">元数据类型名称</param>
 	/// <param name="methodName">元数据函数名称</param>
 	/// <returns>生成对应与指针的匹配映射</returns>
-	static std::pair< QObject *, interfacePlugsType::IRequestNetInterface * > getIRequestNetInterface( const QString &plugFilePath, const QString &name = tr( u8"LoadPlug" ), const QString &spec = tr( u8"getIRequestNetInterface" ), const QString &loadClassName = tr( u8"RequestNet" ), const QString &methodName = tr( u8"getRequestNetInterfacePatr" ) );
+	static std::pair< QObject *, interfacePlugsType::IRequestNetInterface * > getIRequestNetInterface( const QString &plugFilePath,QString& result_error , const QString &name = tr( u8"LoadPlug" ), const QString &spec = tr( u8"getIRequestNetInterface" ), const QString &loadClassName = tr( u8"RequestNet" ), const QString &methodName = tr( u8"getRequestNetInterfacePatr" ) );
 	/// <summary>
 	/// 调用插件的生成函数
 	/// </summary>

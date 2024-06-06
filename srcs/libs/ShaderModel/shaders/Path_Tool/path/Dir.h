@@ -27,7 +27,7 @@ public: // 动作
 	std::vector< Dir > getDirs( ) const {
 		return dirs;
 	}
-	QString getCurrentPath( ) const {
+	const QString & getCurrentPath( ) const {
 		return currentPath;
 	}
 public:
