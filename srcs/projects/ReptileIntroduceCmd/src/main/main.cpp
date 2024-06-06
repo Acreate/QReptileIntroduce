@@ -28,7 +28,6 @@ int main( int argc, char *argv[ ] ) {
 
 	QString compilerString = getBuilderInfo( );
 
-	QString version = QString( "\nqt 版本 %1\n编译版本 %2\n程序位数: %3 " ).arg( qVersion( ) ).arg( compilerString ).arg( QString::number( QSysInfo::WordSize ) );
 
 	QString description = u8"小说爬虫命令行版本";
 	auto argParser = cylStd::ArgParser::parser( argc, argv );
@@ -54,34 +53,47 @@ int main( int argc, char *argv[ ] ) {
 		typeFilePath.append( appPathDir ).append( QDir::separator( ) ).append( "progress" ).append( QDir::separator( ) ).append( "ini" ).append( QDir::separator( ) ).append( "ReptileIntroduce.ini" );
 
 	if( argParser->getOptionValues( "-v" ) ) {
-		std::cout << u8"输出命令行参数" << std::endl << version.toStdString( ).c_str( ) << std::endl;
+		std::cout << "------------\n" u8"qt 版本 :" << qVersion( ) << u8"\n\t" u8"编译版本 :" << compilerString.toStdString( ).c_str( ) << u8"\n\t程序位数 :" << QSysInfo::WordSize << std::endl;
 		auto map = argParser->getPairs( );
+		std::cout << u8"输出命令行参数\n";
 		for( auto &it : map ) {
-			std::cout << u8"名称:" << it.first << std::endl;
+			std::cout << u8"\t名称 : \'" << it.first << u8"\'\n";
 			for( auto &value : *it.second )
-				std::cout << u8"\t值:" << value << std::endl;
+				std::cout << u8"\t\t值 : \'" << value << u8"\'\n";
 		}
-		std::cout << "------------";
+		std::cout << "------------" << std::endl;
 	}
 
 	if( argParser->getOptionValues( "-h" ) )
 		std::cout << "========="
-			"\n\t"
+			"\n"
 			u8"帮助:"
-			"\n"
-			"-l" "\t\t" u8"插件路径[,插件路径1[,插件路径2[,...]]]""\t" u8"加载文件到该程序"
-			"\n"
-			"-s" "\t\t" u8"插件路径[,插件路径1[,插件路径2[,...]]]""\t" u8"开始该文件的工作程序"
-			"\n"
-			"-as" "\t\t" u8"开始所有已加载的插件工作程序"
-			"\n"
-			"-p" "\t\t" u8"路径" "\t" u8"指定输出的路径"
-			"\n"
-			"-t" "\t\t" u8"路径" "\t" u8"指定获取的小说类型配置文件路径-单个类型为一行"
-			"\n"
-			"-url" "\t\t" u8"输出加载的插件指向的网络"
-			"\n"
-			"-name" "\t\t" u8"输出程序名称"
+			"\n\t"
+			"-l" u8"  参数" "\n\t\t" u8"插件路径[,插件路径1[,插件路径2[,...]]]" u8"\n\t  说明:\n\t\t" u8"加载文件到该程序"
+			"\n\t"
+			"-s" u8"  参数" "\n\t\t" u8"插件路径[,插件路径1[,插件路径2[,...]]]" u8"\n\t  说明:\n\t\t" u8"开始该文件的工作程序"
+			"\n\t"
+			"-as" u8"\n\t  说明:\n\t\t" u8"开始所有已加载的插件工作程序"
+			"\n\t"
+			"-p" u8"  参数" "\n\t\t" u8"路径" u8"\n\t  说明:\n\t\t" u8"指定输出的路径"
+			"\n\t"
+			"-isn" u8"  参数" "\n\t\t" u8"关键字[,关键字1 [,关键字2[,....]]]" u8"\n\t  说明:\n\t\t" u8"指定跳过名称子字符串关键字"
+			"\n\t"
+			"-isnf" u8"  参数" "\n\t\t" u8"路径[,路径1 [,路径2[,....]]]" u8"\n\t  说明:\n\t\t" u8"指定跳过名称子字符串关键字存放文件"
+			"\n\t"
+			"-ien" u8"  参数" "\n\t\t" u8"关键字[,关键字1 [,关键字2[,....]]]" u8"\n\t  说明:\n\t\t" u8"指定跳过名称完全匹配关键字"
+			"\n\t"
+			"-ienf" u8"  参数" "\n\t\t" u8"路径[,路径1 [,路径2[,....]]]" u8"\n\t  说明:\n\t\t" u8"指定跳过名称子完全匹配关键字存放文件"
+			"\n\t"
+			"-ifk" u8"  参数" "\n\t\t" u8"关键字[,关键字1 [,关键字2[,....]]]" u8"\n\t  说明:\n\t\t" u8"指定查找关键字"
+			"\n\t"
+			"-ifkf" u8"  参数" "\n\t\t" u8"路径[,路径1 [,路径2[,....]]]" u8"\n\t  说明:\n\t\t" u8"指定查找关键字存放文件"
+			"\n\t"
+			"-t" u8"  参数" "\n\t\t" u8"路径" u8"\n\t  说明:\n\t\t" u8"指定获取的小说类型配置文件路径-单个类型为一行"
+			"\n\t"
+			"-url" u8"\n\t  说明:\n\t\t" u8"输出加载的插件指向的网络"
+			"\n\t"
+			"-name" u8"\n\t  说明:\n\t\t" u8"输出程序名称"
 			"\n"
 			"=========" << std::endl;
 	auto pathValues = argParser->getOptionValues( "-p" );
@@ -276,7 +288,6 @@ int main( int argc, char *argv[ ] ) {
 			}
 		}
 	}
-
 
 	auto currentTime = std::chrono::system_clock::now( );
 	std::unordered_map< size_t, std::shared_ptr< std::vector< std::wstring > > > lenSubStrKeyMap;
