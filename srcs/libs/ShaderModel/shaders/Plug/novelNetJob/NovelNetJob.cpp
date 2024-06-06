@@ -272,23 +272,25 @@ QNetworkReply * NovelNetJob::requestGet( const QUrl &url, const size_t requestMa
 	return nullptr;
 }
 bool NovelNetJob::start( ) {
-
-	if( inPath.isEmpty( ) ) {
-		inPath.append( Project_Run_bin ).append( QDir::separator( ) ).append( "progress" ).append( QDir::separator( ) ).append( "ini" ).append( QDir::separator( ) ).append( "ReptileIntroduce.ini" );
-	}
-	QFile qFile;
-	qFile.setFileName( inPath );
-	if( qFile.open( QIODeviceBase::ReadOnly | QIODeviceBase::Text ) ) {
-		auto byteArray = qFile.readAll( );
-		QString fileContent( byteArray );
-		auto list = fileContent.split( "\n" );
-		for( auto &str : list ) {
-			auto normalQString = getNormalQString( str );
-			if( normalQString.isEmpty( ) )
-				continue;
-			getTypeNamelist << normalQString;
+	if( getTypeNamelist.size( ) == 0 ) { // 类型不足，需要重新读取
+		if( inPath.isEmpty( ) ) {
+			inPath.append( Project_Run_bin ).append( QDir::separator( ) ).append( "progress" ).append( QDir::separator( ) ).append( "ini" ).append( QDir::separator( ) ).append( "ReptileIntroduce.ini" );
+		}
+		QFile qFile;
+		qFile.setFileName( inPath );
+		if( qFile.open( QIODeviceBase::ReadOnly | QIODeviceBase::Text ) ) {
+			auto byteArray = qFile.readAll( );
+			QString fileContent( byteArray );
+			auto list = fileContent.split( "\n" );
+			for( auto &str : list ) {
+				auto normalQString = getNormalQString( str );
+				if( normalQString.isEmpty( ) )
+					continue;
+				getTypeNamelist << normalQString;
+			}
 		}
 	}
+
 	auto basicString = outPath.toStdWString( );
 	interfaceThisPtr->setOutPath( &basicString );
 	QUrl url = this->networkRequest.url( );

@@ -48,8 +48,8 @@ else()
 endif()
 
 
-copy_dir_path( ${PROJECT_NAME} "${CMAKE_CURRENT_LIST_DIR}/res/ini/progress/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/progress/" )
-copy_dir_path( ${PROJECT_NAME} "${CMAKE_CURRENT_LIST_DIR}/res/filter/filter/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/progress/filter/sub_key" )
+copy_dir_path( ${PROJECT_NAME} "${CMAKE_CURRENT_LIST_DIR}/res/ini/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/progress/ini/" )
+
 # 设置变量
 set( Cmake_Project_Name "${PROJECT_NAME}" )
 set( Cmake_Project_Binary_Dir "${CMAKE_BINARY_DIR}" )

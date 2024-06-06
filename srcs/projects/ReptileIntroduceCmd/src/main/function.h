@@ -25,11 +25,30 @@ std::wstring conver( const std::string &str );
 /// <returns>关键字列表</returns>
 std::vector< QString > readIngoreNameFiles( std::vector< cylStd::ArgParser::String > &paths );
 /// <summary>
+/// 读取一个文件，一行为一个关键字
+/// </summary>
+/// <param name="path">文件路径</param>
+/// <returns>返回所有关键字</returns>
+std::vector< QString > readIngoreNameFile(const QString& path );
+/// <summary>
+/// 写入关键字，一行为一个关键字
+/// </summary>
+/// <param name="path">写入路径</param>
+/// <param name="content">写入关键字列表</param>
+/// <returns>写入数量</returns>
+qsizetype writeIngoreNameFile( const QString &path, const std::vector< QString > &content ) ;
+/// <summary>
 /// 调整关键字，存在子字符串则不需要源字符串(a -> aa / 其中只保留 a，不保留 aa)
 /// </summary>
 /// <param name="str_vector">匹配的字符串</param>
 /// <returns>完成匹配的字符串</returns>
 std::vector< QString > vectorStrAdjustSubStr( std::vector< QString > &str_vector );
+/// <summary>
+/// 调整关键字，存在子字符串则不需要源字符串(a -> aa / 其中只保留 a，不保留 aa)
+/// </summary>
+/// <param name="str_vector">匹配的字符串</param>
+/// <returns>完成匹配的字符串</returns>
+std::vector< std::wstring  > vectorStrAdjustSubStr( std::vector< std::wstring > &str_vector );
 /// <summary>
 /// 去掉重复字符串
 /// </summary>
@@ -41,7 +60,13 @@ std::vector< QString > vectorStrduplicate( std::vector< QString > &str_vector );
 /// </summary>
 /// <param name="str_vector">排序列表</param>
 /// <returns>排序结果</returns>
-std::vector< QString > vectorStrsort( std::vector< QString > &str_vector );
+std::vector< QString > vectorStrSort( std::vector< QString > &str_vector );
+/// <summary>
+/// 字符串列表排序-名称
+/// </summary>
+/// <param name="str_vector">排序列表</param>
+/// <returns>排序结果</returns>
+std::vector< QString > vectorStrLenSort( std::vector< QString > &str_vector );
 /// <summary>
 /// 数组转换到以长度为 key 的映射列表 - QString 版本
 /// </summary>
@@ -84,7 +109,8 @@ inline void errorCout( const std::string &msg, const std::string &erro_file, con
 inline void errorCout( const QString &msg, const QString &erro_file, const QString &error_call, const size_t error_line ) {
 	errorCout( msg.toStdString( ), erro_file.toStdString( ), error_call.toStdString( ), error_line );
 }
-
+using LenMap = std::unordered_map< size_t, std::shared_ptr< std::vector< std::wstring > > >;
+using FileLenMap = std::unordered_map< QString, LenMap >;
 /// <summary>
 /// 加载查找文件的配置
 /// </summary>
@@ -92,7 +118,8 @@ inline void errorCout( const QString &msg, const QString &erro_file, const QStri
 /// <param name="find_key_files_option">关键字文件选项</param>
 /// <param name="result_thread">返回正在工作的线程</param>
 /// <param name="result_map">返回线程工作完成被赋值的映射</param>
-void loadFindKeyFiles( const std::shared_ptr< std::vector< cylStd::ArgParser::String > > &find_key_option, const std::shared_ptr< std::vector< cylStd::ArgParser::String > > &find_key_files_option, cylHtmlTools::HtmlWorkThread &result_thread, std::unordered_map< size_t, std::shared_ptr< std::vector< std::wstring > > > &result_map );
+/// <param name="result_file_name_map">文件映射长度</param>
+void loadFindKeyFiles( const std::shared_ptr< std::vector< cylStd::ArgParser::String > > &find_key_option, const std::shared_ptr< std::vector< cylStd::ArgParser::String > > &find_key_files_option, cylHtmlTools::HtmlWorkThread &result_thread, LenMap &result_map, FileLenMap &result_file_name_map );
 /// <summary>
 /// 加载完全匹配忽略名称的配置
 /// </summary>
@@ -100,7 +127,7 @@ void loadFindKeyFiles( const std::shared_ptr< std::vector< cylStd::ArgParser::St
 /// <param name="ignore_equ_key_files_option">关键字文件选项</param>
 /// <param name="result_thread">返回正在工作的线程</param>
 /// <param name="result_map">返回线程工作完成被赋值的映射</param>
-void loadingEquKeyFiles( const std::shared_ptr< std::vector< cylStd::ArgParser::String > > &ignore_equ_key_option, const std::shared_ptr< std::vector< cylStd::ArgParser::String > > &ignore_equ_key_files_option, cylHtmlTools::HtmlWorkThread &result_thread, std::unordered_map< size_t, std::shared_ptr< std::vector< std::wstring > > > &result_map );
+void loadingEquKeyFiles( const std::shared_ptr< std::vector< cylStd::ArgParser::String > > &ignore_equ_key_option, const std::shared_ptr< std::vector< cylStd::ArgParser::String > > &ignore_equ_key_files_option, cylHtmlTools::HtmlWorkThread &result_thread, LenMap &result_map );
 
 /// <summary>
 /// 加载子字符串匹配忽略名称的配置
@@ -109,6 +136,6 @@ void loadingEquKeyFiles( const std::shared_ptr< std::vector< cylStd::ArgParser::
 /// <param name="ignore_sub_key_files_option">关键字文件选项</param>
 /// <param name="result_thread">返回正在工作的线程</param>
 /// <param name="result_map">返回线程工作完成被赋值的映射</param>
-void loadingSubKeyFiles( const std::shared_ptr< std::vector< cylStd::ArgParser::String > > &ignore_sub_key_option, const std::shared_ptr< std::vector< cylStd::ArgParser::String > > &ignore_sub_key_files_option, cylHtmlTools::HtmlWorkThread &result_thread, std::unordered_map< size_t, std::shared_ptr< std::vector< std::wstring > > > &result_map );
+void loadingSubKeyFiles( const std::shared_ptr< std::vector< cylStd::ArgParser::String > > &ignore_sub_key_option, const std::shared_ptr< std::vector< cylStd::ArgParser::String > > &ignore_sub_key_files_option, cylHtmlTools::HtmlWorkThread &result_thread, LenMap &result_map );
 
 #endif // FUNCTION_H_H_HEAD__FILE__

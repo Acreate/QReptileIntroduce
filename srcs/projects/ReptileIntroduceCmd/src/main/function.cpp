@@ -54,6 +54,29 @@ std::vector< QString > readIngoreNameFiles( std::vector< cylStd::ArgParser::Stri
 							nameKeys.emplace_back( appendObj );
 	return nameKeys;
 }
+std::vector< QString > readIngoreNameFile( const QString &path ) {
+	std::vector< QString > nameKeys;
+	QFile readFile( path );
+	if( readFile.open( QIODeviceBase::ReadOnly | QIODeviceBase::Text ) )
+		for( auto str : readFile.readAll( ).split( '\n' ) )
+			for( auto appendObj : str.split( ' ' ) )
+				if( ( appendObj = appendObj.trimmed( ), !appendObj.isEmpty( ) ) )
+					nameKeys.emplace_back( appendObj );
+	return nameKeys;
+}
+qsizetype writeIngoreNameFile( const QString &path, const std::vector< QString > &content ) {
+	std::vector< QString > nameKeys;
+	QFile writeFile( path );
+	if( writeFile.open( QIODeviceBase::WriteOnly | QIODeviceBase::Text | QIODeviceBase::Truncate ) ) {
+		QStringList writeContent( content.begin( ), content.end( ) );
+		auto string = writeContent.join( "\n" );
+		QByteArray byteArray = string.toUtf8( );
+		if( writeFile.write( byteArray ) )
+			return writeContent.size( );
+	}
+
+	return 0;
+}
 std::vector< QString > vectorStrAdjustSubStr( std::vector< QString > &str_vector ) {
 	if( str_vector.size( ) < 2 )
 		return str_vector;
@@ -96,12 +119,23 @@ std::vector< QString > vectorStrduplicate( std::vector< QString > &str_vector ) 
 	}
 	return result;
 }
-std::vector< QString > vectorStrsort( std::vector< QString > &str_vector ) {
+std::vector< QString > vectorStrSort( std::vector< QString > &str_vector ) {
 	std::list< QString > result;
 	for( auto &str : str_vector ) {
 		auto iterator = result.begin( ), end = result.end( );
 		for( ; iterator != end; ++iterator )
 			if( *iterator > str )
+				break;
+		result.insert( iterator, str );
+	}
+	return std::vector< QString >( result.begin( ), result.end( ) );
+}
+std::vector< QString > vectorStrLenSort( std::vector< QString > &str_vector ) {
+	std::list< QString > result;
+	for( auto &str : str_vector ) {
+		auto iterator = result.begin( ), end = result.end( );
+		for( ; iterator != end; ++iterator )
+			if( iterator->length( ) > str.length( ) )
 				break;
 		result.insert( iterator, str );
 	}
@@ -150,7 +184,7 @@ std::unordered_map< size_t, std::shared_ptr< std::vector< std::wstring > > > vec
 	}
 	return result;
 }
-void loadFindKeyFiles( const std::shared_ptr< std::vector< cylStd::ArgParser::String > > &find_key_option, const std::shared_ptr< std::vector< cylStd::ArgParser::String > > &find_key_files_option, cylHtmlTools::HtmlWorkThread &result_thread, std::unordered_map< size_t, std::shared_ptr< std::vector< std::wstring > > > &result_map ) {
+void loadFindKeyFiles( const std::shared_ptr< std::vector< cylStd::ArgParser::String > > &find_key_option, const std::shared_ptr< std::vector< cylStd::ArgParser::String > > &find_key_files_option, cylHtmlTools::HtmlWorkThread &result_thread, LenMap &result_map, FileLenMap &result_file_name_map ) {
 	result_thread.setCurrentThreadRun( [&]( ) {
 		if( !find_key_option && !find_key_files_option )
 			return;
@@ -160,13 +194,35 @@ void loadFindKeyFiles( const std::shared_ptr< std::vector< cylStd::ArgParser::St
 				findKeys.emplace_back( QString::fromLocal8Bit( str ) );
 
 		findKeys = vectorStrAdjustSubStr( findKeys );
+		std::unordered_map< QString, std::vector< QString > > pathKeysMap;
 		if( find_key_files_option ) {
-			auto getBuff = readIngoreNameFiles( *find_key_files_option );
-			findKeys.insert( findKeys.end( ), getBuff.begin( ), getBuff.end( ) );
+			for( auto strPath : *find_key_files_option ) {
+				auto pathInfo = Path::getPathInfo( QString::fromLocal8Bit( strPath ) );
+				for( auto &filePath : pathInfo.second ) {
+					QString currentFilePtah = filePath.getCurrentFilePtah( );
+					auto vector = readIngoreNameFile( currentFilePtah );
+					vector = vectorStrduplicate( vector );
+					writeIngoreNameFile( currentFilePtah, vector );
+					if( vector.size( ) == 0 )
+						continue;
+					findKeys.insert( findKeys.end( ), vector.begin( ), vector.end( ) );
+					pathKeysMap.emplace( currentFilePtah, vector );
+				}
+			}
 		}
 		if( findKeys.size( ) > 0 ) {
 			findKeys = vectorStrduplicate( findKeys );
 			result_map = vectorStrToLenKeyMap( converToWString( findKeys ) );
+		}
+		if( pathKeysMap.size( ) > 0 ) {
+			auto iterator = pathKeysMap.begin( );
+			auto end = pathKeysMap.end( );
+			do {
+				auto newVector = vectorStrduplicate( iterator->second );
+				auto newMap = vectorStrToLenKeyMap( converToWString( newVector ) );
+				result_file_name_map.emplace( iterator->first, newMap );
+				++iterator;
+			} while( iterator != end );
 		}
 	} );
 	result_thread.start( );

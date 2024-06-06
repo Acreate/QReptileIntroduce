@@ -116,6 +116,21 @@ public: // 类的独有属性
 		outPath = path;
 	}
 	/// <summary>
+	/// 设置写入路径
+	/// </summary>
+	/// <param name="type_s">请求类型列表</param>
+	void setRequestTypeNames( const std::vector< QString > &type_s ) {
+		for( auto &typeName : type_s )
+			getTypeNamelist.append( typeName );
+	}
+	/// <summary>
+	/// 设置写入路径
+	/// </summary>
+	/// <param name="type_s">请求类型列表</param>
+	void setRequestTypeNames( const QVector< QString > &type_s ) {
+		getTypeNamelist.append( type_s );
+	}
+	/// <summary>
 	/// 获取写入路径
 	/// </summary>
 	/// <returns></returns>

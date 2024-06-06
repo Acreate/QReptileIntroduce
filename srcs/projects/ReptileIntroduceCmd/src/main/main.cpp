@@ -32,25 +32,38 @@ int main( int argc, char *argv[ ] ) {
 	QString description = u8"小说爬虫命令行版本";
 	auto argParser = cylStd::ArgParser::parser( argc, argv );
 
-	QString typeFilePath;
+	std::vector< QString > requesTypeNameVector;
 
 	if( argParser->getOptionValues( "-name" ) )
 		std::cout << instance->applicationName( ).toStdString( ).c_str( ) << std::endl;
 
-	auto novelTypeFile = argParser->getOptionValues( "-t" );
-	if( novelTypeFile )
-		for( auto &path : *novelTypeFile ) {
+	auto requetTypeNameOption = argParser->getOptionValues( "-t" );
+	if( requetTypeNameOption )
+		for( auto &path : *requetTypeNameOption ) {
 			QFileInfo fileInfo( QString::fromStdString( path ) );
 			if( fileInfo.exists( ) && fileInfo.isFile( ) ) {
-				typeFilePath = fileInfo.absoluteFilePath( );
-				break;
+				auto absoluteFilePath = fileInfo.absoluteFilePath( );
+				auto typeKeyS = readIngoreNameFile( absoluteFilePath );
+				typeKeyS = vectorStrduplicate( typeKeyS );
+				writeIngoreNameFile( absoluteFilePath, typeKeyS );
+				requesTypeNameVector.insert( requesTypeNameVector.end( ), typeKeyS.begin( ), typeKeyS.end( ) );
 			}
 		}
+	requesTypeNameVector = vectorStrduplicate( requesTypeNameVector );
 	QString appPathDir = instance->applicationDirPath( );
 	QString appPath = instance->applicationFilePath( );
 	QString workPath = QDir::currentPath( );
-	if( typeFilePath.isEmpty( ) )
-		typeFilePath.append( appPathDir ).append( QDir::separator( ) ).append( "progress" ).append( QDir::separator( ) ).append( "ini" ).append( QDir::separator( ) ).append( "ReptileIntroduce.ini" );
+	if( requesTypeNameVector.size( ) == 0 ) {
+		QString filePath;
+		filePath.append( appPathDir ).append( QDir::separator( ) ).append( "progress" ).append( QDir::separator( ) ).append( "ini" ).append( QDir::separator( ) ).append( "ReptileIntroduce.ini" );
+		auto vector = readIngoreNameFile( filePath );
+		if( vector.size( ) > 0 ) {
+			vector = vectorStrduplicate( vector );
+			vector = vectorStrLenSort( vector );
+			writeIngoreNameFile( filePath, vector );
+			requesTypeNameVector = vectorStrduplicate( vector );
+		}
+	}
 
 	if( argParser->getOptionValues( "-v" ) ) {
 		std::cout << "------------\n" u8"qt 版本 :" << qVersion( ) << u8"\n\t" u8"编译版本 :" << compilerString.toStdString( ).c_str( ) << u8"\n\t程序位数 :" << QSysInfo::WordSize << std::endl;
@@ -70,33 +83,42 @@ int main( int argc, char *argv[ ] ) {
 	if( htmlOption || count == 1 )
 		std::cout << "========="
 			"\n"
-			u8"帮助:"
-			"\n\t"
-			"-l" u8"  参数" "\n\t\t" u8"插件路径[,插件路径1[,插件路径2[,...]]]" u8"\n\t  说明:\n\t\t" u8"加载文件到该程序"
-			"\n\t"
-			"-s" u8"  参数" "\n\t\t" u8"插件路径[,插件路径1[,插件路径2[,...]]]" u8"\n\t  说明:\n\t\t" u8"开始该文件的工作程序"
-			"\n\t"
-			"-as" u8"\n\t  说明:\n\t\t" u8"开始所有已加载的插件工作程序"
-			"\n\t"
-			"-p" u8"  参数" "\n\t\t" u8"路径" u8"\n\t  说明:\n\t\t" u8"指定输出的路径"
-			"\n\t"
-			"-isn" u8"  参数" "\n\t\t" u8"关键字[,关键字1 [,关键字2[,....]]]" u8"\n\t  说明:\n\t\t" u8"指定跳过名称子字符串关键字"
-			"\n\t"
-			"-isnf" u8"  参数" "\n\t\t" u8"路径[,路径1 [,路径2[,....]]]" u8"\n\t  说明:\n\t\t" u8"指定跳过名称子字符串关键字存放文件"
-			"\n\t"
-			"-ien" u8"  参数" "\n\t\t" u8"关键字[,关键字1 [,关键字2[,....]]]" u8"\n\t  说明:\n\t\t" u8"指定跳过名称完全匹配关键字"
-			"\n\t"
-			"-ienf" u8"  参数" "\n\t\t" u8"路径[,路径1 [,路径2[,....]]]" u8"\n\t  说明:\n\t\t" u8"指定跳过名称子完全匹配关键字存放文件"
-			"\n\t"
-			"-ifk" u8"  参数" "\n\t\t" u8"关键字[,关键字1 [,关键字2[,....]]]" u8"\n\t  说明:\n\t\t" u8"指定查找关键字"
-			"\n\t"
-			"-ifkf" u8"  参数" "\n\t\t" u8"路径[,路径1 [,路径2[,....]]]" u8"\n\t  说明:\n\t\t" u8"指定查找关键字存放文件"
-			"\n\t"
-			"-t" u8"  参数" "\n\t\t" u8"路径" u8"\n\t  说明:\n\t\t" u8"指定获取的小说类型配置文件路径-单个类型为一行"
-			"\n\t"
-			"-url" u8"\n\t  说明:\n\t\t" u8"输出加载的插件指向的网络"
-			"\n\t"
-			"-name" u8"\n\t  说明:\n\t\t" u8"输出程序名称"
+			u8"帮助:" "\n\t"
+			"-l" u8"  参数"
+			"\n\t\t" u8"插件路径[,插件路径1[,插件路径2[,...]]]" u8"\n\t  "
+			u8"说明:\n\t\t" u8"加载文件到该程序" "\n\t"
+			"-s"
+			u8"  参数" "\n\t\t" u8"插件路径[,插件路径1[,插件路径2[,...]]]" u8"\n\t  "
+			u8"说明:\n\t\t" u8"开始该文件的工作程序" "\n\t"
+			"-as" u8"\n\t  "
+			u8"说明:\n\t\t" u8"开始所有已加载的插件工作程序" "\n\t"
+			"-p"
+			u8"  参数" "\n\t\t" u8"路径" u8"\n\t  "
+			u8"说明:\n\t\t" u8"指定输出的路径" "\n\t"
+			"-isn"
+			u8"  参数" "\n\t\t" u8"关键字[,关键字1 [,关键字2[,....]]]" u8"\n\t  "
+			u8"说明:\n\t\t" u8"指定跳过名称子字符串关键字，需要配合 -rdb 与 -w 选项使用" "\n\t"
+			"-isnf"
+			u8"  参数" "\n\t\t" u8"路径[,路径1 [,路径2[,....]]]" u8"\n\t  "
+			u8"说明:\n\t\t" u8"指定跳过名称子字符串关键字存放文件" "\n\t"
+			"-ien" u8"  参数" "\n\t\t" u8"关键字[,关键字1 [,关键字2[,....]]]" u8"\n\t  "
+			u8"说明:\n\t\t" u8"指定跳过名称完全匹配关键字，需要配合 -rdb 与 -w 选项使用" "\n\t"
+			"-ienf"
+			u8"  参数" "\n\t\t" u8"路径[,路径1 [,路径2[,....]]]" u8"\n\t  "
+			u8"说明:\n\t\t" u8"指定跳过名称子完全匹配关键字存放文件，需要配合 -rdb 与 -w 选项使用" "\n\t"
+			"-ifk"
+			u8"  参数" "\n\t\t" u8"关键字[,关键字1 [,关键字2[,....]]]" u8"\n\t  "
+			u8"说明:\n\t\t" u8"指定查找关键字，需要配合 -rdb 与 -w 选项使用" "\n\t"
+			"-ifkf"
+			u8"  参数" "\n\t\t" u8"路径[,路径1 [,路径2[,....]]]" u8"\n\t  "
+			u8"说明:\n\t\t" u8"指定查找关键字存放文件，需要配合 -rdb 与 -w 选项使用" "\n\t"
+			"-t"
+			u8"  参数" "\n\t\t" u8"路径" u8"\n\t  "
+			u8"说明:\n\t\t" u8"指定获取的小说类型配置文件路径-单个类型为一行" "\n\t"
+			"-url" u8"\n\t  "
+			u8"说明:\n\t\t" u8"输出加载的插件指向的网络" "\n\t"
+			"-name" u8"\n\t  "
+			u8"说明:\n\t\t" u8"输出程序名称"
 			"\n"
 			"=========" << std::endl;
 	if( count == 1 )
@@ -143,6 +165,7 @@ int main( int argc, char *argv[ ] ) {
 		if( urlOption ) {
 			count = novelPlugPath.size( );
 			QStringList cmd;
+			auto optionToString = cylStd::ArgParser::converOptionToString( requetTypeNameOption );
 			for( size_t index = 1; index < count; ++index ) {
 				// 加载插件
 				QString plugFilePath = novelPlugPath.at( index );
@@ -159,9 +182,9 @@ int main( int argc, char *argv[ ] ) {
 					cmd.append( " -p " );
 					cmd.append( path );
 				}
-				if( novelTypeFile ) {
+				if( requetTypeNameOption ) {
 					cmd.append( " -t " );
-					cmd.append( typeFilePath );
+					cmd.append( QString::fromLocal8Bit( optionToString ) );
 				}
 				QObject::connect( subProcess
 					, &QProcess::readyReadStandardOutput
@@ -206,8 +229,8 @@ int main( int argc, char *argv[ ] ) {
 					std::cout << novelNetJob->getUrl( ).toStdString( ).c_str( ) << std::endl;
 					if( pathValues )
 						novelNetJob->setPath( path );
-					if( novelTypeFile )
-						novelNetJob->setInPath( typeFilePath );
+					if( requetTypeNameOption )
+						novelNetJob->setRequestTypeNames( requesTypeNameVector );
 					if( findVector( runPlugPath, plugFilePath ) )
 						novelNetJob->start( );
 				} else {
@@ -222,6 +245,7 @@ int main( int argc, char *argv[ ] ) {
 		} else { // 除了首个爬虫，其他爬虫均有子程序进行
 			count = runPlugPath.size( );
 			QStringList cmd;
+			auto optionToString = cylStd::ArgParser::converOptionToString( requetTypeNameOption );
 			for( size_t index = 1; index < count; ++index ) {
 				// 加载插件
 				QString plugFilePath = runPlugPath.at( index );
@@ -234,9 +258,9 @@ int main( int argc, char *argv[ ] ) {
 					cmd.append( " -p " );
 					cmd.append( path );
 				}
-				if( novelTypeFile ) {
+				if( requetTypeNameOption ) {
 					cmd.append( " -t " );
-					cmd.append( typeFilePath );
+					cmd.append( QString::fromLocal8Bit( optionToString ) );
 				}
 				cmd.append( " -s " );
 				cmd.append( plugFilePath );
@@ -280,7 +304,7 @@ int main( int argc, char *argv[ ] ) {
 							--count;
 						} );
 					novelNetJob->setPath( path );
-					novelNetJob->setInPath( typeFilePath );
+					novelNetJob->setRequestTypeNames( requesTypeNameVector );
 					novelNetJob->start( );
 				} else {
 					QMutexLocker lock( &qMutex );
@@ -295,23 +319,32 @@ int main( int argc, char *argv[ ] ) {
 	}
 
 	auto currentTime = std::chrono::system_clock::now( );
-	std::unordered_map< size_t, std::shared_ptr< std::vector< std::wstring > > > lenSubStrKeyMap;
-	cylHtmlTools::HtmlWorkThread ingSubNameThread;
-	auto inNameKeys = argParser->getOptionValues( "-isn" ); // 忽略名称
-	auto inNameFiles = argParser->getOptionValues( "-isnf" ); // 忽略文件路径
-	loadingSubKeyFiles( inNameKeys, inNameFiles, ingSubNameThread, lenSubStrKeyMap );
-
-	std::unordered_map< size_t, std::shared_ptr< std::vector< std::wstring > > > lenEquStrKeyMap;
-	cylHtmlTools::HtmlWorkThread ingEquNameThread;
-	auto inEquNameKeys = argParser->getOptionValues( "-ien" ); // 忽略名称
-	auto inEquNameFiles = argParser->getOptionValues( "-ienf" ); // 忽略文件路径
-	loadingEquKeyFiles( inEquNameKeys, inEquNameFiles, ingEquNameThread, lenEquStrKeyMap ); // 处理完全匹配名称忽略文件
-
-	std::unordered_map< size_t, std::shared_ptr< std::vector< std::wstring > > > lenFindStrKeyMap; // 查找文件的映射
+	auto dbPaths = argParser->getOptionValues( "-rdb" ); // 是否存在导出
+	auto writeFilePaths = argParser->getOptionValues( "-w" ); // 是否存在导出
+	/// 忽略子名称
+	LenMap lenSubStrKeyMap; // 子字符串匹配
+	cylHtmlTools::HtmlWorkThread ingSubNameThread;  // 子字符串匹配线程
+	/// 忽略名称
+	LenMap lenEquStrKeyMap; // 完全匹配映射
+	cylHtmlTools::HtmlWorkThread ingEquNameThread; // 完全匹配线程
+	/// 关键字查找
+	LenMap lenFindStrKeyMap; // 查找文件的映射-汇总
+	FileLenMap fileLenFindStrKeyMap; // 查找文件的映射-文件<长度，名称列表>
 	cylHtmlTools::HtmlWorkThread ingFindStrKeyThread;
-	auto findKeysOptions = argParser->getOptionValues( "-fk" ); // 小说查找名称
-	auto findNameFiles = argParser->getOptionValues( "-fkf" ); // 小说查找文件路径
-	loadFindKeyFiles( findKeysOptions, findNameFiles, ingFindStrKeyThread, lenFindStrKeyMap ); // 处理查找文件
+
+	if( dbPaths && writeFilePaths ) { // 如果存在 -rdb 与 -w 选项，那么可以使用过滤选项
+		auto inNameKeys = argParser->getOptionValues( "-isn" ); // 忽略名称
+		auto inNameFiles = argParser->getOptionValues( "-isnf" ); // 忽略文件路径
+		loadingSubKeyFiles( inNameKeys, inNameFiles, ingSubNameThread, lenSubStrKeyMap );
+
+		auto inEquNameKeys = argParser->getOptionValues( "-ien" ); // 忽略名称
+		auto inEquNameFiles = argParser->getOptionValues( "-ienf" ); // 忽略文件路径
+		loadingEquKeyFiles( inEquNameKeys, inEquNameFiles, ingEquNameThread, lenEquStrKeyMap ); // 处理完全匹配名称忽略文件
+
+		auto findKeysOptions = argParser->getOptionValues( "-fk" ); // 小说查找名称
+		auto findNameFiles = argParser->getOptionValues( "-fkf" ); // 小说查找文件路径
+		loadFindKeyFiles( findKeysOptions, findNameFiles, ingFindStrKeyThread, lenFindStrKeyMap, fileLenFindStrKeyMap ); // 处理查找文件
+	}
 
 	do {
 		instance->processEvents( );
@@ -329,9 +362,6 @@ int main( int argc, char *argv[ ] ) {
 		break;
 	} while( true );
 
-
-	auto dbPaths = argParser->getOptionValues( "-rdb" ); // 是否存在导出
-	auto writeFilePaths = argParser->getOptionValues( "-w" ); // 是否存在导出
 
 	if( dbPaths && writeFilePaths ) {
 		std::cout << u8"检测到 -rdb 与 -w 选项" << std::endl;
@@ -383,7 +413,7 @@ int main( int argc, char *argv[ ] ) {
 		}
 		if( lenEquStrKeyMap.size( ) > 0 )
 			novelInfoS = NovelDBJob::removeEquName( novelInfoS
-				, lenSubStrKeyMap
+				, lenEquStrKeyMap
 				, [&currentTime]( ) {
 					auto cur = std::chrono::system_clock::now( );
 					auto sep = cur - currentTime;
@@ -408,6 +438,8 @@ int main( int argc, char *argv[ ] ) {
 		std::cout << u8"开始写入小说到文件" << std::endl;
 		std::vector< cylHtmlTools::HtmlWorkThread * > threads;
 		for( auto &str : *writeFilePaths ) {
+			size_t fileLenKeyMapSize = fileLenFindStrKeyMap.size( ); // 文件查找映射数量
+			size_t lenFindAllKeySize = lenFindStrKeyMap.size( ); // 总查找长度
 			for( auto iterator = novelHostMap.begin( ), end = novelHostMap.end( ); iterator != end; ++iterator )
 				for( auto vit = iterator->second->begin( ), ven = iterator->second->end( ); vit != ven; ++vit ) {
 					cylHtmlTools::HtmlWorkThread *writeThread = new cylHtmlTools::HtmlWorkThread;
