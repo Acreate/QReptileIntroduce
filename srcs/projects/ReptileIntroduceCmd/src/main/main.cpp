@@ -64,7 +64,10 @@ int main( int argc, char *argv[ ] ) {
 		std::cout << "------------" << std::endl;
 	}
 
-	if( argParser->getOptionValues( "-h" ) )
+	auto htmlOption = argParser->getOptionValues( "-h" );
+
+	size_t count = argParser->getPairs( ).size( );
+	if( htmlOption || count == 1 )
 		std::cout << "========="
 			"\n"
 			u8"帮助:"
@@ -96,6 +99,8 @@ int main( int argc, char *argv[ ] ) {
 			"-name" u8"\n\t  说明:\n\t\t" u8"输出程序名称"
 			"\n"
 			"=========" << std::endl;
+	if( count == 1 )
+		return 0;
 	auto pathValues = argParser->getOptionValues( "-p" );
 	QString path = workPath + QDir::separator( ) + "cmd_download_novels_info" + QDir::separator( );
 	if( pathValues )
@@ -104,7 +109,7 @@ int main( int argc, char *argv[ ] ) {
 	std::vector< QString > novelPlugPath;
 	std::vector< QString > runPlugPath;
 
-	size_t count = 0;
+	count = 0;
 	if( loadPathOption ) {
 		for( auto &value : *loadPathOption ) {
 			QString fromStdString = QString::fromStdString( value );
