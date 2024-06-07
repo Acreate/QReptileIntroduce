@@ -42,9 +42,9 @@ int main( int argc, char *argv[ ] ) {
 	auto requetTypeNameOption = argParser->getOptionValues( "-t" );
 	if( requetTypeNameOption )
 		for( auto &path : *requetTypeNameOption ) {
-			QFileInfo fileInfo( QString::fromStdString( path ) );
-			if( fileInfo.exists( ) && fileInfo.isFile( ) ) {
-				auto absoluteFilePath = fileInfo.absoluteFilePath( );
+			auto pathInfo = Path::getPathInfo( QString::fromStdString( path ) );
+			for( auto fileInfo : pathInfo.second ) {
+				auto absoluteFilePath = fileInfo.getCurrentFilePtah( );
 				auto typeKeyS = readIngoreNameFile( absoluteFilePath );
 				typeKeyS = vectorStrduplicate( typeKeyS );
 				if( writeFilePaths )
