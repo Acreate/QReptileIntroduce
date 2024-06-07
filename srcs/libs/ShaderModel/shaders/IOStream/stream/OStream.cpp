@@ -51,77 +51,22 @@ qint64 OStream::outDebugLogFile( const QString &write_path, const QByteArray &wr
 	}
 	return result;
 }
-QStringList OStream::anyDebugOut( OStream *os, const QString &msg, const QString &file_name, size_t line, const QString &call_fun_name, const QString &write_path, const QString &write_content ) {
-	QStringList anyDebugOut = OStream::anyDebugOut( os, msg, file_name, line, call_fun_name );
-	if( !write_path.isEmpty( ) ) {
-		if( Path::creatFilePath( write_path ) ) {
-			QFile writeHtmlFile( write_path );
-			if( writeHtmlFile.open( QIODeviceBase::WriteOnly | QIODeviceBase::Text | QIODeviceBase::Truncate ) ) {
-				auto buff = anyDebugOut.join( "" );
-				buff = write_content + u8"\n" + buff;
-				writeHtmlFile.write( buff.toLatin1( ) );
-				writeHtmlFile.close( );
-			}
-		}
-	}
-	return anyDebugOut;
-}
-QStringList OStream::anyDebugOut( OStream *os, const QString &msg, const QString &file_name, size_t line, const QString &call_fun_name ) {
-	QStringList msgList;
-	QString buff;
-	msgList << u8"============================================";
-	msgList << msg;
-	msgList << u8"--------------------------------------------";
-	msgList << u8"--------------------------------------------";
-	buff.append( file_name ).append( u8"\n\t调用: " ).append( call_fun_name ).append( u8"\n\t第 " ).append( QString( u8"%1" ).arg( line ) ).append( u8" 行" );
-	msgList << buff;
-	msgList << u8"============================================";
-	buff = msgList.join( "\n" );
-	auto errorMessage = buff.toStdString( );
-	std::cout << errorMessage.c_str( ) << std::endl;
-	if( os ) {
-		*os << errorMessage << "\n";
-		os->flush( );
-	}
-	return msgList;
-}
-QStringList OStream::errorQDebugOut( const QString &msg, const QString &fileName, size_t line, const QString &call_fun_name, const QString &write_path, const QString &write_content ) {
-	QStringList msgList = OStream::errorQDebugOut( msg, fileName, line, call_fun_name );
+QStringList OStream::anyStdCerr( const QString &msg, const QString &fileName, size_t line, const QString &call_fun_name, const QString &write_path, const QString &write_content, OStream *os ) {
+	QStringList msgList = OStream::anyStdCerr( msg, fileName, line, call_fun_name );
 	if( !write_path.isEmpty( ) ) {
 		if( Path::creatFilePath( write_path ) ) {
 			QFile writeHtmlFile( write_path );
 			if( writeHtmlFile.open( QIODeviceBase::WriteOnly | QIODeviceBase::Text | QIODeviceBase::Truncate ) ) {
 				auto buff = msgList.join( "" );
 				buff = write_content + u8"\n" + buff;
-				writeHtmlFile.write( buff.toLatin1( ) );
+				writeHtmlFile.write( buff.toUtf8( ) );
 				writeHtmlFile.close( );
 			}
 		}
 	}
 	return msgList;
 }
-QStringList OStream::errorQDebugOut( OStream *os, const QString &msg, const QString &fileName, size_t line, const QString &call_fun_name ) {
-	if( os ) {
-		QStringList msgList;
-		QString buff;
-		msgList << u8"============================================";
-		msgList << msg;
-		msgList << u8"--------------------------------------------";
-		msgList << u8"--------------------------------------------";
-		buff.append( fileName ).append( u8"\n\t调用: " ).append( call_fun_name ).append( u8"\n\t第 " ).append( QString( u8"%1" ).arg( line ) ).append( u8" 行" );
-		msgList << buff;
-		msgList << u8"============================================";
-		buff = msgList.join( "\n" );
-		std::string string = buff.toStdString( );
-		const char *cStr = string.c_str( );
-		*os << cStr << "\n";
-		os->flush( );
-		return msgList;
-	} else
-		return OStream::errorQDebugOut( msg, fileName, line, call_fun_name );
-
-}
-QStringList OStream::errorQDebugOut( const QString &msg, const QString &fileName, size_t line, const QString &call_fun_name ) {
+QStringList OStream::anyStdCerr( const QString &msg, const QString &fileName, size_t line, const QString &call_fun_name, OStream *o_stream ) {
 	QStringList msgList;
 	QString buff;
 	msgList << u8"============================================";
@@ -132,25 +77,16 @@ QStringList OStream::errorQDebugOut( const QString &msg, const QString &fileName
 	msgList << buff;
 	msgList << u8"============================================";
 	buff = msgList.join( "\n" );
+	if( o_stream ) {
+		*o_stream << buff;
+		o_stream->flush( );
+	}
 	std::string string = buff.toStdString( );
 	const char *cStr = string.c_str( );
-	std::cout << cStr << std::endl;
+	std::cerr << cStr << std::endl;
 	return msgList;
 }
-QStringList OStream::errorQDebugOut( OStream *os, const QString &msg, const QString &fileName, size_t line, const QString &call_fun_name, const QString &write_path, const QString &write_content ) {
-	QStringList msgList = OStream::errorQDebugOut( os, msg, fileName, line, call_fun_name );
-	if( write_path.isEmpty( ) || !Path::creatFilePath( write_path ) )
-		return msgList;
-	QFile writeHtmlFile( write_path );
-	if( writeHtmlFile.open( QIODeviceBase::WriteOnly | QIODeviceBase::Text | QIODeviceBase::Truncate ) ) {
-		auto buff = msgList.join( "" );
-		buff = write_content + u8"\n" + buff;
-		writeHtmlFile.write( buff.toLatin1( ) );
-		writeHtmlFile.close( );
-	}
-	return msgList;
-}
-void OStream::anyDebugOut( OStream *os, const QString &msg ) {
+void OStream::anyStdCOut( const QString &msg, OStream *os ) {
 	if( os ) {
 		*os << msg << "\n";
 		os->flush( );
@@ -158,13 +94,10 @@ void OStream::anyDebugOut( OStream *os, const QString &msg ) {
 	std::cout << msg.toStdString( ).c_str( ) << std::endl;
 }
 
-void OStream::errorQDebugOut( OStream *os, const QString &msg ) {
+void OStream::anyStdCerr( const QString &msg, OStream *os ) {
 	if( os ) {
 		*os << msg << "\n";
 		os->flush( );
-	} else
-		OStream::errorQDebugOut( msg );
-}
-void OStream::errorQDebugOut( const QString &msg ) {
+	}
 	std::cout << msg.toStdString( ).c_str( ) << std::endl;
 }

@@ -66,7 +66,7 @@ namespace instance_function {
 			.append( u8"\n\t自由信息 : " ).append( error_info_text )
 			.append( "\n=========================" )
 			.append( "\n-->" );
-		OStream::anyDebugOut( os, msg );
+		OStream::anyStdCOut( msg, os );
 		auto path = QString( root_path ).append( QDir::separator( ) )
 											.append( "write_error_info_file" ).append( QDir::separator( ) )
 											.append( dir_name ).append( QDir::separator( ) )

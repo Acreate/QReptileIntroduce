@@ -22,6 +22,7 @@ int main( int argc, char *argv[ ] ) {
 	std::cout.imbue( locale );
 	std::wcout.imbue( locale );
 	QMutex qMutex;
+	auto currentTime = std::chrono::system_clock::now( );
 
 	QCoreApplication application( argc, argv );
 	auto *instance = qApp;// 指定一个键，这个键用来标识共享内存区域
@@ -37,6 +38,7 @@ int main( int argc, char *argv[ ] ) {
 	if( argParser->getOptionValues( "-name" ) )
 		std::cout << instance->applicationName( ).toStdString( ).c_str( ) << std::endl;
 
+	auto writeFilePaths = argParser->getOptionValues( "-w" ); // 是否存在导出
 	auto requetTypeNameOption = argParser->getOptionValues( "-t" );
 	if( requetTypeNameOption )
 		for( auto &path : *requetTypeNameOption ) {
@@ -45,7 +47,8 @@ int main( int argc, char *argv[ ] ) {
 				auto absoluteFilePath = fileInfo.absoluteFilePath( );
 				auto typeKeyS = readIngoreNameFile( absoluteFilePath );
 				typeKeyS = vectorStrduplicate( typeKeyS );
-				writeIngoreNameFile( absoluteFilePath, typeKeyS );
+				if( writeFilePaths )
+					writeIngoreNameFile( absoluteFilePath, typeKeyS );
 				requesTypeNameVector.insert( requesTypeNameVector.end( ), typeKeyS.begin( ), typeKeyS.end( ) );
 			}
 		}
@@ -64,7 +67,7 @@ int main( int argc, char *argv[ ] ) {
 			requesTypeNameVector = vectorStrduplicate( vector );
 		}
 	}
-
+	currentTime = std::chrono::system_clock::now( );
 	if( argParser->getOptionValues( "-v" ) ) {
 		std::cout << "------------\n" u8"qt 版本 :" << qVersion( ) << u8"\n\t" u8"编译版本 :" << compilerString.toStdString( ).c_str( ) << u8"\n\t程序位数 :" << QSysInfo::WordSize << std::endl;
 		auto map = argParser->getPairs( );
@@ -76,7 +79,7 @@ int main( int argc, char *argv[ ] ) {
 		}
 		std::cout << "------------" << std::endl;
 	}
-
+	currentTime = std::chrono::system_clock::now( );
 	auto htmlOption = argParser->getOptionValues( "-h" );
 
 	size_t count = argParser->getPairs( ).size( );
@@ -123,6 +126,7 @@ int main( int argc, char *argv[ ] ) {
 			"=========" << std::endl;
 	if( count == 1 )
 		return 0;
+	currentTime = std::chrono::system_clock::now( );
 	auto pathValues = argParser->getOptionValues( "-p" );
 	QString path = workPath + QDir::separator( ) + "cmd_download_novels_info" + QDir::separator( );
 	if( pathValues )
@@ -243,12 +247,12 @@ int main( int argc, char *argv[ ] ) {
 				errorCout( error.toStdString( ), __FILE__, __FUNCTION__, __LINE__ );
 			}
 		} else { // 除了首个爬虫，其他爬虫均有子程序进行
-			count = runPlugPath.size( );
+			count = novelPlugPath.size( );
 			QStringList cmd;
 			auto optionToString = cylStd::ArgParser::converOptionToString( requetTypeNameOption );
 			for( size_t index = 1; index < count; ++index ) {
 				// 加载插件
-				QString plugFilePath = runPlugPath.at( index );
+				QString plugFilePath = novelPlugPath.at( index );
 				auto subProcess = new QProcess;
 				cmd.append( " -l " );
 				cmd.append( plugFilePath );
@@ -262,8 +266,10 @@ int main( int argc, char *argv[ ] ) {
 					cmd.append( " -t " );
 					cmd.append( QString::fromLocal8Bit( optionToString ) );
 				}
-				cmd.append( " -s " );
-				cmd.append( plugFilePath );
+				if( findVector( runPlugPath, plugFilePath ) ) {
+					cmd.append( " -s " );
+					cmd.append( plugFilePath );
+				}
 				QObject::connect( subProcess
 					, &QProcess::readyReadStandardOutput
 					, [=]( ) {
@@ -291,7 +297,7 @@ int main( int argc, char *argv[ ] ) {
 			}
 
 			// 加载第一个插件
-			QString plugFilePath = runPlugPath.front( );
+			QString plugFilePath = novelPlugPath.front( );
 			if( findVector( runPlugPath, plugFilePath ) ) {
 				QString error;
 				auto interface = LoadPlug::getIRequestNetInterface( plugFilePath, error );
@@ -317,10 +323,8 @@ int main( int argc, char *argv[ ] ) {
 			}
 		}
 	}
-
-	auto currentTime = std::chrono::system_clock::now( );
+	currentTime = std::chrono::system_clock::now( );
 	auto dbPaths = argParser->getOptionValues( "-rdb" ); // 是否存在导出
-	auto writeFilePaths = argParser->getOptionValues( "-w" ); // 是否存在导出
 	/// 忽略子名称
 	LenMap lenSubStrKeyMap; // 子字符串匹配
 	cylHtmlTools::HtmlWorkThread ingSubNameThread;  // 子字符串匹配线程
@@ -387,7 +391,10 @@ int main( int argc, char *argv[ ] ) {
 			}
 		}
 		std::cout << u8"数据库读取完毕" << std::endl;
-
+		if( novelInfoS.size( ) == 0 ) {
+			std::cout << u8"有效小说数量为 0，退出操作" << std::endl;
+			return 0;
+		}
 		std::cout << u8"开始分解小说到域名" << std::endl;
 		auto novelHostMap = NovelDBJob::decompose( novelInfoS
 			, [&currentTime]( ) {
@@ -423,6 +430,11 @@ int main( int argc, char *argv[ ] ) {
 					std::cout << u8"正在删除匹配的符串关键字" << std::endl;
 					currentTime = cur;
 				} );
+
+		if( novelInfoS.size( ) == 0 ) {
+			std::cout << u8"删除匹配的符串关键字后，有效小说数量为 0，退出操作" << std::endl;
+			return 0;
+		}
 		if( lenSubStrKeyMap.size( ) > 0 )
 			novelInfoS = NovelDBJob::removeSubName( novelInfoS
 				, lenSubStrKeyMap
@@ -435,30 +447,91 @@ int main( int argc, char *argv[ ] ) {
 					std::cout << u8"正在删除子字符串关键字" << std::endl;
 					currentTime = cur;
 				} );
+		if( novelInfoS.size( ) == 0 ) {
+			std::cout << u8"删除子字符串关键字后，有效小说数量为 0，退出操作" << std::endl;
+			return 0;
+		}
 		std::cout << u8"开始写入小说到文件" << std::endl;
 		std::vector< cylHtmlTools::HtmlWorkThread * > threads;
+		size_t fileLenKeyMapSize = fileLenFindStrKeyMap.size( ); // 文件查找映射数量
+		size_t lenFindAllKeySize = lenFindStrKeyMap.size( ); // 总查找长度
 		for( auto &str : *writeFilePaths ) {
-			size_t fileLenKeyMapSize = fileLenFindStrKeyMap.size( ); // 文件查找映射数量
-			size_t lenFindAllKeySize = lenFindStrKeyMap.size( ); // 总查找长度
 			for( auto iterator = novelHostMap.begin( ), end = novelHostMap.end( ); iterator != end; ++iterator )
 				for( auto vit = iterator->second->begin( ), ven = iterator->second->end( ); vit != ven; ++vit ) {
 					cylHtmlTools::HtmlWorkThread *writeThread = new cylHtmlTools::HtmlWorkThread;
 					QString writePath;
 					writePath.append( str ).append( QDir::separator( ) ).append( iterator->first );
 					std::cout << u8"\t写入目录 " << writePath.toStdString( ).c_str( ) << std::endl;
+					auto rootPath = QString::fromLocal8Bit( str );
+					auto host = iterator->first;
+					auto typeName = vit->first;
+					auto novels = vit->second;
 					writeThread->setCurrentThreadRun( [=]( ) {
-						NovelDBJob::writeFile( QString::fromStdString( str ), iterator->first, vit->first, *vit->second );
+						NovelDBJob::writeFile( rootPath, host, typeName, *novels );
 					} );
 					threads.emplace_back( writeThread );
-					writeThread->start( );
+
+					if( fileLenKeyMapSize > 0 ) { // 配置文件查找
+						auto fileKeyIterator = fileLenFindStrKeyMap.begin( );
+						auto fileKeyEnd = fileLenFindStrKeyMap.end( );
+						for( ; fileKeyIterator != fileKeyEnd; ++fileKeyIterator ) {
+							writeThread = new cylHtmlTools::HtmlWorkThread;
+							auto writeFile = rootPath + QDir::separator( ) + "find_write" + QDir::separator( ) + fileKeyIterator->first + QDir::separator( );
+							writeThread->setCurrentThreadRun( [=,&currentTime]( ) {
+								auto findResultNovels = NovelDBJob::findNovel( *novels
+									, fileKeyIterator->second
+									, [&currentTime]( ) {
+										auto cur = std::chrono::system_clock::now( );
+										auto sep = cur - currentTime;
+										auto second = std::chrono::duration_cast< std::chrono::seconds >( sep ).count( );
+										if( second < 2 )
+											return;
+										std::cout << u8"正在匹配 文件 关键字" << std::endl;
+										currentTime = cur;
+									} );
+								NovelDBJob::writeFile( writeFile, host, typeName, findResultNovels );
+							} );
+							threads.emplace_back( writeThread );
+						}
+					}
+					if( lenFindAllKeySize > 0 ) { // 总关键字查找
+						writeThread = new cylHtmlTools::HtmlWorkThread;
+						auto writeFile = rootPath + QDir::separator( ) + "find_write" + QDir::separator( );
+						writeThread->setCurrentThreadRun( [=,&currentTime]( ) {
+							auto findResultNovels = NovelDBJob::findNovel( *novels
+								, lenFindStrKeyMap
+								, [&]( ) {
+									auto cur = std::chrono::system_clock::now( );
+									auto sep = cur - currentTime;
+									auto second = std::chrono::duration_cast< std::chrono::seconds >( sep ).count( );
+									if( second < 2 )
+										return;
+									std::cout << u8"正在匹配 全文 关键字" << std::endl;
+									currentTime = cur;
+								} );
+							NovelDBJob::writeFile( writeFile, host, typeName, findResultNovels );
+						} );
+						threads.emplace_back( writeThread );
+					}
 				}
 		}
+		size_t threadCount = 0;
 		do {
 			auto begin = threads.begin( );
 			auto end = threads.end( );
 			if( begin == end )
 				break;
+			while( threadCount < 8 && begin != end ) {
+				cylHtmlTools::HtmlWorkThread *writeThread = *begin;
+				if( writeThread->isInit( ) ) {
+					writeThread->start( );
+					++threadCount;
+				}
+				++begin;
+			}
 			do {
+				if( begin == end )
+					break;
 				cylHtmlTools::HtmlWorkThread *writeThread = *begin;
 				if( writeThread->isFinish( ) ) {
 					threads.erase( begin );
@@ -474,7 +547,7 @@ int main( int argc, char *argv[ ] ) {
 					continue;
 				std::cout << u8"正在写入文件" << std::endl;
 				currentTime = cur;
-			} while( begin != end );
+			} while( true );
 		} while( true );
 	}
 

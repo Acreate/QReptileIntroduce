@@ -69,7 +69,7 @@ public:// - 静态方法
 	/// <param name="writeFilePath">写入路径</param>
 	/// <param name="infos">待写入列表</param>
 	/// <returns>写入列表-完成排序</returns>
-	static NovelInfoVector writeFile( const QString &writeFilePath, const NovelInfoVector &infos);
+	static NovelInfoVector writeFile( const QString &writeFilePath, const NovelInfoVector &infos );
 
 	/// <summary>
 	/// 写入小说
@@ -111,6 +111,15 @@ public:// - 静态方法
 	/// <param name="call_function">工作时候会调用该函数</param>
 	/// <returns>删除完毕的列表</returns>
 	static NovelInfoVector removeEquName( const NovelInfoVector &infos, const std::unordered_map< size_t, std::shared_ptr< std::vector< interfacePlugsType::HtmlDocString > > > &remove_name_s, const std::function< void( ) > &call_function );
+
+	/// <summary>
+	/// 查找小说
+	/// </summary>
+	/// <param name="infos">查找列表</param>
+	/// <param name="find_key">长度关键字</param>
+	/// <param name="call_function">工作时候会调用该函数</param>
+	/// <returns>匹配的小说列表</returns>
+	static NovelInfoVector findNovel( const NovelInfoVector &infos, const std::unordered_map< size_t, std::shared_ptr< std::vector< interfacePlugsType::HtmlDocString > > > &find_key , const std::function< void( ) > &call_function );
 };
 
 

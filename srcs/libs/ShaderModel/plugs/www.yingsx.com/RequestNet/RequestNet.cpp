@@ -99,7 +99,7 @@ Map_HtmlStrK_HtmlStrV * RequestNet::formHtmlGetTypeTheUrls( const interfacePlugs
 		auto htmlDoc = cylHtmlTools::HtmlDoc::parse( stdWString );
 		if( !htmlDoc.get( ) ) {
 			auto msg = QString( "%1 : %2" ).arg( QString::fromStdWString( url ) ).arg( QString( u8" HtmlDoc::parse 异常，登出" ) );
-			OStream::anyDebugOut( thisOStream, msg, __FILE__, __LINE__, __FUNCTION__ );
+			OStream::anyStdCerr( msg, __FILE__, __LINE__, __FUNCTION__, thisOStream );
 			return;
 		}
 
@@ -110,7 +110,7 @@ Map_HtmlStrK_HtmlStrV * RequestNet::formHtmlGetTypeTheUrls( const interfacePlugs
 		auto vectorHtmlNodeSPtrShared = xpath.buider( htmlNodeSPtrShared );
 		if( !vectorHtmlNodeSPtrShared ) {
 			auto msg = QString( "%1 : %2 " ).arg( QString::fromStdWString( url ) ).arg( QString( u8" xpath 异常，登出" ) );
-			OStream::anyDebugOut( thisOStream, msg, __FILE__, __LINE__, __FUNCTION__ );
+			OStream::anyStdCerr( msg, __FILE__, __LINE__, __FUNCTION__, thisOStream );
 			return;
 		}
 		auto vectorIterator = vectorHtmlNodeSPtrShared->begin( );
@@ -271,7 +271,7 @@ Vector_INovelInfoSPtr RequestNet::formHtmlGetTypePageNovels( const interfacePlug
 				QString outMsg( u8"[%1]小说(%2):url(%3) -> 解析成功 [%4]" );
 				++novelCount;
 				outMsg = outMsg.arg( novelInfoBuffPtr->typeName ).arg( novelInfoBuffPtr->name ).arg( novelInfoBuffPtr->url ).arg( novelCount );
-				OStream::anyDebugOut( thisOStream, outMsg );
+				OStream::anyStdCOut( outMsg, thisOStream );
 				novelInfoBuffPtr = std::make_shared< NovelInfo >( );
 			} else {
 				QString errorInfo = instance_function::get_error_info( quitMsg, QString::fromStdWString( xpath.getHtmlString( ) ) );

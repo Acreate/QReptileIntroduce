@@ -19,29 +19,6 @@ public:
 	/// <returns>写入数量</returns>
 	static qint64 outDebugLogFile( const QString &write_path, const QByteArray &write_content, QString file_base_name, QString error_type = u8"normal", QString dir_name = "", QString file_suffix = u8".log" );
 	/// <summary>
-	/// 同步流输出，使用指定 OStream 与 qdebug() 输出信息
-	/// 如果 writePath 正确，那么将会写入内容。
-	/// </summary>
-	/// <param name="os">输出</param>
-	/// <param name="msg">消息</param>
-	/// <param name="file_name">产生错误的文件</param>
-	/// <param name="line">产生错误的文件行数</param>
-	/// <param name="call_fun_name">产生错误的调用函数</param>
-	/// <param name="write_path">写入路径</param>
-	/// <param name="write_content">写入内容</param>
-	static QStringList anyDebugOut( OStream *os, const QString &msg, const QString &file_name, size_t line, const QString &call_fun_name, const QString &write_path, const QString &write_content );
-
-	/// <summary>
-	/// 同步流输出，使用指定 OStream 与 qdebug() 输出信息
-	/// 如果 writePath 正确，那么将会写入内容。
-	/// </summary>
-	/// <param name="os">输出</param>
-	/// <param name="msg">消息</param>
-	/// <param name="file_name">产生错误的文件</param>
-	/// <param name="line">产生错误的文件行数</param>
-	/// <param name="call_fun_name">产生错误的调用函数</param>
-	static QStringList anyDebugOut( OStream *os, const QString &msg, const QString &file_name, size_t line, const QString &call_fun_name );
-	/// <summary>
 	/// 使用指定 qdebug() 输出信息
 	/// 如果 writePath 正确，那么将会写入内容。
 	/// </summary>
@@ -49,28 +26,8 @@ public:
 	/// <param name="fileName">产生错误的文件</param>
 	/// <param name="line">产生错误的文件行数</param>
 	/// <param name="call_fun_name">产生错误的调用函数</param>
-	/// <param name="write_path">写入路径</param>
-	/// <param name="write_content">写入内容</param>
-	static QStringList errorQDebugOut( const QString &msg, const QString &fileName, size_t line, const QString &call_fun_name, const QString &write_path, const QString &write_content );
-	/// <summary>
-	/// 使用指定流输出信息
-	/// 当 os 不存在时，写入 qdebug()
-	/// </summary>
-	/// <param name="os">输出</param>
-	/// <param name="msg">消息</param>
-	/// <param name="fileName">产生错误的文件</param>
-	/// <param name="line">产生错误的文件行数</param>
-	/// <param name="call_fun_name">产生错误的调用函数</param>
-	static QStringList errorQDebugOut( OStream *os, const QString &msg, const QString &fileName, size_t line, const QString &call_fun_name );
-	/// <summary>
-	/// 使用指定 qdebug() 输出信息
-	/// 如果 writePath 正确，那么将会写入内容。
-	/// </summary>
-	/// <param name="msg">消息</param>
-	/// <param name="fileName">产生错误的文件</param>
-	/// <param name="line">产生错误的文件行数</param>
-	/// <param name="call_fun_name">产生错误的调用函数</param>
-	static QStringList errorQDebugOut( const QString &msg, const QString &fileName, size_t line, const QString &call_fun_name );
+	/// <param name="o_stream">可选输出流</param>
+	static QStringList anyStdCerr( const QString &msg, const QString &fileName, size_t line, const QString &call_fun_name, OStream *o_stream = nullptr );
 
 	/// <summary>
 	/// 使用指定 os 输出信息，假设 os 为null，将会调用
@@ -84,8 +41,7 @@ public:
 	/// <param name="call_fun_name">产生错误的调用函数</param>
 	/// <param name="write_path">写入路径</param>
 	/// <param name="write_content">写入内容</param>
-	static QStringList errorQDebugOut( OStream *os, const QString &msg, const QString &fileName, size_t line, const QString &call_fun_name, const QString &write_path, const QString &write_content );
-
+	static QStringList anyStdCerr( const QString &msg, const QString &fileName, size_t line, const QString &call_fun_name, const QString &write_path, const QString &write_content, OStream *os = nullptr );
 
 	/// <summary>
 	/// 使用指定 os 输出信息，假设 os 为null，将会调用
@@ -94,7 +50,7 @@ public:
 	/// </summary>
 	/// <param name="os">输出</param>
 	/// <param name="msg">消息</param>
-	static void anyDebugOut( OStream *os, const QString &msg );
+	static void anyStdCOut( const QString &msg, OStream *os = nullptr );
 	/// <summary>
 	/// 使用指定 os 输出信息，假设 os 为null，将会调用
 	/// static void errorQDebugOut( const std::string &msg );
@@ -102,14 +58,7 @@ public:
 	/// </summary>
 	/// <param name="os">输出</param>
 	/// <param name="msg">消息</param>
-	static void errorQDebugOut( OStream *os, const QString &msg );
-	/// <summary>
-	/// 使用指定 os 输出信息，假设 os 为null，将会调用
-	/// static void errorQDebugOut( const std::string &msg );
-	/// 如果 writePath 正确，那么将会写入内容。
-	/// </summary>
-	/// <param name="msg">消息</param>
-	static void errorQDebugOut( const QString &msg );
+	static void anyStdCerr( const QString &msg, OStream *os = nullptr );
 private: // - 类型
 	template< class TKey, class TValue >
 	using UN_Map_Iterator_Template = std::unordered_map< TKey, TValue >;

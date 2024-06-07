@@ -130,7 +130,7 @@ namespace instance_function {
 				, { "typeName", dbTextType }
 			} );
 		if( !hasTab )
-			OStream::anyDebugOut( thisOStream, "无法创建正确的 db 文件", __FILE__, __LINE__, __FUNCTION__ );
+			OStream::anyStdCerr( "无法创建正确的 db 文件", __FILE__, __LINE__, __FUNCTION__, thisOStream );
 		return hasTab;
 	}
 	/// <summary>
@@ -191,7 +191,7 @@ namespace instance_function {
 			.append( u8"\n\t自由信息 : " ).append( error_info_text )
 			.append( "\n=========================" )
 			.append( "\n-->" );
-		OStream::anyDebugOut( os, msg );
+		OStream::anyStdCerr( msg, os );
 		auto path = QString( root_path ).append( QDir::separator( ) )
 										.append( "write_error_info_file" ).append( QDir::separator( ) )
 										.append( dir_name ).append( QDir::separator( ) )
@@ -347,7 +347,7 @@ size_t NovelDBJob::writeDB( OStream *thisOStream, const QString &outPath, const 
 			if( depositoryShared ) {
 				if( !depositoryShared->open( ) ) {
 					auto lastError = depositoryShared->getLastError( );
-					OStream::anyDebugOut( thisOStream, lastError.text( ), __FILE__, __LINE__, __FUNCTION__ );
+					OStream::anyStdCerr( lastError.text( ), __FILE__, __LINE__, __FUNCTION__, thisOStream );
 					return;
 				}
 				bool hasTab = depositoryShared->hasTab( tabName );
@@ -523,7 +523,7 @@ NovelDBJob::NovelInfoVector_Shared NovelDBJob::readDB( OStream *thisOStream, con
 			if( depositoryShared ) {
 				if( !depositoryShared->open( ) ) {
 					auto lastError = depositoryShared->getLastError( );
-					OStream::anyDebugOut( thisOStream, lastError.text( ), __FILE__, __LINE__, __FUNCTION__ );
+					OStream::anyStdCerr( lastError.text( ), __FILE__, __LINE__, __FUNCTION__, thisOStream );
 					return;
 				}
 				bool hasTab = depositoryShared->hasTab( tabName );
@@ -738,6 +738,82 @@ NovelDBJob::NovelInfoVector NovelDBJob::removeEquName( const NovelInfoVector &in
 				writeMutex->lock( );
 				result.emplace_back( node );
 				writeMutex->unlock( );
+			} );
+		thread->start( );
+		threads.emplace_back( thread );
+		call_function( );
+		checkThreadsWork( threads, call_function, 8 );
+	}
+	overThreadsWork( threads, call_function );
+	return result;
+}
+NovelDBJob::NovelInfoVector NovelDBJob::findNovel( const NovelInfoVector &infos, const std::unordered_map< size_t, std::shared_ptr< std::vector< interfacePlugsType::HtmlDocString > > > &find_key, const std::function< void( ) > &call_function ) {
+	std::mutex *writeMutex = new std::mutex; // 数组写入锁
+	NovelDBJob::NovelInfoVector result;
+	std::vector< cylHtmlTools::HtmlWorkThread * > threads;
+	std::vector< size_t > mapLenKeyS; // 存储所有的 key
+	for( auto it = find_key.begin( ), en = find_key.end( ); it != en; ++it )
+		mapLenKeyS.emplace_back( it->first );
+	std::sort( mapLenKeyS.begin( ), mapLenKeyS.end( ) );
+
+	for( auto &node : infos ) {
+		cylHtmlTools::HtmlWorkThread *thread = new cylHtmlTools::HtmlWorkThread;
+		thread->setCurrentThreadRun( [
+				node,writeMutex
+				,&mapLenKeyS,&find_key,&result
+			]( ) ->void {
+				// todo : ......
+				interfacePlugsType::HtmlDocString name;
+				interfacePlugsType::HtmlDocString info;
+				interfacePlugsType::HtmlDocString auth;
+				interfacePlugsType::HtmlDocString lastItem;
+				node->getNovelName( &name );
+				node->getNovelInfo( &info );
+				node->getNovelAuthor( &auth );
+				node->getNovelLastItem( &lastItem );
+				size_t nameLen = name.length( );
+				size_t infoLen = info.length( );
+				size_t authLen = auth.length( );
+				size_t lastItemLen = lastItem.length( );
+				for( auto &key : mapLenKeyS ) {
+					if( nameLen < key && infoLen < key && authLen < key && lastItemLen < key )
+						break;
+					auto &&sharedPtr = find_key.at( key );
+					for( auto &str : *sharedPtr ) {
+						if( nameLen >= key ) {
+							if( cylHtmlTools::HtmlStringTools::findNextHtmlStringPotion( &name, 0, &str ) ) {
+								writeMutex->lock( );
+								result.emplace_back( node );
+								writeMutex->unlock( );
+								break; // 小说当属匹配当前子字符串
+							}
+						}
+						if( infoLen >= key ) {
+							if( cylHtmlTools::HtmlStringTools::findNextHtmlStringPotion( &info, 0, &str ) ) {
+								writeMutex->lock( );
+								result.emplace_back( node );
+								writeMutex->unlock( );
+								break; // 小说当属匹配当前子字符串
+							}
+						}
+						if( authLen >= key ) {
+							if( cylHtmlTools::HtmlStringTools::findNextHtmlStringPotion( &auth, 0, &str ) ) {
+								writeMutex->lock( );
+								result.emplace_back( node );
+								writeMutex->unlock( );
+								break; // 小说当属匹配当前子字符串
+							}
+						}
+						if( lastItemLen >= key ) {
+							if( cylHtmlTools::HtmlStringTools::findNextHtmlStringPotion( &lastItem, 0, &str ) ) {
+								writeMutex->lock( );
+								result.emplace_back( node );
+								writeMutex->unlock( );
+								break; // 小说当属匹配当前子字符串
+							}
+						}
+					}
+				}
 			} );
 		thread->start( );
 		threads.emplace_back( thread );
