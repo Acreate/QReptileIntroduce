@@ -533,6 +533,7 @@ NovelDBJob::NovelInfoVector_Shared NovelDBJob::readDB( OStream *thisOStream, con
 				if( !allItem )
 					return;
 				auto vectorINovelInfoSPtr = converNovelBaseVector( allItem );
+				vectorINovelInfoSPtr = NovelDBJob::identical( vectorINovelInfoSPtr ); // 剔除相同
 				mutex->lock( );
 				for( auto &novel : vectorINovelInfoSPtr )
 					result->emplace_back( novel );
@@ -630,7 +631,8 @@ inline void checkThreadsWork( std::vector< cylHtmlTools::HtmlWorkThread * > &thr
 				break;
 			do {
 				cylHtmlTools::HtmlWorkThread *thread = iterator.operator*( );
-				call_function( );
+				if( call_function )
+					call_function( );
 				if( thread->isFinish( ) ) {
 					threads.erase( iterator );
 					delete thread;
@@ -655,7 +657,8 @@ inline void overThreadsWork( std::vector< cylHtmlTools::HtmlWorkThread * > &thre
 			return;
 		do {
 			cylHtmlTools::HtmlWorkThread *thread = iterator.operator*( );
-			call_function( );
+			if( call_function )
+				call_function( );
 			if( thread->isFinish( ) ) {
 				threads.erase( iterator );
 				delete thread;
@@ -817,7 +820,8 @@ NovelDBJob::NovelInfoVector NovelDBJob::findNovel( const NovelInfoVector &infos,
 			} );
 		thread->start( );
 		threads.emplace_back( thread );
-		call_function( );
+		if( call_function )
+			call_function( );
 		checkThreadsWork( threads, call_function, 8 );
 	}
 	overThreadsWork( threads, call_function );
