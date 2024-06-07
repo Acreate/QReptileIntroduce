@@ -27,6 +27,7 @@ private:
 	static QDateTime currentTime; // 请求时间
 	static QString currentTimeForm; // 当前请求时间的格式
 	static int expireDay; // 过期-日
+public:
 private:
 	QUrl rootUrl;
 	OStream *thisOStream;
@@ -53,7 +54,6 @@ public: // 实现虚函数
 		*path = outPath.toStdWString( );
 		return path->length( );
 	}
-
 	/// <summary>
 	/// 获取建议请求间隔
 	/// </summary>
@@ -173,6 +173,8 @@ public: // 实现解析
 	/// <summary>
 	/// 结束该网站请求时被调用
 	/// </summary>
+	/// <param name="saveNovelInfos">请求到的所有小说信息</param>
+	/// <param name="run">返回 true 表示刷新时间</param>
 	void endHost( const interfacePlugsType::Vector_INovelInfoSPtr &saveNovelInfos, const std::function< bool( const std::chrono::system_clock::time_point::duration & ) > &run ) override;
 private:
 	OStream *oStream;
