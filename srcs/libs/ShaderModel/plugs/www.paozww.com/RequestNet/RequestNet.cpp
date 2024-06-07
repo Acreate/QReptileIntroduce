@@ -40,7 +40,7 @@ RequestNet::~RequestNet( ) {
 
 }
 size_t RequestNet::getRequestInterval( ) {
-	return 2000;
+	return 1000;
 }
 int RequestNet::initAfter( ) {
 	thisOStream = OStream::getDefaultOStream( rootUrl.toString( ) );
