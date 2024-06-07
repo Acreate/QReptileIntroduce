@@ -4,12 +4,12 @@
 #include <qdir.h>
 #include <QFileInfo>
 
-Setting::Setting( const QString &filePath, QObject *parent = nullptr ):
+Setting::Setting( const QString &filePath, QObject *parent ):
 	QObject( parent ) {
 	setting = new QSettings( filePath, QSettings::IniFormat, this );
 	instanceMutex = new QMutex;
 }
-Setting::Setting( QObject *parent = nullptr ) : QObject( parent ) {
+Setting::Setting( QObject *parent ) : QObject( parent ) {
 	setting = nullptr;
 	instanceMutex = new QMutex;
 }

@@ -58,7 +58,7 @@ using namespace interfacePlugsType;
 /// <param name="write_root_path">写入的根目录</param>
 /// <param name="file_name">文件名称</param>
 /// <param name="file_suffix">后缀名称</param>
-inline void error_write_file( const _CHRONO time_point< std::chrono::system_clock > &nowTimeDuration, OStream *oStream, QNetworkReply *networkReply, const QString &file, const QString &call_function_name, size_t line, const QString &append_msg, const QString &write_root_path, const QString &file_name, const QString &file_suffix ) {
+inline void error_write_file( const  std::chrono::time_point< std::chrono::system_clock > &nowTimeDuration, OStream *oStream, QNetworkReply *networkReply, const QString &file, const QString &call_function_name, size_t line, const QString &append_msg, const QString &write_root_path, const QString &file_name, const QString &file_suffix ) {
 	QDateTime currentDateTime = QDateTime::currentDateTime( );
 	QString currentTime = currentDateTime.toString( "yyyy_MM_dd hh-mm-ss" );
 	auto currentTimeDuration = std::chrono::system_clock::now( ) - nowTimeDuration;

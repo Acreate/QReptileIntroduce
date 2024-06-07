@@ -108,17 +108,10 @@ public:
 	/// <returns>消息字体</returns>
 	QFont getDisplayFont( ) const;
 
-	template< Display_Repaint_Type NParamType = Any_Type >
-	void updatDisplay( );
-
-	template< >
-	void updatDisplay< QString_Type >( );
-	template< >
-	void updatDisplay< QObject_Type >( );
-	template< >
-	void updatDisplay< QArrayData_Type >( );
-	template< >
-	void updatDisplay< QByteArray_Type >( );
+	void updatDisplay(Display_Repaint_Type type = Any_Type ) {
+		this->updataStatus |= type;
+	}
+	
 protected:
 	void paintEvent( QPaintEvent *event ) override;
 	void mousePressEvent( QMouseEvent *event ) override;
@@ -250,9 +243,6 @@ public: // 流接口
 };
 
 
-template< DisplayWidget::Display_Repaint_Type NParamType >
-void DisplayWidget::updatDisplay( ) {
-	this->updataStatus |= NParamType;
-}
+
 
 #endif // DISPLAYWIDGET_H_H_HEAD__FILE__

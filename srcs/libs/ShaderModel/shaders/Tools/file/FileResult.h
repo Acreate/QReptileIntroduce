@@ -5,6 +5,8 @@
 #include <QFileDevice>
 #include <qbytearray.h>
 #include <QObject>
+class RWFileThread;
+class FileThread;
 class FileResult : public QObject {
 	Q_OBJECT;
 public:

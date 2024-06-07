@@ -100,8 +100,7 @@ void DisplayWidget::initConnect( ) {
 		, &DisplayWidget::changeDisplayFont
 		, [=]( QFont &font ) {
 			msgFont = font;
-			updatDisplay< QString_Type >( );
-
+			updatDisplay( QString_Type);
 			update( );
 		} );
 	connect( this
@@ -251,22 +250,6 @@ QFont DisplayWidget::getDisplayFont( ) const {
 	return msgFont;
 }
 
-template< >
-void DisplayWidget::updatDisplay< DisplayWidget::QString_Type >( ) {
-	this->updataStatus |= QString_Type;
-}
-template< >
-void DisplayWidget::updatDisplay< DisplayWidget::QObject_Type >( ) {
-	this->updataStatus |= QObject_Type;
-}
-template< >
-void DisplayWidget::updatDisplay< DisplayWidget::QArrayData_Type >( ) {
-	this->updataStatus |= QArrayData_Type;
-}
-template< >
-void DisplayWidget::updatDisplay< DisplayWidget::QByteArray_Type >( ) {
-	this->updataStatus |= QByteArray_Type;
-}
 void DisplayWidget::paintEvent( QPaintEvent *event ) {
 
 	if( updataStatus & QString_Type )
@@ -308,7 +291,7 @@ void DisplayWidget::resizeEvent( QResizeEvent *event ) {
 	*stringMsgImage = stringMsgImage->scaled( size );
 	*byteArrayMsgImage = stringMsgImage->scaled( size );
 	*arrayDataMsgImage = stringMsgImage->scaled( size );
-	updatDisplay< >( );
+	updatDisplay( Any_Type);
 }
 void DisplayWidget::native_slot_display( const QObject &data ) {
 	objectImage->fill( QColor( 0, 0, 0, 0 ) );
@@ -523,110 +506,110 @@ IStream & DisplayWidget::operator>>( double_t &msg ) {
 }
 OStream & DisplayWidget::operator<<( const QChar &msg ) {
 	msgList << msg;
-	updatDisplay< QString_Type >( );
+	updatDisplay(QString_Type );
 	return *this;
 }
 OStream & DisplayWidget::operator<<( const char16_t &msg ) {
 	msgList << QChar( msg );
-	updatDisplay< QString_Type >( );
+	updatDisplay(QString_Type );
 	return *this;
 }
 OStream & DisplayWidget::operator<<( const char32_t &msg ) {
 	msgList << QChar( msg );
-	updatDisplay< QString_Type >( );
+	updatDisplay(QString_Type );
 	return *this;
 }
 OStream & DisplayWidget::operator<<( const wchar_t &msg ) {
 	msgList << QString::fromStdWString( std::wstring( ) + msg );
-	updatDisplay< QString_Type >( );
+	updatDisplay(QString_Type );
 	return *this;
 }
 OStream & DisplayWidget::operator<<( const char &msg ) {
 	msgList << QChar( msg );
-	updatDisplay< QString_Type >( );
+	updatDisplay(QString_Type );
 	return *this;
 }
 OStream & DisplayWidget::operator<<( const QArrayData &msg ) {
-	updatDisplay< QArrayData_Type >( );
+	updatDisplay(QArrayData_Type );
 	return *this;
 }
 OStream & DisplayWidget::operator<<( const QByteArray &msg ) {
-	updatDisplay< QByteArray_Type >( );
+	updatDisplay(QArrayData_Type );
 	return *this;
 }
 OStream & DisplayWidget::operator<<( const QString &msg ) {
 	msgList << msg;
-	updatDisplay< QString_Type >( );
+	updatDisplay(QString_Type );
 	return *this;
 }
 OStream & DisplayWidget::operator<<( const char *msg ) {
 	msgList << msg;
-	updatDisplay< QString_Type >( );
+	updatDisplay(QString_Type );
 	return *this;
 }
 OStream & DisplayWidget::operator<<( const std::string &msg ) {
 	msgList << QString::fromStdString( msg );
-	updatDisplay< QString_Type >( );
+	updatDisplay(QString_Type );
 	return *this;
 }
 OStream & DisplayWidget::operator<<( const std::wstring &msg ) {
 	msgList << QString::fromStdWString( msg );
-	updatDisplay< QString_Type >( );
+	updatDisplay(QString_Type );
 	return *this;
 }
 OStream & DisplayWidget::operator<<( const int8_t &msg ) {
 	msgList << QString::number( msg );
-	updatDisplay< QString_Type >( );
+	updatDisplay(QString_Type );
 	return *this;
 }
 OStream & DisplayWidget::operator<<( const int16_t &msg ) {
 	msgList << QString::number( msg );
-	updatDisplay< QString_Type >( );
+	updatDisplay(QString_Type );
 	return *this;
 }
 OStream & DisplayWidget::operator<<( const int32_t &msg ) {
 	msgList << QString::number( msg );
-	updatDisplay< QString_Type >( );
+	updatDisplay(QString_Type );
 	return *this;
 }
 OStream & DisplayWidget::operator<<( const int64_t &msg ) {
 	msgList << QString::number( msg );
-	updatDisplay< QString_Type >( );
+	updatDisplay(QString_Type );
 	return *this;
 }
 OStream & DisplayWidget::operator<<( const uint8_t &msg ) {
 	msgList << QString::number( msg );
-	updatDisplay< QString_Type >( );
+	updatDisplay(QString_Type );
 	return *this;
 }
 OStream & DisplayWidget::operator<<( const uint16_t &msg ) {
 	msgList << QString::number( msg );
-	updatDisplay< QString_Type >( );
+	updatDisplay(QString_Type );
 	return *this;
 }
 OStream & DisplayWidget::operator<<( const uint32_t &msg ) {
 	msgList << QString::number( msg );
-	updatDisplay< QString_Type >( );
+	updatDisplay(QString_Type );
 	return *this;
 }
 OStream & DisplayWidget::operator<<( const uint64_t &msg ) {
 	msgList << QString::number( msg );
-	updatDisplay< QString_Type >( );
+	updatDisplay(QString_Type );
 	return *this;
 }
 OStream & DisplayWidget::operator<<( const float_t &msg ) {
 	msgList << QString::number( msg );
-	updatDisplay< QString_Type >( );
+	updatDisplay(QString_Type );
 	return *this;
 }
 OStream & DisplayWidget::operator<<( const double_t &msg ) {
 	msgList << QString::number( msg );
-	updatDisplay< QString_Type >( );
+	updatDisplay(QString_Type );
 	return *this;
 }
 OStream & DisplayWidget::operator<<( const void *msg ) {
 	msgList << QString( u8"0x%1" ).arg( QString::number( reinterpret_cast< uint64_t >( msg ), 16 ) );
-	updatDisplay< QString_Type >( );
+	updatDisplay(QString_Type );
 	return *this;
 }
 OStream & DisplayWidget::operator<<( const XPath &msg ) {

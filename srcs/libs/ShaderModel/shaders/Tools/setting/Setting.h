@@ -12,8 +12,8 @@ private:
 	QSettings *setting;
 	QMutex *instanceMutex;
 public: // 构造函数
-	Setting( const QString &filePath, QObject *parent );
-	Setting( QObject *parent );
+	Setting( const QString &filePath, QObject *parent = nullptr );
+	Setting( QObject *parent  = nullptr);
 	~Setting( ) override;
 public: // 配置文件的值操作
 	/// <summary>

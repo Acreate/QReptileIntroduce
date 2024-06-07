@@ -21,7 +21,7 @@ public: // 静态函数调用
 	/// <param name="loadClassName">元数据类型名称</param>
 	/// <param name="methodName">元数据函数名称</param>
 	/// <returns>生成对应与指针的匹配映射</returns>
-	static std::pair< QObject *, interfacePlugsType::IRequestNetInterface * > getIRequestNetInterface( const QString &plugFilePath,QString& result_error , const QString &name = tr( u8"LoadPlug" ), const QString &spec = tr( u8"getIRequestNetInterface" ), const QString &loadClassName = tr( u8"RequestNet" ), const QString &methodName = tr( u8"getRequestNetInterfacePatr" ) );
+	static std::pair< QObject *, interfacePlugsType::IRequestNetInterface * > getIRequestNetInterface( const QString &plugFilePath,QString& result_error , const QString &name = QObject::tr( u8"LoadPlug" ), const QString &spec = QObject::tr( u8"getIRequestNetInterface" ), const QString &loadClassName = QObject::tr( u8"RequestNet" ), const QString &methodName = QObject::tr( u8"getRequestNetInterfacePatr" ) );
 	/// <summary>
 	/// 调用插件的生成函数
 	/// </summary>
@@ -29,12 +29,12 @@ public: // 静态函数调用
 	/// <param name="loadClassName">元数据对象名称</param>
 	/// <param name="methodName">元数据调用的函数名称</param>
 	/// <returns>返回对象指针</returns>
-	static interfacePlugsType::IRequestNetInterface * metaGetResult( QObject *outObj, const QString &loadClassName = tr( u8"RequestNet" ), const QString &methodName = tr( u8"getRequestNetInterfacePatr" ) );
+	static interfacePlugsType::IRequestNetInterface * metaGetResult( QObject *outObj, const QString &loadClassName = QObject::tr( u8"RequestNet" ), const QString &methodName = QObject::tr( u8"getRequestNetInterfacePatr" ) );
 private:
 	Q_OBJECT;
 private:// 运算参考成员
-	QString loadClassName = tr( u8"RequestNet" );  // 加载的类名
-	QString methodName = tr( u8"getRequestNetInterfacePatr" ); // 元数据调用的函数名称
+	QString loadClassName = QObject::tr( u8"RequestNet" );  // 加载的类名
+	QString methodName = QObject::tr( u8"getRequestNetInterfacePatr" ); // 元数据调用的函数名称
 	QString name; // 传递到构造器的第一参数
 	QString spec; // 传递到构造器的第二参数
 	QString plugPath; // 目录或者文件

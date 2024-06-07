@@ -18,7 +18,7 @@ class PLUG_EXPORT NovelNetJob : public QObject {
 	Q_OBJECT;
 public:
 	using Duration = std::chrono::system_clock::time_point::duration;
-	using TimePoint = _CHRONO time_point< std::chrono::system_clock >;
+	using TimePoint =  std::chrono::time_point< std::chrono::system_clock >;
 	using NetworkmanagerConnectFunction = std::function< bool( QNetworkReply *q_network_reply, const QString call_file_path_name, size_t call_line, const QString call_name ) >;
 private: // - 装饰指针
 	QObject *interfaceObjPtr; // 小说基于 qt 框架的指针
@@ -75,7 +75,7 @@ public: //- 静态调用
 	/// 获取当前时间戳
 	/// </summary>
 	/// <returns>返回时间戳</returns>
-	static _CHRONO time_point< std::chrono::system_clock > getCurrentTimePoint( ) {
+	static  std::chrono::time_point< std::chrono::system_clock > getCurrentTimePoint( ) {
 		return std::chrono::system_clock::now( );
 	}
 	/// <summary>
