@@ -100,6 +100,17 @@ public: // 类的独有属性
 	/// <returns>实现链接信号操的对象指针</returns>
 	bool start( );
 	/// <summary>
+	/// 获取请求间隔
+	/// </summary>
+	/// <returns>请求间隔-毫秒</returns>
+	size_t getSepMs( ) const { return sepMs; }
+	/// <summary>
+	/// 设置请求间隔-毫秒
+	/// </summary>
+	/// <param name="sep_ms">间隔</param>
+	void setSepMs( const size_t sep_ms ) { sepMs = sep_ms; }
+
+	/// <summary>
 	/// 获取 url
 	/// </summary>
 	/// <returns>url</returns>
