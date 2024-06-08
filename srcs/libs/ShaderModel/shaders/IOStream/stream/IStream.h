@@ -4,6 +4,7 @@
 #include <QString>
 
 #include "../auto_generate_files/export/IOStream_export.h"
+
 class IOSTREAM_EXPORT Flush;
 class IOSTREAM_EXPORT IStream {
 public:

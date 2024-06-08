@@ -3,6 +3,7 @@
 #pragma once
 #include <qfontmetrics.h>
 #include "../auto_generate_files/export/Tools_export.h"
+
 class TOOLS_EXPORT Font {
 public:
 	/// <summary>

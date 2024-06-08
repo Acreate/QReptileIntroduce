@@ -9,6 +9,7 @@
 #include "nameSpace/interfacePlugsType.h"
 #include "path/Path.h"
 
+
 class PLUG_EXPORT IOFile {
 	QFile *qFile;
 	interfacePlugsType::Vector_INovelInfoSPtr novelInfoSPtrShared;

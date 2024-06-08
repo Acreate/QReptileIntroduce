@@ -5,6 +5,7 @@
 #include <QString>
 #include "../auto_generate_files/export/IOStream_export.h"
 struct QArrayData;
+
 class IOSTREAM_EXPORT OStream {
 public:
 	/// <summary>

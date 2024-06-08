@@ -4,6 +4,7 @@
 #include <QException>
 #include "../auto_generate_files/export/Tools_export.h"
 
+
 class TOOLS_EXPORT Exception : public QException {
 private:
 	QString msg;

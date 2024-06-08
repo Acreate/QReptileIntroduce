@@ -3,6 +3,8 @@
 #pragma once
 
 #include "../nameSpace/interfacePlugsType.h"
+
+
 namespace interfacePlugsType {
 	class NOVELINFO_EXPORT INovelInfo {
 

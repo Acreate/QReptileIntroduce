@@ -6,6 +6,7 @@
 #include "nameSpace/interfacePlugsType.h"
 #include "../auto_generate_files/export/Plug_export.h"
 #include "stream/OStream.h"
+
 class PLUG_EXPORT NovelDBJob {
 public: // 新类型
 	using NovelTypeNameType = QString;

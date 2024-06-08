@@ -13,6 +13,7 @@
 
 #include "nameSpace/cylHtmlTools.h"
 
+
 class QMutex;
 class PLUG_EXPORT NovelNetJob : public QObject {
 	Q_OBJECT;

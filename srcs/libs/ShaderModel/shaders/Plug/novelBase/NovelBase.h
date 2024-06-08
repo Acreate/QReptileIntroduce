@@ -4,6 +4,7 @@
 #include "../auto_generate_files/export/Plug_export.h"
 #include "interface/INovelInfo.h"
 #include <QString>
+
 class PLUG_EXPORT NovelBase : public interfacePlugsType::INovelInfo {
 public:
 	void *additionalData;

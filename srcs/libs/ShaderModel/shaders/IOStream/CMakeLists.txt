@@ -71,11 +71,15 @@ target_link_libraries( ${PROJECT_NAME}
 	Path_Tool
 )
 
+
 STRING( SUBSTRING "${PROJECT_NAME}" 0 1 exportFileStartName )
 STRING( SUBSTRING "${PROJECT_NAME}" 1 -1 exportFileName )
 STRING( TOUPPER ${exportFileStartName} exportFileStartName )
 SET( exportFileName ${CMAKE_CURRENT_SOURCE_DIR}/${cmake_auto_sub_dir_name}/export/${exportFileStartName}${exportFileName}_export.h )
+
+
 GENERATE_EXPORT_HEADER( ${PROJECT_NAME}
+	${NO_BUILD_DEPRECATED}
 	EXPORT_FILE_NAME ${exportFileName}
 )
 TARGET_INCLUDE_DIRECTORIES( ${PROJECT_NAME} INTERFACE ${CMAKE_CURRENT_SOURCE_DIR} )

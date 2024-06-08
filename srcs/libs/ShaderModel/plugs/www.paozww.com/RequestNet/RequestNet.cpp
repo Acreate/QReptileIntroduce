@@ -255,6 +255,14 @@ Vector_INovelInfoSPtr RequestNet::formHtmlGetTypePageNovels( const interfacePlug
 					if( lastItem )
 						novelInfoBuffPtr->lastItem = *lastItem;
 				}
+				if( novelInfoBuffPtr->lastItem.empty( ) ) {
+					auto novelUrl = QString::fromStdWString( novelInfoBuffPtr->url );
+					novelUrl.append( u8" => 找不到最后选项" );
+					auto typeNme = QString::fromStdWString( type_name );
+					auto msg = QString( "%1 : %2 : %3" ).arg( typeNme ).arg( request_url ).arg( novelUrl );
+					QUrl url( QString::fromStdWString( request_url ) );
+					instance_function::write_error_info_file( oStream, url, outPath, "novel_listItem_error", "none", typeNme, ".html", __FILE__, __FUNCTION__, __LINE__, msg, QString::fromStdWString( htmlText ) );
+				}
 				novelInfoBuffPtr->format = RequestNet::timeForm.toStdWString( );
 				novelInfoBuffPtr->typePageUrl = request_url;
 				novelInfoBuffPtr->typeName = type_name;
@@ -269,13 +277,15 @@ Vector_INovelInfoSPtr RequestNet::formHtmlGetTypePageNovels( const interfacePlug
 				outMsg = outMsg.arg( novelInfoBuffPtr->typeName ).arg( novelInfoBuffPtr->name ).arg( novelInfoBuffPtr->url ).arg( novelCount );
 				OStream::anyStdCOut( outMsg, thisOStream );
 				novelInfoBuffPtr = std::make_shared< NovelInfo >( );
-
 			} else {
 				QString errorInfo = instance_function::get_error_info( quitMsg, QString::fromStdWString( xpath.getHtmlString( ) ) );
 				auto typeNme = QString::fromStdWString( type_name );
 				auto msg = QString( "%1 : %2 : %3" ).arg( typeNme ).arg( request_url ).arg( errorInfo );
-				QUrl url( QString::fromStdWString( request_url ) );
-				instance_function::write_error_info_file( oStream, url, outPath, "novel_error", "parse", typeNme, ".html", __FILE__, __FUNCTION__, __LINE__, msg, msg );
+				if( DateTime_Error_Xpath < quitMsg ) {
+					QUrl url( QString::fromStdWString( request_url ) );
+					instance_function::write_error_info_file( oStream, url, outPath, "novel_error", "parse", typeNme, ".html", __FILE__, __FUNCTION__, __LINE__, msg, msg );
+				} else
+					OStream::anyStdCerr( msg, __FILE__, __LINE__, __FUNCTION__, oStream );
 				novelInfoBuffPtr->clear( ); // 重置
 			}
 			novelInfoPtr.reset( ); // 重置

@@ -68,7 +68,6 @@ namespace instance_function {
 			.append( "\n-->" );
 		OStream::anyStdCerr( msg, os );
 		auto path = QString( root_path ).append( QDir::separator( ) )
-											.append( "write_error_info_file" ).append( QDir::separator( ) )
 											.append( dir_name ).append( QDir::separator( ) )
 											.append( url.host( ) ).append( QDir::separator( ) )
 											.append( error_type )

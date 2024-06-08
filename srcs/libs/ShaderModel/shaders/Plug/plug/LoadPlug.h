@@ -9,6 +9,7 @@
 
 #include "../auto_generate_files/export/Plug_export.h"
 
+
 class PLUG_EXPORT LoadPlug : public QObject {
 public: // 静态函数调用
 	/// <summary>
@@ -21,7 +22,7 @@ public: // 静态函数调用
 	/// <param name="loadClassName">元数据类型名称</param>
 	/// <param name="methodName">元数据函数名称</param>
 	/// <returns>生成对应与指针的匹配映射</returns>
-	static std::pair< QObject *, interfacePlugsType::IRequestNetInterface * > getIRequestNetInterface( const QString &plugFilePath,QString& result_error , const QString &name = QObject::tr( u8"LoadPlug" ), const QString &spec = QObject::tr( u8"getIRequestNetInterface" ), const QString &loadClassName = QObject::tr( u8"RequestNet" ), const QString &methodName = QObject::tr( u8"getRequestNetInterfacePatr" ) );
+	static std::pair< QObject *, interfacePlugsType::IRequestNetInterface * > getIRequestNetInterface( const QString &plugFilePath, QString &result_error, const QString &name = QObject::tr( u8"LoadPlug" ), const QString &spec = QObject::tr( u8"getIRequestNetInterface" ), const QString &loadClassName = QObject::tr( u8"RequestNet" ), const QString &methodName = QObject::tr( u8"getRequestNetInterfacePatr" ) );
 	/// <summary>
 	/// 调用插件的生成函数
 	/// </summary>

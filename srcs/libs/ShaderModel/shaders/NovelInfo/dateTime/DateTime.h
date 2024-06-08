@@ -7,6 +7,7 @@
 #include <QString>
 
 #include "../nameSpace/interfacePlugsType.h"
+
 class NOVELINFO_EXPORT DateTime {
 public:
 	/// <summary>

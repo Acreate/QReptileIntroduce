@@ -7,7 +7,9 @@
 #include <QObject>
 class RWFileThread;
 class FileThread;
-class FileResult : public QObject {
+#include "../auto_generate_files/export/Tools_export.h"
+
+class TOOLS_EXPORT FileResult : public QObject {
 	Q_OBJECT;
 public:
 	friend class RWFileThread;

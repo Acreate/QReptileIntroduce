@@ -1,5 +1,41 @@
 ﻿CMAKE_MINIMUM_REQUIRED( VERSION 3.19 )
 
+set(tools_dir )
+
+if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+	set(tools_dir "llvm-mingw_64")
+	set(Clang 1)
+	set(GNU 0)
+	set(MSVC 0)
+	SET( builder_tools llvm-mingw_64 )
+elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+	set(tools_dir "mingw_64")
+    add_compile_options( -finput-charset=UTF-8  )
+    add_compile_options( -fexec-charset=UTF-8  )
+	set(Clang 0)
+	set(GNU 1)
+	set(MSVC 0)
+	SET( builder_tools mingw_64 )
+elseif (CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
+elseif (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+	set(tools_dir "msvc2019_64")
+    add_compile_options( /utf-8 )
+	set(Clang 0)
+	set(GNU 0)
+	set(MSVC 1)
+	SET( builder_tools msvc2019_64 )
+endif()
+
+#set(root_path "C:/Qt")
+#if( NOT DEFINED QT_VERSION_MAJOR )
+#	SET( QT_VERSION_MAJOR 6 )
+#endif()
+#
+#if( NOT DEFINED QT_VERSION )
+#	SET( QT_VERSION ${QT_VERSION_MAJOR}.7.1 )
+#endif()
+#list(APPEND CMAKE_PREFIX_PATH "${root_path}/${QT_VERSION}/${tools_dir}/")
+#
 
 if( NOT DEFINED QT_VERSION_MAJOR )
 	SET( QT_VERSION_MAJOR 6 )
@@ -11,9 +47,6 @@ endif()
 
 if( NOT DEFINED	QT_QMAKE_EXECUTABLE)
         
-    if( NOT DEFINED builder_tools )
-	    SET( builder_tools msvc2019_64 )
-    endif()
     
     SET( DEPLOY_QT_HOME "C:/Qt/${QT_VERSION}/${builder_tools}/" )
     SET( CMAKE_PREFIX_PATH "${DEPLOY_QT_HOME}" )

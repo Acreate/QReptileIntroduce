@@ -95,8 +95,7 @@ bool Path::creatFilePath( const QString &path ) {
 	if( info.exists( ) )
 		if( info.isFile( ) )
 			return true;
-		else
-			return false;
+		return false;
 	QDir targetDir = info.dir( );
 	QString dirPath = targetDir.absolutePath( );
 	if( !targetDir.exists( ) )
@@ -116,8 +115,7 @@ bool Path::creatDirPath( const QString &path ) {
 	if( info.exists( ) )
 		if( info.isDir( ) )
 			return true;
-		else
-			return false;
+		return false;
 	return info.dir( ).mkpath( path );
 }
 bool Path::removePath( const QString &path ) {

@@ -3,9 +3,10 @@
 #pragma once
 #include <qcontainerfwd.h>
 
-#include "Dir.h"
+#include "./Dir.h"
 
 #include "../auto_generate_files/export/Path_Tool_export.h"
+
 class PATH_TOOL_EXPORT Path {
 public:
 	using FileList = std::vector< File >;

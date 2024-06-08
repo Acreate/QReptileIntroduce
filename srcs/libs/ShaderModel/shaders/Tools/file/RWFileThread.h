@@ -11,6 +11,7 @@ class QFile;
 class FileResult;
 #include "../auto_generate_files/export/Tools_export.h"
 
+
 class TOOLS_EXPORT  RWFileThread : public QObject {
 
 public:
