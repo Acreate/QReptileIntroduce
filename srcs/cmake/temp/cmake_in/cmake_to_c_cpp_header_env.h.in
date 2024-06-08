@@ -3,6 +3,9 @@
 #pragma once
 
 #define qt_version u8"${QT_VERSION}"
+#define Builder_Tools_Clang ${Clang}
+#define Builder_Tools_GNU ${GNU}
+#define Builder_Tools_MSVC ${MSVC}
 
 #define is_exe ${project_type_property_is_exe}
 
