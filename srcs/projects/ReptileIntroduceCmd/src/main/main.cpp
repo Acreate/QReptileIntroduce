@@ -460,7 +460,7 @@ int main( int argc, char *argv[ ] ) {
 			for( auto iterator = novelHostMap.begin( ), end = novelHostMap.end( ); iterator != end; ++iterator )
 				for( auto vit = iterator->second->begin( ), ven = iterator->second->end( ); vit != ven; ++vit ) {
 					cylHtmlTools::HtmlWorkThread *writeThread = new cylHtmlTools::HtmlWorkThread;
-					auto rootPath = QString::fromLocal8Bit( str );
+					auto rootPath = QFileInfo( QString::fromLocal8Bit( str ) ).absoluteFilePath( );
 					auto host = iterator->first;
 					auto typeName = vit->first;
 					auto novels = vit->second;
@@ -491,7 +491,9 @@ int main( int argc, char *argv[ ] ) {
 							writeThread = new cylHtmlTools::HtmlWorkThread;
 
 							writeThread->setCurrentThreadRun( [=,&qMutex]( ) {
-								auto writeComposePath = rootPath + QDir::separator( ) + "find_write" + QDir::separator( ) + fileKeyIterator->first + QDir::separator( );
+								auto writeComposePath = rootPath + QDir::separator( ) + u8"find_write" + QDir::separator( ) + fileKeyIterator->first + QDir::separator( );
+								auto targetPath = writeComposePath + QDir::separator( ) + host + QDir::separator( ) + typeName + u8".txt";
+								auto msgPath = targetPath.toStdString( ).c_str( );
 								{
 									QMutexLocker lock( &qMutex );
 									std::cout << "-------------------" << std::endl;
@@ -502,14 +504,14 @@ int main( int argc, char *argv[ ] ) {
 								{
 									QMutexLocker lock( &qMutex );
 									std::cout << "-------------------" << std::endl;
-									std::cout << u8"\t正在写入查找结果 " << writeComposePath.toStdString( ).c_str( ) << std::endl;
+									std::cout << u8"\t正在写入查找结果 " << msgPath << std::endl;
 									std::cout << "-------------------" << std::endl;
 								}
 								NovelDBJob::writeFile( writeComposePath, host, typeName, findResultNovels );
 								{
 									QMutexLocker lock( &qMutex );
 									std::cout << "-------------------" << std::endl;
-									std::cout << u8"\t查找结果写入完毕 " << writeComposePath.toStdString( ).c_str( ) << std::endl;
+									std::cout << u8"\t查找结果写入完毕 " << msgPath << std::endl;
 									std::cout << "-------------------" << std::endl;
 								}
 							} );
@@ -519,7 +521,9 @@ int main( int argc, char *argv[ ] ) {
 					if( lenFindAllKeySize > 0 ) { // 总关键字查找
 						writeThread = new cylHtmlTools::HtmlWorkThread;
 						writeThread->setCurrentThreadRun( [=,&qMutex]( ) {
-							auto writeComposePath = rootPath + QDir::separator( ) + "find_write" + QDir::separator( ) + instance->applicationName( ) + QDir::separator( );
+							auto writeComposePath = rootPath + QDir::separator( ) + u8"find_write" + QDir::separator( ) + instance->applicationName( ) + QDir::separator( );
+							auto targetPath = writeComposePath + QDir::separator( ) + host + QDir::separator( ) + typeName + u8".txt";
+							auto msgPath = targetPath.toStdString( ).c_str( );
 							{
 								QMutexLocker lock( &qMutex );
 								std::cout << "-------------------" << std::endl;
@@ -530,14 +534,14 @@ int main( int argc, char *argv[ ] ) {
 							{
 								QMutexLocker lock( &qMutex );
 								std::cout << "-------------------" << std::endl;
-								std::cout << u8"\t正在写入查找结果 " << writeComposePath.toStdString( ).c_str( ) << std::endl;
+								std::cout << u8"\t正在写入查找结果 " << msgPath << std::endl;
 								std::cout << "-------------------" << std::endl;
 							}
 							NovelDBJob::writeFile( writeComposePath, host, typeName, findResultNovels );
 							{
 								QMutexLocker lock( &qMutex );
 								std::cout << "-------------------" << std::endl;
-								std::cout << u8"\t查找结果写入完毕 " << writeComposePath.toStdString( ).c_str( ) << std::endl;
+								std::cout << u8"\t查找结果写入完毕 " << msgPath << std::endl;
 								std::cout << "-------------------" << std::endl;
 							}
 						} );

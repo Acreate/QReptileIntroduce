@@ -95,12 +95,12 @@ bool Path::creatFilePath( const QString &path ) {
 	if( info.exists( ) )
 		if( info.isFile( ) )
 			return true;
-		return false;
+		else
+			return false;
 	QDir targetDir = info.dir( );
 	QString dirPath = targetDir.absolutePath( );
-	if( !targetDir.exists( ) )
-		if( !targetDir.mkpath( dirPath ) )
-			return false;
+	if( !Path::creatDirPath( dirPath ) )
+		return false;
 	QString absoluteFilePath = info.absoluteFilePath( );
 	QFile file( absoluteFilePath );
 	if( file.open( QIODeviceBase::NewOnly | QIODevice::WriteOnly ) ) {
@@ -115,8 +115,9 @@ bool Path::creatDirPath( const QString &path ) {
 	if( info.exists( ) )
 		if( info.isDir( ) )
 			return true;
-		return false;
-	return info.dir( ).mkpath( path );
+		else
+			return false;
+	return QDir( ).mkpath( path );
 }
 bool Path::removePath( const QString &path ) {
 	QFileInfo fileInfo( path );

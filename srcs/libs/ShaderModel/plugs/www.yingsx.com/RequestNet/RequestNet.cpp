@@ -285,7 +285,7 @@ Vector_INovelInfoSPtr RequestNet::formHtmlGetTypePageNovels( const interfacePlug
 				QString errorInfo = instance_function::get_error_info( quitMsg, QString::fromStdWString( xpath.getHtmlString( ) ) );
 				auto typeNme = QString::fromStdWString( type_name );
 				auto msg = QString( "%1 : %2 : %3" ).arg( typeNme ).arg( request_url ).arg( errorInfo );
-				if( DateTime_Error_Xpath < quitMsg ) {
+				if( DateTime_Error_Xpath > quitMsg ) {
 					QUrl url( QString::fromStdWString( request_url ) );
 					instance_function::write_error_info_file( oStream, url, outPath, "novel_error", "parse", typeNme, ".html", __FILE__, __FUNCTION__, __LINE__, msg, msg );
 				} else
