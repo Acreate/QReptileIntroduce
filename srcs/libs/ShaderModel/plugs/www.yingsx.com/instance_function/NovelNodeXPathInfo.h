@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QString>
 #include <htmlString/HtmlStringTools.h>
+#include <interface/instance_function.h>
 
 namespace instance_function {
 	// todo : 小说相关而的 xpath

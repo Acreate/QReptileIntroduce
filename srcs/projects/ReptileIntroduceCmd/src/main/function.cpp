@@ -5,6 +5,7 @@
 
 #include "htmlString/HtmlStringTools.h"
 #include "interface/INovelInfo.h"
+#include "novelNetJob/NovelDBJob.h"
 #include "path/Path.h"
 QString getBuilderInfo( ) {
 
@@ -63,7 +64,7 @@ std::vector< QString > readIngoreNameFile( const QString &path ) {
 		for( auto str : readFile.readAll( ).split( '\n' ) )
 			for( auto appendObj : str.split( ' ' ) )
 				if( ( appendObj = appendObj.trimmed( ), !appendObj.isEmpty( ) ) )
-					nameKeys.emplace_back( appendObj );
+					nameKeys.emplace_back( appendObj.toUpper( ) );
 	return nameKeys;
 }
 qsizetype writeIngoreNameFile( const QString &path, const std::vector< QString > &content ) {
@@ -187,13 +188,13 @@ std::unordered_map< size_t, std::shared_ptr< std::vector< std::wstring > > > vec
 	return result;
 }
 void loadFindKeyFiles( const std::shared_ptr< std::vector< cylStd::ArgParser::String > > &find_key_option, const std::shared_ptr< std::vector< cylStd::ArgParser::String > > &find_key_files_option, cylHtmlTools::HtmlWorkThread &result_thread, QString &app_name, FileLenMap &result_file_name_map ) {
-	result_thread.setCurrentThreadRun( [&]( cylHtmlTools::HtmlWorkThread* ) {
+	result_thread.setCurrentThreadRun( [&]( cylHtmlTools::HtmlWorkThread * ) {
 		if( !find_key_option && !find_key_files_option )
 			return;
 		std::vector< QString > findKeys;
 		if( find_key_option )
 			for( auto str : *find_key_option )
-				findKeys.emplace_back( QString::fromLocal8Bit( str ) );
+				findKeys.emplace_back( QString::fromLocal8Bit( NovelDBJob::converStringToLower( str ) ) );
 
 		findKeys = vectorStrAdjustSubStr( findKeys );
 		if( findKeys.size( ) > 0 ) {
@@ -233,7 +234,7 @@ void loadingEquKeyFiles( const std::shared_ptr< std::vector< cylStd::ArgParser::
 	if( !ignore_equ_key_option && !ignore_equ_key_files_option )
 		return;
 
-	result_thread.setCurrentThreadRun( [&]( cylHtmlTools::HtmlWorkThread* ) {
+	result_thread.setCurrentThreadRun( [&]( cylHtmlTools::HtmlWorkThread * ) {
 		std::vector< QString > findKeys;
 		if( ignore_equ_key_option )
 			for( auto str : *ignore_equ_key_option )
@@ -255,11 +256,9 @@ void loadingSubKeyFiles( const std::shared_ptr< std::vector< cylStd::ArgParser::
 		return;
 	// 忽略选项
 	std::vector< QString > ignoreSubNames;
-	if( ignore_sub_key_option ) {
-		std::cout << u8"检测 -isn 选项" << std::endl;
+	if( ignore_sub_key_option )
 		for( auto str : *ignore_sub_key_option )
 			ignoreSubNames.emplace_back( QString::fromLocal8Bit( str ) );
-	}
 
 	ignoreSubNames = vectorStrAdjustSubStr( ignoreSubNames );
 	if( ignore_sub_key_files_option ) {

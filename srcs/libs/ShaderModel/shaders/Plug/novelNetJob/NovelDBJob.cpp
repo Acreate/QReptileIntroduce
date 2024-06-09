@@ -4,6 +4,7 @@
 #include <QDir>
 #include <QSqlQuery>
 #include <htmls/htmlTools/HtmlWorkThread/HtmlWorkThread.h>
+#include <htmls/htmlTools/HtmlWorkThread/HtmlWorkThreadPool.h>
 #include <nameSpace/cylDB.h>
 #include <DB/DBTools.h>
 #include <DB/dbInterface/I_DB.h>
@@ -315,7 +316,7 @@ inline void insterNovelHostMap( NovelDBJob::NovelHostMap &inster_map, const inte
 NovelDBJob::NovelHostMap NovelDBJob::decompose( const NovelInfoVector &infos, const std::function< void( ) > &call_back ) {
 	NovelDBJob::NovelHostMap result;
 	cylHtmlTools::HtmlWorkThread thread;
-	thread.setCurrentThreadRun( [&infos,&result]( cylHtmlTools::HtmlWorkThread* ) {
+	thread.setCurrentThreadRun( [&infos,&result]( cylHtmlTools::HtmlWorkThread * ) {
 
 		for( auto &inoveShared : infos )
 			insterNovelHostMap( result, inoveShared );
@@ -328,21 +329,27 @@ NovelDBJob::NovelHostMap NovelDBJob::decompose( const NovelInfoVector &infos, co
 	}
 	return result;
 }
-size_t NovelDBJob::writeDB( OStream *thisOStream, const QString &outPath, const QUrl &url, const NovelInfoVector &saveNovelInfos, const std::function< bool( const std::chrono::system_clock::time_point::duration & ) > &run ) {
-	QString linkPath( u8"%1%2%3%2" );
-	linkPath = linkPath.arg( outPath ).arg( QDir::separator( ) ).arg( "dbs" );
-	if( !QDir( ).mkpath( linkPath ) )
-		linkPath = outPath + QDir::separator( );
-	auto dbInterface = cylDB::DBTools::linkDB( linkPath );
+size_t NovelDBJob::writeDB( OStream *thisOStream, const QString &outPath, const NovelInfoVector &saveNovelInfos, const std::function< bool( const std::chrono::system_clock::time_point::duration & ) > &run ) {
+	QFileInfo fileInfo( outPath );
+	QDir absoluteDir = fileInfo.absoluteDir( );
+	auto absolutePath = absoluteDir.absolutePath( );
+	if( !absoluteDir.exists( ) )
+		if( !QDir( ).mkpath( absolutePath ) )
+			return 0; // 无法写入
+	auto dbName = fileInfo.fileName( );
+	qsizetype lastIndexOf = dbName.lastIndexOf( '.' );
+	QString tabName;
+	if( lastIndexOf != -1 )
+		tabName = dbName.mid( 0, lastIndexOf );
+	else
+		tabName = dbName;
+	auto dbInterface = cylDB::DBTools::linkDB( absolutePath );
 	size_t result = 0;
 	if( dbInterface->link( ) ) {
 		cylHtmlTools::HtmlWorkThread::TThreadCall currentThreadRun = [
-				dbInterface, url, outPath, run, thisOStream,
+				dbInterface, dbName,tabName, outPath, run, thisOStream,
 				&saveNovelInfos, &result
-			]( cylHtmlTools::HtmlWorkThread* ) {
-			QString dbName = url.host( );
-			QString tabName = dbName;
-			dbName.append( ".db" );
+			]( cylHtmlTools::HtmlWorkThread * ) {
 			auto depositoryShared = dbInterface->openDepository( dbName );
 			if( depositoryShared ) {
 				if( !depositoryShared->open( ) ) {
@@ -367,7 +374,7 @@ size_t NovelDBJob::writeDB( OStream *thisOStream, const QString &outPath, const 
 				result = interList.size( ) + saveNovelInfos.size( );
 				QString requestTime = currentTime.toString( currentTimeForm );
 				// 开始更新
-				interfacePlugsType::HtmlDocString rootUrl = url.toString( ).toStdWString( ),
+				interfacePlugsType::HtmlDocString rootUrl,
 					novelName,
 					novelInfo,
 					novelUpdateTime,
@@ -378,6 +385,8 @@ size_t NovelDBJob::writeDB( OStream *thisOStream, const QString &outPath, const 
 					novelAdditionalData,
 					novelTypePageUrl,
 					novelTypeName;
+				saveNovelInfos.at( 0 )->getNovelUrl( &rootUrl );
+				auto outLogPath = outPath + QDir::separator( ) + u8"logs" + QDir::separator( );
 				QString cmd = updateCmd.arg( tabName );
 				bool transaction = depositoryShared->transaction( );
 				std::shared_ptr< QSqlQuery > sqlQuery = depositoryShared->generateSqlQuery( );
@@ -395,7 +404,7 @@ size_t NovelDBJob::writeDB( OStream *thisOStream, const QString &outPath, const 
 					sqlQuery->bindValue( ":additionalData", QString::fromStdWString( novelAuthor ) );
 					sqlQuery->bindValue( ":url", QString::fromStdWString( novelUrl ) );
 					if( !depositoryShared->exec( sqlQuery.get( ) ) ) {
-						instance_function::write_error_info_file( thisOStream, QUrl( " " ), outPath, "db_updateList", "db_error", "update", "db.log", __FILE__, __FUNCTION__, __LINE__, "无法更新正确的小说内容", "无法更新正确的小说内容" );
+						instance_function::write_error_info_file( thisOStream, QUrl( " " ), outLogPath, "db_updateList", "db_error", "update", "db.log", __FILE__, __FUNCTION__, __LINE__, "无法更新正确的小说内容", "无法更新正确的小说内容" );
 						--result;
 					}
 				}
@@ -433,7 +442,7 @@ size_t NovelDBJob::writeDB( OStream *thisOStream, const QString &outPath, const 
 					sqlQuery->bindValue( ":typePageUrl", QString::fromStdWString( novelTypePageUrl ) );
 					sqlQuery->bindValue( ":typeName", QString::fromStdWString( novelTypeName ) );
 					if( !depositoryShared->exec( sqlQuery.get( ) ) ) {
-						instance_function::write_error_info_file( thisOStream, QUrl( " " ), outPath, "db_interList", "db_error", "inster", "db.log", __FILE__, __FUNCTION__, __LINE__, "无法插入正确的小说内容", "无法插入正确的小说内容" );
+						instance_function::write_error_info_file( thisOStream, QUrl( " " ), outLogPath, "db_interList", "db_error", "inster", "db.log", __FILE__, __FUNCTION__, __LINE__, "无法插入正确的小说内容", "无法插入正确的小说内容" );
 						--result;
 					}
 				}
@@ -506,66 +515,46 @@ NovelDBJob::NovelInfoVector_Shared NovelDBJob::readDB( OStream *thisOStream, con
 
 	std::mutex *mutex = new std::mutex; // 返回列表对象操作锁
 
-	std::vector< cylHtmlTools::HtmlWorkThread * > threaVector; // 线程池
-
-	for( auto &dbFile : dbNames ) {
-		cylHtmlTools::HtmlWorkThread::TThreadCall currentThreadRun = [
+	cylHtmlTools::HtmlWorkThreadPool threadPool;
+	for( auto &dbFile : dbNames )
+		threadPool.appendWork( [
 				outPath, run, thisOStream,mutex,linkPath,
 				&result,dbFile
-			](cylHtmlTools::HtmlWorkThread* ) {
-			auto dbInterface = cylDB::DBTools::linkDB( linkPath );
-			if( !dbInterface->link( ) )
-				return;
-			auto depositoryShared = dbInterface->openDepository( dbFile );
-			if( !depositoryShared )
-				return;
-			QString tabName = dbFile.mid( 0, dbFile.length( ) - 3 );
-			if( depositoryShared ) {
-				if( !depositoryShared->open( ) ) {
-					auto lastError = depositoryShared->getLastError( );
-					OStream::anyStdCerr( lastError.text( ), __FILE__, __LINE__, __FUNCTION__, thisOStream );
+			]( cylHtmlTools::HtmlWorkThread * ) {
+				auto dbInterface = cylDB::DBTools::linkDB( linkPath );
+				if( !dbInterface->link( ) )
 					return;
+				auto depositoryShared = dbInterface->openDepository( dbFile );
+				if( !depositoryShared )
+					return;
+				QString tabName = dbFile.mid( 0, dbFile.length( ) - 3 );
+				if( depositoryShared ) {
+					if( !depositoryShared->open( ) ) {
+						auto lastError = depositoryShared->getLastError( );
+						OStream::anyStdCerr( lastError.text( ), __FILE__, __LINE__, __FUNCTION__, thisOStream );
+						return;
+					}
+					bool hasTab = depositoryShared->hasTab( tabName );
+					if( !hasTab )
+						return;
+					auto allItem = depositoryShared->findItems( tabName, tabFieldNames );
+					if( !allItem )
+						return;
+					auto vectorINovelInfoSPtr = converNovelBaseVector( allItem );
+					vectorINovelInfoSPtr = NovelDBJob::identical( vectorINovelInfoSPtr ); // 剔除相同
+					mutex->lock( );
+					for( auto &novel : vectorINovelInfoSPtr )
+						result->emplace_back( novel );
+					mutex->unlock( );
 				}
-				bool hasTab = depositoryShared->hasTab( tabName );
-				if( !hasTab )
-					return;
-				auto allItem = depositoryShared->findItems( tabName, tabFieldNames );
-				if( !allItem )
-					return;
-				auto vectorINovelInfoSPtr = converNovelBaseVector( allItem );
-				vectorINovelInfoSPtr = NovelDBJob::identical( vectorINovelInfoSPtr ); // 剔除相同
-				mutex->lock( );
-				for( auto &novel : vectorINovelInfoSPtr )
-					result->emplace_back( novel );
-				mutex->unlock( );
-			}
 
-		};
-		auto thread = new cylHtmlTools::HtmlWorkThread( );
-		thread->setCurrentThreadRun( currentThreadRun );
-		threaVector.emplace_back( thread );
-		thread->start( );
-	}
-	do {
-		cylHtmlTools::HtmlWorkThread *deletePtr = nullptr;
-		auto iterator = threaVector.begin( );
-		auto end = threaVector.end( );
-		if( iterator == end ) // 没有元素
-			break;
-		for( ; iterator != end; ++iterator ) {
-			deletePtr = *iterator;
-			auto instance = qApp;
-			if( deletePtr->isRun( ) ) {
+			} );
+	threadPool.start( 8
+		, [&]( cylHtmlTools::HtmlWorkThreadPool *html_work_thread_pool, const unsigned long long &workCount, const unsigned long long &currentWorkSize ) {
+			if( run )
 				run( );
-				instance->processEvents( );
-			} else
-				break;
-		}
-		if( iterator != end ) {
-			delete deletePtr;
-			threaVector.erase( iterator );
-		}
-	} while( true );
+		} );
+	threadPool.waiteOverJob( );
 	delete mutex;
 
 	if( result->size( ) )
@@ -615,74 +604,19 @@ NovelDBJob::NovelInfoVector NovelDBJob::removeSubName( const NovelInfoVector &in
 }
 
 
-/// <summary>
-/// 检测任务
-/// </summary>
-/// <param name="threads">检测队列</param>
-/// <param name="call_function">工作时，会调用函数</param>
-/// <param name="max_size">最大允许任务</param>
-inline void checkThreadsWork( std::vector< cylHtmlTools::HtmlWorkThread * > &threads, const std::function< void( ) > &call_function, size_t max_size = 0 ) {
-	// 最大限制不能等于0，否则跳出函数
-	if( max_size < threads.size( ) )
-		do {
-			auto iterator = threads.begin( );
-			auto end = threads.end( );
-			if( max_size > threads.size( ) ) // 剩余个数不足 max_size，则跳出
-				break;
-			do {
-				cylHtmlTools::HtmlWorkThread *thread = iterator.operator*( );
-				if( call_function )
-					call_function( );
-				if( thread->isFinish( ) ) {
-					threads.erase( iterator );
-					delete thread;
-					break;
-				}
-				++iterator;
-			} while( iterator != end );
-		} while( true );
-}
-/// <summary>
-/// 完成任务
-/// </summary>
-/// <param name="threads">检测队列</param>
-/// <param name="call_function">工作时，会调用函数</param>
-inline void overThreadsWork( std::vector< cylHtmlTools::HtmlWorkThread * > &threads, const std::function< void( ) > &call_function ) {
-	// 最大限制不能等于0，否则跳出函数
-
-	do {
-		auto iterator = threads.begin( );
-		auto end = threads.end( );
-		if( iterator == end )
-			return;
-		do {
-			cylHtmlTools::HtmlWorkThread *thread = iterator.operator*( );
-			if( call_function )
-				call_function( );
-			if( thread->isFinish( ) ) {
-				threads.erase( iterator );
-				delete thread;
-				break;
-			}
-			++iterator;
-		} while( iterator != end );
-	} while( true );
-}
 NovelDBJob::NovelInfoVector NovelDBJob::removeSubName( const NovelInfoVector &infos, const std::unordered_map< size_t, std::shared_ptr< std::vector< interfacePlugsType::HtmlDocString > > > &remove_name_s, const std::function< void( ) > &call_function ) {
 	std::mutex *writeMutex = new std::mutex; // 数组写入锁
 	NovelDBJob::NovelInfoVector result;
-	std::vector< cylHtmlTools::HtmlWorkThread * > threads;
 	std::vector< size_t > mapLenKeyS; // 存储所有的 key
 	for( auto it = remove_name_s.begin( ), en = remove_name_s.end( ); it != en; ++it )
 		mapLenKeyS.emplace_back( it->first );
 	std::sort( mapLenKeyS.begin( ), mapLenKeyS.end( ) );
-
+	cylHtmlTools::HtmlWorkThreadPool threadPool;
 	for( auto &node : infos ) {
-		cylHtmlTools::HtmlWorkThread *thread = new cylHtmlTools::HtmlWorkThread;
-		thread->setCurrentThreadRun( [
+		threadPool.appendWork( [
 				node,writeMutex
 				,&mapLenKeyS,&remove_name_s,&result
-			]( cylHtmlTools::HtmlWorkThread*) ->void {
+			]( cylHtmlTools::HtmlWorkThread * ) ->void {
 				// todo : ......
 				interfacePlugsType::HtmlDocString name;
 				if( !node->getNovelName( &name ) )
@@ -700,29 +634,29 @@ NovelDBJob::NovelInfoVector NovelDBJob::removeSubName( const NovelInfoVector &in
 				result.emplace_back( node );
 				writeMutex->unlock( );
 			} );
-		thread->start( );
-		threads.emplace_back( thread );
-		call_function( );
-		checkThreadsWork( threads, call_function, 8 );
+
 	}
-	overThreadsWork( threads, call_function );
+	threadPool.start( 8
+		, [&]( cylHtmlTools::HtmlWorkThreadPool *html_work_thread_pool, const unsigned long long &workCount, const unsigned long long &crrentWorkCount ) {
+			if( call_function )
+				call_function( );
+		} );
+	threadPool.waiteOverJob( );
 	return result;
 }
 NovelDBJob::NovelInfoVector NovelDBJob::removeEquName( const NovelInfoVector &infos, const std::unordered_map< size_t, std::shared_ptr< std::vector< interfacePlugsType::HtmlDocString > > > &remove_name_s, const std::function< void( ) > &call_function ) {
 	std::mutex *writeMutex = new std::mutex; // 数组写入锁
 	NovelDBJob::NovelInfoVector result;
-	std::vector< cylHtmlTools::HtmlWorkThread * > threads;
 	std::vector< size_t > mapLenKeyS; // 存储所有的 key
 	for( auto it = remove_name_s.begin( ), en = remove_name_s.end( ); it != en; ++it )
 		mapLenKeyS.emplace_back( it->first );
 	std::sort( mapLenKeyS.begin( ), mapLenKeyS.end( ) );
-
+	cylHtmlTools::HtmlWorkThreadPool threadPool;
 	for( auto &node : infos ) {
-		cylHtmlTools::HtmlWorkThread *thread = new cylHtmlTools::HtmlWorkThread;
-		thread->setCurrentThreadRun( [
+		threadPool.appendWork( [
 				node,writeMutex
 				,&mapLenKeyS,&remove_name_s,&result
-			]( cylHtmlTools::HtmlWorkThread*) ->void {
+			]( cylHtmlTools::HtmlWorkThread * ) ->void {
 				// todo : ......
 				interfacePlugsType::HtmlDocString name;
 				if( !node->getNovelName( &name ) )
@@ -742,29 +676,28 @@ NovelDBJob::NovelInfoVector NovelDBJob::removeEquName( const NovelInfoVector &in
 				result.emplace_back( node );
 				writeMutex->unlock( );
 			} );
-		thread->start( );
-		threads.emplace_back( thread );
-		call_function( );
-		checkThreadsWork( threads, call_function, 8 );
 	}
-	overThreadsWork( threads, call_function );
+	threadPool.start( 8
+		, [&]( cylHtmlTools::HtmlWorkThreadPool *html_work_thread_pool, const unsigned long long &workCount, const unsigned long long &currentCount ) {
+			if( call_function )
+				call_function( );
+		} );
+	threadPool.waiteOverJob( );
 	return result;
 }
 NovelDBJob::NovelInfoVector NovelDBJob::findNovel( const NovelInfoVector &infos, const std::unordered_map< size_t, std::shared_ptr< std::vector< interfacePlugsType::HtmlDocString > > > &find_key, const std::function< void( ) > &call_function ) {
 	std::mutex *writeMutex = new std::mutex; // 数组写入锁
 	NovelDBJob::NovelInfoVector result;
-	std::vector< cylHtmlTools::HtmlWorkThread * > threads;
 	std::vector< size_t > mapLenKeyS; // 存储所有的 key
 	for( auto it = find_key.begin( ), en = find_key.end( ); it != en; ++it )
 		mapLenKeyS.emplace_back( it->first );
 	std::sort( mapLenKeyS.begin( ), mapLenKeyS.end( ) );
-
+	cylHtmlTools::HtmlWorkThreadPool threadPool; // 线程池
 	for( auto &node : infos ) {
-		cylHtmlTools::HtmlWorkThread *thread = new cylHtmlTools::HtmlWorkThread;
-		thread->setCurrentThreadRun( [
+		threadPool.appendWork( [
 				node,writeMutex
 				,&mapLenKeyS,&find_key,&result
-			]( cylHtmlTools::HtmlWorkThread* ) ->void {
+			]( cylHtmlTools::HtmlWorkThread * ) ->void {
 				// todo : ......
 				interfacePlugsType::HtmlDocString name;
 				interfacePlugsType::HtmlDocString info;
@@ -818,15 +751,20 @@ NovelDBJob::NovelInfoVector NovelDBJob::findNovel( const NovelInfoVector &infos,
 					}
 				}
 			} );
-		thread->start( );
-		threads.emplace_back( thread );
-		if( call_function )
-			call_function( );
-		checkThreadsWork( threads, call_function, 8 );
 	}
-	overThreadsWork( threads, call_function );
+	threadPool.start( 8
+		, [&](
+		cylHtmlTools::HtmlWorkThreadPool *html_work_thread_pool
+		, const unsigned long long &i
+		, const unsigned long long & ) {
+			if( call_function )
+				call_function( );
+		} );
+	threadPool.waiteOverJob( );
 	return result;
 }
+
+
 
 bool NovelDBJob::findNovelKey( const interfacePlugsType::INovelInfo_Shared &novel_info_shared, const std::unordered_map< size_t, std::shared_ptr< std::vector< interfacePlugsType::HtmlDocString > > > &find_key ) {
 
@@ -838,6 +776,11 @@ bool NovelDBJob::findNovelKey( const interfacePlugsType::INovelInfo_Shared &nove
 	novelAuthLen = element->getNovelAuthor( &novelAuth );
 	novelLastItemLen = element->getNovelLastItem( &novelLastItem );
 	novelUrlLen = element->getNovelUrl( &novelUrl );
+	converStringToUpper( novelName );
+	converStringToUpper( novelInfo );
+	converStringToUpper( novelAuth );
+	converStringToUpper( novelLastItem );
+	converStringToUpper( novelUrl );
 	// 匹配名称
 	auto iterator = find_key.begin( );
 	auto end = find_key.end( );

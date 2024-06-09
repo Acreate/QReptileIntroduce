@@ -22,9 +22,11 @@
 
 #include "../NovelInfo/NovelInfo.h"
 #include "dateTime/DateTime.h"
-#include "../instance_function/instance_function.h"
+#include <interface/instance_function.h>
+#include "../instance_function/NovelNodeXPathInfo.h"
 using namespace interfacePlugsType;
 using namespace cylHtmlTools;
+using namespace instance_function;
 
 
 QString RequestNet::timeForm = QObject::tr( u8R"(yyyy-MM-dd hh:mm:ss)" );
@@ -146,12 +148,13 @@ Vector_INovelInfoSPtr RequestNet::formHtmlGetTypePageNovels( const interfacePlug
 	Vector_INovelInfoSPtr result;
 
 	auto htmlDoc = cylHtmlTools::HtmlDoc::parse( htmlText );
-
+	auto outLogPath = outPath + QDir::separator( ) + u8"logs" + QDir::separator( );
 	if( !htmlDoc ) {
 		auto typeNme = QString::fromStdWString( type_name );
 		auto msg = QString( "%1 : %2 : %3" ).arg( typeNme ).arg( request_url ).arg( QString( u8" HtmlDoc::parse 异常，登出" ) );
 		QUrl url( QString::fromStdWString( request_url ) );
-		instance_function::write_error_info_file( oStream, url, outPath, "formHtmlGetTypePageNovels", "parse", typeNme, ".html", __FILE__, __FUNCTION__, __LINE__, msg, msg );
+
+		instance_function::write_error_info_file( oStream, url, outLogPath, "formHtmlGetTypePageNovels", "parse", typeNme, ".html", __FILE__, __FUNCTION__, __LINE__, msg, msg );
 		return result;
 	}
 	htmlDoc->analysisBrotherNode( );
@@ -175,17 +178,18 @@ Vector_INovelInfoSPtr RequestNet::formHtmlGetTypePageNovels( const interfacePlug
 		auto typeNme = QString::fromStdWString( type_name );
 		auto msg = QString( "%1 : %2 : %3" ).arg( typeNme ).arg( request_url ).arg( QString( u8" xpath 异常，登出" ) );
 		QUrl url( QString::fromStdWString( request_url ) );
-		instance_function::write_error_info_file( oStream, url, outPath, "xpath", "parse", typeNme, ".html", __FILE__, __FUNCTION__, __LINE__, msg, msg );
+		instance_function::write_error_info_file( oStream, url, outLogPath, "xpath", "parse", typeNme, ".html", __FILE__, __FUNCTION__, __LINE__, msg, msg );
 		return result;
 	}
 	HtmlWorkThread::TThreadCall currentThreadRun = [&vectorHtmlNodeSPtrShared,&saveNovelInfos,&result, &type_name,&xpath,&request_url,&htmlText,&novelNodeXPathInfo,this]( cylHtmlTools::HtmlWorkThread * ) {
+		auto outLogPath = outPath + QDir::separator(  ) + u8"logs" + QDir::separator(  );
 		auto vectorIterator = vectorHtmlNodeSPtrShared->begin( );
 		auto vectorEnd = vectorHtmlNodeSPtrShared->end( );
 		bool saveNovel = false;
 		Vector_HtmlNodeSPtr_Shared htmlNodes = nullptr;
 		HtmlString_Shared content = nullptr;
 		QString rootUrl = GET_URL;
-		Novel_Xpath_Analysis_Error quitMsg;
+		instance_function::Novel_Xpath_Analysis_Error quitMsg;
 		HtmlNode *element;
 		auto novelInfoBuffPtr = std::make_shared< NovelInfo >( );
 		size_t novelCount = saveNovelInfos.size( );
@@ -284,7 +288,7 @@ Vector_INovelInfoSPtr RequestNet::formHtmlGetTypePageNovels( const interfacePlug
 				auto msg = QString( "%1 : %2 : %3" ).arg( typeNme ).arg( request_url ).arg( errorInfo );
 				if( DateTime_Error_Xpath > quitMsg ) {
 					QUrl url( QString::fromStdWString( request_url ) );
-					instance_function::write_error_info_file( oStream, url, outPath, "novel_error", "parse", typeNme, ".html", __FILE__, __FUNCTION__, __LINE__, msg, msg );
+					instance_function::write_error_info_file( oStream, url, outLogPath, "novel_error", "parse", typeNme, ".html", __FILE__, __FUNCTION__, __LINE__, msg, msg );
 				} else
 					OStream::anyStdCerr( msg, __FILE__, __LINE__, __FUNCTION__, oStream );
 				novelInfoBuffPtr->clear( ); // 重置
@@ -347,7 +351,7 @@ bool RequestNet::isRequestNovelInfoUrl( const interfacePlugsType::INovelInfoPtr 
 }
 void RequestNet::novelTypeEnd( const HtmlDocString &root_url, const HtmlDocString &type_name, const HtmlDocString &url, const interfacePlugsType::Vector_INovelInfoSPtr &saveNovelInfos ) {
 }
-void RequestNet::endHost( const interfacePlugsType::Vector_INovelInfoSPtr &saveNovelInfos, const std::function< bool( const std::chrono::system_clock::time_point::duration & ) > &run ) {
+void RequestNet::endHost( const interfacePlugsType::Vector_INovelInfoSPtr &saveNovelInfos) {
 
 }
 OStream * RequestNet::setOStream( OStream *o_stream ) {

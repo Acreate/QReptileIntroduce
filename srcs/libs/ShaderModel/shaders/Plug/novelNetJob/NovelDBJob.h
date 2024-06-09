@@ -3,6 +3,8 @@
 #pragma once
 #include <QDateTime>
 
+#include <cwctype>
+
 #include "nameSpace/interfacePlugsType.h"
 #include "../auto_generate_files/export/Plug_export.h"
 #include "stream/OStream.h"
@@ -51,11 +53,10 @@ public:// - 静态方法
 	/// </summary>
 	/// <param name="thisOStream">可选信息输出流</param>
 	/// <param name="outPath">目标根目录</param>
-	/// <param name="url">写入的url</param>
 	/// <param name="saveNovelInfos">写入的小说</param>
 	/// <param name="run">线程工作当中时，会调用该函数</param>
 	/// <returns>写入个数</returns>
-	static size_t writeDB( OStream *thisOStream, const QString &outPath, const QUrl &url, const NovelInfoVector &saveNovelInfos, const std::function< bool( const std::chrono::system_clock::time_point::duration & ) > &run );
+	static size_t writeDB( OStream *thisOStream, const QString &outPath, const NovelInfoVector &saveNovelInfos, const std::function< bool( const std::chrono::system_clock::time_point::duration & ) > &run );
 	/// <summary>
 	/// 读取数据库
 	/// </summary>
@@ -121,7 +122,38 @@ public:// - 静态方法
 	/// <param name="call_function">工作时候会调用该函数</param>
 	/// <returns>匹配的小说列表</returns>
 	static NovelInfoVector findNovel( const NovelInfoVector &infos, const std::unordered_map< size_t, std::shared_ptr< std::vector< interfacePlugsType::HtmlDocString > > > &find_key, const std::function< void( ) > &call_function );
-
+	/// <summary>
+	/// 字符串转换到大写
+	/// </summary>
+	/// <param name="str">转换的字符串</param>
+	static std::wstring & converStringToUpper( std::wstring &str ) {
+		std::transform( str.begin( ), str.end( ), str.begin( ), []( std::wstring::value_type c ) { return std::towupper( c ); } );
+		return str;
+	}
+	/// <summary>
+	/// 字符串转换到小写
+	/// </summary>
+	/// <param name="str">转换的字符串</param>
+	static std::wstring & converStringToLower( std::wstring &str ) {
+		std::transform( str.begin( ), str.end( ), str.begin( ), []( std::wstring::value_type c ) { return std::towlower( c ); } );
+		return str;
+	}
+	/// <summary>
+	/// 字符串转换到大写
+	/// </summary>
+	/// <param name="str">转换的字符串</param>
+	static std::string & converStringToUpper( std::string &str ) {
+		std::transform( str.begin( ), str.end( ), str.begin( ), []( std::string::value_type c ) { return std::toupper( c ); } );
+		return str;
+	}
+	/// <summary>
+	/// 字符串转换到小写
+	/// </summary>
+	/// <param name="str">转换的字符串</param>
+	static std::string & converStringToLower( std::string &str ) {
+		std::transform( str.begin( ), str.end( ), str.begin( ), []( std::string::value_type c ) { return std::tolower( c ); } );
+		return str;
+	}
 	/// <summary>
 	/// 匹配小说，小说匹配 LenMap，返回 true，不配，返回 false
 	/// </summary>

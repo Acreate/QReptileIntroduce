@@ -22,9 +22,11 @@
 
 #include "../NovelInfo/NovelInfo.h"
 #include "dateTime/DateTime.h"
-#include "../instance_function/instance_function.h"
+#include <interface/instance_function.h>
+#include "../instance_function/NovelNodeXPathInfo.h"
 using namespace interfacePlugsType;
 using namespace cylHtmlTools;
+using namespace instance_function;
 
 QString RequestNet::timeForm = QObject::tr( u8R"(yyyy-MM-dd hh:mm)" );
 QString RequestNet::currentTimeForm = QObject::tr( u8R"(yyyy-MM-dd hh:mm:ss)" );
@@ -92,7 +94,7 @@ Map_HtmlStrK_HtmlStrV * RequestNet::formHtmlGetTypeTheUrls( const interfacePlugs
 		HtmlWorkThread thread;
 		auto stdWString( std::make_shared< HtmlString >( removeBothSpaceHtmlText ) );
 		auto result = std::make_shared< Map_HtmlStrK_HtmlStrV >( );
-		thread.setCurrentThreadRun( [&result,&stdWString, this,&url]( HtmlWorkThread* ) {
+		thread.setCurrentThreadRun( [&result,&stdWString, this,&url]( HtmlWorkThread * ) {
 			auto htmlDoc = cylHtmlTools::HtmlDoc::parse( stdWString );
 			if( !htmlDoc.get( ) ) {
 				auto msg = QString( "%1 : %2" ).arg( QString::fromStdWString( url ) ).arg( QString( u8" HtmlDoc::parse 异常，登出" ) );
@@ -143,11 +145,12 @@ Map_HtmlStrK_HtmlStrV * RequestNet::formHtmlGetTypeTheUrls( const interfacePlugs
 Vector_INovelInfoSPtr RequestNet::formHtmlGetTypePageNovels( const interfacePlugsType::HtmlDocString &type_name, const interfacePlugsType::HtmlDocString &request_url, const HtmlDocString &htmlText, const Vector_INovelInfoSPtr &saveNovelInfos, void *appendDataPtr ) { // todo : 类型页面获取小说信息
 	Vector_INovelInfoSPtr result;
 	auto htmlDoc = cylHtmlTools::HtmlDoc::parse( htmlText );
+	auto outLogPath = outPath + QDir::separator( ) + u8"logs" + QDir::separator( );
 	if( !htmlDoc ) {
 		auto typeNme = QString::fromStdWString( type_name );
 		auto msg = QString( "%1 : %2 : %3" ).arg( typeNme ).arg( request_url ).arg( QString( u8" HtmlDoc::parse 异常，登出" ) );
 		QUrl url( QString::fromStdWString( request_url ) );
-		instance_function::write_error_info_file( oStream, url, outPath, "formHtmlGetTypePageNovels", "parse", typeNme, ".html", __FILE__, __FUNCTION__, __LINE__, msg, msg );
+		instance_function::write_error_info_file( oStream, url, outLogPath, "formHtmlGetTypePageNovels", "parse", typeNme, ".html", __FILE__, __FUNCTION__, __LINE__, msg, msg );
 		return result;
 	}
 	htmlDoc->analysisBrotherNode( );
@@ -196,12 +199,13 @@ Vector_INovelInfoSPtr RequestNet::formHtmlGetTypePageNovels( const interfacePlug
 			auto typeNme = QString::fromStdWString( type_name );
 			auto msg = QString( "%1 : %2 : %3" ).arg( typeNme ).arg( request_url ).arg( QString( u8" xpath 异常，登出" ) );
 			QUrl url( QString::fromStdWString( request_url ) );
-			instance_function::write_error_info_file( oStream, url, outPath, "xpath", "parse", typeNme, ".html", __FILE__, __FUNCTION__, __LINE__, msg, msg );
+			instance_function::write_error_info_file( oStream, url, outLogPath, "xpath", "parse", typeNme, ".html", __FILE__, __FUNCTION__, __LINE__, msg, msg );
 			return result;
 		}
 	}
 
-	HtmlWorkThread::TThreadCall currentThreadRun = [&vectorHtmlNodeSPtrShared,&saveNovelInfos,&result, &type_name,&xpath,&request_url,&htmlText,&novelNodeXPathInfo,this]( HtmlWorkThread* ) {
+	HtmlWorkThread::TThreadCall currentThreadRun = [&vectorHtmlNodeSPtrShared,&saveNovelInfos,&result, &type_name,&xpath,&request_url,&htmlText,&novelNodeXPathInfo,this]( HtmlWorkThread * ) {
+		auto outLogPath = outPath + QDir::separator( ) + u8"logs" + QDir::separator( );
 		auto vectorIterator = vectorHtmlNodeSPtrShared->begin( );
 		auto vectorEnd = vectorHtmlNodeSPtrShared->end( );
 		std::shared_ptr< INovelInfo > novelInfoPtr = nullptr;
@@ -293,7 +297,7 @@ Vector_INovelInfoSPtr RequestNet::formHtmlGetTypePageNovels( const interfacePlug
 					auto typeNme = QString::fromStdWString( type_name );
 					auto msg = QString( "%1 : %2 : %3" ).arg( typeNme ).arg( request_url ).arg( novelUrl );
 					QUrl url( QString::fromStdWString( request_url ) );
-					instance_function::write_error_info_file( oStream, url, outPath, "novel_listItem_error", "none", typeNme, ".html", __FILE__, __FUNCTION__, __LINE__, msg, QString::fromStdWString( htmlText ) );
+					instance_function::write_error_info_file( oStream, url, outLogPath, "novel_listItem_error", "none", typeNme, ".html", __FILE__, __FUNCTION__, __LINE__, msg, QString::fromStdWString( htmlText ) );
 				}
 
 				novelInfoBuffPtr->format = RequestNet::timeForm.toStdWString( );
@@ -316,7 +320,7 @@ Vector_INovelInfoSPtr RequestNet::formHtmlGetTypePageNovels( const interfacePlug
 				auto msg = QString( "%1 : %2 : %3" ).arg( typeNme ).arg( request_url ).arg( errorInfo );
 				if( DateTime_Error_Xpath > quitMsg ) {
 					QUrl url( QString::fromStdWString( request_url ) );
-					instance_function::write_error_info_file( oStream, url, outPath, "novel_error", "parse", typeNme, ".html", __FILE__, __FUNCTION__, __LINE__, msg, msg );
+					instance_function::write_error_info_file( oStream, url, outLogPath, "novel_error", "parse", typeNme, ".html", __FILE__, __FUNCTION__, __LINE__, msg, msg );
 				} else
 					OStream::anyStdCerr( msg, __FILE__, __LINE__, __FUNCTION__, oStream );
 				novelInfoBuffPtr->clear( ); // 重置
@@ -379,7 +383,7 @@ bool RequestNet::isRequestNovelInfoUrl( const interfacePlugsType::INovelInfoPtr 
 }
 void RequestNet::novelTypeEnd( const HtmlDocString &root_url, const HtmlDocString &type_name, const HtmlDocString &url, const interfacePlugsType::Vector_INovelInfoSPtr &saveNovelInfos ) {
 }
-void RequestNet::endHost( const interfacePlugsType::Vector_INovelInfoSPtr &saveNovelInfos, const std::function< bool( const std::chrono::system_clock::time_point::duration & ) > &run ) {
+void RequestNet::endHost( const interfacePlugsType::Vector_INovelInfoSPtr &saveNovelInfos ) {
 
 }
 OStream * RequestNet::setOStream( OStream *o_stream ) {

@@ -58,7 +58,7 @@ using namespace interfacePlugsType;
 /// <param name="write_root_path">写入的根目录</param>
 /// <param name="file_name">文件名称</param>
 /// <param name="file_suffix">后缀名称</param>
-inline void error_write_file( const  std::chrono::time_point< std::chrono::system_clock > &nowTimeDuration, OStream *oStream, QNetworkReply *networkReply, const QString &file, const QString &call_function_name, size_t line, const QString &append_msg, const QString &write_root_path, const QString &file_name, const QString &file_suffix ) {
+inline void error_write_file( const std::chrono::time_point< std::chrono::system_clock > &nowTimeDuration, OStream *oStream, QNetworkReply *networkReply, const QString &file, const QString &call_function_name, size_t line, const QString &append_msg, const QString &write_root_path, const QString &file_name, const QString &file_suffix ) {
 	QDateTime currentDateTime = QDateTime::currentDateTime( );
 	QString currentTime = currentDateTime.toString( "yyyy_MM_dd hh-mm-ss" );
 	auto currentTimeDuration = std::chrono::system_clock::now( ) - nowTimeDuration;
@@ -81,10 +81,11 @@ inline void error_write_file( const  std::chrono::time_point< std::chrono::syste
 	if( write_root_path.isEmpty( ) )
 		OStream::anyStdCerr( msg, file, line, call_function_name, oStream );
 	else {
-		QString errorWriteFilePath( u8R"(%2%1%3%1%4%1%5%1%6.%7)" );
+		QString errorWriteFilePath = write_root_path;
 		QString host = url.host( );
 		QString timeForm = currentDateTime.toString( "yyyy-MM-dd" );
-		errorWriteFilePath = errorWriteFilePath.arg( QDir::separator( ) ).arg( write_root_path ).arg( u8"log_write_file_s" ).arg( host ).arg( timeForm ).arg( file_name ).arg( file_suffix );
+		auto sep = QDir::separator( );
+		errorWriteFilePath.append( sep ).append( u8"logs" ).append( sep ).append( u8"log_write_file_s" ).append( sep ).append( host ).append( sep ).append( timeForm ).append( sep ).append( file_name ).append( file_suffix );
 		OStream::anyStdCerr( msg, file, line, call_function_name, errorWriteFilePath, msg, oStream );
 	}
 }
@@ -446,11 +447,11 @@ void NovelNetJob::novelPageInfoRequestEnd( const QString &type_name, const QUrl 
 	std::cout << u8"-----------------------" << std::endl;
 	std::cout << type_name.toStdString( ) << "(" << url.toString( ).toStdString( ) << ") 请求结束" << std::endl;
 	std::cout << u8"-----------------------" << std::endl;
-	QString writeFilePath( u8"%2%1%3%1%4%1%5%6" );
 	auto rootUrl = url.host( );
 	auto root_url = url.scheme( ) + "://" + rootUrl;
-	writeFilePath = writeFilePath.arg( QDir::separator( ) ).arg( outPath ).arg( u8"txt_out" ).arg( rootUrl ).arg( type_name ).arg( u8".txt" );
-
+	auto pathSep = QDir::separator( );
+	QString writeFilePath;
+	writeFilePath.append( outPath ).append( pathSep ).append( u8"txt_out" ).append( pathSep ).append( rootUrl ).append( pathSep ).append( type_name ).append( u8".txt" );
 	Vector_INovelInfoSPtr_Shared infos = typeNovelsMap.at( type_name );
 	auto novelInfos = NovelDBJob::writeFile( writeFilePath, *infos );
 	OStream::anyStdCOut( QString( u8"================\n\t路径: (%1)\n\t写入数量 : [%2]\n\t类型计数 : [%3]\n================\n" ).arg( writeFilePath ).arg( novelInfos.size( ) ).arg( typeCount ), oStream );
@@ -462,7 +463,7 @@ void NovelNetJob::novelPageInfoRequestEnd( const QString &type_name, const QUrl 
 void NovelNetJob::slots_requested_get_web_page_signals_end( const QUrl &url ) {
 	Vector_INovelInfoSPtr_Shared novelInfoSPtr( std::make_shared< Vector_INovelInfoSPtr >( ) );
 
-	cylHtmlTools::HtmlWorkThread::TThreadCall currentThreadRun = [&]( cylHtmlTools::HtmlWorkThread*) {
+	cylHtmlTools::HtmlWorkThread::TThreadCall currentThreadRun = [&]( cylHtmlTools::HtmlWorkThread * ) {
 		auto mapIterator = typeNovelsMap.begin( );
 		auto mapEnd = typeNovelsMap.end( );
 		for( ; mapIterator != mapEnd; ++mapIterator )
@@ -485,19 +486,22 @@ void NovelNetJob::slots_requested_get_web_page_signals_end( const QUrl &url ) {
 		}
 		qApp->processEvents( );
 	}
-	auto run = [this]( const Duration &duration ) {
-		if( getTimeDurationToMilliseconds( duration ) < 2000 )
-			return false;
-		auto msg = QString( "===========" )
-					.append( "\n\t" ).append( "正在存储数据库" )
-					.append( "\n\t" ).append( __FILE__ )
-					.append( "\n\t" ).append( QString::number( __LINE__ ) )
-					.append( "\n\t" ).append( "===========" );
-		return true;
-	};
-	NovelDBJob::writeDB( oStream, outPath, url, *novelInfoSPtr, run );
-	interfaceThisPtr->endHost( *novelInfoSPtr
-		, run );
+	if( novelInfoSPtr->size( ) > 0 ) {
+		auto run = [this]( const Duration &duration ) {
+			if( getTimeDurationToMilliseconds( duration ) < 2000 )
+				return false;
+			auto msg = QString( "===========" )
+						.append( "\n\t" ).append( "正在存储数据库" )
+						.append( "\n\t" ).append( __FILE__ )
+						.append( "\n\t" ).append( QString::number( __LINE__ ) )
+						.append( "\n\t" ).append( "===========" );
+			return true;
+		};
+		QString dbPath = outPath + QDir::separator( ) + "dbs" + QDir::separator( ) + url.host( ) + ".db";
+		NovelDBJob::writeDB( oStream, dbPath, *novelInfoSPtr, run );
+	}
+
+	interfaceThisPtr->endHost( *novelInfoSPtr );
 	runStatus = 0; // 可以重新运行
 	QString msg = QString( ).append( "请求 : (" ).append( url.scheme( ) ).append( u8"://" ).append( url.host( ) ).append( ") 结束 " );
 	OStream::anyStdCOut( msg, oStream );

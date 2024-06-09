@@ -12,16 +12,7 @@ class RequestNet : public QObject, public IRequestNetInterface {
 	Q_OBJECT;
 	Q_INTERFACES( IRequestNetInterface )
 public:
-	enum Novel_Xpath_Analysis_Error {
-		None// 没有异常
-		, Name_Error_Xpath// 名称 xpath 异常
-		, Name_Error_None// 名称找不到异常
-		, Url_Error_Xpath// url xpath 异常
-		, Url_Error_None // url 找不到异常
-		, DateTime_Error_Xpath// 时间 xpath 异常
-		, DateTime_Error_None// 时间 找不到异常
-		, DateTime_Error_Expire// 时间 超出限定
-	};
+	
 private:
 	static QString timeForm; // 时间格式
 	static QDateTime currentTime; // 请求时间
@@ -173,7 +164,7 @@ public: // 实现解析
 	/// <summary>
 	/// 结束该网站请求时被调用
 	/// </summary>
-	void endHost( const interfacePlugsType::Vector_INovelInfoSPtr &saveNovelInfos, const std::function< bool( const std::chrono::system_clock::time_point::duration & ) > &run ) override;
+	void endHost( const interfacePlugsType::Vector_INovelInfoSPtr &saveNovelInfos) override;
 private:
 	OStream *oStream;
 	IStream *iStream;

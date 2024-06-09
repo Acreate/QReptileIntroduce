@@ -130,6 +130,9 @@ int main( int argc, char *argv[ ] ) {
 			u8"说明:\n\t\t" u8"输出加载的插件指向的网络" "\n\t"
 			"-name" u8"\n\t  "
 			u8"说明:\n\t\t" u8"输出程序名称"
+			"-edb" u8"\n\t  "
+			u8"  参数" "\n\t\t" u8"路径[,路径1 [,路径2[,....]]]" u8"\n\t  "
+			u8"说明:\n\t\t" u8"导出数据库"
 			"\n"
 			"=========" << std::endl;
 	if( count == 1 )
@@ -192,7 +195,7 @@ int main( int argc, char *argv[ ] ) {
 				}
 				if( pathValues ) {
 					cmd.append( " -p " );
-					cmd.append( path );
+					cmd.append( QString::fromLocal8Bit( argParser->converOptionToString( pathValues ) ) );
 				}
 				if( requetTypeNameOption ) {
 					cmd.append( " -t " );
@@ -239,8 +242,7 @@ int main( int argc, char *argv[ ] ) {
 							--count;
 						} );
 					std::cout << novelNetJob->getUrl( ).toStdString( ).c_str( ) << std::endl;
-					if( pathValues )
-						novelNetJob->setPath( path );
+					novelNetJob->setPath( path );
 					if( requetTypeNameOption )
 						novelNetJob->setRequestTypeNames( requesTypeNameVector );
 					if( findVector( runPlugPath, plugFilePath ) )
@@ -265,10 +267,9 @@ int main( int argc, char *argv[ ] ) {
 				cmd.append( " -l " );
 				cmd.append( plugFilePath );
 
-
 				if( pathValues ) {
 					cmd.append( " -p " );
-					cmd.append( path );
+					cmd.append( QString::fromLocal8Bit( argParser->converOptionToString( pathValues ) ) );
 				}
 				if( requetTypeNameOption ) {
 					cmd.append( " -t " );
@@ -403,18 +404,6 @@ int main( int argc, char *argv[ ] ) {
 			return 0;
 		} else
 			std::cout << u8"有效小说数量为 " << count << std::endl;
-		/*	std::cout << u8"开始分解小说到域名" << std::endl;
-		auto novelHostMap = NovelDBJob::decompose( readDBNovels
-				, [&currentTime,&qMutex]( ) {
-					QMutexLocker lock( &qMutex );
-					auto cur = std::chrono::system_clock::now( );
-					auto sep = cur - currentTime;
-					auto second = std::chrono::duration_cast< std::chrono::seconds >( sep ).count( );
-					if( second < 2 )
-						return;
-					std::cout << u8"正在分解小说到域名" << std::endl;
-					currentTime = cur;
-				} );*/
 		while( ingSubNameThread.isRun( ) ) {
 			std::cout << u8"等待忽略选项完成" << std::endl;
 			instance->processEvents( );
