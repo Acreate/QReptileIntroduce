@@ -315,7 +315,7 @@ inline void insterNovelHostMap( NovelDBJob::NovelHostMap &inster_map, const inte
 NovelDBJob::NovelHostMap NovelDBJob::decompose( const NovelInfoVector &infos, const std::function< void( ) > &call_back ) {
 	NovelDBJob::NovelHostMap result;
 	cylHtmlTools::HtmlWorkThread thread;
-	thread.setCurrentThreadRun( [&infos,&result]( ) {
+	thread.setCurrentThreadRun( [&infos,&result]( cylHtmlTools::HtmlWorkThread* ) {
 
 		for( auto &inoveShared : infos )
 			insterNovelHostMap( result, inoveShared );
@@ -336,10 +336,10 @@ size_t NovelDBJob::writeDB( OStream *thisOStream, const QString &outPath, const 
 	auto dbInterface = cylDB::DBTools::linkDB( linkPath );
 	size_t result = 0;
 	if( dbInterface->link( ) ) {
-		std::function< void( ) > currentThreadRun = [
+		cylHtmlTools::HtmlWorkThread::TThreadCall currentThreadRun = [
 				dbInterface, url, outPath, run, thisOStream,
 				&saveNovelInfos, &result
-			]( ) {
+			]( cylHtmlTools::HtmlWorkThread* ) {
 			QString dbName = url.host( );
 			QString tabName = dbName;
 			dbName.append( ".db" );
@@ -509,10 +509,10 @@ NovelDBJob::NovelInfoVector_Shared NovelDBJob::readDB( OStream *thisOStream, con
 	std::vector< cylHtmlTools::HtmlWorkThread * > threaVector; // 线程池
 
 	for( auto &dbFile : dbNames ) {
-		std::function< void( ) > currentThreadRun = [
+		cylHtmlTools::HtmlWorkThread::TThreadCall currentThreadRun = [
 				outPath, run, thisOStream,mutex,linkPath,
 				&result,dbFile
-			]( ) {
+			](cylHtmlTools::HtmlWorkThread* ) {
 			auto dbInterface = cylDB::DBTools::linkDB( linkPath );
 			if( !dbInterface->link( ) )
 				return;
@@ -682,7 +682,7 @@ NovelDBJob::NovelInfoVector NovelDBJob::removeSubName( const NovelInfoVector &in
 		thread->setCurrentThreadRun( [
 				node,writeMutex
 				,&mapLenKeyS,&remove_name_s,&result
-			]( ) ->void {
+			]( cylHtmlTools::HtmlWorkThread*) ->void {
 				// todo : ......
 				interfacePlugsType::HtmlDocString name;
 				if( !node->getNovelName( &name ) )
@@ -722,7 +722,7 @@ NovelDBJob::NovelInfoVector NovelDBJob::removeEquName( const NovelInfoVector &in
 		thread->setCurrentThreadRun( [
 				node,writeMutex
 				,&mapLenKeyS,&remove_name_s,&result
-			]( ) ->void {
+			]( cylHtmlTools::HtmlWorkThread*) ->void {
 				// todo : ......
 				interfacePlugsType::HtmlDocString name;
 				if( !node->getNovelName( &name ) )
@@ -764,7 +764,7 @@ NovelDBJob::NovelInfoVector NovelDBJob::findNovel( const NovelInfoVector &infos,
 		thread->setCurrentThreadRun( [
 				node,writeMutex
 				,&mapLenKeyS,&find_key,&result
-			]( ) ->void {
+			]( cylHtmlTools::HtmlWorkThread* ) ->void {
 				// todo : ......
 				interfacePlugsType::HtmlDocString name;
 				interfacePlugsType::HtmlDocString info;
@@ -826,4 +826,38 @@ NovelDBJob::NovelInfoVector NovelDBJob::findNovel( const NovelInfoVector &infos,
 	}
 	overThreadsWork( threads, call_function );
 	return result;
+}
+
+bool NovelDBJob::findNovelKey( const interfacePlugsType::INovelInfo_Shared &novel_info_shared, const std::unordered_map< size_t, std::shared_ptr< std::vector< interfacePlugsType::HtmlDocString > > > &find_key ) {
+
+	interfacePlugsType::HtmlDocString novelName, novelInfo, novelAuth, novelLastItem, novelUrl;
+	size_t novelNameLen, novelInfoLen, novelAuthLen, novelLastItemLen, novelUrlLen;
+	interfacePlugsType::INovelInfo *element = novel_info_shared.get( );
+	novelNameLen = element->getNovelName( &novelName );
+	novelInfoLen = element->getNovelInfo( &novelInfo );
+	novelAuthLen = element->getNovelAuthor( &novelAuth );
+	novelLastItemLen = element->getNovelLastItem( &novelLastItem );
+	novelUrlLen = element->getNovelUrl( &novelUrl );
+	// 匹配名称
+	auto iterator = find_key.begin( );
+	auto end = find_key.end( );
+	for( ; iterator != end; ++iterator ) {
+		size_t len = iterator->first;
+		auto second = iterator->second;
+		for( auto &str : *second ) {
+			if( novelNameLen > len && cylHtmlTools::HtmlStringTools::findNextHtmlStringPotion( &novelName, 0, &str ) )
+				return true;
+			if( novelInfoLen > len && cylHtmlTools::HtmlStringTools::findNextHtmlStringPotion( &novelInfo, 0, &str ) )
+				return true;
+			if( novelAuthLen > len && cylHtmlTools::HtmlStringTools::findNextHtmlStringPotion( &novelAuth, 0, &str ) )
+				return true;
+			if( novelLastItemLen > len && cylHtmlTools::HtmlStringTools::findNextHtmlStringPotion( &novelLastItem, 0, &str ) )
+				return true;
+			if( novelUrlLen > len && cylHtmlTools::HtmlStringTools::findNextHtmlStringPotion( &novelUrl, 0, &str ) )
+				return true;
+		}
+
+	}
+
+	return false;
 }

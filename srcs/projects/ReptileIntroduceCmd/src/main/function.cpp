@@ -3,6 +3,8 @@
 #include <codecvt>
 #include <locale>
 
+#include "htmlString/HtmlStringTools.h"
+#include "interface/INovelInfo.h"
 #include "path/Path.h"
 QString getBuilderInfo( ) {
 
@@ -184,8 +186,8 @@ std::unordered_map< size_t, std::shared_ptr< std::vector< std::wstring > > > vec
 	}
 	return result;
 }
-void loadFindKeyFiles( const std::shared_ptr< std::vector< cylStd::ArgParser::String > > &find_key_option, const std::shared_ptr< std::vector< cylStd::ArgParser::String > > &find_key_files_option, cylHtmlTools::HtmlWorkThread &result_thread, LenMap &result_map, FileLenMap &result_file_name_map ) {
-	result_thread.setCurrentThreadRun( [&]( ) {
+void loadFindKeyFiles( const std::shared_ptr< std::vector< cylStd::ArgParser::String > > &find_key_option, const std::shared_ptr< std::vector< cylStd::ArgParser::String > > &find_key_files_option, cylHtmlTools::HtmlWorkThread &result_thread, QString &app_name, FileLenMap &result_file_name_map ) {
+	result_thread.setCurrentThreadRun( [&]( cylHtmlTools::HtmlWorkThread* ) {
 		if( !find_key_option && !find_key_files_option )
 			return;
 		std::vector< QString > findKeys;
@@ -194,6 +196,10 @@ void loadFindKeyFiles( const std::shared_ptr< std::vector< cylStd::ArgParser::St
 				findKeys.emplace_back( QString::fromLocal8Bit( str ) );
 
 		findKeys = vectorStrAdjustSubStr( findKeys );
+		if( findKeys.size( ) > 0 ) {
+			findKeys = vectorStrduplicate( findKeys );
+			result_file_name_map.emplace( app_name, vectorStrToLenKeyMap( converToWString( findKeys ) ) );
+		}
 		std::unordered_map< QString, std::vector< QString > > pathKeysMap;
 		if( find_key_files_option ) {
 			for( auto strPath : *find_key_files_option ) {
@@ -202,17 +208,13 @@ void loadFindKeyFiles( const std::shared_ptr< std::vector< cylStd::ArgParser::St
 					QString currentFilePtah = filePath.getCurrentFilePtah( );
 					auto vector = readIngoreNameFile( currentFilePtah );
 					vector = vectorStrduplicate( vector );
+					vector = vectorStrAdjustSubStr( vector );
 					writeIngoreNameFile( currentFilePtah, vector );
 					if( vector.size( ) == 0 )
 						continue;
-					findKeys.insert( findKeys.end( ), vector.begin( ), vector.end( ) );
 					pathKeysMap.emplace( currentFilePtah, vector );
 				}
 			}
-		}
-		if( findKeys.size( ) > 0 ) {
-			findKeys = vectorStrduplicate( findKeys );
-			result_map = vectorStrToLenKeyMap( converToWString( findKeys ) );
 		}
 		if( pathKeysMap.size( ) > 0 ) {
 			auto iterator = pathKeysMap.begin( );
@@ -231,7 +233,7 @@ void loadingEquKeyFiles( const std::shared_ptr< std::vector< cylStd::ArgParser::
 	if( !ignore_equ_key_option && !ignore_equ_key_files_option )
 		return;
 
-	result_thread.setCurrentThreadRun( [&]( ) {
+	result_thread.setCurrentThreadRun( [&]( cylHtmlTools::HtmlWorkThread* ) {
 		std::vector< QString > findKeys;
 		if( ignore_equ_key_option )
 			for( auto str : *ignore_equ_key_option )
@@ -271,7 +273,6 @@ void loadingSubKeyFiles( const std::shared_ptr< std::vector< cylStd::ArgParser::
 	}
 	result_thread.start( );
 }
-
 
 std::vector< std::wstring > converToWString( std::vector< QString > &str_vector ) {
 	std::vector< std::wstring > result;

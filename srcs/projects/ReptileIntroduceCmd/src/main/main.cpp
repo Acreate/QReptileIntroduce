@@ -11,9 +11,11 @@
 #include <QProcess>
 #include <QMutex>
 #include <QMutexLocker>
+#include <htmls/htmlTools/HtmlWorkThread/HtmlWorkThreadPool.h>
 #include <htmls/htmlTools/HtmlWorkThread/HtmlWorkThread.h>
 #include <QSharedMemory>
 
+#include "interface/INovelInfo.h"
 #include "novelNetJob/NovelDBJob.h"
 #include "path/Path.h"
 int main( int argc, char *argv[ ] ) {
@@ -26,6 +28,11 @@ int main( int argc, char *argv[ ] ) {
 
 	QCoreApplication application( argc, argv );
 	auto *instance = qApp;// 指定一个键，这个键用来标识共享内存区域
+	QString applicationDirPath = instance->applicationDirPath( ); // 当前 exe 所在目录
+	QString applicationBaseName = instance->applicationName( ); // 当前 exe 名称
+	QString applicationFilePath = instance->applicationFilePath( ); // 当前 exe 文件全路径名
+	QString applicationName = QFileInfo( applicationFilePath ).fileName( ); // 当前 exe 名称，带后缀
+	QString appRunCurrentPath = QDir::currentPath( ); // 当前运行目录
 
 	QString compilerString = getBuilderInfo( );
 
@@ -38,7 +45,8 @@ int main( int argc, char *argv[ ] ) {
 	if( argParser->getOptionValues( "-name" ) )
 		std::cout << instance->applicationName( ).toStdString( ).c_str( ) << std::endl;
 
-	auto writeFilePaths = argParser->getOptionValues( "-w" ); // 是否存在导出
+	auto writeFilePaths = argParser->getOptionValues( "-w" ); // 导出目录
+	auto isOutAll = argParser->getOptionValues( "-out" ); // 是否存在导出全部
 	auto requetTypeNameOption = argParser->getOptionValues( "-t" );
 	if( requetTypeNameOption )
 		for( auto &path : *requetTypeNameOption ) {
@@ -332,9 +340,8 @@ int main( int argc, char *argv[ ] ) {
 	LenMap lenEquStrKeyMap; // 完全匹配映射
 	cylHtmlTools::HtmlWorkThread ingEquNameThread; // 完全匹配线程
 	/// 关键字查找
-	LenMap lenFindStrKeyMap; // 查找文件的映射-汇总
 	FileLenMap fileLenFindStrKeyMap; // 查找文件的映射-文件<长度，名称列表>
-	cylHtmlTools::HtmlWorkThread ingFindStrKeyThread;
+	cylHtmlTools::HtmlWorkThread findStrKeyThread;
 
 	if( dbPaths && writeFilePaths ) { // 如果存在 -rdb 与 -w 选项，那么可以使用过滤选项
 		auto inNameKeys = argParser->getOptionValues( "-isn" ); // 忽略名称
@@ -347,7 +354,7 @@ int main( int argc, char *argv[ ] ) {
 
 		auto findKeysOptions = argParser->getOptionValues( "-fk" ); // 小说查找名称
 		auto findNameFiles = argParser->getOptionValues( "-fkf" ); // 小说查找文件路径
-		loadFindKeyFiles( findKeysOptions, findNameFiles, ingFindStrKeyThread, lenFindStrKeyMap, fileLenFindStrKeyMap ); // 处理查找文件
+		loadFindKeyFiles( findKeysOptions, findNameFiles, findStrKeyThread, applicationName, fileLenFindStrKeyMap ); // 处理查找文件
 	}
 
 	do {
@@ -369,7 +376,7 @@ int main( int argc, char *argv[ ] ) {
 
 	if( dbPaths && writeFilePaths ) {
 		std::cout << u8"检测到 -rdb 与 -w 选项" << std::endl;
-		interfacePlugsType::Vector_INovelInfoSPtr novelInfoS;
+		interfacePlugsType::Vector_INovelInfoSPtr readDBNovels;
 		for( auto &str : *dbPaths ) {
 			std::cout << u8"检测路径 " << str << std::endl;
 			auto novelInfoSPtrShared = NovelDBJob::readDB( nullptr
@@ -386,26 +393,28 @@ int main( int argc, char *argv[ ] ) {
 				} );
 			if( novelInfoSPtrShared ) {
 				std::cout << u8"加入小说进行中... " << str << std::endl;
-				novelInfoS.insert( novelInfoS.begin( ), novelInfoSPtrShared->begin( ), novelInfoSPtrShared->end( ) );
+				readDBNovels.insert( readDBNovels.begin( ), novelInfoSPtrShared->begin( ), novelInfoSPtrShared->end( ) );
 			}
 		}
 		std::cout << u8"数据库读取完毕" << std::endl;
-		if( novelInfoS.size( ) == 0 ) {
+		count = readDBNovels.size( );
+		if( count == 0 ) {
 			std::cout << u8"有效小说数量为 0，退出操作" << std::endl;
 			return 0;
-		}
-		std::cout << u8"开始分解小说到域名" << std::endl;
-		auto novelHostMap = NovelDBJob::decompose( novelInfoS
-			, [&currentTime,&qMutex]( ) {
-				QMutexLocker lock( &qMutex );
-				auto cur = std::chrono::system_clock::now( );
-				auto sep = cur - currentTime;
-				auto second = std::chrono::duration_cast< std::chrono::seconds >( sep ).count( );
-				if( second < 2 )
-					return;
-				std::cout << u8"正在分解小说到域名" << std::endl;
-				currentTime = cur;
-			} );
+		} else
+			std::cout << u8"有效小说数量为 " << count << std::endl;
+		/*	std::cout << u8"开始分解小说到域名" << std::endl;
+		auto novelHostMap = NovelDBJob::decompose( readDBNovels
+				, [&currentTime,&qMutex]( ) {
+					QMutexLocker lock( &qMutex );
+					auto cur = std::chrono::system_clock::now( );
+					auto sep = cur - currentTime;
+					auto second = std::chrono::duration_cast< std::chrono::seconds >( sep ).count( );
+					if( second < 2 )
+						return;
+					std::cout << u8"正在分解小说到域名" << std::endl;
+					currentTime = cur;
+				} );*/
 		while( ingSubNameThread.isRun( ) ) {
 			std::cout << u8"等待忽略选项完成" << std::endl;
 			instance->processEvents( );
@@ -414,12 +423,12 @@ int main( int argc, char *argv[ ] ) {
 			std::cout << u8"等待相等选项完成" << std::endl;
 			instance->processEvents( );
 		}
-		while( ingFindStrKeyThread.isRun( ) ) {
+		while( findStrKeyThread.isRun( ) ) {
 			std::cout << u8"等待查找选项完成" << std::endl;
 			instance->processEvents( );
 		}
 		if( lenEquStrKeyMap.size( ) > 0 )
-			novelInfoS = NovelDBJob::removeEquName( novelInfoS
+			readDBNovels = NovelDBJob::removeEquName( readDBNovels
 				, lenEquStrKeyMap
 				, [&currentTime,&qMutex]( ) {
 					QMutexLocker lock( &qMutex );
@@ -432,12 +441,12 @@ int main( int argc, char *argv[ ] ) {
 					currentTime = cur;
 				} );
 
-		if( novelInfoS.size( ) == 0 ) {
+		if( readDBNovels.size( ) == 0 ) {
 			std::cout << u8"删除匹配的符串关键字后，有效小说数量为 0，退出操作" << std::endl;
 			return 0;
 		}
 		if( lenSubStrKeyMap.size( ) > 0 )
-			novelInfoS = NovelDBJob::removeSubName( novelInfoS
+			readDBNovels = NovelDBJob::removeSubName( readDBNovels
 				, lenSubStrKeyMap
 				, [&currentTime]( ) {
 					auto cur = std::chrono::system_clock::now( );
@@ -448,145 +457,121 @@ int main( int argc, char *argv[ ] ) {
 					std::cout << u8"正在删除子字符串关键字" << std::endl;
 					currentTime = cur;
 				} );
-		if( novelInfoS.size( ) == 0 ) {
+		if( readDBNovels.size( ) == 0 ) {
 			std::cout << u8"删除子字符串关键字后，有效小说数量为 0，退出操作" << std::endl;
 			return 0;
 		}
-		std::cout << u8"开始写入小说到文件" << std::endl;
-		std::vector< cylHtmlTools::HtmlWorkThread * > threads;
-		size_t fileLenKeyMapSize = fileLenFindStrKeyMap.size( ); // 文件查找映射数量
-		size_t lenFindAllKeySize = lenFindStrKeyMap.size( ); // 总查找长度
-		for( auto &str : *writeFilePaths ) {
-			for( auto iterator = novelHostMap.begin( ), end = novelHostMap.end( ); iterator != end; ++iterator )
-				for( auto vit = iterator->second->begin( ), ven = iterator->second->end( ); vit != ven; ++vit ) {
-					cylHtmlTools::HtmlWorkThread *writeThread = new cylHtmlTools::HtmlWorkThread;
-					auto rootPath = QFileInfo( QString::fromLocal8Bit( str ) ).absoluteFilePath( );
-					auto host = iterator->first;
-					auto typeName = vit->first;
-					auto novels = vit->second;
-
-					writeThread->setCurrentThreadRun( [=,&qMutex]( ) {
-						QString writePath = rootPath + QDir::separator( ) + u8"host" + QDir::separator( );
-						QString writeComposePath = writePath + QDir::separator( ) + host + QDir::separator( ) + typeName;
-						{
-							QMutexLocker lock( &qMutex );
-							std::cout << "-------------------" << std::endl;
-							std::cout << u8"\t写入目录 " << writeComposePath.toStdString( ).c_str( ) << std::endl;
-							std::cout << "-------------------" << std::endl;
-						}
-						NovelDBJob::writeFile( writePath, host, typeName, *novels );
-						{
-							QMutexLocker lock( &qMutex );
-							std::cout << "-------------------" << std::endl;
-							std::cout << u8"\t目录写入完成 " << writeComposePath.toStdString( ).c_str( ) << std::endl;
-							std::cout << "-------------------" << std::endl;
+		cylHtmlTools::HtmlWorkThreadPool threadPool;
+		QMutex saveMapMutex;
+		std::unordered_map< QString, interfacePlugsType::Vector_INovelInfoSPtr_Shared > findFileKeyResult; // 文件返回
+		for( auto &novelInfoShared : readDBNovels ) {
+			auto iterator = fileLenFindStrKeyMap.begin( );
+			auto end = fileLenFindStrKeyMap.end( );
+			for( ; iterator != end; ++iterator ) {
+				QFileInfo fileInfo( iterator->first );
+				QString fileName = fileInfo.fileName( );
+				findFileKeyResult.emplace( fileName, std::make_shared< interfacePlugsType::Vector_INovelInfoSPtr >( ) );
+				threadPool.appendWork( [
+						iterator,novelInfoShared,fileName
+						,&findFileKeyResult,&saveMapMutex
+					]( cylHtmlTools::HtmlWorkThread * ) {
+						if( NovelDBJob::findNovelKey( novelInfoShared, iterator->second ) ) {
+							// 找到引用指针
+							for( auto saveIterator = findFileKeyResult.begin( ), saveEnd = findFileKeyResult.end( ); saveIterator != saveEnd; ++saveIterator )
+								if( saveIterator->first == fileName ) {
+									QMutexLocker< QMutex > locker( &saveMapMutex );
+									interfacePlugsType::HtmlDocString name, url;
+									auto novelInfo = novelInfoShared.get( );
+									novelInfo->getNovelName( &name );
+									novelInfo->getNovelUrl( &url );
+									std::wcout << L"找到关键字 (" << url << L") 名称:\"" << name << '\"' << std::endl;
+									saveIterator->second->emplace_back( novelInfoShared );
+									return;
+								}
 						}
 					} );
-					threads.emplace_back( writeThread );
-
-					if( fileLenKeyMapSize > 0 ) { // 配置文件查找
-						auto fileKeyIterator = fileLenFindStrKeyMap.begin( );
-						auto fileKeyEnd = fileLenFindStrKeyMap.end( );
-						for( ; fileKeyIterator != fileKeyEnd; ++fileKeyIterator ) {
-							writeThread = new cylHtmlTools::HtmlWorkThread;
-
-							writeThread->setCurrentThreadRun( [=,&qMutex]( ) {
-								auto writeComposePath = rootPath + QDir::separator( ) + u8"find_write" + QDir::separator( ) + fileKeyIterator->first + QDir::separator( );
-								auto targetPath = writeComposePath + QDir::separator( ) + host + QDir::separator( ) + typeName + u8".txt";
-								auto msgPath = targetPath.toStdString( ).c_str( );
-								{
-									QMutexLocker lock( &qMutex );
-									std::cout << "-------------------" << std::endl;
-									std::cout << u8"\t正在查找关键字 " << std::endl;
-									std::cout << "-------------------" << std::endl;
-								}
-								auto findResultNovels = NovelDBJob::findNovel( *novels, fileKeyIterator->second, { } );
-								{
-									QMutexLocker lock( &qMutex );
-									std::cout << "-------------------" << std::endl;
-									std::cout << u8"\t正在写入查找结果 " << msgPath << std::endl;
-									std::cout << "-------------------" << std::endl;
-								}
-								NovelDBJob::writeFile( writeComposePath, host, typeName, findResultNovels );
-								{
-									QMutexLocker lock( &qMutex );
-									std::cout << "-------------------" << std::endl;
-									std::cout << u8"\t查找结果写入完毕 " << msgPath << std::endl;
-									std::cout << "-------------------" << std::endl;
-								}
-							} );
-							threads.emplace_back( writeThread );
-						}
-					}
-					if( lenFindAllKeySize > 0 ) { // 总关键字查找
-						writeThread = new cylHtmlTools::HtmlWorkThread;
-						writeThread->setCurrentThreadRun( [=,&qMutex]( ) {
-							auto writeComposePath = rootPath + QDir::separator( ) + u8"find_write" + QDir::separator( ) + instance->applicationName( ) + QDir::separator( );
-							auto targetPath = writeComposePath + QDir::separator( ) + host + QDir::separator( ) + typeName + u8".txt";
-							auto msgPath = targetPath.toStdString( ).c_str( );
-							{
-								QMutexLocker lock( &qMutex );
-								std::cout << "-------------------" << std::endl;
-								std::cout << u8"\t正在查找关键字 " << std::endl;
-								std::cout << "-------------------" << std::endl;
-							}
-							auto findResultNovels = NovelDBJob::findNovel( *novels, lenFindStrKeyMap, { } );
-							{
-								QMutexLocker lock( &qMutex );
-								std::cout << "-------------------" << std::endl;
-								std::cout << u8"\t正在写入查找结果 " << msgPath << std::endl;
-								std::cout << "-------------------" << std::endl;
-							}
-							NovelDBJob::writeFile( writeComposePath, host, typeName, findResultNovels );
-							{
-								QMutexLocker lock( &qMutex );
-								std::cout << "-------------------" << std::endl;
-								std::cout << u8"\t查找结果写入完毕 " << msgPath << std::endl;
-								std::cout << "-------------------" << std::endl;
-							}
-						} );
-						threads.emplace_back( writeThread );
-					}
-				}
-		}
-		count = 0;
-		do {
-			size_t size = threads.size( );
-			auto begin = threads.begin( );
-			auto end = threads.end( );
-			if( begin == end )
-				break;
-			while( count < 8 && size > 7 ) {
-				cylHtmlTools::HtmlWorkThread *writeThread = *begin;
-				if( writeThread->isInit( ) ) {
-					writeThread->start( );
-					++count;
-				}
-				++begin;
 			}
-			do {
-				if( begin == end )
-					break;
-				cylHtmlTools::HtmlWorkThread *writeThread = *begin;
-				if( writeThread->isFinish( ) ) {
-					threads.erase( begin );
-					--count;
-					delete writeThread;
-					break;
-				}
+		}
+		threadPool.start( 32
+			, [&]( cylHtmlTools::HtmlWorkThreadPool *, const size_t &residueWorks, const size_t &currentWorks ) {
+				std::cout << u8"正在查找关键字，剩余任务数 [" << residueWorks << "]，进行任务数[" << currentWorks << ']' << std::endl;
 				instance->processEvents( );
+				std::this_thread::sleep_for( std::chrono::seconds( 2 ) );
+			} );
+		threadPool.waiteOverJob( );
+
+		auto exportDB = argParser->getOptionValues( "-edb" );
+		if( exportDB ) {
+			auto novelHostMap = NovelDBJob::decompose( readDBNovels
+				, [&currentTime,&qMutex]( ) {
+					QMutexLocker lock( &qMutex );
+					auto cur = std::chrono::system_clock::now( );
+					auto sep = cur - currentTime;
+					auto second = std::chrono::duration_cast< std::chrono::seconds >( sep ).count( );
+					if( second < 2 )
+						return;
+					std::cout << u8"正在分解小说到域名" << std::endl;
+					currentTime = cur;
+				} );
+			for( auto writeRoot : *exportDB ) {
+				QString writeFilePath = QString::fromLocal8Bit( writeRoot ) + QDir::separator( ) + u8"db_export_novels" + QDir::separator( );
+				for( auto hostPair : novelHostMap ) {
+					auto typeFilePathName = writeFilePath + hostPair.first + QDir::separator( );
+					auto second = hostPair.second;
+					for( auto typePair : *second ) {
+						auto allFilePathName = typeFilePathName + typePair.first + ".txt";
+						threadPool.appendWork( [=,&qMutex]( cylHtmlTools::HtmlWorkThread * ) {
+							NovelDBJob::writeFile( allFilePathName, *typePair.second );
+							QMutexLocker locker( &qMutex );
+							std::cout << u8"导出数据库 : " << allFilePathName.toStdString( ) << std::endl;
+						} );
+					}
+				}
+			}
+		}
+
+		auto fileMapIterator = findFileKeyResult.begin( );
+		auto fileMapEnd = findFileKeyResult.end( );
+		for( ; fileMapIterator != fileMapEnd; ++fileMapIterator ) {
+			QString writeFilePath;
+			auto novelHostMap = NovelDBJob::decompose( *fileMapIterator->second
+				, [&currentTime,&qMutex]( ) {
+					QMutexLocker lock( &qMutex );
+					auto cur = std::chrono::system_clock::now( );
+					auto sep = cur - currentTime;
+					auto second = std::chrono::duration_cast< std::chrono::seconds >( sep ).count( );
+					if( second < 2 )
+						return;
+					std::cout << u8"正在分解小说到域名" << std::endl;
+					currentTime = cur;
+				} );
+			for( auto writeRoot : *writeFilePaths ) {
+				writeFilePath = QString::fromLocal8Bit( writeRoot ) + QDir::separator( ) + u8"find_keys_result" + QDir::separator( ) + fileMapIterator->first + QDir::separator( );
+				for( auto hostPair : novelHostMap ) {
+					auto typeFilePathName = writeFilePath + hostPair.first + QDir::separator( );
+					auto second = hostPair.second;
+					for( auto typePair : *second ) {
+						auto allFilePathName = typeFilePathName + typePair.first + ".txt";
+						threadPool.appendWork( [=,&qMutex]( cylHtmlTools::HtmlWorkThread * ) {
+							NovelDBJob::writeFile( allFilePathName, *typePair.second );
+							QMutexLocker locker( &qMutex );
+							std::cout << u8"导出查找结果 : " << allFilePathName.toStdString( ) << std::endl;
+						} );
+					}
+				}
+			}
+		}
+		threadPool.start( 8
+			, [&]( cylHtmlTools::HtmlWorkThreadPool *, const size_t &residueWorks, const size_t &currentWorks ) {
+				instance->processEvents( );
+				std::this_thread::sleep_for( std::chrono::seconds( 2 ) );
 				QMutexLocker lock( &qMutex );
-				auto cur = std::chrono::system_clock::now( );
-				auto sep = cur - currentTime;
-				auto second = std::chrono::duration_cast< std::chrono::seconds >( sep ).count( );
-				++begin;
-				if( second < 5 )
-					continue;
-				std::cout << u8"正在写入文件 [" << size << u8"] 个任务" << std::endl;
-				currentTime = cur;
-			} while( true );
-		} while( true );
+				std::cout << u8"正在写入查找小说，剩余任务数 [" << residueWorks << "]，进行任务数[" << currentWorks << ']' << std::endl;
+			} );
+		threadPool.waiteOverJob( );
+
 	}
+
 
 	//return instance->exec( );
 	return 0;

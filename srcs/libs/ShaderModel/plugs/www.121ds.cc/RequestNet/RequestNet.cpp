@@ -93,7 +93,7 @@ Map_HtmlStrK_HtmlStrV * RequestNet::formHtmlGetTypeTheUrls( const interfacePlugs
 	HtmlWorkThread thread;
 	auto stdWString( std::make_shared< HtmlString >( htmlText ) );
 	auto result = std::make_shared< Map_HtmlStrK_HtmlStrV >( );
-	thread.setCurrentThreadRun( [&result,&stdWString, this,&url]( ) {
+	thread.setCurrentThreadRun( [&result,&stdWString, this,&url]( cylHtmlTools::HtmlWorkThread * ) {
 
 		auto htmlDoc = cylHtmlTools::HtmlDoc::parse( stdWString );
 		if( !htmlDoc.get( ) ) {
@@ -178,7 +178,7 @@ Vector_INovelInfoSPtr RequestNet::formHtmlGetTypePageNovels( const interfacePlug
 		instance_function::write_error_info_file( oStream, url, outPath, "xpath", "parse", typeNme, ".html", __FILE__, __FUNCTION__, __LINE__, msg, msg );
 		return result;
 	}
-	std::function< void( ) > currentThreadRun = [&vectorHtmlNodeSPtrShared,&saveNovelInfos,&result, &type_name,&xpath,&request_url,&htmlText,&novelNodeXPathInfo,this]( ) {
+	HtmlWorkThread::TThreadCall currentThreadRun = [&vectorHtmlNodeSPtrShared,&saveNovelInfos,&result, &type_name,&xpath,&request_url,&htmlText,&novelNodeXPathInfo,this]( cylHtmlTools::HtmlWorkThread * ) {
 		auto vectorIterator = vectorHtmlNodeSPtrShared->begin( );
 		auto vectorEnd = vectorHtmlNodeSPtrShared->end( );
 		bool saveNovel = false;

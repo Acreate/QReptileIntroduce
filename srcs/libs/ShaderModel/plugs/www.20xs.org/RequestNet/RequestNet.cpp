@@ -92,7 +92,7 @@ Map_HtmlStrK_HtmlStrV * RequestNet::formHtmlGetTypeTheUrls( const interfacePlugs
 		HtmlWorkThread thread;
 		auto stdWString( std::make_shared< HtmlString >( removeBothSpaceHtmlText ) );
 		auto result = std::make_shared< Map_HtmlStrK_HtmlStrV >( );
-		thread.setCurrentThreadRun( [&result,&stdWString, this,&url]( ) {
+		thread.setCurrentThreadRun( [&result,&stdWString, this,&url]( HtmlWorkThread* ) {
 			auto htmlDoc = cylHtmlTools::HtmlDoc::parse( stdWString );
 			if( !htmlDoc.get( ) ) {
 				auto msg = QString( "%1 : %2" ).arg( QString::fromStdWString( url ) ).arg( QString( u8" HtmlDoc::parse 异常，登出" ) );
@@ -201,7 +201,7 @@ Vector_INovelInfoSPtr RequestNet::formHtmlGetTypePageNovels( const interfacePlug
 		}
 	}
 
-	std::function< void( ) > currentThreadRun = [&vectorHtmlNodeSPtrShared,&saveNovelInfos,&result, &type_name,&xpath,&request_url,&htmlText,&novelNodeXPathInfo,this]( ) {
+	HtmlWorkThread::TThreadCall currentThreadRun = [&vectorHtmlNodeSPtrShared,&saveNovelInfos,&result, &type_name,&xpath,&request_url,&htmlText,&novelNodeXPathInfo,this]( HtmlWorkThread* ) {
 		auto vectorIterator = vectorHtmlNodeSPtrShared->begin( );
 		auto vectorEnd = vectorHtmlNodeSPtrShared->end( );
 		std::shared_ptr< INovelInfo > novelInfoPtr = nullptr;

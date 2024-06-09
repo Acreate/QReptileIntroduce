@@ -120,7 +120,15 @@ public:// - 静态方法
 	/// <param name="find_key">长度关键字</param>
 	/// <param name="call_function">工作时候会调用该函数</param>
 	/// <returns>匹配的小说列表</returns>
-	static NovelInfoVector findNovel( const NovelInfoVector &infos, const std::unordered_map< size_t, std::shared_ptr< std::vector< interfacePlugsType::HtmlDocString > > > &find_key , const std::function< void( ) > &call_function );
+	static NovelInfoVector findNovel( const NovelInfoVector &infos, const std::unordered_map< size_t, std::shared_ptr< std::vector< interfacePlugsType::HtmlDocString > > > &find_key, const std::function< void( ) > &call_function );
+
+	/// <summary>
+	/// 匹配小说，小说匹配 LenMap，返回 true，不配，返回 false
+	/// </summary>
+	/// <param name="novel_info_shared">小说</param>
+	/// <param name="find_key">匹配映射</param>
+	/// <returns>小说当中找到关键字，则返回 true</returns>
+	static bool findNovelKey( const interfacePlugsType::INovelInfo_Shared &novel_info_shared, const std::unordered_map< size_t, std::shared_ptr< std::vector< interfacePlugsType::HtmlDocString > > > &find_key );
 };
 
 

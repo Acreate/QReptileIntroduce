@@ -462,7 +462,7 @@ void NovelNetJob::novelPageInfoRequestEnd( const QString &type_name, const QUrl 
 void NovelNetJob::slots_requested_get_web_page_signals_end( const QUrl &url ) {
 	Vector_INovelInfoSPtr_Shared novelInfoSPtr( std::make_shared< Vector_INovelInfoSPtr >( ) );
 
-	std::function< void( ) > currentThreadRun = [&]( ) {
+	cylHtmlTools::HtmlWorkThread::TThreadCall currentThreadRun = [&]( cylHtmlTools::HtmlWorkThread*) {
 		auto mapIterator = typeNovelsMap.begin( );
 		auto mapEnd = typeNovelsMap.end( );
 		for( ; mapIterator != mapEnd; ++mapIterator )
