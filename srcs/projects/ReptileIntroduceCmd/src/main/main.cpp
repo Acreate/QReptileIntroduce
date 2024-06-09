@@ -451,35 +451,31 @@ int main( int argc, char *argv[ ] ) {
 			return 0;
 		}
 		cylHtmlTools::HtmlWorkThreadPool threadPool;
+
 		QMutex saveMapMutex;
 		std::unordered_map< QString, interfacePlugsType::Vector_INovelInfoSPtr_Shared > findFileKeyResult; // 文件返回
-		for( auto &novelInfoShared : readDBNovels ) {
-			auto iterator = fileLenFindStrKeyMap.begin( );
-			auto end = fileLenFindStrKeyMap.end( );
-			for( ; iterator != end; ++iterator ) {
-				QFileInfo fileInfo( iterator->first );
-				QString fileName = fileInfo.fileName( );
-				findFileKeyResult.emplace( fileName, std::make_shared< interfacePlugsType::Vector_INovelInfoSPtr >( ) );
-				threadPool.appendWork( [
-						iterator,novelInfoShared,fileName
-						,&findFileKeyResult,&saveMapMutex
-					]( cylHtmlTools::HtmlWorkThread * ) {
-						if( NovelDBJob::findNovelKey( novelInfoShared, iterator->second ) ) {
-							// 找到引用指针
-							for( auto saveIterator = findFileKeyResult.begin( ), saveEnd = findFileKeyResult.end( ); saveIterator != saveEnd; ++saveIterator )
-								if( saveIterator->first == fileName ) {
-									QMutexLocker< QMutex > locker( &saveMapMutex );
-									interfacePlugsType::HtmlDocString name, url;
-									auto novelInfo = novelInfoShared.get( );
-									novelInfo->getNovelName( &name );
-									novelInfo->getNovelUrl( &url );
-									std::wcout << L"找到关键字 (" << url << L") 名称:\"" << name << '\"' << std::endl;
-									saveIterator->second->emplace_back( novelInfoShared );
-									return;
-								}
+		for( auto &iterator : fileLenFindStrKeyMap ) {
+			threadPool.appendWork( [iterator, &readDBNovels,&findFileKeyResult,&saveMapMutex
+				]( cylHtmlTools::HtmlWorkThread * ) {
+					interfacePlugsType::Vector_INovelInfoSPtr_Shared vectorINovelInfoS( std::make_shared< interfacePlugsType::Vector_INovelInfoSPtr >( ) );
+					QFileInfo fileInfo( iterator.first );
+					QString fileName = fileInfo.fileName( );
+					for( auto &novelInfoShared : readDBNovels ) {
+						if( NovelDBJob::findNovelKey( novelInfoShared, iterator.second ) ) {
+							vectorINovelInfoS->emplace_back( novelInfoShared );
+							interfacePlugsType::HtmlDocString name, url;
+							auto novelInfo = novelInfoShared.get( );
+							novelInfo->getNovelName( &name );
+							novelInfo->getNovelUrl( &url );
+							saveMapMutex.lock( );
+							std::wcout << L"找到关键字 (" << url << L") 名称:\"" << name << '\"' << std::endl;
+							saveMapMutex.unlock( );
 						}
-					} );
-			}
+					}
+					saveMapMutex.lock( );
+					findFileKeyResult.emplace( fileName, vectorINovelInfoS );
+					saveMapMutex.unlock( );
+				} );
 		}
 		threadPool.start( 32
 			, [&]( cylHtmlTools::HtmlWorkThreadPool *, const size_t &residueWorks, const size_t &currentWorks ) {
