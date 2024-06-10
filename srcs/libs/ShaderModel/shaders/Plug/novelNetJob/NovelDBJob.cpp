@@ -395,6 +395,7 @@ size_t NovelDBJob::writeDB( OStream *thisOStream, const QString &outPath, const 
 					novel->getNovelUrl( &novelUrl );
 					novel->getNovelUpdateTime( &novelUpdateTime );
 					novel->getNovelUpdateTimeFormat( &novelFormat );
+					novel->getNovelLastItem( &novelLastItem );
 					void *ptr = &novelAuthor;
 					novel->getNovelAttach( ptr );
 					sqlQuery->bindValue( ":updateTime", QString::fromStdWString( novelUpdateTime ) );
