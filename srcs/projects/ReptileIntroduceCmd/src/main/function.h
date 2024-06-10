@@ -3,11 +3,13 @@
 #pragma once
 #include <iostream>
 #include <qcoreapplication.h>
+#include <QDateTime>
 #include <QMutexLocker>
 #include <QString>
 
 #include "argParser/ArgParser.h"
 #include "htmls/htmlTools/HtmlWorkThread/HtmlWorkThread.h"
+#include "interface/INovelInfo.h"
 #include "nameSpace/cylHtmlTools.h"
 #include "nameSpace/interfacePlugsType.h"
 /// <summary>
@@ -192,4 +194,20 @@ inline void waitThreadOverJob( size_t runCount, std::vector< cylHtmlTools::HtmlW
 		} while( true );
 	} while( true );
 }
+
+inline QString jionNovels( const interfacePlugsType::Vector_INovelInfoSPtr &novel_info_vector ) {
+	QString result = QDateTime::currentDateTime( ).toString( "yyyy 年 MM 月 dd 日 hh 时 mm 分 ss 秒" );
+	std::vector< QString > vector;
+	interfacePlugsType::HtmlDocString name;
+	for( auto &novel : novel_info_vector )
+		if( novel->objToHtmlDocString( &name ) )
+			vector.emplace_back( QString::fromStdWString( name ) );
+	size_t count = vector.size( );
+	auto countQString = " / " + QString::number( count ) + '\n';
+	QString jon = "\n==================\t";
+	for( size_t index = 0; index < count; ++index )
+		result = result + jon + QString::number( index + 1 ) + countQString + vector.at( index ) + jon;
+	return result;
+}
+
 #endif // FUNCTION_H_H_HEAD__FILE__

@@ -161,6 +161,20 @@ public:// - 静态方法
 	/// <param name="find_key">匹配映射</param>
 	/// <returns>小说当中找到关键字，则返回 true</returns>
 	static bool findNovelKey( const interfacePlugsType::INovelInfo_Shared &novel_info_shared, const std::unordered_map< size_t, std::shared_ptr< std::vector< interfacePlugsType::HtmlDocString > > > &find_key );
+	/// <summary>
+	/// 获取所有小说的名称
+	/// </summary>
+	/// <param name="novel_info_vector">获取列表</param>
+	/// <returns>小说名称列表</returns>
+	static std::vector<QString> getNovelNames(const interfacePlugsType::Vector_INovelInfoSPtr &novel_info_vector);
+	/// <summary>
+	/// 把小说列表转换到字符串列表
+	/// </summary>
+	/// <param name="novel_info_vector">小说列表</param>
+	/// <returns>字符串列表</returns>
+	static std::vector<QString> converNovelToStrings(const interfacePlugsType::Vector_INovelInfoSPtr &novel_info_vector);
+
+
 };
 
 

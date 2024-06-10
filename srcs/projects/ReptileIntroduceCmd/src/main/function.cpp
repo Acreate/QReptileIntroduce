@@ -223,7 +223,22 @@ void loadFindKeyFiles( const std::shared_ptr< std::vector< cylStd::ArgParser::St
 			do {
 				auto newVector = vectorStrduplicate( iterator->second );
 				auto newMap = vectorStrToLenKeyMap( converToWString( newVector ) );
-				result_file_name_map.emplace( iterator->first, newMap );
+				decltype(newMap) buff;
+				QString fileName = QFileInfo( iterator->first ).fileName( );
+				auto it = result_file_name_map.begin( ), en = result_file_name_map.end( );
+				auto resultIteraotr = std::find_if( it
+					, en
+					, [&]( const std::pair< QString, LenMap > &pair ) {
+						if( pair.first == fileName )
+							return true;
+						return false;
+					} );
+				if( resultIteraotr == en )
+					result_file_name_map.emplace( fileName, newMap );
+				else {
+					newMap.insert( resultIteraotr->second.begin( ), resultIteraotr->second.end( ) );
+					result_file_name_map[ fileName ] = newMap;
+				}
 				++iterator;
 			} while( iterator != end );
 		}

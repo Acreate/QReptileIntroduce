@@ -9,6 +9,7 @@
 #include "./function.h"
 #include <iostream>
 #include <QProcess>
+#include <ioFile/IOFile.h>
 #include <QMutex>
 #include <QMutexLocker>
 #include <htmls/htmlTools/HtmlWorkThread/HtmlWorkThreadPool.h>
@@ -515,10 +516,11 @@ int main( int argc, char *argv[ ] ) {
 			}
 		}
 
+
 		auto fileMapIterator = findFileKeyResult.begin( );
 		auto fileMapEnd = findFileKeyResult.end( );
 		for( ; fileMapIterator != fileMapEnd; ++fileMapIterator ) {
-			QString writeFilePath;
+			QString writeFilePath; // 写入小说
 			auto novelHostMap = NovelDBJob::decompose( *fileMapIterator->second
 				, [&currentTime,&qMutex]( ) {
 					QMutexLocker lock( &qMutex );
@@ -532,17 +534,41 @@ int main( int argc, char *argv[ ] ) {
 				} );
 			for( auto writeRoot : *writeFilePaths ) {
 				writeFilePath = QString::fromLocal8Bit( writeRoot ) + QDir::separator( ) + u8"find_keys_result" + QDir::separator( ) + fileMapIterator->first + QDir::separator( );
+				QString fileName = QFileInfo( fileMapIterator->first ).fileName( );
+				auto pairs = fileLenFindStrKeyMap.at( fileName );
+				QStringList keys;
+				for( auto &keyPairs : pairs )
+					for( auto &key : *keyPairs.second )
+						keys.append( QString::fromStdWString( key ) );
+				auto writeKeyContes = u8"\n-------------\t匹配关键字\t" + QString::number( keys.size( ) ) + " 个\t-------------\n" + keys.join( ", " ) + u8"\n-------------\n";
 				for( auto hostPair : novelHostMap ) {
 					auto typeFilePathName = writeFilePath + hostPair.first + QDir::separator( );
 					auto second = hostPair.second;
 					for( auto typePair : *second ) {
 						auto allFilePathName = typeFilePathName + typePair.first + ".txt";
 						threadPool.appendWork( [=,&qMutex]( cylHtmlTools::HtmlWorkThread * ) {
-							NovelDBJob::writeFile( allFilePathName, *typePair.second );
-							QMutexLocker locker( &qMutex );
-							std::cout << u8"导出查找结果 : " << allFilePathName.toStdString( ) << std::endl;
+							qint64 writeCount = 0;
+							if( Path::creatFilePath( allFilePathName ) ) {
+								auto result = NovelDBJob::identical( *typePair.second );
+								cylHtmlTools::HtmlWorkThread thread;
+								result = NovelDBJob::sort( result );
+								auto list = NovelDBJob::getNovelNames( *typePair.second );
+								QStringList novelNameList( list.begin( ), list.end( ) );
+								auto novelNameListJoin = novelNameList.join( "\n" );
+								auto allContents = jionNovels( result ) + u8"\n+++++\t小说名称列表\t" + QString::number( novelNameList.size( ) ) + " 个\t+++++++\n" + novelNameListJoin + u8"\n++++++++++++\n" + writeKeyContes;
+								QFile writeFile( allFilePathName );
+								if( writeFile.open( QIODeviceBase::Text | QIODeviceBase::WriteOnly | QIODeviceBase::Truncate ) ) {
+									writeCount = writeFile.write( allContents.toUtf8( ) );
+									writeFile.close( );
+									QMutexLocker locker( &qMutex );
+									std::cout << u8"导出查找结果 : " << allFilePathName.toStdString( ) << std::endl;
+								}
+							}
+							if( writeCount == 0 )
+								std::cout << u8"导出查找结果失败 : " << allFilePathName.toStdString( ) << std::endl;
 						} );
 					}
+
 				}
 			}
 		}

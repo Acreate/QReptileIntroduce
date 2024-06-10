@@ -765,7 +765,6 @@ NovelDBJob::NovelInfoVector NovelDBJob::findNovel( const NovelInfoVector &infos,
 }
 
 
-
 bool NovelDBJob::findNovelKey( const interfacePlugsType::INovelInfo_Shared &novel_info_shared, const std::unordered_map< size_t, std::shared_ptr< std::vector< interfacePlugsType::HtmlDocString > > > &find_key ) {
 
 	interfacePlugsType::HtmlDocString novelName, novelInfo, novelAuth, novelLastItem, novelUrl;
@@ -803,4 +802,22 @@ bool NovelDBJob::findNovelKey( const interfacePlugsType::INovelInfo_Shared &nove
 	}
 
 	return false;
+}
+std::vector<QString>  NovelDBJob::getNovelNames( const interfacePlugsType::Vector_INovelInfoSPtr &novel_info_vector ) {
+	std::vector< QString > result;
+	interfacePlugsType::HtmlDocString name;
+	for( auto &novel : novel_info_vector )
+		if( novel->getNovelName( &name ) )
+			result.emplace_back( QString::fromStdWString( name ) );
+	return result;
+}
+std::vector< QString > NovelDBJob::converNovelToStrings( const interfacePlugsType::Vector_INovelInfoSPtr &novel_info_vector ) {
+	std::vector< QString > result;
+	auto iterator = novel_info_vector.begin( );
+	auto end = novel_info_vector.end( );
+	interfacePlugsType::HtmlDocString resultSerializableHtmlDocString;
+	for( ; iterator != end; ++iterator )
+		if( iterator->get( )->objToHtmlDocString( &resultSerializableHtmlDocString ) > 0 )
+			result.emplace_back( QString::fromStdWString( resultSerializableHtmlDocString ) );
+	return result;
 }
