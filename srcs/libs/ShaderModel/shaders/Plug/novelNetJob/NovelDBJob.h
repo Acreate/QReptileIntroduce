@@ -166,14 +166,20 @@ public:// - 静态方法
 	/// </summary>
 	/// <param name="novel_info_vector">获取列表</param>
 	/// <returns>小说名称列表</returns>
-	static std::vector<QString> getNovelNames(const interfacePlugsType::Vector_INovelInfoSPtr &novel_info_vector);
+	static std::vector< QString > getNovelNames( const interfacePlugsType::Vector_INovelInfoSPtr &novel_info_vector );
 	/// <summary>
 	/// 把小说列表转换到字符串列表
 	/// </summary>
 	/// <param name="novel_info_vector">小说列表</param>
 	/// <returns>字符串列表</returns>
-	static std::vector<QString> converNovelToStrings(const interfacePlugsType::Vector_INovelInfoSPtr &novel_info_vector);
+	static std::vector< QString > converNovelToStrings( const interfacePlugsType::Vector_INovelInfoSPtr &novel_info_vector );
 
+	/// <summary>
+	/// 输出拼接小说
+	/// </summary>
+	/// <param name="novel_info_vector"></param>
+	/// <returns></returns>
+	static  QString jionNovels( const interfacePlugsType::Vector_INovelInfoSPtr &novel_info_vector );
 
 };
 

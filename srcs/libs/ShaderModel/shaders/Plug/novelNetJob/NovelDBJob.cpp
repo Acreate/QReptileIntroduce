@@ -13,6 +13,7 @@
 #include <stream/OStream.h>
 #include <interface/INovelInfo.h>
 #include <qguiapplication.h>
+#include <htmlString/HtmlStringTools.h>
 #include <QUrl>
 #include <mutex>
 #include "../ioFile/IOFile.h"
@@ -662,6 +663,7 @@ NovelDBJob::NovelInfoVector NovelDBJob::removeEquName( const NovelInfoVector &in
 				interfacePlugsType::HtmlDocString name;
 				if( !node->getNovelName( &name ) )
 					return;
+				NovelDBJob::converStringToUpper( name );
 				size_t length = name.length( );
 				for( auto &key : mapLenKeyS ) {
 					if( length > key )
@@ -804,7 +806,7 @@ bool NovelDBJob::findNovelKey( const interfacePlugsType::INovelInfo_Shared &nove
 
 	return false;
 }
-std::vector<QString>  NovelDBJob::getNovelNames( const interfacePlugsType::Vector_INovelInfoSPtr &novel_info_vector ) {
+std::vector< QString > NovelDBJob::getNovelNames( const interfacePlugsType::Vector_INovelInfoSPtr &novel_info_vector ) {
 	std::vector< QString > result;
 	interfacePlugsType::HtmlDocString name;
 	for( auto &novel : novel_info_vector )
@@ -820,5 +822,19 @@ std::vector< QString > NovelDBJob::converNovelToStrings( const interfacePlugsTyp
 	for( ; iterator != end; ++iterator )
 		if( iterator->get( )->objToHtmlDocString( &resultSerializableHtmlDocString ) > 0 )
 			result.emplace_back( QString::fromStdWString( resultSerializableHtmlDocString ) );
+	return result;
+}
+QString NovelDBJob::jionNovels( const interfacePlugsType::Vector_INovelInfoSPtr &novel_info_vector ) {
+	QString result = QDateTime::currentDateTime( ).toString( "yyyy 年 MM 月 dd 日 hh 时 mm 分 ss 秒" );
+	std::vector< QString > vector;
+	interfacePlugsType::HtmlDocString name;
+	for( auto &novel : novel_info_vector )
+		if( novel->objToHtmlDocString( &name ) )
+			vector.emplace_back( QString::fromStdWString( name ) );
+	size_t count = vector.size( );
+	auto countQString = " / " + QString::number( count ) + '\n';
+	QString jon = "\n==================\t";
+	for( size_t index = 0; index < count; ++index )
+		result = result + jon + QString::number( index + 1 ) + countQString + vector.at( index ) + jon;
 	return result;
 }

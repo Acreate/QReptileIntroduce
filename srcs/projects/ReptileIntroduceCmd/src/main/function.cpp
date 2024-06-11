@@ -52,9 +52,12 @@ std::vector< QString > readIngoreNameFiles( std::vector< cylStd::ArgParser::Stri
 		for( auto &fileInfo : Path::getPathInfo( QString::fromLocal8Bit( path ) ).second )
 			if( ( readFile.setFileName( fileInfo.getCurrentFilePtah( ) ), readFile.open( QIODeviceBase::ReadOnly | QIODeviceBase::Text ) ) )
 				for( auto str : readFile.readAll( ).split( '\n' ) )
-					for( auto appendObj : str.split( ' ' ) )
-						if( ( appendObj = appendObj.trimmed( ), !appendObj.isEmpty( ) ) )
-							nameKeys.emplace_back( appendObj );
+					for( auto appendObj : str.split( ' ' ) ) {
+						QString elem = appendObj.trimmed( );
+						if( elem.isEmpty( ) )
+							continue;
+						nameKeys.emplace_back( appendObj );
+					}
 	return nameKeys;
 }
 std::vector< QString > readIngoreNameFile( const QString &path ) {
@@ -253,11 +256,12 @@ void loadingEquKeyFiles( const std::shared_ptr< std::vector< cylStd::ArgParser::
 		std::vector< QString > findKeys;
 		if( ignore_equ_key_option )
 			for( auto str : *ignore_equ_key_option )
-				findKeys.emplace_back( QString::fromLocal8Bit( str ) );
+				findKeys.emplace_back( QString::fromLocal8Bit( str ).trimmed( ).toUpper( ) );
 		findKeys = vectorStrAdjustSubStr( findKeys );
 		if( ignore_equ_key_files_option ) {
 			auto getBuff = readIngoreNameFiles( *ignore_equ_key_files_option );
-			findKeys.insert( findKeys.end( ), getBuff.begin( ), getBuff.end( ) );
+			for( auto it = getBuff.begin( ), en = getBuff.end( ); it != en; ++it )
+				findKeys.emplace_back( it->toUpper( ) );
 		}
 		if( findKeys.size( ) > 0 ) {
 			findKeys = vectorStrduplicate( findKeys );
@@ -273,12 +277,14 @@ void loadingSubKeyFiles( const std::shared_ptr< std::vector< cylStd::ArgParser::
 	std::vector< QString > ignoreSubNames;
 	if( ignore_sub_key_option )
 		for( auto str : *ignore_sub_key_option )
-			ignoreSubNames.emplace_back( QString::fromLocal8Bit( str ) );
+			ignoreSubNames.emplace_back( QString::fromLocal8Bit( str ).toUpper( ) );
 
 	ignoreSubNames = vectorStrAdjustSubStr( ignoreSubNames );
 	if( ignore_sub_key_files_option ) {
 		auto getBuff = readIngoreNameFiles( *ignore_sub_key_files_option );
-		ignoreSubNames.insert( ignoreSubNames.end( ), getBuff.begin( ), getBuff.end( ) );
+		for( auto it = getBuff.begin( ), en = getBuff.end( ); it != en; ++it )
+			if( !it->isEmpty( ) )
+				ignoreSubNames.emplace_back( it->toUpper( ) );
 	}
 	if( ignoreSubNames.size( ) > 0 ) {
 		ignoreSubNames = vectorStrAdjustSubStr( ignoreSubNames );

@@ -417,7 +417,7 @@ int main( int argc, char *argv[ ] ) {
 			std::cout << u8"等待查找选项完成" << std::endl;
 			instance->processEvents( );
 		}
-		if( lenEquStrKeyMap.size( ) > 0 )
+		if( lenEquStrKeyMap.size( ) > 0 ) {
 			readDBNovels = NovelDBJob::removeEquName( readDBNovels
 				, lenEquStrKeyMap
 				, [&currentTime,&qMutex]( ) {
@@ -431,11 +431,14 @@ int main( int argc, char *argv[ ] ) {
 					currentTime = cur;
 				} );
 
-		if( readDBNovels.size( ) == 0 ) {
-			std::cout << u8"删除匹配的符串关键字后，有效小说数量为 0，退出操作" << std::endl;
-			return 0;
+			count = readDBNovels.size( );
+			if( readDBNovels.size( ) == 0 ) {
+				std::cout << u8"删除匹配的符串关键字后，有效小说数量为 0，退出操作" << std::endl;
+				return 0;
+			} else
+				std::cout << u8"有效小说数量为 " << count << std::endl;
 		}
-		if( lenSubStrKeyMap.size( ) > 0 )
+		if( lenSubStrKeyMap.size( ) > 0 ) {
 			readDBNovels = NovelDBJob::removeSubName( readDBNovels
 				, lenSubStrKeyMap
 				, [&currentTime]( ) {
@@ -447,9 +450,12 @@ int main( int argc, char *argv[ ] ) {
 					std::cout << u8"正在删除子字符串关键字" << std::endl;
 					currentTime = cur;
 				} );
-		if( readDBNovels.size( ) == 0 ) {
-			std::cout << u8"删除子字符串关键字后，有效小说数量为 0，退出操作" << std::endl;
-			return 0;
+			count = readDBNovels.size( );
+			if( count == 0 ) {
+				std::cout << u8"删除子字符串关键字后，有效小说数量为 0，退出操作" << std::endl;
+				return 0;
+			} else
+				std::cout << u8"有效小说数量为 " << count << std::endl;
 		}
 		cylHtmlTools::HtmlWorkThreadPool threadPool;
 
@@ -507,9 +513,23 @@ int main( int argc, char *argv[ ] ) {
 					for( auto typePair : *second ) {
 						auto allFilePathName = typeFilePathName + typePair.first + ".txt";
 						threadPool.appendWork( [=,&qMutex]( cylHtmlTools::HtmlWorkThread * ) {
-							NovelDBJob::writeFile( allFilePathName, *typePair.second );
-							QMutexLocker locker( &qMutex );
-							std::cout << u8"导出数据库 : " << allFilePathName.toStdString( ) << std::endl;
+							if( Path::creatFilePath( allFilePathName ) ) {
+								auto result = NovelDBJob::identical( *typePair.second );
+								result = NovelDBJob::sort( result );
+								auto list = NovelDBJob::getNovelNames( result );
+								QStringList novelNameList( list.begin( ), list.end( ) );
+								auto novelNameListJoin = novelNameList.join( "\n" );
+								auto allContents = NovelDBJob::jionNovels( result ) + u8"\n+++++\t小说名称列表\t" + QString::number( novelNameList.size( ) ) + " 个\t+++++++\n" + novelNameListJoin + u8"\n++++++++++++\n";
+								QFile writeFile( allFilePathName );
+								if( writeFile.open( QIODeviceBase::Text | QIODeviceBase::WriteOnly | QIODeviceBase::Truncate ) ) {
+									writeFile.write( allContents.toUtf8( ) );
+									writeFile.close( );
+									QMutexLocker locker( &qMutex );
+									std::cout << u8"导出数据库成功 : " << allFilePathName.toStdString( ) << std::endl;
+									return;
+								}
+							}
+							std::cout << u8"导出数据库失败 : " << allFilePathName.toStdString( ) << std::endl;
 						} );
 					}
 				}
@@ -550,12 +570,11 @@ int main( int argc, char *argv[ ] ) {
 							qint64 writeCount = 0;
 							if( Path::creatFilePath( allFilePathName ) ) {
 								auto result = NovelDBJob::identical( *typePair.second );
-								cylHtmlTools::HtmlWorkThread thread;
 								result = NovelDBJob::sort( result );
-								auto list = NovelDBJob::getNovelNames( *typePair.second );
+								auto list = NovelDBJob::getNovelNames( result );
 								QStringList novelNameList( list.begin( ), list.end( ) );
 								auto novelNameListJoin = novelNameList.join( "\n" );
-								auto allContents = jionNovels( result ) + u8"\n+++++\t小说名称列表\t" + QString::number( novelNameList.size( ) ) + " 个\t+++++++\n" + novelNameListJoin + u8"\n++++++++++++\n" + writeKeyContes;
+								auto allContents = NovelDBJob::jionNovels( result ) + u8"\n+++++\t小说名称列表\t" + QString::number( novelNameList.size( ) ) + " 个\t+++++++\n" + novelNameListJoin + u8"\n++++++++++++\n" + writeKeyContes;
 								QFile writeFile( allFilePathName );
 								if( writeFile.open( QIODeviceBase::Text | QIODeviceBase::WriteOnly | QIODeviceBase::Truncate ) ) {
 									writeCount = writeFile.write( allContents.toUtf8( ) );
