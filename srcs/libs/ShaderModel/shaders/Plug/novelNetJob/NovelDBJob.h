@@ -26,6 +26,7 @@ private: // - 静态成员变量
 	static QStringList tabFieldNames; // 表字体信息
 	static QString updateCmd; // 更新命令
 	static QString insterCmd; // 插入命令
+	static QString deleteCmd; // 删除命令
 
 public:// - 静态方法
 	/// <summary>
@@ -61,10 +62,56 @@ public:// - 静态方法
 	/// 读取数据库
 	/// </summary>
 	/// <param name="thisOStream">可选信息输出流</param>
-	/// <param name="outPath">目标根目录</param>
-	/// <param name="run">线程工作当中时，会调用该函数</param>
+	/// <param name="db_link">链接对象</param>
+	/// <param name="db_name">数据库名称</param>
 	/// <returns>写入个数</returns>
-	static NovelInfoVector_Shared readDB( OStream *thisOStream, const QString &outPath, const std::function< void( ) > &run );
+	static NovelInfoVector_Shared readDB( OStream *thisOStream, const QString &db_link, const QString &db_name );
+	/// <summary>
+	/// 删除过期选项
+	/// </summary>
+	/// <param name="thisOStream">可选信息输出流</param>
+	/// <param name="db_link">链接对象</param>
+	/// <param name="db_name">数据库名称</param>
+	/// <param name="expire_day">超过日期</param>
+	/// <returns>删除元素</returns>
+	static NovelInfoVector_Shared removeExpireDB( OStream *thisOStream, const QString &db_link, const QString &db_name, const size_t &expire_day );
+	/// <summary>
+	/// 删除指定 url
+	/// </summary>
+	/// <param name="thisOStream">可选信息输出流</param>
+	/// <param name="db_link">链接对象</param>
+	/// <param name="db_name">数据库名称</param>
+	/// <param name="novel_url_vector">删除的列表</param>
+	/// <returns>删除元素</returns>
+	static void removeNovelVectorDB( OStream *thisOStream, const QString &db_link, const QString &db_name, const std::vector< interfacePlugsType::HtmlDocString > &novel_url_vector );
+	/// <summary>
+	/// 校验小说是否过期-单对象
+	/// </summary>
+	/// <param name="expire_day">过期天数</param>
+	/// <param name="novel_info_ptr">校验小说指针对象</param>
+	/// <returns>true 表示过期</returns>
+	static bool novelIsExpire( const size_t &expire_day, const interfacePlugsType::INovelInfoPtr &novel_info_ptr );
+	/// <summary>
+	/// 校验小说是否过期-列表
+	/// </summary>
+	/// <param name="expire_day">过期天数</param>
+	/// <param name="novel_info_ptr">校验小说列表</param>
+	/// <returns>过期的 url</returns>
+	static interfacePlugsType::Vector_INovelInfoSPtr novelVectorIsExpire( const size_t &expire_day, const interfacePlugsType::Vector_INovelInfoSPtr &novel_info_ptr );
+	/// <summary>
+	/// 获取小说列表当中的 url
+	/// </summary>
+	/// <param name="novel_info_ptr">获取小说</param>
+	/// <returns>url 列表</returns>
+	static std::vector< interfacePlugsType::HtmlDocString > novelVectorGetNovleUrl( interfacePlugsType::Vector_INovelInfoSPtr &novel_info_ptr );
+	/// <summary>
+	/// src 排除 des 所有成员
+	/// </summary>
+	/// <param name="src">源</param>
+	/// <param name="des">目标</param>
+	/// <returns>返回 src 排除 des 后的列表</returns>
+	static interfacePlugsType::Vector_INovelInfoSPtr formVectorINovelInfoRemoveVectorINovelInfo( const interfacePlugsType::Vector_INovelInfoSPtr &src, const interfacePlugsType::Vector_INovelInfoSPtr &des );
+
 	/// <summary>
 	/// 写入小说列表
 	/// </summary>
@@ -90,29 +137,21 @@ public:// - 静态方法
 	/// <param name="infos">写入小说</param>
 	/// <returns>已经排序的小说</returns>
 	static NovelInfoVector writeFile( const QString &root_path, const QString &novel_host, const QString &novel_type, const NovelInfoVector &infos );
+
 	/// <summary>
 	/// 删除列表当中指定子名称的列表( aa 与 关键字 a， 结果为删除 aa 名称小说) 
 	/// </summary>
 	/// <param name="infos">校验列表</param>
 	/// <param name="remove_name_s">提供关键字的列表</param>
 	/// <returns>删除完毕的列表</returns>
-	static NovelInfoVector removeSubName( const NovelInfoVector &infos, const std::vector< interfacePlugsType::HtmlDocString > &remove_name_s );
-	/// <summary>
-	/// 删除列表当中指定子名称的列表( aa 与 关键字 a， 结果为删除 aa 名称小说) 
-	/// </summary>
-	/// <param name="infos">校验列表</param>
-	/// <param name="remove_name_s">提供关键字的列表</param>
-	/// <param name="call_function">工作时候会调用该函数</param>
-	/// <returns>删除完毕的列表</returns>
-	static NovelInfoVector removeSubName( const NovelInfoVector &infos, const std::unordered_map< size_t, std::shared_ptr< std::vector< interfacePlugsType::HtmlDocString > > > &remove_name_s, const std::function< void( ) > &call_function );
+	static NovelInfoVector removeSubName( const NovelInfoVector &infos, const std::unordered_map< size_t, std::shared_ptr< std::vector< interfacePlugsType::HtmlDocString > > > &remove_name_s );
 	/// <summary>
 	/// 删除列表当中指定名称的列表( aa 与 关键字 a， 保留 aa， 如果存在 a 名称， 则删除 a) 
 	/// </summary>
 	/// <param name="infos">校验列表</param>
 	/// <param name="remove_name_s">提供关键字的列表</param>
-	/// <param name="call_function">工作时候会调用该函数</param>
 	/// <returns>删除完毕的列表</returns>
-	static NovelInfoVector removeEquName( const NovelInfoVector &infos, const std::unordered_map< size_t, std::shared_ptr< std::vector< interfacePlugsType::HtmlDocString > > > &remove_name_s, const std::function< void( ) > &call_function );
+	static NovelInfoVector removeEquName( const NovelInfoVector &infos, const std::unordered_map< size_t, std::shared_ptr< std::vector< interfacePlugsType::HtmlDocString > > > &remove_name_s );
 
 	/// <summary>
 	/// 查找小说
@@ -179,7 +218,7 @@ public:// - 静态方法
 	/// </summary>
 	/// <param name="novel_info_vector"></param>
 	/// <returns></returns>
-	static  QString jionNovels( const interfacePlugsType::Vector_INovelInfoSPtr &novel_info_vector );
+	static QString jionNovels( const interfacePlugsType::Vector_INovelInfoSPtr &novel_info_vector );
 
 };
 

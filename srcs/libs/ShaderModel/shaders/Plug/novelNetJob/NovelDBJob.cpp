@@ -14,6 +14,7 @@
 #include <interface/INovelInfo.h>
 #include <qguiapplication.h>
 #include <htmlString/HtmlStringTools.h>
+#include <iostream>
 #include <QUrl>
 #include <mutex>
 #include "../ioFile/IOFile.h"
@@ -25,6 +26,7 @@ QDateTime NovelDBJob::currentTime = QDateTime::currentDateTime( );
 QStringList NovelDBJob::tabFieldNames = { "rootUrl", "novelName", "info", "updateTime", "format", "lastRequestTime", "lastRequestTimeFormat", "author", "url", "lastItem", "additionalData", "typePageUrl", "typeName" };
 QString NovelDBJob::updateCmd = R"(UPDATE `%1` SET `updateTime`=:updateTime, `lastRequestTime`=:lastRequestTime, `additionalData`=:additionalData, `lastItem`=:lastItem , `format`=:format  WHERE `url`=:url;)";
 QString NovelDBJob::insterCmd = R"(INSERT INTO `%1`( `rootUrl`, `novelName`, `info`, `updateTime`, `format`, `lastRequestTime`, `lastRequestTimeFormat`, `author`, `url`, `lastItem`, `additionalData`, `typePageUrl`, `typeName`  ) VALUES ( :rootUrl,:novelName,:info,:updateTime,:format,:lastRequestTime,:lastRequestTimeFormat,:author,:url,:lastItem,:additionalData,:typePageUrl,:typeName  );)";
+QString NovelDBJob::deleteCmd = R"(DELETE FROM `%1` WHERE `url`=:url;)";
 namespace instance_function {
 	struct NovelNodeXPathInfo;
 	/// <summary>
@@ -194,6 +196,8 @@ namespace instance_function {
 			.append( "\n=========================" )
 			.append( "\n-->" );
 		OStream::anyStdCerr( msg, os );
+		if( error_write_info_content.isEmpty( ) )
+			return false;
 		auto path = QString( root_path ).append( QDir::separator( ) )
 										.append( "write_error_info_file" ).append( QDir::separator( ) )
 										.append( dir_name ).append( QDir::separator( ) )
@@ -215,6 +219,31 @@ namespace instance_function {
 			writeHtmlFile.write( msg.toUtf8( ) );
 			writeHtmlFile.close( );
 		}
+		return true;
+	}
+	/// <summary>
+	/// 输出错误信息到指定文件
+	/// </summary>
+	/// <param name="os">流，可选为nullptr</param>
+	/// <param name="error_call_path_file_name">错误诞生的文件</param>
+	/// <param name="error_file_call_function_name">错误诞生的描述调用函数</param>
+	/// <param name="error_file_call_function_line">错误诞生的描述行号</param>
+	/// <param name="error_info_text">错误信息</param>
+	/// <returns>成功写入文件返回 true</returns>
+	inline bool write_error_info_file( OStream *os, const QString &error_call_path_file_name, const QString &error_file_call_function_name, const size_t error_file_call_function_line, const QString &error_info_text ) {
+		QString currentTime = QDateTime::currentDateTime( ).toString( "yyyy_MM_dd hh mm ss" );
+		QString msg;
+		msg.append( "\n<!--" )
+			.append( "\n=========================		try : info" )
+			.append( u8"\n\t当前时间 : " ).append( currentTime ).append( "\n\t" )
+			.append( u8"\n\t错误文件 : " ).append( error_call_path_file_name ).append( "\n\t" )
+			.append( u8"\n\t信息位置 : " ).append( QString::number( error_file_call_function_line ) )
+			.append( u8"\n\t信息函数 : " ).append( error_file_call_function_name )
+			.append( "\n=========================		user : message" )
+			.append( u8"\n\t自由信息 : " ).append( error_info_text )
+			.append( "\n=========================" )
+			.append( "\n-->" );
+		OStream::anyStdCerr( msg, os );
 		return true;
 	}
 }
@@ -387,6 +416,9 @@ size_t NovelDBJob::writeDB( OStream *thisOStream, const QString &outPath, const 
 					novelTypePageUrl,
 					novelTypeName;
 				saveNovelInfos.at( 0 )->getNovelUrl( &rootUrl );
+				QUrl qUrl( QString::fromStdWString( rootUrl ) );
+				auto rootQStringUrl = qUrl.scheme( ) + "://" + qUrl.host( );
+				rootUrl = rootQStringUrl.toStdWString( );
 				auto outLogPath = outPath + QDir::separator( ) + u8"logs" + QDir::separator( );
 				QString cmd = updateCmd.arg( tabName );
 				bool transaction = depositoryShared->transaction( );
@@ -413,7 +445,6 @@ size_t NovelDBJob::writeDB( OStream *thisOStream, const QString &outPath, const 
 				if( transaction )
 					depositoryShared->commit( );
 				transaction = depositoryShared->transaction( );
-				auto rootQStringUrl = QString::fromStdWString( rootUrl );
 				cmd = insterCmd.arg( tabName );
 				sqlQuery.get( )->prepare( cmd );
 				QStringList tabValues;
@@ -477,12 +508,12 @@ inline NovelDBJob::NovelInfoVector converNovelBaseVector( cylDB::IResultInfo_Sha
 	allItem->resetColIndex( );
 	auto currentRows = allItem->getCurrentRows( );
 	while( currentRows->size( ) > 0 ) {
-		// QStringList NovelDBJob::tabFieldNames = { 0"rootUrl", 1"novelName", 2"info", 3"updateTime", 4"format", 5"lastRequestTime", 6"lastRequestTimeFormat", 7"author", 8"url", 9"lastItem", 10"additionalData", 11"typePageUrl", 12"typeName" };
 		NovelBase *novelBase = new NovelBase;
 		novelBase->rootUrl = currentRows->at( 0 )->toString( ).toStdWString( );
 		novelBase->novelName = currentRows->at( 1 )->toString( ).toStdWString( );
 		novelBase->info = currentRows->at( 2 )->toString( ).toStdWString( );
 		novelBase->updateTime = currentRows->at( 3 )->toString( ).toStdWString( );
+		novelBase->format = currentRows->at( 4 )->toString( ).toStdWString( );
 		novelBase->lastRequestTime = currentRows->at( 5 )->toString( ).toStdWString( );
 		novelBase->author = currentRows->at( 7 )->toString( ).toStdWString( );
 		novelBase->url = currentRows->at( 8 )->toString( ).toStdWString( );
@@ -497,71 +528,212 @@ inline NovelDBJob::NovelInfoVector converNovelBaseVector( cylDB::IResultInfo_Sha
 	return vectorINovelInfoSPtr;
 }
 
-NovelDBJob::NovelInfoVector_Shared NovelDBJob::readDB( OStream *thisOStream, const QString &outPath, const std::function< void( ) > &run ) {
+NovelDBJob::NovelInfoVector_Shared NovelDBJob::readDB( OStream *thisOStream, const QString &db_link, const QString &db_name ) {
 	NovelInfoVector_Shared result( std::make_shared< NovelInfoVector >( ) );
-	std::vector< QString > dbNames; // 存储所有db
-	QString linkPath; // 存储根目录
-	// 判定文件夹还是文件
-	QFileInfo path( outPath );
-	if( path.isDir( ) ) { // 文件夹
-		linkPath = path.absoluteFilePath( ) + QDir::separator( );;
-		QDir dir( linkPath );
-		QFileInfoList entryInfoList = dir.entryInfoList( QDir::Files );
-		for( auto &fileInfo : entryInfoList )
-			if( fileInfo.suffix( ) == "db" )
-				dbNames.emplace_back( fileInfo.fileName( ) );
-	} else { // 文件
-		linkPath = path.dir( ).absolutePath( ) + QDir::separator( );;
-		dbNames.emplace_back( path.fileName( ) );
-	}
 
-	std::mutex *mutex = new std::mutex; // 返回列表对象操作锁
-
-	cylHtmlTools::HtmlWorkThreadPool threadPool;
-	for( auto &dbFile : dbNames )
-		threadPool.appendWork( [
-				outPath, run, thisOStream,mutex,linkPath,
-				&result,dbFile
-			]( cylHtmlTools::HtmlWorkThread * ) {
-				auto dbInterface = cylDB::DBTools::linkDB( linkPath );
-				if( !dbInterface->link( ) )
-					return;
-				auto depositoryShared = dbInterface->openDepository( dbFile );
-				if( !depositoryShared )
-					return;
-				QString tabName = dbFile.mid( 0, dbFile.length( ) - 3 );
-				if( depositoryShared ) {
-					if( !depositoryShared->open( ) ) {
-						auto lastError = depositoryShared->getLastError( );
-						OStream::anyStdCerr( lastError.text( ), __FILE__, __LINE__, __FUNCTION__, thisOStream );
-						return;
-					}
+	auto dbInterface = cylDB::DBTools::linkDB( db_link );
+	if( dbInterface->link( ) ) {
+		auto depositoryShared = dbInterface->openDepository( db_name );
+		if( depositoryShared ) {
+			QString tabName = db_name.mid( 0, db_name.length( ) - 3 );
+			if( depositoryShared ) {
+				if( depositoryShared->open( ) ) {
 					bool hasTab = depositoryShared->hasTab( tabName );
-					if( !hasTab )
-						return;
-					auto allItem = depositoryShared->findItems( tabName, tabFieldNames );
-					if( !allItem )
-						return;
-					auto vectorINovelInfoSPtr = converNovelBaseVector( allItem );
-					vectorINovelInfoSPtr = NovelDBJob::identical( vectorINovelInfoSPtr ); // 剔除相同
-					mutex->lock( );
-					for( auto &novel : vectorINovelInfoSPtr )
-						result->emplace_back( novel );
-					mutex->unlock( );
+					if( hasTab ) {
+						auto allItem = depositoryShared->findItems( tabName, tabFieldNames );
+						if( allItem ) {
+							auto vectorINovelInfoSPtr = converNovelBaseVector( allItem );
+							vectorINovelInfoSPtr = NovelDBJob::identical( vectorINovelInfoSPtr ); // 剔除相同
+							for( auto &novel : vectorINovelInfoSPtr )
+								result->emplace_back( novel );
+						}
+					}
+				} else {
+					auto lastError = depositoryShared->getLastError( );
+					OStream::anyStdCerr( lastError.text( ), __FILE__, __LINE__, __FUNCTION__, thisOStream );
 				}
 
-			} );
-	threadPool.start( 8
-		, [&]( cylHtmlTools::HtmlWorkThreadPool *html_work_thread_pool, const unsigned long long &workCount, const unsigned long long &currentWorkSize ) {
-			if( run )
-				run( );
-		} );
-	threadPool.waiteOverJob( );
-	delete mutex;
+			}
+		}
 
+	}
 	if( result->size( ) )
 		return result;
 	return nullptr;
+}
+
+bool NovelDBJob::novelIsExpire( const size_t &expire_day, const interfacePlugsType::INovelInfoPtr &novel_info_ptr ) {
+	interfacePlugsType::HtmlDocString upTime;
+	interfacePlugsType::HtmlDocString upTimeFrom;
+	interfacePlugsType::HtmlDocString novelUrl;
+	if( !novel_info_ptr->getNovelUpdateTime( &upTime ) )
+		return true;
+	if( !novel_info_ptr->getNovelUpdateTimeFormat( &upTimeFrom ) )
+		return true;
+	QDateTime dateTime = QDateTime::fromString( QString::fromStdWString( upTime ), QString::fromStdWString( upTimeFrom ) );
+	auto milliseconds = currentTime - dateTime;
+	auto minutes = std::chrono::duration_cast< std::chrono::minutes >( milliseconds ).count( );
+	auto hours = minutes / 60; // 获取小时
+	auto duration = hours / 24; // 获取天数
+	auto day = abs( duration );
+	if( day > expire_day )
+		return true;
+	minutes = minutes % 60; // 剩余分钟
+	if( minutes > 0 ) {
+		day += 1;
+		if( day > expire_day )
+			return true;
+	}
+	hours = hours % 24; // 剩余小时
+	if( hours > 0 ) {
+		day += 1;
+		if( day > expire_day )
+			return true;
+	}
+	if( !novel_info_ptr->getNovelLastRequestGetTime( &upTime ) )
+		return true;
+	dateTime = QDateTime::fromString( QString::fromStdWString( upTime ), currentTimeForm );
+	milliseconds = currentTime - dateTime;
+	minutes = std::chrono::duration_cast< std::chrono::minutes >( milliseconds ).count( );
+	hours = minutes / 60; // 获取小时
+	duration = hours / 24; // 获取天数
+	day = abs( duration );
+	if( day > expire_day )
+		return true;
+	minutes = minutes % 60; // 剩余分钟
+	if( minutes > 0 ) {
+		day += 1;
+		if( day > expire_day )
+			return true;
+	}
+	hours = hours % 24; // 剩余小时
+	if( hours > 0 ) {
+		day += 1;
+		if( day > expire_day )
+			return true;
+	}
+	return false;
+}
+interfacePlugsType::Vector_INovelInfoSPtr NovelDBJob::novelVectorIsExpire( const size_t &expire_day, const interfacePlugsType::Vector_INovelInfoSPtr &novel_info_ptr ) {
+	interfacePlugsType::Vector_INovelInfoSPtr result;
+	for( auto &novel : novel_info_ptr )
+		if( novelIsExpire( expire_day, novel.get( ) ) )
+			result.emplace_back( novel );
+	return result;
+}
+std::vector< interfacePlugsType::HtmlDocString > NovelDBJob::novelVectorGetNovleUrl( interfacePlugsType::Vector_INovelInfoSPtr &novel_info_ptr ) {
+	std::vector< interfacePlugsType::HtmlDocString > result;
+	interfacePlugsType::HtmlDocString novelUrl;
+	for( auto &novel : novel_info_ptr ) {
+		novel->getNovelUrl( &novelUrl );
+		result.emplace_back( novelUrl );
+	}
+	return result;
+}
+interfacePlugsType::Vector_INovelInfoSPtr NovelDBJob::formVectorINovelInfoRemoveVectorINovelInfo( const interfacePlugsType::Vector_INovelInfoSPtr &src, const interfacePlugsType::Vector_INovelInfoSPtr &des ) {
+	interfacePlugsType::Vector_INovelInfoSPtr result;
+
+	auto srcIterator = src.begin( );
+	auto srcEnd = src.end( );
+	if( srcIterator == srcEnd )
+		return result;
+
+	auto desIterator = des.begin( );
+	auto desEnd = des.end( );
+	if( srcIterator == srcEnd )
+		return src;
+	interfacePlugsType::HtmlDocString desUrl;
+	interfacePlugsType::HtmlDocString srcUrl;
+	do {
+		srcIterator->get( )->getNovelUrl( &srcUrl );
+		do {
+			desIterator->get( )->getNovelUrl( &desUrl );
+			if( cylHtmlTools::HtmlStringTools::equRemoveSpaceOverHtmlString( srcUrl, desUrl ) )
+				break;
+			++desIterator;
+		} while( desIterator != desEnd );
+		if( desIterator == desEnd )
+			result.emplace_back( *srcIterator );
+		++srcIterator;
+		desIterator = des.begin( );
+		desEnd = des.end( );
+	} while( srcIterator != srcEnd );
+
+	return result;
+}
+
+NovelDBJob::NovelInfoVector_Shared NovelDBJob::removeExpireDB( OStream *thisOStream, const QString &db_link, const QString &db_name, const size_t &expire_day ) {
+	NovelInfoVector_Shared result( std::make_shared< NovelInfoVector >( ) );
+	auto dbInterface = cylDB::DBTools::linkDB( db_link );
+	if( dbInterface->link( ) ) {
+		auto depositoryShared = dbInterface->openDepository( db_name );
+		if( depositoryShared ) {
+			QString tabName = db_name.mid( 0, db_name.length( ) - 3 );
+			if( depositoryShared ) {
+				if( depositoryShared->open( ) ) {
+					bool hasTab = depositoryShared->hasTab( tabName );
+					if( hasTab ) {
+						QString removeUrlWhere( " `url` = \"%1\"" );
+
+						auto allItem = depositoryShared->findItems( tabName, tabFieldNames );
+						if( allItem ) {
+							bool transaction = depositoryShared->transaction( );
+							auto vectorINovelInfoSPtr = converNovelBaseVector( allItem );
+							interfacePlugsType::HtmlDocString novelUrl;
+							for( auto &novel : vectorINovelInfoSPtr )
+								if( novelIsExpire( expire_day, novel.get( ) ) ) {
+									result->emplace_back( novel );
+									novel->getNovelUrl( &novelUrl );
+									depositoryShared->removeItem( tabName, removeUrlWhere.arg( QString::fromStdWString( novelUrl ) ) );
+								}
+							if( transaction )
+								depositoryShared->commit( );
+						}
+					}
+				} else {
+					auto lastError = depositoryShared->getLastError( );
+					OStream::anyStdCerr( lastError.text( ), __FILE__, __LINE__, __FUNCTION__, thisOStream );
+				}
+
+			}
+		}
+
+	}
+	if( result->size( ) )  // 开始删除列表
+		return result;
+	return nullptr;
+}
+void NovelDBJob::removeNovelVectorDB( OStream *thisOStream, const QString &db_link, const QString &db_name, const std::vector< interfacePlugsType::HtmlDocString > &novel_url_vector ) {
+	auto dbInterface = cylDB::DBTools::linkDB( db_link );
+	if( dbInterface->link( ) ) {
+		auto depositoryShared = dbInterface->openDepository( db_name );
+		if( depositoryShared ) {
+			QString tabName = db_name.mid( 0, db_name.length( ) - 3 );
+			if( depositoryShared ) {
+				if( depositoryShared->open( ) ) {
+					bool hasTab = depositoryShared->hasTab( tabName );
+					if( hasTab ) {
+						bool transaction = depositoryShared->transaction( );
+						auto sqlQuery = depositoryShared->generateSqlQuery( );
+						QSqlQuery *query = sqlQuery.get( );
+						query->prepare( deleteCmd.arg( tabName ) );
+						for( auto &novelUrl : novel_url_vector ) {
+							query->bindValue( ":url", QString::fromStdWString( novelUrl ) );
+							if( !depositoryShared->exec( query ) )
+								instance_function::write_error_info_file( nullptr, __FILE__, __FUNCTION__, __LINE__, "无法删除指定项目" );
+						}
+						if( transaction )
+							depositoryShared->commit( );
+					}
+				}
+			} else {
+				auto lastError = depositoryShared->getLastError( );
+				OStream::anyStdCerr( lastError.text( ), __FILE__, __LINE__, __FUNCTION__, thisOStream );
+			}
+
+		}
+	}
+
 }
 
 NovelDBJob::NovelInfoVector NovelDBJob::writeFile( const QString &writeFilePath, const NovelInfoVector &infos ) {
@@ -585,107 +757,68 @@ NovelDBJob::NovelInfoVector NovelDBJob::writeFile( const QString &root_path, con
 	return writeFile( writeFilePath, infos );
 }
 
-NovelDBJob::NovelInfoVector NovelDBJob::removeSubName( const NovelInfoVector &infos, const std::vector< interfacePlugsType::HtmlDocString > &remove_name_s ) {
-	interfacePlugsType::HtmlDocString name;
+
+NovelDBJob::NovelInfoVector NovelDBJob::removeSubName( const NovelInfoVector &infos, const std::unordered_map< size_t, std::shared_ptr< std::vector< interfacePlugsType::HtmlDocString > > > &remove_name_s ) {
+
 	NovelDBJob::NovelInfoVector result;
-	auto iterator = remove_name_s.begin( );
-	auto iteratorEnd = remove_name_s.end( );
-	for( auto &info : infos )
-		if( info->getNovelName( &name ) ) {
-			size_t length = name.length( );
-			auto cloneIterator = iterator;
-			do {
-				if( name.find( *cloneIterator ) < length )
+	std::vector< size_t > mapLenKeyS; // 存储所有的 key
+	for( auto it = remove_name_s.begin( ), en = remove_name_s.end( ); it != en; ++it )
+		mapLenKeyS.emplace_back( it->first );
+	std::sort( mapLenKeyS.begin( ), mapLenKeyS.end( ) );
+	for( auto node : infos ) {
+		interfacePlugsType::HtmlDocString name;
+		if( !node->getNovelName( &name ) )
+			continue;
+		cylHtmlTools::HtmlStringTools::removeAllSpace( name );
+		name = NovelDBJob::converStringToUpper( name );
+		size_t length = name.length( );
+		for( auto &key : mapLenKeyS ) {
+			if( length < key )
+				break;
+			auto &&sharedPtr = remove_name_s.at( key );
+			for( auto &str : *sharedPtr )
+				if( cylHtmlTools::HtmlStringTools::findNextHtmlStringPotion( &name, 0, &str ) ) {
+					node = nullptr;
 					break;
-				++cloneIterator;
-			} while( cloneIterator != iteratorEnd );
-			if( cloneIterator == iteratorEnd )
-				result.emplace_back( info );
+				}
+			if( node == nullptr )
+				break;
 		}
+		if( node )
+			result.emplace_back( node );
+	}
 	return result;
 }
-
-
-NovelDBJob::NovelInfoVector NovelDBJob::removeSubName( const NovelInfoVector &infos, const std::unordered_map< size_t, std::shared_ptr< std::vector< interfacePlugsType::HtmlDocString > > > &remove_name_s, const std::function< void( ) > &call_function ) {
-	std::mutex *writeMutex = new std::mutex; // 数组写入锁
+NovelDBJob::NovelInfoVector NovelDBJob::removeEquName( const NovelInfoVector &infos, const std::unordered_map< size_t, std::shared_ptr< std::vector< interfacePlugsType::HtmlDocString > > > &remove_name_s ) {
 	NovelDBJob::NovelInfoVector result;
 	std::vector< size_t > mapLenKeyS; // 存储所有的 key
 	for( auto it = remove_name_s.begin( ), en = remove_name_s.end( ); it != en; ++it )
 		mapLenKeyS.emplace_back( it->first );
 	std::sort( mapLenKeyS.begin( ), mapLenKeyS.end( ) );
-	cylHtmlTools::HtmlWorkThreadPool threadPool;
-	for( auto &node : infos ) {
-		threadPool.appendWork( [
-				node,writeMutex
-				,&mapLenKeyS,&remove_name_s,&result
-			]( cylHtmlTools::HtmlWorkThread * ) ->void {
-				// todo : ......
-				interfacePlugsType::HtmlDocString name;
-				if( !node->getNovelName( &name ) )
-					return;
-				size_t length = name.length( );
-				for( auto &key : mapLenKeyS ) {
-					if( length < key )
-						break;
-					auto &&sharedPtr = remove_name_s.at( key );
-					for( auto &str : *sharedPtr )
-						if( cylHtmlTools::HtmlStringTools::findNextHtmlStringPotion( &name, 0, &str ) )
-							return; // 小说当属匹配当前子字符串
+	for( auto node : infos ) {
+		interfacePlugsType::HtmlDocString name;
+		if( !node->getNovelName( &name ) )
+			continue;
+		cylHtmlTools::HtmlStringTools::removeAllSpace( name );
+		name = NovelDBJob::converStringToUpper( name );
+		size_t length = name.length( );
+		for( auto &key : mapLenKeyS ) {
+			if( length != key )
+				continue;
+			if( key > length )
+				break;
+			auto &&sharedPtr = remove_name_s.at( key );
+			for( auto &str : *sharedPtr )
+				if( cylHtmlTools::HtmlStringTools::equRemoveSpaceOverHtmlString( name, str ) ) {
+					node = nullptr;
+					break;
 				}
-				writeMutex->lock( );
-				result.emplace_back( node );
-				writeMutex->unlock( );
-			} );
-
+			if( node == nullptr )
+				break;
+		}
+		if( node )
+			result.emplace_back( node );
 	}
-	threadPool.start( 8
-		, [&]( cylHtmlTools::HtmlWorkThreadPool *html_work_thread_pool, const unsigned long long &workCount, const unsigned long long &crrentWorkCount ) {
-			if( call_function )
-				call_function( );
-		} );
-	threadPool.waiteOverJob( );
-	return result;
-}
-NovelDBJob::NovelInfoVector NovelDBJob::removeEquName( const NovelInfoVector &infos, const std::unordered_map< size_t, std::shared_ptr< std::vector< interfacePlugsType::HtmlDocString > > > &remove_name_s, const std::function< void( ) > &call_function ) {
-	std::mutex *writeMutex = new std::mutex; // 数组写入锁
-	NovelDBJob::NovelInfoVector result;
-	std::vector< size_t > mapLenKeyS; // 存储所有的 key
-	for( auto it = remove_name_s.begin( ), en = remove_name_s.end( ); it != en; ++it )
-		mapLenKeyS.emplace_back( it->first );
-	std::sort( mapLenKeyS.begin( ), mapLenKeyS.end( ) );
-	cylHtmlTools::HtmlWorkThreadPool threadPool;
-	for( auto &node : infos ) {
-		threadPool.appendWork( [
-				node,writeMutex
-				,&mapLenKeyS,&remove_name_s,&result
-			]( cylHtmlTools::HtmlWorkThread * ) ->void {
-				// todo : ......
-				interfacePlugsType::HtmlDocString name;
-				if( !node->getNovelName( &name ) )
-					return;
-				NovelDBJob::converStringToUpper( name );
-				size_t length = name.length( );
-				for( auto &key : mapLenKeyS ) {
-					if( length > key )
-						break;
-					if( length != key )
-						continue;
-					auto &&sharedPtr = remove_name_s.at( key );
-					for( auto &str : *sharedPtr )
-						if( cylHtmlTools::HtmlStringTools::equRemoveSpaceOverHtmlString( name, str ) )
-							return; // 小说当属匹配当前子字符串
-				}
-				writeMutex->lock( );
-				result.emplace_back( node );
-				writeMutex->unlock( );
-			} );
-	}
-	threadPool.start( 8
-		, [&]( cylHtmlTools::HtmlWorkThreadPool *html_work_thread_pool, const unsigned long long &workCount, const unsigned long long &currentCount ) {
-			if( call_function )
-				call_function( );
-		} );
-	threadPool.waiteOverJob( );
 	return result;
 }
 NovelDBJob::NovelInfoVector NovelDBJob::findNovel( const NovelInfoVector &infos, const std::unordered_map< size_t, std::shared_ptr< std::vector< interfacePlugsType::HtmlDocString > > > &find_key, const std::function< void( ) > &call_function ) {

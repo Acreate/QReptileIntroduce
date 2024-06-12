@@ -29,6 +29,22 @@ std::wstring conver( const std::string &str );
 /// <param name="paths">路径</param>
 /// <returns>关键字列表</returns>
 std::vector< QString > readIngoreNameFiles( std::vector< cylStd::ArgParser::String > &paths );
+
+inline QString & removeAllSpace( QString &str ) {
+	size_t leftLen = str.length( );
+	QString::value_type *buff = new QString::value_type [ leftLen ];
+	size_t index = 0, buffIndex = 0;
+	for( ; index < leftLen; ++index ) {
+		auto value = str.at( index );
+		if( value.isSpace( ) || !value.isPrint( ) )
+			continue;
+		buff[ buffIndex ] = value;
+		++buffIndex;
+	}
+	str = QString( buff, buffIndex );
+	delete[] buff;
+	return str;
+}
 /// <summary>
 /// 读取一个文件，一行为一个关键字
 /// </summary>
@@ -121,27 +137,24 @@ using FileLenMap = std::unordered_map< QString, LenMap >;
 /// </summary>
 /// <param name="find_key_option">关键字选项</param>
 /// <param name="find_key_files_option">关键字文件选项</param>
-/// <param name="result_thread">返回正在工作的线程</param>
 /// <param name="app_name">app 名称，用于汇总命令行提供的查找关键字到该文件当中</param>
 /// <param name="result_file_name_map">文件映射长度</param>
-void loadFindKeyFiles( const std::shared_ptr< std::vector< cylStd::ArgParser::String > > &find_key_option, const std::shared_ptr< std::vector< cylStd::ArgParser::String > > &find_key_files_option, cylHtmlTools::HtmlWorkThread &result_thread, QString &app_name, FileLenMap &result_file_name_map );
+void loadFindKeyFiles( const std::shared_ptr< std::vector< cylStd::ArgParser::String > > &find_key_option, const std::shared_ptr< std::vector< cylStd::ArgParser::String > > &find_key_files_option,  QString &app_name, FileLenMap &result_file_name_map );
 /// <summary>
 /// 加载完全匹配忽略名称的配置
 /// </summary>
 /// <param name="ignore_equ_key_option">关键字选项</param>
 /// <param name="ignore_equ_key_files_option">关键字文件选项</param>
-/// <param name="result_thread">返回正在工作的线程</param>
 /// <param name="result_map">返回线程工作完成被赋值的映射</param>
-void loadingEquKeyFiles( const std::shared_ptr< std::vector< cylStd::ArgParser::String > > &ignore_equ_key_option, const std::shared_ptr< std::vector< cylStd::ArgParser::String > > &ignore_equ_key_files_option, cylHtmlTools::HtmlWorkThread &result_thread, LenMap &result_map );
+void loadingEquKeyFiles( const std::shared_ptr< std::vector< cylStd::ArgParser::String > > &ignore_equ_key_option, const std::shared_ptr< std::vector< cylStd::ArgParser::String > > &ignore_equ_key_files_option, LenMap &result_map );
 
 /// <summary>
 /// 加载子字符串匹配忽略名称的配置
 /// </summary>
 /// <param name="ignore_sub_key_option">关键字选项</param>
 /// <param name="ignore_sub_key_files_option">关键字文件选项</param>
-/// <param name="result_thread">返回正在工作的线程</param>
 /// <param name="result_map">返回线程工作完成被赋值的映射</param>
-void loadingSubKeyFiles( const std::shared_ptr< std::vector< cylStd::ArgParser::String > > &ignore_sub_key_option, const std::shared_ptr< std::vector< cylStd::ArgParser::String > > &ignore_sub_key_files_option, cylHtmlTools::HtmlWorkThread &result_thread, LenMap &result_map );
+void loadingSubKeyFiles( const std::shared_ptr< std::vector< cylStd::ArgParser::String > > &ignore_sub_key_option, const std::shared_ptr< std::vector< cylStd::ArgParser::String > > &ignore_sub_key_files_option, LenMap &result_map );
 
 /// <summary>
 /// 等待工作线程完成，线程需要在准备状态，而不是在工作状态
@@ -194,5 +207,57 @@ inline void waitThreadOverJob( size_t runCount, std::vector< cylHtmlTools::HtmlW
 		} while( true );
 	} while( true );
 }
+/// <summary>
+/// 运行一个子进程
+/// </summary>
+/// <param name="app_path">主进程路径</param>
+/// <param name="qt_mutex">计数访问锁</param>
+/// <param name="ref_count">计数器</param>
+/// <param name="run_plug_path">运行插件路径</param>
+/// <param name="ref_arg_parser_obj_sptr">arg 参数对象</param>
+/// <param name="requet_type_name_options">获取类型选项</param>
+/// <param name="out_path_values">输出路径值</param>
+/// <param name="novel_plug_paths">小说路径值</param>
+void runSubProcess( const QString &app_path, QMutex &qt_mutex, size_t &ref_count, const std::vector< QString > &run_plug_path, const std::shared_ptr< cylStd::ArgParser > &ref_arg_parser_obj_sptr, const std::shared_ptr< std::vector< cylStd::ArgParser::String > > &requet_type_name_options, const std::shared_ptr< std::vector< cylStd::ArgParser::String > > &out_path_values, const std::vector< QString > &novel_plug_paths );
 
+/// <summary>
+/// 输出插件的 url ，并且运行一个子进程
+/// </summary>
+/// <param name="app_path">主进程路径</param>
+/// <param name="qt_mutex">计数访问锁</param>
+/// <param name="ref_count">计数器</param>
+/// <param name="run_plug_path">运行插件路径</param>
+/// <param name="ref_arg_parser_obj_sptr">arg 参数对象</param>
+/// <param name="requet_type_name_options">获取类型选项</param>
+/// <param name="out_path_values">输出路径值</param>
+/// <param name="novel_plug_paths">小说路径值</param>
+void runPrintfUrlSubProcess( const QString &app_path, QMutex &qt_mutex, size_t &ref_count, const std::vector< QString > &run_plug_path, const std::shared_ptr< cylStd::ArgParser > &ref_arg_parser_obj_sptr, const std::shared_ptr< std::vector< cylStd::ArgParser::String > > &requet_type_name_options, const std::shared_ptr< std::vector< cylStd::ArgParser::String > > &out_path_values, const std::vector< QString > &novel_plug_paths );
+/// <summary>
+/// 在该进程运行最后一个插件，并且输出该插件的 url
+/// </summary>
+/// <param name="qt_mutex">计数锁</param>
+/// <param name="ref_count">计数器</param>
+/// <param name="path">输出路径</param>
+/// <param name="run_plug_path">运行的插件路径表</param>
+/// <param name="requet_type_name_options">获取的类型选项表</param>
+/// <param name="requesTypeNameVector">获取的类型列表</param>
+/// <param name="novel_plug_paths">指向的所有插件路径</param>
+/// <param name="call_function_file_path">调用的文件调用</param>
+/// <param name="call_function_name">调用的函数名称</param>
+/// <param name="call_function_line">调用的行</param>
+void loadPrintfUrlLastPlugOnThisProcess( QMutex &qt_mutex, size_t &ref_count, const QString &path, const std::vector< QString > &run_plug_path, const std::shared_ptr< std::vector< cylStd::ArgParser::String > > &requet_type_name_options, const std::vector< QString > &requesTypeNameVector, const std::vector< QString > &novel_plug_paths, const char *call_function_file_path, const char *call_function_name, const size_t &call_function_line );
+/// <summary>
+/// 在该进程运行最后一个插件
+/// </summary>
+/// <param name="qt_mutex">计数锁</param>
+/// <param name="ref_count">计数器</param>
+/// <param name="path">输出路径</param>
+/// <param name="run_plug_path">运行的插件路径表</param>
+/// <param name="requet_type_name_options">获取的类型选项表</param>
+/// <param name="requesTypeNameVector">获取的类型列表</param>
+/// <param name="novel_plug_paths">指向的所有插件路径</param>
+/// <param name="call_function_file_path">调用的文件调用</param>
+/// <param name="call_function_name">调用的函数名称</param>
+/// <param name="call_function_line">调用的行</param>
+void loadLastPlugOnThisProcess( QMutex &qt_mutex, size_t &ref_count, const QString &path, const std::vector< QString > &run_plug_path, const std::shared_ptr< std::vector< cylStd::ArgParser::String > > &requet_type_name_options, const std::vector< QString > &requesTypeNameVector, const std::vector< QString > &novel_plug_paths, const char *call_function_file_path, const char *call_function_name, const size_t &call_function_line );
 #endif // FUNCTION_H_H_HEAD__FILE__
