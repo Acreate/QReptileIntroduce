@@ -207,12 +207,9 @@ namespace instance_function {
 										.append( currentTime )
 										.append( '-' )
 										.append( error_novel_type_name ).append( error_file_suffix );
-		QFileInfo fileInfo( path );
-		auto dir = fileInfo.dir( );
-		if( !dir.exists( ) )
-			if( !dir.mkpath( dir.absolutePath( ) ) )
-				return false;
-		QFile writeHtmlFile( fileInfo.absoluteFilePath( ) );
+
+		Path::creatFilePath( path );
+		QFile writeHtmlFile( path );
 		if( writeHtmlFile.open( QIODeviceBase::WriteOnly | QIODeviceBase::Text | QIODeviceBase::Truncate ) ) {
 			msg.append( '\n' );
 			msg.append( error_write_info_content );
@@ -429,13 +426,13 @@ size_t NovelDBJob::writeDB( OStream *thisOStream, const QString &outPath, const 
 					novel->getNovelUpdateTime( &novelUpdateTime );
 					novel->getNovelUpdateTimeFormat( &novelFormat );
 					novel->getNovelLastItem( &novelLastItem );
-					void *ptr = &novelAuthor;
+					void *ptr = &novelAdditionalData;
 					novel->getNovelAttach( ptr );
 					sqlQuery->bindValue( ":updateTime", QString::fromStdWString( novelUpdateTime ) );
 					sqlQuery->bindValue( ":format", QString::fromStdWString( novelFormat ) );
 					sqlQuery->bindValue( ":lastRequestTime", requestTime );
 					sqlQuery->bindValue( ":lastItem", QString::fromStdWString( novelLastItem ) );
-					sqlQuery->bindValue( ":additionalData", QString::fromStdWString( novelAuthor ) );
+					sqlQuery->bindValue( ":additionalData", QString::fromStdWString( novelAdditionalData ) );
 					sqlQuery->bindValue( ":url", QString::fromStdWString( novelUrl ) );
 					if( !depositoryShared->exec( sqlQuery.get( ) ) ) {
 						instance_function::write_error_info_file( thisOStream, QUrl( " " ), outLogPath, "db_updateList", "db_error", "update", "db.log", __FILE__, __FUNCTION__, __LINE__, "无法更新正确的小说内容", "无法更新正确的小说内容" );
@@ -457,7 +454,7 @@ size_t NovelDBJob::writeDB( OStream *thisOStream, const QString &outPath, const 
 					novel->getNovelAuthor( &novelAuthor );
 					novel->getNovelUrl( &novelUrl );
 					novel->getNovelLastItem( &novelLastItem );
-					void *ptr = &novelAuthor;
+					void *ptr = &novelAdditionalData;
 					novel->getNovelAttach( ptr );
 					novel->getNovelUrlAtPageLocation( &novelTypePageUrl );
 					novel->getNovelTypeName( &novelTypeName );
