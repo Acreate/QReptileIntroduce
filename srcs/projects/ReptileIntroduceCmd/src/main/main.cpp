@@ -272,7 +272,7 @@ int main( int argc, char *argv[ ] ) {
 								, fileName );
 							if( !novelInfoSPtrShared ) {
 								coutMutex.lock( );
-								std::cout << u8"路径 " << stdString << u8" 无法加载小说列表"<< std::endl;
+								std::cout << u8"路径 " << stdString << u8" 无法加载小说列表" << std::endl;
 								coutMutex.unlock( );
 								return;
 							}
@@ -375,7 +375,7 @@ int main( int argc, char *argv[ ] ) {
 				std::this_thread::sleep_for( std::chrono::seconds( 10 ) );
 			} );
 		threadPool.waiteOverJob( );
-
+		std::vector< QString > removePath;
 		auto exportDB = argParser->getOptionValues( "-edb" );
 		if( exportDB ) {
 			auto novelHostMap = NovelDBJob::decompose( readDBNovels
@@ -392,17 +392,16 @@ int main( int argc, char *argv[ ] ) {
 			for( auto writeRoot : *exportDB ) {
 				QString writeFilePath = QString::fromLocal8Bit( writeRoot ) + QDir::separator( ) + u8"db_export_novels" + QDir::separator( );
 				qMutex.lock( );
-				if( Path::removePath( writeFilePath ) )
-					std::cout << u8"删除目录成功 : " << writeFilePath.toStdString( ) << std::endl;
-				else
-					std::cout << u8"！删除目录失败 : " << writeFilePath.toStdString( ) << std::endl;
+				auto pathInfo = Path::getPathInfo( writeFilePath );
+				for( auto file : pathInfo.second )
+					removePath.emplace_back( file.getCurrentFilePtah( ) );
 				qMutex.unlock( );
 				for( auto hostPair : novelHostMap ) {
 					auto typeFilePathName = writeFilePath + hostPair.first + QDir::separator( );
 					auto second = hostPair.second;
 					for( auto typePair : *second ) {
 						auto allFilePathName = typeFilePathName + typePair.first + ".txt";
-						threadPool.appendWork( [=,&qMutex,&coutMutex]( cylHtmlTools::HtmlWorkThread * ) {
+						threadPool.appendWork( [=,&qMutex,&coutMutex,&removePath]( cylHtmlTools::HtmlWorkThread * ) {
 							qMutex.lock( );
 							bool isCreate = Path::creatFilePath( allFilePathName );
 							qMutex.unlock( );
@@ -422,6 +421,19 @@ int main( int argc, char *argv[ ] ) {
 									coutMutex.unlock( );
 									return;
 								}
+								qMutex.lock( );
+								auto end = removePath.end( );
+								auto absoluteFilePath = QFileInfo( allFilePathName ).absoluteFilePath( );
+								auto findIf = std::find_if( removePath.begin( )
+									, end
+									, [&]( const QString &file ) {
+										if( file == absoluteFilePath )
+											return true;
+										return false;
+									} );
+								if( findIf != end )
+									removePath.erase( findIf );
+								qMutex.unlock( );
 							}
 							coutMutex.lock( );
 							std::cout << u8"导出数据库失败 : " << allFilePathName.toStdString( ) << std::endl;
@@ -452,10 +464,9 @@ int main( int argc, char *argv[ ] ) {
 			for( auto writeRoot : *writeFilePaths ) {
 				writeFilePath = QString::fromLocal8Bit( writeRoot ) + QDir::separator( ) + u8"find_keys_result" + QDir::separator( ) + fileMapIterator->first + QDir::separator( );
 				qMutex.lock( );
-				if( Path::removePath( writeFilePath ) )
-					std::cout << u8"删除目录成功 : " << writeFilePath.toStdString( ) << std::endl;
-				else
-					std::cout << u8"！删除目录失败 : " << writeFilePath.toStdString( ) << std::endl;
+				auto pathInfo = Path::getPathInfo( writeFilePath );
+				for( auto file : pathInfo.second )
+					removePath.emplace_back( file.getCurrentFilePtah( ) );
 				qMutex.unlock( );
 				QString fileName = QFileInfo( fileMapIterator->first ).fileName( );
 				auto pairs = fileLenFindStrKeyMap.at( fileName );
@@ -469,7 +480,7 @@ int main( int argc, char *argv[ ] ) {
 					auto second = hostPair.second;
 					for( auto typePair : *second ) {
 						auto allFilePathName = typeFilePathName + typePair.first + ".txt";
-						threadPool.appendWork( [=,&qMutex,&coutMutex]( cylHtmlTools::HtmlWorkThread * ) {
+						threadPool.appendWork( [=,&qMutex,&coutMutex,&removePath]( cylHtmlTools::HtmlWorkThread * ) {
 							qint64 writeCount = 0;
 							qMutex.lock( );
 							bool isCreate = Path::creatFilePath( allFilePathName );
@@ -485,6 +496,20 @@ int main( int argc, char *argv[ ] ) {
 								if( writeFile.open( QIODeviceBase::Text | QIODeviceBase::WriteOnly | QIODeviceBase::Truncate ) ) {
 									writeCount = writeFile.write( allContents.toUtf8( ) );
 									writeFile.close( );
+									qMutex.lock( );
+									auto absoluteFilePath = QFileInfo( allFilePathName ).absoluteFilePath( );
+									auto end = removePath.end( );
+
+									auto findIf = std::find_if( removePath.begin( )
+										, end
+										, [&]( const QString &file ) {
+											if( file == absoluteFilePath )
+												return true;
+											return false;
+										} );
+									if( findIf != end )
+										removePath.erase( findIf );
+									qMutex.unlock( );
 									QMutexLocker locker( &coutMutex );
 									std::cout << u8"导出查找结果 : " << allFilePathName.toStdString( ) << std::endl;
 								}
@@ -496,6 +521,7 @@ int main( int argc, char *argv[ ] ) {
 
 				}
 			}
+
 		}
 		threadPool.start( 8
 			, [&]( cylHtmlTools::HtmlWorkThreadPool *, const size_t &residueWorks, const size_t &currentWorks ) {
@@ -505,7 +531,8 @@ int main( int argc, char *argv[ ] ) {
 				std::cout << u8"正在写入查找小说，剩余任务数 [" << residueWorks << "]，进行任务数[" << currentWorks << ']' << std::endl;
 			} );
 		threadPool.waiteOverJob( );
-
+		for( auto filePath : removePath )
+			Path::removePath( filePath );
 	}
 
 
