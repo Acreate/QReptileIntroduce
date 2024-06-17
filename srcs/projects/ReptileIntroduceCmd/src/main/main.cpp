@@ -391,12 +391,12 @@ int main( int argc, char *argv[ ] ) {
 				} );
 			for( auto writeRoot : *exportDB ) {
 				QString writeFilePath = QString::fromLocal8Bit( writeRoot ) + QDir::separator( ) + u8"db_export_novels" + QDir::separator( );
+				qMutex.lock( );
+				removePath.appendPath( writeFilePath );
+				qMutex.unlock( );
 				for( auto hostPair : novelHostMap ) {
 					auto typeFilePathName = writeFilePath + hostPair.first + QDir::separator( );
 					auto second = hostPair.second;
-					qMutex.lock( );
-					removePath.appendPath( typeFilePathName );
-					qMutex.unlock( );
 					for( auto typePair : *second ) {
 						auto allFilePathName = typeFilePathName + typePair.first + ".txt";
 						threadPool.appendWork( [=,&qMutex,&coutMutex,&removePath]( cylHtmlTools::HtmlWorkThread * ) {
@@ -418,8 +418,7 @@ int main( int argc, char *argv[ ] ) {
 									std::cout << u8"导出数据库成功 : " << allFilePathName.toStdString( ) << std::endl;
 									coutMutex.unlock( );
 									qMutex.lock( );
-									auto absoluteFilePath = QFileInfo( allFilePathName ).absoluteFilePath( );
-									removePath.removePath( absoluteFilePath );
+									removePath.removePath( allFilePathName );
 									qMutex.unlock( );
 									return;
 								}
@@ -485,8 +484,7 @@ int main( int argc, char *argv[ ] ) {
 									writeCount = writeFile.write( allContents.toUtf8( ) );
 									writeFile.close( );
 									qMutex.lock( );
-									auto absoluteFilePath = QFileInfo( allFilePathName ).absoluteFilePath( );
-									removePath.removePath( absoluteFilePath );
+									removePath.removePath( allFilePathName );
 									qMutex.unlock( );
 									QMutexLocker locker( &coutMutex );
 									std::cout << u8"导出查找结果 : " << allFilePathName.toStdString( ) << std::endl;

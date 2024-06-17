@@ -14,6 +14,7 @@
 #include "interface/INovelInfo.h"
 #include "nameSpace/cylHtmlTools.h"
 #include "nameSpace/interfacePlugsType.h"
+#include "path/Path.h"
 /// <summary>
 /// 获取编译信息
 /// </summary>
@@ -331,7 +332,7 @@ public:
 					checkPaths.emplace_back( appendAbsDirPath );
 			}
 		}
-		qsizetype index = 0, manageSize = checkPaths.size( ) - 1;
+		qsizetype manageSize = checkPaths.size( ) - 1;
 		std::sort( checkPaths.begin( ), checkPaths.end( ) );
 		while( manageSize > 0 ) {
 			auto managePath = checkPaths[ manageSize ];
@@ -346,6 +347,7 @@ public:
 			auto ingPathVectorEnd = ingPaths.end( );
 			auto removePathVectorBegin = removePath.begin( );
 			auto removePathVectorEnd = removePath.end( );
+			bool isDeleteDir = true;
 			for( ; iterator != end; ++iterator ) {
 				QString absoluteFilePath = iterator->absoluteFilePath( );
 				if( std::find_if( ingPathVectorBegin
@@ -354,8 +356,10 @@ public:
 						if( absoluteFilePath == file_abs_path )
 							return true;
 						return false;
-					} ) != ingPathVectorEnd )
-					break;
+					} ) != ingPathVectorEnd ) {
+					isDeleteDir = false;
+					continue;
+				}
 
 				if( std::find_if( removePathVectorBegin
 					, removePathVectorEnd
@@ -363,11 +367,16 @@ public:
 						if( absoluteFilePath == file_abs_path )
 							return true;
 						return false;
-					} ) != removePathVectorEnd )
-					break;
+					} ) != removePathVectorEnd ) {
+					isDeleteDir = false;
+					continue;
+				}
+
+				Path::removePath( absoluteFilePath );
+				removePath.emplace_back( absoluteFilePath );
 			}
 
-			if( iterator == end ) {
+			if( isDeleteDir ) {
 				info.removeRecursively( );
 				removePath.emplace_back( managePath );
 			}

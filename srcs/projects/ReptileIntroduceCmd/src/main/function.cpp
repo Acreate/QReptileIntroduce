@@ -56,7 +56,9 @@ std::vector< QString > readIngoreNameFiles( std::vector< cylStd::ArgParser::Stri
 		for( auto &fileInfo : Path::getPathInfo( QString::fromLocal8Bit( path ) ).second ) {
 			auto currentFilePtah = fileInfo.getCurrentFilePtah( );
 			fileKeys = readIngoreNameFile( currentFilePtah );
-			fileKeys = vectorStrAdjustSubStr( fileKeys );
+			fileKeys = vectorStrduplicate( fileKeys );
+			fileKeys = vectorStrSort( fileKeys );
+			fileKeys = vectorStrLenSort( fileKeys );
 			QString writeContents;
 			auto iterator = fileKeys.begin( );
 			auto end = fileKeys.end( );
@@ -289,7 +291,6 @@ void loadingEquKeyFiles( const std::shared_ptr< std::vector< cylStd::ArgParser::
 	if( ignore_equ_key_option )
 		for( auto str : *ignore_equ_key_option )
 			findKeys.emplace_back( QString::fromLocal8Bit( str ).trimmed( ).toUpper( ) );
-	findKeys = vectorStrAdjustSubStr( findKeys );
 	if( ignore_equ_key_files_option ) {
 		auto getBuff = readIngoreNameFiles( *ignore_equ_key_files_option );
 		for( auto it = getBuff.begin( ), en = getBuff.end( ); it != en; ++it )
