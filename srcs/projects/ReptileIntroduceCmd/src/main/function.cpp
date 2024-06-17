@@ -100,9 +100,11 @@ std::vector< QString > readIngoreNameFile( const QString &path ) {
 	std::vector< QString > nameKeys;
 	QFile readFile( path );
 	if( readFile.open( QIODeviceBase::ReadOnly | QIODeviceBase::Text ) )
-		for( auto str : splite( readFile.readAll( ), { "\n", " ", "\t" } ) )
+		for( auto str : splite( readFile.readAll( ), { "\n" } ) ) {
+			str = removeAllSpace( str );
 			if( !str.isEmpty( ) )
 				nameKeys.emplace_back( str.toUpper( ) );
+		}
 	return nameKeys;
 }
 qsizetype writeIngoreNameFile( const QString &path, const std::vector< QString > &content ) {
