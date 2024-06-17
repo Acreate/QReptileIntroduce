@@ -180,12 +180,14 @@ namespace instance_function {
 	/// <param name="error_write_info_content">错误内容</param>
 	/// <returns>成功写入文件返回 true</returns>
 	inline bool write_error_info_file( OStream *os, const QUrl &url, const QString &root_path, const QString &dir_name, const QString &error_type, const QString &error_novel_type_name, const QString &error_file_suffix, const QString &error_call_path_file_name, const QString &error_file_call_function_name, const size_t error_file_call_function_line, const QString &error_info_text, const QString &error_write_info_content ) {
-		QString currentTime = QDateTime::currentDateTime( ).toString( "yyyy_MM_dd hh mm ss" );
+		QDateTime currentDateTime = QDateTime::currentDateTime( );
+		QString day = currentDateTime.toString( "yyyy_MM_dd" );
+		QString time = currentDateTime.toString( "hh mm ss" );
 
 		QString msg;
 		msg.append( "\n<!--" )
 			.append( "\n=========================		try : info" )
-			.append( u8"\n\t当前时间 : " ).append( currentTime ).append( "\n\t" )
+			.append( u8"\n\t当前时间 : " ).append( day + " " + time ).append( "\n\t" )
 			.append( u8"\n\t错误文件 : " ).append( error_call_path_file_name ).append( "\n\t" )
 			.append( u8"\n\t信息位置 : " ).append( QString::number( error_file_call_function_line ) )
 			.append( u8"\n\t信息函数 : " ).append( error_file_call_function_name )
@@ -199,12 +201,13 @@ namespace instance_function {
 		if( error_write_info_content.isEmpty( ) )
 			return false;
 		auto path = QString( root_path ).append( QDir::separator( ) )
+										.append( day ).append( QDir::separator( ) )
 										.append( "write_error_info_file" ).append( QDir::separator( ) )
 										.append( dir_name ).append( QDir::separator( ) )
 										.append( url.host( ) ).append( QDir::separator( ) )
 										.append( error_type )
 										.append( '-' )
-										.append( currentTime )
+										.append( time )
 										.append( '-' )
 										.append( error_novel_type_name ).append( error_file_suffix );
 
@@ -228,11 +231,13 @@ namespace instance_function {
 	/// <param name="error_info_text">错误信息</param>
 	/// <returns>成功写入文件返回 true</returns>
 	inline bool write_error_info_file( OStream *os, const QString &error_call_path_file_name, const QString &error_file_call_function_name, const size_t error_file_call_function_line, const QString &error_info_text ) {
-		QString currentTime = QDateTime::currentDateTime( ).toString( "yyyy_MM_dd hh mm ss" );
+		QDateTime currentDateTime = QDateTime::currentDateTime( );
+		QString day = currentDateTime.toString( "yyyy_MM_dd" );
+		QString time = currentDateTime.toString( "hh mm ss" );
 		QString msg;
 		msg.append( "\n<!--" )
 			.append( "\n=========================		try : info" )
-			.append( u8"\n\t当前时间 : " ).append( currentTime ).append( "\n\t" )
+			.append( u8"\n\t当前时间 : " ).append( day + " " + time ).append( "\n\t" )
 			.append( u8"\n\t错误文件 : " ).append( error_call_path_file_name ).append( "\n\t" )
 			.append( u8"\n\t信息位置 : " ).append( QString::number( error_file_call_function_line ) )
 			.append( u8"\n\t信息函数 : " ).append( error_file_call_function_name )

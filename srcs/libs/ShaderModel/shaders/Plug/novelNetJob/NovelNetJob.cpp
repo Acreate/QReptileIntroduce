@@ -317,6 +317,8 @@ bool NovelNetJob::start( ) {
 	};
 	auto networkReply = requestGet( url, requestMaxCount, requestMaxMilliseconds, u8"首页请求失败", u8".root_request.error.log", callFunction, __FILE__, __FUNCTION__, __LINE__ );
 	this->interfaceThisPtr->initBefore( );
+	if( !networkReply )
+		emit requested_get_web_page_signals_end( url );
 	return networkReply;
 }
 QString NovelNetJob::getUrl( ) const {
@@ -389,7 +391,7 @@ void NovelNetJob::slots_requesting_get_root_page_signals( const QUrl &url, QNetw
 		--typeCount;
 		++requestVectorIterator;
 	}
-	emit slots_requested_get_web_page_signals_end( rootUrl );
+	emit requested_get_web_page_signals_end( rootUrl );
 }
 
 interfacePlugsType::INovelInfo_Shared NovelNetJob::saveToStoreNovels(
@@ -480,42 +482,44 @@ void NovelNetJob::novelPageInfoRequestEnd( const QString &type_name, const QUrl 
 void NovelNetJob::slots_requested_get_web_page_signals_end( const QUrl &url ) {
 	Vector_INovelInfoSPtr_Shared novelInfoSPtr( std::make_shared< Vector_INovelInfoSPtr >( ) );
 
-	cylHtmlTools::HtmlWorkThread::TThreadCall currentThreadRun = [&]( cylHtmlTools::HtmlWorkThread * ) {
-		auto mapIterator = typeNovelsMap.begin( );
-		auto mapEnd = typeNovelsMap.end( );
-		for( ; mapIterator != mapEnd; ++mapIterator )
-			for( auto &novel : *mapIterator->second )
-				novelInfoSPtr->emplace_back( novel );
-	};
-	cylHtmlTools::HtmlWorkThread thread( nullptr, currentThreadRun, nullptr );
-	thread.start( );
-	auto nowTimeDuration = NovelNetJob::getCurrentTimeDuration( );
-	while( thread.isRun( ) ) {
-		long long timeDurationToMilliseconds = getTimeDurationToMilliseconds( getCurrentTimeDuration( ) - nowTimeDuration );
-		if( timeDurationToMilliseconds > 2000 ) {
-			auto msg = QString( "===========" )
-						.append( "\n\t" ).append( "正在合并小说列表" )
-						.append( "\n\t" ).append( __FILE__ )
-						.append( "\n\t" ).append( QString::number( __LINE__ ) )
-						.append( "\n\t" ).append( "===========" );
-			OStream::anyStdCOut( msg, oStream );
-			nowTimeDuration = getCurrentTimeDuration( );
-		}
-		qApp->processEvents( );
-	}
-	if( novelInfoSPtr->size( ) > 0 ) {
-		auto run = [this]( const Duration &duration ) {
-			if( getTimeDurationToMilliseconds( duration ) < 2000 )
-				return false;
-			auto msg = QString( "===========" )
-						.append( "\n\t" ).append( "正在存储数据库" )
-						.append( "\n\t" ).append( __FILE__ )
-						.append( "\n\t" ).append( QString::number( __LINE__ ) )
-						.append( "\n\t" ).append( "===========" );
-			return true;
+	auto mapIterator = typeNovelsMap.begin( );
+	auto mapEnd = typeNovelsMap.end( );
+	if( mapIterator != mapEnd ) {
+		cylHtmlTools::HtmlWorkThread::TThreadCall currentThreadRun = [&]( cylHtmlTools::HtmlWorkThread * ) {
+			for( ; mapIterator != mapEnd; ++mapIterator )
+				for( auto &novel : *mapIterator->second )
+					novelInfoSPtr->emplace_back( novel );
 		};
-		QString dbPath = outPath + QDir::separator( ) + "dbs" + QDir::separator( ) + url.host( ) + ".db";
-		NovelDBJob::writeDB( oStream, dbPath, *novelInfoSPtr, run );
+		cylHtmlTools::HtmlWorkThread thread( nullptr, currentThreadRun, nullptr );
+		thread.start( );
+		auto nowTimeDuration = NovelNetJob::getCurrentTimeDuration( );
+		while( thread.isRun( ) ) {
+			long long timeDurationToMilliseconds = getTimeDurationToMilliseconds( getCurrentTimeDuration( ) - nowTimeDuration );
+			if( timeDurationToMilliseconds > 2000 ) {
+				auto msg = QString( "===========" )
+							.append( "\n\t" ).append( "正在合并小说列表" )
+							.append( "\n\t" ).append( __FILE__ )
+							.append( "\n\t" ).append( QString::number( __LINE__ ) )
+							.append( "\n\t" ).append( "===========" );
+				OStream::anyStdCOut( msg, oStream );
+				nowTimeDuration = getCurrentTimeDuration( );
+			}
+			qApp->processEvents( );
+		}
+		if( novelInfoSPtr->size( ) > 0 ) {
+			auto run = [this]( const Duration &duration ) {
+				if( getTimeDurationToMilliseconds( duration ) < 2000 )
+					return false;
+				auto msg = QString( "===========" )
+							.append( "\n\t" ).append( "正在存储数据库" )
+							.append( "\n\t" ).append( __FILE__ )
+							.append( "\n\t" ).append( QString::number( __LINE__ ) )
+							.append( "\n\t" ).append( "===========" );
+				return true;
+			};
+			QString dbPath = outPath + QDir::separator( ) + "dbs" + QDir::separator( ) + url.host( ) + ".db";
+			NovelDBJob::writeDB( oStream, dbPath, *novelInfoSPtr, run );
+		}
 	}
 
 	interfaceThisPtr->endHost( *novelInfoSPtr );

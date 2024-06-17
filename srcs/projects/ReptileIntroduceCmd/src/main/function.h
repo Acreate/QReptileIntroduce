@@ -4,8 +4,10 @@
 #include <iostream>
 #include <qcoreapplication.h>
 #include <QDateTime>
+#include <QFileInfo>
 #include <QMutexLocker>
 #include <QString>
+#include <QDir>
 
 #include "argParser/ArgParser.h"
 #include "htmls/htmlTools/HtmlWorkThread/HtmlWorkThread.h"
@@ -139,7 +141,7 @@ using FileLenMap = std::unordered_map< QString, LenMap >;
 /// <param name="find_key_files_option">关键字文件选项</param>
 /// <param name="app_name">app 名称，用于汇总命令行提供的查找关键字到该文件当中</param>
 /// <param name="result_file_name_map">文件映射长度</param>
-void loadFindKeyFiles( const std::shared_ptr< std::vector< cylStd::ArgParser::String > > &find_key_option, const std::shared_ptr< std::vector< cylStd::ArgParser::String > > &find_key_files_option,  QString &app_name, FileLenMap &result_file_name_map );
+void loadFindKeyFiles( const std::shared_ptr< std::vector< cylStd::ArgParser::String > > &find_key_option, const std::shared_ptr< std::vector< cylStd::ArgParser::String > > &find_key_files_option, QString &app_name, FileLenMap &result_file_name_map );
 /// <summary>
 /// 加载完全匹配忽略名称的配置
 /// </summary>
@@ -260,4 +262,118 @@ void loadPrintfUrlLastPlugOnThisProcess( QMutex &qt_mutex, size_t &ref_count, co
 /// <param name="call_function_name">调用的函数名称</param>
 /// <param name="call_function_line">调用的行</param>
 void loadLastPlugOnThisProcess( QMutex &qt_mutex, size_t &ref_count, const QString &path, const std::vector< QString > &run_plug_path, const std::shared_ptr< std::vector< cylStd::ArgParser::String > > &requet_type_name_options, const std::vector< QString > &requesTypeNameVector, const std::vector< QString > &novel_plug_paths, const char *call_function_file_path, const char *call_function_name, const size_t &call_function_line );
+
+/// <summary>
+/// 空文件夹管理器
+/// </summary>
+class QPathManage {
+	std::vector< QString > managePaths;
+	std::vector< QString > ingPaths;
+public:
+	explicit QPathManage( const std::vector< QString > &paths )
+		: managePaths( paths ) { }
+	QPathManage( ) { }
+	inline std::vector< QString > getSubstrateDir( const QString &path ) {
+		std::vector< QString > result;
+
+		QFileInfo info( path );
+		if( info.isFile( ) )
+			return result;
+		QDir dirInfo( path );
+		auto entryInfoList = dirInfo.entryInfoList( QDir::AllDirs | QDir::NoDotAndDotDot );
+		QString filePath = info.absoluteFilePath( );
+		if( entryInfoList.size( ) == 0 )
+			return { filePath };
+		for( auto &fileInfo : entryInfoList )
+			if( fileInfo.isDir( ) ) {
+				QString absoluteFilePath = fileInfo.absoluteFilePath( );
+				auto substrateDir = getSubstrateDir( absoluteFilePath );
+				if( substrateDir.size( ) > 0 )
+					result.insert( result.begin( ), substrateDir.begin( ), substrateDir.end( ) );
+			}
+		return result;
+	}
+	/// <summary>
+	/// 加入管理
+	/// </summary>
+	/// <param name="path">加入管理的路径</param>
+	void appendPath( const QString &path ) {
+		QFileInfo info( path );
+		managePaths.emplace_back( info.absoluteFilePath( ) );
+	}
+	/// <summary>
+	/// 忽略管理
+	/// </summary>
+	/// <param name="path">忽略管理的路径</param>
+	void removePath( const QString &path ) {
+		QFileInfo info( path );
+		ingPaths.emplace_back( info.absoluteFilePath( ) );
+	}
+	/// <summary>
+	/// 移除空路径（一般指空文件夹）
+	/// </summary>
+	/// <returns>被移除的空路径</returns>
+	std::vector< QString > removeEmptyPtah( ) {
+		std::vector< QString > removePath;
+		std::vector< QString > checkPaths;
+		for( auto &absPath : managePaths ) {
+			auto substrateDir = getSubstrateDir( absPath );
+			for( auto &appendAbsDirPath : substrateDir ) {
+				auto iterator = checkPaths.begin( );
+				auto end = checkPaths.end( );
+				if( std::find_if( iterator
+					, end
+					, [&]( const QString &checkPath ) {
+						if( checkPath == appendAbsDirPath )
+							return true;
+						return false;
+					} ) == end )
+					checkPaths.emplace_back( appendAbsDirPath );
+			}
+		}
+		qsizetype index = 0, manageSize = checkPaths.size( ) - 1;
+		std::sort( checkPaths.begin( ), checkPaths.end( ) );
+		while( manageSize > 0 ) {
+			auto managePath = checkPaths[ manageSize ];
+			--manageSize;
+
+			QDir info( managePath );
+			auto entryInfoList = info.entryInfoList( QDir::AllEntries | QDir::NoDotAndDotDot );
+			auto iterator = entryInfoList.begin( );
+			auto end = entryInfoList.end( );
+
+			auto ingPathVectorBegin = ingPaths.begin( );
+			auto ingPathVectorEnd = ingPaths.end( );
+			auto removePathVectorBegin = removePath.begin( );
+			auto removePathVectorEnd = removePath.end( );
+			for( ; iterator != end; ++iterator ) {
+				QString absoluteFilePath = iterator->absoluteFilePath( );
+				if( std::find_if( ingPathVectorBegin
+					, ingPathVectorEnd
+					, [&]( const QString &file_abs_path ) {
+						if( absoluteFilePath == file_abs_path )
+							return true;
+						return false;
+					} ) != ingPathVectorEnd )
+					break;
+
+				if( std::find_if( removePathVectorBegin
+					, removePathVectorEnd
+					, [&]( const QString &file_abs_path ) {
+						if( absoluteFilePath == file_abs_path )
+							return true;
+						return false;
+					} ) != removePathVectorEnd )
+					break;
+			}
+
+			if( iterator == end ) {
+				info.removeRecursively( );
+				removePath.emplace_back( managePath );
+			}
+		}
+		return removePath;
+	}
+};
+
 #endif // FUNCTION_H_H_HEAD__FILE__
