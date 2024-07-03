@@ -510,6 +510,9 @@ int main( int argc, char *argv[ ] ) {
 		std::vector< QString > emptyPtah = removePath.removeEmptyPtah( );
 		for( auto &removeDirPath : emptyPtah )
 			std::cout << u8"删除路径 : " << removeDirPath.toStdString( ) << std::endl;
+		emptyPtah = removePath.removeEmptyPtah( );
+		for( auto &removeDirPath : emptyPtah )
+			std::cout << u8"删除路径 : " << removeDirPath.toStdString( ) << std::endl;
 	}
 
 

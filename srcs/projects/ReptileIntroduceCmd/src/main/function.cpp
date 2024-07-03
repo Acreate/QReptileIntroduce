@@ -44,6 +44,34 @@ QString getBuilderInfo( ) {
 #endif
 	return compilerString;
 }
+
+QString writeVector( const std::vector< QString > &vector, const QString &write_file_path, std::vector< QString > *result_key_s = nullptr ) {
+	QString writeContents;
+	auto iterator = vector.begin( );
+	auto end = vector.end( );
+	if( result_key_s )
+		while( iterator != end ) {
+			auto value = *iterator;
+			result_key_s->emplace_back( value );
+			writeContents.append( value );
+			writeContents.append( '\n' );
+			++iterator;
+		}
+	else
+		while( iterator != end ) {
+			auto value = *iterator;
+			writeContents.append( value );
+			writeContents.append( '\n' );
+			++iterator;
+		}
+	QFile openFile( write_file_path );
+	if( openFile.open( QIODeviceBase::Text | QIODeviceBase::WriteOnly | QIODeviceBase::Truncate ) ) {
+		openFile.write( writeContents.toUtf8( ) );
+		openFile.close( );
+	}
+	return writeContents;
+}
+
 std::wstring conver( const std::string &str ) {
 	std::wstring_convert< std::codecvt_utf8_utf16< wchar_t > > converter;
 	return converter.from_bytes( str );
@@ -59,21 +87,7 @@ std::vector< QString > readIngoreNameFiles( std::vector< cylStd::ArgParser::Stri
 			fileKeys = vectorStrduplicate( fileKeys );
 			fileKeys = vectorStrSort( fileKeys );
 			fileKeys = vectorStrLenSort( fileKeys );
-			QString writeContents;
-			auto iterator = fileKeys.begin( );
-			auto end = fileKeys.end( );
-			while( iterator != end ) {
-				auto value = *iterator;
-				nameKeys.emplace_back( value );
-				writeContents.append( value );
-				writeContents.append( '\n' );
-				++iterator;
-			}
-			QFile openFile( currentFilePtah );
-			if( openFile.open( QIODeviceBase::Text | QIODeviceBase::WriteOnly | QIODeviceBase::Truncate ) ) {
-				openFile.write( writeContents.toUtf8( ) );
-				openFile.close( );
-			}
+			writeVector( fileKeys, currentFilePtah, &nameKeys );
 		}
 	return nameKeys;
 }
@@ -252,7 +266,7 @@ void loadFindKeyFiles( const std::shared_ptr< std::vector< cylStd::ArgParser::St
 				auto vector = readIngoreNameFile( currentFilePtah );
 				vector = vectorStrduplicate( vector );
 				vector = vectorStrAdjustSubStr( vector );
-				writeIngoreNameFile( currentFilePtah, vector );
+				writeVector( vector, currentFilePtah );
 				if( vector.size( ) == 0 )
 					continue;
 				pathKeysMap.emplace( currentFilePtah, vector );
