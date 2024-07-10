@@ -152,7 +152,8 @@ int main( int argc, char *argv[ ] ) {
 	auto fkrrlkd = argParser->getOptionValues( "-fkrrlkd" );
 	std::shared_ptr< std::vector< cylStd::ArgParser::String > > fkrrlks = nullptr;
 	if( fkrrlkd )
-		auto res = ( fkrrlks = argParser->getOptionValues( "-fkrrlks" ), fkrrlks ? removeFileSourceFilesKeys( *fkrrlks, *fkrrlkd ) : false );
+		if( fkrrlks = argParser->getOptionValues( "-fkrrlks" ), fkrrlks )
+			removeFileSourceFilesKeys( *fkrrlks, *fkrrlkd );
 
 
 	auto pathValues = argParser->getOptionValues( "-p" );

@@ -509,9 +509,17 @@ std::vector< std::wstring > converToWString( std::vector< QString > &str_vector 
 	return result;
 }
 bool removeFileSourceFilesKeys( const std::vector< std::string > &source_file_s, const std::vector< std::string > &des_file_s ) {
-
-
-	auto ingoreNameFiles = readIngoreNameFiles( source_file_s );
+	std::vector< QString > ingoreNameFiles;
+	for( auto &sourceFile : source_file_s ) {
+		QString path = QString::fromLocal8Bit( sourceFile );
+		auto keys = readIngoreNameFile( path );
+		keys = vectorStrduplicate( keys );
+		keys = vectorStrAdjustSubStr( keys );
+		writeVector( keys, path );
+		ingoreNameFiles.insert( ingoreNameFiles.end( ), keys.begin( ), keys.end( ) );
+	}
+	ingoreNameFiles = vectorStrduplicate( ingoreNameFiles );
+	ingoreNameFiles = vectorStrAdjustSubStr( ingoreNameFiles );
 	auto begin = ingoreNameFiles.begin( );
 	auto end = ingoreNameFiles.end( );
 	std::vector< QString > filterKeys;
@@ -527,6 +535,8 @@ bool removeFileSourceFilesKeys( const std::vector< std::string > &source_file_s,
 					return false;
 				} ) == end )
 				filterKeys.emplace_back( key );
+		filterKeys = vectorStrduplicate( filterKeys );
+		filterKeys = vectorStrAdjustSubStr( filterKeys );
 		writeVector( filterKeys, path );
 		filterKeys.clear( );
 	}
