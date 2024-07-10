@@ -555,6 +555,7 @@ bool removeFileSourceFilesKeys( const std::vector< std::string > &source_file_s,
 	for( auto &path : sourcesPaths ) {
 		auto keys = readIngoreNameFile( path );
 		keys = vectorStrduplicate( keys );
+		keys = vectorStrLenSort( keys );
 		writeVector( keys, path );
 		ingoreNameFiles.insert( ingoreNameFiles.end( ), keys.begin( ), keys.end( ) );
 	}
