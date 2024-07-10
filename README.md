@@ -109,6 +109,12 @@ Qt 6.6.2
 
 删除 -fkrrlkd 所有 -fkrrlks 选项指定的行关键字
 
+#### 案例 [.\ReptileIntroduceCmd.exe  -fkrrlks ..\findKeys\年代.txt -fkrrlkd ..\findKeys\朝代.txt ]
+
+删除 ..\findKeys\朝代.txt 文件中存在的关键字(行为单位，每个为 ..\findKeys\年代.txt  中的关键字)
+
+
+
 ## QReptileIntroduce
 
 界面工具
