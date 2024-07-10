@@ -552,7 +552,6 @@ bool removeFileSourceFilesKeys( const std::vector< std::string > &source_file_s,
 		return false;
 	}
 	destPaths = vectorStrduplicate( destPaths );
-
 	for( auto &path : sourcesPaths ) {
 		auto keys = readIngoreNameFile( path );
 		keys = vectorStrduplicate( keys );
@@ -565,7 +564,7 @@ bool removeFileSourceFilesKeys( const std::vector< std::string > &source_file_s,
 		return false;
 	}
 	ingoreNameFiles = vectorStrduplicate( ingoreNameFiles );
-	ingoreNameFiles = vectorStrAdjustSubStr( ingoreNameFiles );
+	ingoreNameFiles = vectorStrLenSort( ingoreNameFiles );
 	begin = ingoreNameFiles.begin( );
 	end = ingoreNameFiles.end( );
 	std::vector< QString > filterKeys;
@@ -581,7 +580,7 @@ bool removeFileSourceFilesKeys( const std::vector< std::string > &source_file_s,
 				} ) == end )
 				filterKeys.emplace_back( key );
 		filterKeys = vectorStrduplicate( filterKeys );
-		filterKeys = vectorStrAdjustSubStr( filterKeys );
+		filterKeys = vectorStrLenSort( filterKeys );
 		writeVector( filterKeys, path );
 		filterKeys.clear( );
 	}
