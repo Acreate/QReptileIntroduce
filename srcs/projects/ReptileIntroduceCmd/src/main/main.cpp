@@ -131,10 +131,16 @@ int main( int argc, char *argv[ ] ) {
 			"-url" u8"\n\t  "
 			u8"说明:\n\t\t" u8"输出加载的插件指向的网络" "\n\t"
 			"-name" u8"\n\t  "
-			u8"说明:\n\t\t" u8"输出程序名称"
+			u8"说明:\n\t\t" u8"输出程序名称""\n\t"
 			"-edb" u8"\n\t  "
 			u8"  参数" "\n\t\t" u8"路径[,路径1 [,路径2[,....]]]" u8"\n\t  "
-			u8"说明:\n\t\t" u8"导出数据库"
+			u8"说明:\n\t\t" u8"导出数据库""\n\t"
+			"-fkrrlks" u8"\n\t  "
+			u8"  参数" "\n\t\t" u8"路径[,路径1 [,路径2[,....]]]" u8"\n\t  "
+			u8"说明:\n\t\t" u8"获取删除目标的行关键字文件，必须存在有效 -fkrrlkd 选项""\n\t"
+			"-fkrrlkd" u8"\n\t  "
+			u8"  参数" "\n\t\t" u8"路径[,路径1 [,路径2[,....]]]" u8"\n\t  "
+			u8"说明:\n\t\t" u8"处理删除目标的行关键字文件，必须存在有效 -fkrrlks 选项""\n\t"
 			"-ex" u8"\n\t  "
 			u8"  参数" "\n\t\t" u8"天数" u8"\n\t  "
 			u8"说明:\n\t\t" u8"校验过期，将会删除过期小说"
@@ -143,6 +149,12 @@ int main( int argc, char *argv[ ] ) {
 	if( count == 1 )
 		return 0;
 	currentTime = std::chrono::system_clock::now( );
+	auto fkrrlkd = argParser->getOptionValues( "-fkrrlkd" );
+	std::shared_ptr< std::vector< cylStd::ArgParser::String > > fkrrlks = nullptr;
+	if( fkrrlkd )
+		auto res = ( fkrrlks = argParser->getOptionValues( "-fkrrlks" ), fkrrlks ? removeFileSourceFilesKeys( *fkrrlks, *fkrrlkd ) : false );
+
+
 	auto pathValues = argParser->getOptionValues( "-p" );
 	QString path = workPath + QDir::separator( ) + "cmd_download_novels_info" + QDir::separator( );
 	if( pathValues )

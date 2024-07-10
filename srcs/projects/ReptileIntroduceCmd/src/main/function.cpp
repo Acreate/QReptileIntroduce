@@ -10,6 +10,7 @@
 #include "novelNetJob/NovelNetJob.h"
 #include "path/Path.h"
 #include "plug/LoadPlug.h"
+
 QString getBuilderInfo( ) {
 
 	QString compilerString = "<unknown>";
@@ -76,7 +77,7 @@ std::wstring conver( const std::string &str ) {
 	std::wstring_convert< std::codecvt_utf8_utf16< wchar_t > > converter;
 	return converter.from_bytes( str );
 }
-std::vector< QString > readIngoreNameFiles( std::vector< cylStd::ArgParser::String > &paths ) {
+std::vector< QString > readIngoreNameFiles( const std::vector< cylStd::ArgParser::String > &paths ) {
 	std::vector< QString > nameKeys;
 	std::vector< QString > fileKeys;
 	QFile readFile;
@@ -506,4 +507,28 @@ std::vector< std::wstring > converToWString( std::vector< QString > &str_vector 
 	for( auto &str : str_vector )
 		result.emplace_back( str.toStdWString( ) );
 	return result;
+}
+bool removeFileSourceFilesKeys( const std::vector< std::string > &source_file_s, const std::vector< std::string > &des_file_s ) {
+
+
+	auto ingoreNameFiles = readIngoreNameFiles( source_file_s );
+	auto begin = ingoreNameFiles.begin( );
+	auto end = ingoreNameFiles.end( );
+	std::vector< QString > filterKeys;
+	for( auto &desFile : des_file_s ) {
+		QString path = QString::fromLocal8Bit( desFile );
+		auto keys = readIngoreNameFile( path );
+		for( auto &key : keys )
+			if( std::find_if( begin
+				, end
+				, [&key]( QString &comp ) {
+					if( key == comp )
+						return true;
+					return false;
+				} ) == end )
+				filterKeys.emplace_back( key );
+		writeVector( filterKeys, path );
+		filterKeys.clear( );
+	}
+	return false;
 }

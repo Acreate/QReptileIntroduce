@@ -89,6 +89,26 @@ Qt 6.6.2
 
 指定过期选项， -ex 2 ，表示删除超过2天的小说
 
+#### -fkrrlks
+
+获取删除目标的行关键字文件
+
+必须存在有效 -fkrrlkd 选项
+
+支持多个文件
+
+删除 -fkrrlkd 所有 -fkrrlks 选项指定的行关键字
+
+#### -fkrrlkd
+
+处理删除目标的行关键字文件
+
+必须存在有效 -fkrrlks 选项
+
+支持多个文件
+
+删除 -fkrrlkd 所有 -fkrrlks 选项指定的行关键字
+
 ## QReptileIntroduce
 
 界面工具

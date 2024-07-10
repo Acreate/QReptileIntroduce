@@ -15,6 +15,14 @@
 #include "nameSpace/cylHtmlTools.h"
 #include "nameSpace/interfacePlugsType.h"
 #include "path/Path.h"
+
+/// <summary>
+/// 根据源目标的文件内容删除目标文件的内容（关键字为一行删除）
+/// </summary>
+/// <param name="source_file_s">源列表</param>
+/// <param name="des_file_s">目标列表</param>
+bool removeFileSourceFilesKeys(const std::vector<std::string> &source_file_s, const std::vector<std::string> &des_file_s );
+
 /// <summary>
 /// 获取编译信息
 /// </summary>
@@ -31,7 +39,7 @@ std::wstring conver( const std::string &str );
 /// </summary>
 /// <param name="paths">路径</param>
 /// <returns>关键字列表</returns>
-std::vector< QString > readIngoreNameFiles( std::vector< cylStd::ArgParser::String > &paths );
+std::vector< QString > readIngoreNameFiles(const std::vector< cylStd::ArgParser::String > &paths );
 
 inline QString & removeAllSpace( QString &str ) {
 	size_t leftLen = str.length( );
