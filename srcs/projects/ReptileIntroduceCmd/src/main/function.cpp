@@ -510,21 +510,66 @@ std::vector< std::wstring > converToWString( std::vector< QString > &str_vector 
 }
 bool removeFileSourceFilesKeys( const std::vector< std::string > &source_file_s, const std::vector< std::string > &des_file_s ) {
 	std::vector< QString > ingoreNameFiles;
-	for( auto &sourceFile : source_file_s ) {
-		QString path = QString::fromLocal8Bit( sourceFile );
+	std::vector< QString > sourcesPaths; // 源文件路径
+	std::vector< QString > destPaths; // 目标文件路径
+	for( auto &sourceFilePath : source_file_s ) {
+		QString path = QString::fromLocal8Bit( sourceFilePath );
+		auto pathInfo = Path::getPathInfo( path );
+		auto files = pathInfo.second;
+		if( files.size( ) != 0 )
+			for( auto &filePath : files )
+				sourcesPaths.emplace_back( filePath.getCurrentFilePtah( ) );
+		else
+			std::cout << u8"错误的 -fkrrlks 路径 :\"" << path.toUtf8( ).data( ) << u8'\"' << std::endl;
+	}
+	if( sourcesPaths.size( ) == 0 ) {
+		std::cout << u8"没有需要删除的文字" << std::endl;
+		return false;
+	}
+	sourcesPaths = vectorStrduplicate( sourcesPaths );
+	auto begin = sourcesPaths.begin( );
+	auto end = sourcesPaths.end( );
+	for( auto &destFilePath : des_file_s ) {
+		QString path = QString::fromLocal8Bit( destFilePath );
+		auto pathInfo = Path::getPathInfo( path );
+		auto files = pathInfo.second;
+		if( files.size( ) != 0 )
+			for( auto &filePath : files ) {
+				if( std::find_if( begin
+					, end
+					, [&filePath]( QString &comp ) {
+						if( filePath == comp )
+							return true;
+						return false;
+					} ) == end )
+					destPaths.emplace_back( filePath.getCurrentFilePtah( ) );
+			}
+		else
+			std::cout << u8"错误的 -fkrrlkd 路径 :\"" << path.toUtf8( ).data( ) << u8'\"' << std::endl;
+	}
+	if( destPaths.size( ) == 0 ) {
+		std::cout << u8"没有需要被删除的文件路径" << std::endl;
+		return false;
+	}
+	destPaths = vectorStrduplicate( destPaths );
+
+	for( auto &path : sourcesPaths ) {
 		auto keys = readIngoreNameFile( path );
 		keys = vectorStrduplicate( keys );
-		keys = vectorStrAdjustSubStr( keys );
 		writeVector( keys, path );
 		ingoreNameFiles.insert( ingoreNameFiles.end( ), keys.begin( ), keys.end( ) );
 	}
+
+	if( ingoreNameFiles.size( ) == 0 ) {
+		std::cout << u8"没有需要删除的文字" << std::endl;
+		return false;
+	}
 	ingoreNameFiles = vectorStrduplicate( ingoreNameFiles );
 	ingoreNameFiles = vectorStrAdjustSubStr( ingoreNameFiles );
-	auto begin = ingoreNameFiles.begin( );
-	auto end = ingoreNameFiles.end( );
+	begin = ingoreNameFiles.begin( );
+	end = ingoreNameFiles.end( );
 	std::vector< QString > filterKeys;
-	for( auto &desFile : des_file_s ) {
-		QString path = QString::fromLocal8Bit( desFile );
+	for( auto &path : destPaths ) {
 		auto keys = readIngoreNameFile( path );
 		for( auto &key : keys )
 			if( std::find_if( begin
@@ -540,5 +585,5 @@ bool removeFileSourceFilesKeys( const std::vector< std::string > &source_file_s,
 		writeVector( filterKeys, path );
 		filterKeys.clear( );
 	}
-	return false;
+	return true;
 }
