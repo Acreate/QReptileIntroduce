@@ -936,9 +936,7 @@ bool NovelDBJob::findNovelKey( const interfacePlugsType::INovelInfo_Shared &nove
 			if( novelUrlLen > len && cylHtmlTools::HtmlStringTools::findNextHtmlStringPotion( &novelUrl, 0, &str ) )
 				return true;
 		}
-
 	}
-
 	return false;
 }
 std::vector< QString > NovelDBJob::getNovelNames( const interfacePlugsType::Vector_INovelInfoSPtr &novel_info_vector ) {
