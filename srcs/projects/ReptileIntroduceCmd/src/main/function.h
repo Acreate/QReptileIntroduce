@@ -21,7 +21,7 @@
 /// </summary>
 /// <param name="source_file_s">源列表</param>
 /// <param name="des_file_s">目标列表</param>
-bool removeFileSourceFilesKeys(const std::vector<std::string> &source_file_s, const std::vector<std::string> &des_file_s );
+bool removeFileSourceFilesKeys( const std::vector< std::string > &source_file_s, const std::vector< std::string > &des_file_s );
 
 /// <summary>
 /// 获取编译信息
@@ -38,8 +38,9 @@ std::wstring conver( const std::string &str );
 /// 从文件读取关键字
 /// </summary>
 /// <param name="paths">路径</param>
+/// <param name="spls_list">切分列表</param>
 /// <returns>关键字列表</returns>
-std::vector< QString > readIngoreNameFiles(const std::vector< cylStd::ArgParser::String > &paths );
+std::vector< QString > readIngoreNameFiles( const std::vector< cylStd::ArgParser::String > &paths, const std::vector< QString > &spls_list );
 
 inline QString & removeAllSpace( QString &str ) {
 	size_t leftLen = str.length( );
@@ -60,8 +61,9 @@ inline QString & removeAllSpace( QString &str ) {
 /// 读取一个文件，一行为一个关键字
 /// </summary>
 /// <param name="path">文件路径</param>
+/// <param name="spls_list">切分列表</param>
 /// <returns>返回所有关键字</returns>
-std::vector< QString > readIngoreNameFile( const QString &path );
+std::vector< QString > readIngoreNameFile( const QString &path, const std::vector< QString > &spls_list );
 /// <summary>
 /// 写入关键字，一行为一个关键字
 /// </summary>

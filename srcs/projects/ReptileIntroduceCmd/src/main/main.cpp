@@ -55,7 +55,7 @@ int main( int argc, char *argv[ ] ) {
 			auto pathInfo = Path::getPathInfo( QString::fromStdString( path ) );
 			for( auto fileInfo : pathInfo.second ) {
 				auto absoluteFilePath = fileInfo.getCurrentFilePtah( );
-				auto typeKeyS = readIngoreNameFile( absoluteFilePath );
+				auto typeKeyS = readIngoreNameFile( absoluteFilePath, { "\n" } );
 				typeKeyS = vectorStrduplicate( typeKeyS );
 				if( writeFilePaths )
 					writeIngoreNameFile( absoluteFilePath, typeKeyS );
@@ -69,7 +69,7 @@ int main( int argc, char *argv[ ] ) {
 	if( requesTypeNameVector.size( ) == 0 ) {
 		QString filePath;
 		filePath.append( appPathDir ).append( QDir::separator( ) ).append( "progress" ).append( QDir::separator( ) ).append( "ini" ).append( QDir::separator( ) ).append( "ReptileIntroduce.ini" );
-		auto vector = readIngoreNameFile( filePath );
+		auto vector = readIngoreNameFile( filePath, { "\n" } );
 		if( vector.size( ) > 0 ) {
 			vector = vectorStrduplicate( vector );
 			vector = vectorStrLenSort( vector );

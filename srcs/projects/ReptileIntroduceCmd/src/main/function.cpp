@@ -77,14 +77,14 @@ std::wstring conver( const std::string &str ) {
 	std::wstring_convert< std::codecvt_utf8_utf16< wchar_t > > converter;
 	return converter.from_bytes( str );
 }
-std::vector< QString > readIngoreNameFiles( const std::vector< cylStd::ArgParser::String > &paths ) {
+std::vector< QString > readIngoreNameFiles( const std::vector< cylStd::ArgParser::String > &paths, const std::vector< QString > &spls_list ) {
 	std::vector< QString > nameKeys;
 	std::vector< QString > fileKeys;
 	QFile readFile;
 	for( auto &path : paths )
 		for( auto &fileInfo : Path::getPathInfo( QString::fromLocal8Bit( path ) ).second ) {
 			auto currentFilePtah = fileInfo.getCurrentFilePtah( );
-			fileKeys = readIngoreNameFile( currentFilePtah );
+			fileKeys = readIngoreNameFile( currentFilePtah, { "\n" } );
 			fileKeys = vectorStrduplicate( fileKeys );
 			fileKeys = vectorStrSort( fileKeys );
 			fileKeys = vectorStrLenSort( fileKeys );
@@ -92,7 +92,7 @@ std::vector< QString > readIngoreNameFiles( const std::vector< cylStd::ArgParser
 		}
 	return nameKeys;
 }
-
+// { "\n", "·", ",", "、", ",", "`", "~", "。", "." ,"，"}
 inline QStringList splite( const QString &splite_str_obj, const std::vector< QString > &spls_list ) {
 	QStringList result, stringList;
 	result.append( splite_str_obj );
@@ -112,11 +112,11 @@ inline QStringList splite( const QString &splite_str_obj, const std::vector< QSt
 	return result;
 }
 
-std::vector< QString > readIngoreNameFile( const QString &path ) {
+std::vector< QString > readIngoreNameFile( const QString &path, const std::vector< QString > &spls_list ) {
 	std::vector< QString > nameKeys;
 	QFile readFile( path );
 	if( readFile.open( QIODeviceBase::ReadOnly | QIODeviceBase::Text ) )
-		for( auto str : splite( readFile.readAll( ), { "\n", "·", ",", "、", ",", "`", "~", "。", "." } ) ) {
+		for( auto str : splite( readFile.readAll( ), spls_list ) ) {
 			str = removeAllSpace( str );
 			if( !str.isEmpty( ) )
 				nameKeys.emplace_back( str.toUpper( ) );
@@ -265,7 +265,7 @@ void loadFindKeyFiles( const std::shared_ptr< std::vector< cylStd::ArgParser::St
 			auto pathInfo = Path::getPathInfo( QString::fromLocal8Bit( strPath ) );
 			for( auto &filePath : pathInfo.second ) {
 				QString currentFilePtah = filePath.getCurrentFilePtah( );
-				auto vector = readIngoreNameFile( currentFilePtah );
+				auto vector = readIngoreNameFile( currentFilePtah, { "\n", "·", ",", "、", ",", "`", "~", "。", ".", "，" } );
 				vector = vectorStrduplicate( vector );
 				vector = vectorStrAdjustSubStr( vector );
 				writeVector( vector, currentFilePtah );
@@ -310,7 +310,7 @@ void loadingEquKeyFiles( const std::shared_ptr< std::vector< cylStd::ArgParser::
 		for( auto str : *ignore_equ_key_option )
 			findKeys.emplace_back( QString::fromLocal8Bit( str ).trimmed( ).toUpper( ) );
 	if( ignore_equ_key_files_option ) {
-		auto getBuff = readIngoreNameFiles( *ignore_equ_key_files_option );
+		auto getBuff = readIngoreNameFiles( *ignore_equ_key_files_option, { "\n" } );
 		for( auto it = getBuff.begin( ), en = getBuff.end( ); it != en; ++it )
 			findKeys.emplace_back( removeAllSpace( *it ) );
 	}
@@ -330,7 +330,7 @@ void loadingSubKeyFiles( const std::shared_ptr< std::vector< cylStd::ArgParser::
 
 	ignoreSubNames = vectorStrAdjustSubStr( ignoreSubNames );
 	if( ignore_sub_key_files_option ) {
-		auto getBuff = readIngoreNameFiles( *ignore_sub_key_files_option );
+		auto getBuff = readIngoreNameFiles( *ignore_sub_key_files_option, { "\n" } );
 		for( auto it = getBuff.begin( ), en = getBuff.end( ); it != en; ++it )
 			if( !it->isEmpty( ) )
 				ignoreSubNames.emplace_back( it->toUpper( ) );
@@ -554,7 +554,7 @@ bool removeFileSourceFilesKeys( const std::vector< std::string > &source_file_s,
 	}
 	destPaths = vectorStrduplicate( destPaths );
 	for( auto &path : sourcesPaths ) {
-		auto keys = readIngoreNameFile( path );
+		auto keys = readIngoreNameFile( path, { "\n" } );
 		keys = vectorStrduplicate( keys );
 		keys = vectorStrLenSort( keys );
 		writeVector( keys, path );
@@ -571,7 +571,7 @@ bool removeFileSourceFilesKeys( const std::vector< std::string > &source_file_s,
 	end = ingoreNameFiles.end( );
 	std::vector< QString > filterKeys;
 	for( auto &path : destPaths ) {
-		auto keys = readIngoreNameFile( path );
+		auto keys = readIngoreNameFile( path, { "\n" } );
 		for( auto &key : keys )
 			if( std::find_if( begin
 				, end
