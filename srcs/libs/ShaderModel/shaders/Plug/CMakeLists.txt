@@ -49,24 +49,16 @@ include_directories( ${Path_Tool_include_dir} )
 include_directories( ${QtExtendDB_include_dir} )
 # # 合并源码
 list( APPEND ${SRC_LIST} ${SRC_UI} ${QM_FILES} ${SRC_DATA} ${cmake_definitions_out} )
-qt_add_library( ${PROJECT_NAME} SHARED
+
+# # qt_add_library( ${PROJECT_NAME} SHARED
+# # 	${SRC_LIST}
+# # )
+
+add_library( ${PROJECT_NAME} SHARED
 	${SRC_LIST}
 )
 
-get_target_property( project_type_property  ${PROJECT_NAME} TYPE )
-if( "EXECUTABLE" STREQUAL ${project_type_property} )
-	set( project_type_property_is_exe true )
-else()
-	set( project_type_property_is_exe false )
-endif()
-configure_file( "${cmake_definitions_org}" "${cmake_definitions_out}" )
-
-
-
-string( REPLACE "." "_" project_name_include_dir ${PROJECT_NAME} )
-set( ${project_name_include_dir}_include_dir ${CMAKE_CURRENT_LIST_DIR} ${CMAKE_CURRENT_LIST_DIR}/ PARENT_SCOPE )
-
-target_link_libraries( ${PROJECT_NAME}
+call_qt_deploy( ${PROJECT_NAME}
 	PRIVATE
 	Qt${QT_VERSION_MAJOR}::Widgets
 	Qt${QT_VERSION_MAJOR}::Gui
@@ -81,6 +73,36 @@ target_link_libraries( ${PROJECT_NAME}
 	IOStream
 	QtExtendDB
 )
+
+
+get_target_property( project_type_property  ${PROJECT_NAME} TYPE )
+if( "EXECUTABLE" STREQUAL ${project_type_property} )
+	set( project_type_property_is_exe true )
+else()
+	set( project_type_property_is_exe false )
+endif()
+configure_file( "${cmake_definitions_org}" "${cmake_definitions_out}" )
+
+
+
+string( REPLACE "." "_" project_name_include_dir ${PROJECT_NAME} )
+set( ${project_name_include_dir}_include_dir ${CMAKE_CURRENT_LIST_DIR} ${CMAKE_CURRENT_LIST_DIR}/ PARENT_SCOPE )
+
+# # target_link_libraries( ${PROJECT_NAME}
+# # 	PRIVATE
+# # 	Qt${QT_VERSION_MAJOR}::Widgets
+# # 	Qt${QT_VERSION_MAJOR}::Gui
+# # 	Qt${QT_VERSION_MAJOR}::Core
+# # 	Qt${QT_VERSION_MAJOR}::Network
+# # 	Qt${QT_VERSION_MAJOR}::Core5Compat
+# # 	Qt${QT_VERSION_MAJOR}::Sql
+# # 	NovelInfo
+# # 	Tools
+# # 	HtmlTools
+# # 	Path_Tool
+# # 	IOStream
+# # 	QtExtendDB
+# # )
 
 STRING( SUBSTRING "${PROJECT_NAME}" 0 1 exportFileStartName )
 STRING( SUBSTRING "${PROJECT_NAME}" 1 -1 exportFileName )

@@ -107,6 +107,7 @@ inline QStringList splite( const QString &splite_str_obj, const std::vector< QSt
 		for( auto &str : stringList )
 			result.append( str );
 		++begin;
+		stringList.clear( );
 	}
 	return result;
 }
@@ -115,7 +116,7 @@ std::vector< QString > readIngoreNameFile( const QString &path ) {
 	std::vector< QString > nameKeys;
 	QFile readFile( path );
 	if( readFile.open( QIODeviceBase::ReadOnly | QIODeviceBase::Text ) )
-		for( auto str : splite( readFile.readAll( ), { "\n" } ) ) {
+		for( auto str : splite( readFile.readAll( ), { "\n", "·", ",", "、", ",", "`", "~", "。", "." } ) ) {
 			str = removeAllSpace( str );
 			if( !str.isEmpty( ) )
 				nameKeys.emplace_back( str.toUpper( ) );

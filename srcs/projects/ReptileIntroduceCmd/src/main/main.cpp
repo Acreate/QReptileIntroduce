@@ -169,42 +169,51 @@ int main( int argc, char *argv[ ] ) {
 		for( auto &value : *loadPathOption ) {
 			QString fromStdString = QString::fromStdString( value );
 			auto dirInfo = Path::getPathInfo( fromStdString );
+			size_t size = novelPlugPath.size( );
 			for( auto &file : dirInfo.second )
 				if( !findVector( novelPlugPath, file.getCurrentFilePtah( ) ) )
 					novelPlugPath.emplace_back( file.getCurrentFilePtah( ) ); // 存储
-		}
-		auto startOption = argParser->getOptionValues( "-s" );
-		auto allStartOption = argParser->getOptionValues( "-as" );
-		if( allStartOption ) // 全部加载
-			runPlugPath = novelPlugPath;
-		else if( startOption ) { // 选择加载
-			std::vector< QString > paths; // 全路径保存
-			auto startIterator = startOption->begin( );
-			auto startEnd = startOption->end( );
-			for( ; startIterator != startEnd; ++startIterator ) {
-				QFileInfo info( QString::fromLocal8Bit( *startIterator ) );
-				auto absPath = info.absoluteFilePath( );
-				if( !findVector( paths, absPath ) )
-					paths.emplace_back( absPath );
-				for( auto &value : *loadPathOption ) {
-					auto absoluteFilePath = QFileInfo( QString::fromStdString( value ) ).absoluteFilePath( );
-					if( findVector( paths, absoluteFilePath ) && !findVector( runPlugPath, absoluteFilePath ) )
-						// 不存在选择路径当中，需要直接跳过
-						runPlugPath.emplace_back( absoluteFilePath ); // 存储
-				}
+			if( novelPlugPath.size( ) == size ) {
+				std::cout << u8"指定路径没有发现任何文件:\"" << fromStdString.toUtf8( ).toStdString( ) << '\"' << std::endl;
 			}
 		}
-		auto urlOption = argParser->getOptionValues( "-url" );
-		if( urlOption ) {
-			count = novelPlugPath.size( );
-			runPrintfUrlSubProcess( appPath, qMutex, count, runPlugPath, argParser, requetTypeNameOption, pathValues, novelPlugPath );
-			loadPrintfUrlLastPlugOnThisProcess( qMutex, count, path, runPlugPath, requetTypeNameOption, requesTypeNameVector, novelPlugPath, __FILE__, __FUNCTION__, __LINE__ );
-		} else { // 除了首个爬虫，其他爬虫均有子程序进行
-			count = novelPlugPath.size( );
-			runSubProcess( appPath, qMutex, count, runPlugPath, argParser, requetTypeNameOption, pathValues, novelPlugPath );
-			loadLastPlugOnThisProcess( qMutex, count, path, runPlugPath, requetTypeNameOption, requesTypeNameVector, novelPlugPath, __FILE__, __FUNCTION__, __LINE__ );
+		if( novelPlugPath.size( ) == 0 )
+			std::cout << u8"没有任何可加载文件" << std::endl;
+		else {
+			auto startOption = argParser->getOptionValues( "-s" );
+			auto allStartOption = argParser->getOptionValues( "-as" );
+			if( allStartOption ) // 全部加载
+				runPlugPath = novelPlugPath;
+			else if( startOption ) { // 选择加载
+				std::vector< QString > paths; // 全路径保存
+				auto startIterator = startOption->begin( );
+				auto startEnd = startOption->end( );
+				for( ; startIterator != startEnd; ++startIterator ) {
+					QFileInfo info( QString::fromLocal8Bit( *startIterator ) );
+					auto absPath = info.absoluteFilePath( );
+					if( !findVector( paths, absPath ) )
+						paths.emplace_back( absPath );
+					for( auto &value : *loadPathOption ) {
+						auto absoluteFilePath = QFileInfo( QString::fromStdString( value ) ).absoluteFilePath( );
+						if( findVector( paths, absoluteFilePath ) && !findVector( runPlugPath, absoluteFilePath ) )
+							// 不存在选择路径当中，需要直接跳过
+							runPlugPath.emplace_back( absoluteFilePath ); // 存储
+					}
+				}
+			}
+			auto urlOption = argParser->getOptionValues( "-url" );
+			if( urlOption ) {
+				count = novelPlugPath.size( );
+				runPrintfUrlSubProcess( appPath, qMutex, count, runPlugPath, argParser, requetTypeNameOption, pathValues, novelPlugPath );
+				loadPrintfUrlLastPlugOnThisProcess( qMutex, count, path, runPlugPath, requetTypeNameOption, requesTypeNameVector, novelPlugPath, __FILE__, __FUNCTION__, __LINE__ );
+			} else { // 除了首个爬虫，其他爬虫均有子程序进行
+				count = novelPlugPath.size( );
+				runSubProcess( appPath, qMutex, count, runPlugPath, argParser, requetTypeNameOption, pathValues, novelPlugPath );
+				loadLastPlugOnThisProcess( qMutex, count, path, runPlugPath, requetTypeNameOption, requesTypeNameVector, novelPlugPath, __FILE__, __FUNCTION__, __LINE__ );
+			}
 		}
-	}
+	} else
+		std::cout << u8"没有发现 -l 选项" << std::endl;
 	currentTime = std::chrono::system_clock::now( );
 	auto dbPaths = argParser->getOptionValues( "-rdb" ); // 是否存在导出
 	/// 忽略子名称

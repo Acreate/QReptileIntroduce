@@ -65,10 +65,9 @@ message( "目标 : ${cmake_definitions_out}" )
 
 
 call_qt_deploy( ${PROJECT_NAME}
-	Qt${QT_VERSION_MAJOR}::Widgets
+	Qt${QT_VERSION_MAJOR}::Gui
 	Qt${QT_VERSION_MAJOR}::Core
 	Qt${QT_VERSION_MAJOR}::Network
-	Qt${QT_VERSION_MAJOR}::OpenGLWidgets
 	Qt${QT_VERSION_MAJOR}::Core5Compat
 	NovelInfo
 	Tools

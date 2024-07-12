@@ -25,7 +25,7 @@ INCLUDE( GNUInstallDirs )
 
 SET( Project_Run_bin "${CMAKE_HOME_DIRECTORY}/builder/${CMAKE_BUILD_TYPE}_${CMAKE_CXX_COMPILER_ARCHITECTURE_ID}_${CMAKE_CXX_COMPILER_ID}/" )
 SET( Project_Install_bin "${Project_Run_bin}" )
-SET( Project_Plug_bin "${CMAKE_HOME_DIRECTORY}/builder/${CMAKE_BUILD_TYPE}_${CMAKE_CXX_COMPILER_ARCHITECTURE_ID}_${CMAKE_CXX_COMPILER_ID}/plugs" )
+SET( Project_Plug_bin "${Project_Install_bin}/plug_lib" )
 
 message( "QT_VERSION_MAJOR : ${QT_VERSION_MAJOR}" )
 
