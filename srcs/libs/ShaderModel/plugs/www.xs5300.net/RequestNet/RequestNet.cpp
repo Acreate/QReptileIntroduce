@@ -254,8 +254,7 @@ Vector_INovelInfoSPtr RequestNet::formHtmlGetTypePageNovels( const interfacePlug
 				auto begin = unorderedMapAttribute->begin( );
 				auto second = begin->second;
 				auto newSecond = second.substr( 1, second.length( ) - 2 );
-				QString urlLastStr = QString::fromStdWString( newSecond );
-				novelInfoBuffPtr->url = QString( u8"%1%2" ).arg( rootUrl ).arg( urlLastStr ).toStdWString( );
+				novelInfoBuffPtr->url = newSecond;
 				//////////// 名称 xpath
 				auto contentText = element->getNodeIncludeContentText( );
 				if( contentText )
