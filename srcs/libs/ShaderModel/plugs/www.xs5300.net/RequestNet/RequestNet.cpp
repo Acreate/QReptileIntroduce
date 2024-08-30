@@ -24,12 +24,13 @@
 #include "dateTime/DateTime.h"
 #include <interface/instance_function.h>
 #include "../instance_function/NovelNodeXPathInfo.h"
+#include "htmls/htmlDoc/Tools/HtmlDocTools.h"
 using namespace interfacePlugsType;
 using namespace cylHtmlTools;
 using namespace instance_function;
 
-QString RequestNet::timeForm = QObject::tr( u8R"(yyyy-MM-dd hh:mm)" );
-QString RequestNet::currentTimeForm = QObject::tr( u8R"(yyyy-MM-dd hh:mm:ss)" );
+QString RequestNet::timeForm = QObject::tr( u8R"(yyyy-MM-dd)" );
+QString RequestNet::currentTimeForm = QObject::tr( u8R"(yyyy-MM-dd)" );
 QDateTime RequestNet::currentTime;
 int RequestNet::expireDay = 2;
 
@@ -103,6 +104,7 @@ Map_HtmlStrK_HtmlStrV * RequestNet::formHtmlGetTypeTheUrls( const interfacePlugs
 			}
 
 			htmlDoc->analysisBrotherNode( );
+			// todo : 首页获取类型
 			auto xpath = cylHtmlTools::XPath( instance_function::NovelNodeXPathInfo::novels_root_get_type_xpath );
 
 			auto htmlNodeSPtrShared = htmlDoc->getHtmlNodeRoots( );
@@ -161,49 +163,57 @@ Vector_INovelInfoSPtr RequestNet::formHtmlGetTypePageNovels( const interfacePlug
 	QString currentYearStart = currentTime.toString( "yyyy-" );
 	if( vectorHtmlNodeSPtrShared ) { // 首次的页面算法
 		novelNodeXPathInfo.formTypePageGetNovelNameXpath = QString( tr( u8R"(./span[@class="s2"]/a)" ) ).toStdWString( );
-		novelNodeXPathInfo.formTypePageGetNovelUpdateTimeXpath = QString( tr( u8R"(.//span[@class="s5"])" ) ).toStdWString( );
-		novelNodeXPathInfo.formTypePageGetNovelAuthorXpath = QString( tr( u8R"(./span[@class="s4"])" ) ).toStdWString( );
+		novelNodeXPathInfo.formTypePageGetNovelUpdateTimeXpath = QString( tr( u8R"(.//span[@class="s3"])" ) ).toStdWString( );
+		novelNodeXPathInfo.formTypePageGetNovelAuthorXpath = QString( tr( u8R"(./span[@class="s5"])" ) ).toStdWString( );
 		novelNodeXPathInfo.formTypePageGetNovelLastUpdateItemXpath = QString( tr( u8R"(./span[@class="s3"]/a)" ) ).toStdWString( );
 		novelNodeXPathInfo.normal_update_time_function = [&]( HtmlString_Shared &html_string_shared )->QString {
-			return currentYearStart + QString::fromStdWString( *html_string_shared );
+			QString resultQString = QString::fromStdWString( *html_string_shared );
+			qsizetype last_index_of = resultQString.lastIndexOf( '(' );
+			if( last_index_of == -1 )
+				return "";
+			last_index_of += 1;
+			qint64 index_of = resultQString.lastIndexOf( ')' );
+			resultQString = resultQString.mid( last_index_of, index_of - last_index_of );
+			return currentYearStart + resultQString;
 		};
 		novelNodeXPathInfo.check_html_is_first_type_url = [&]( HtmlNode *html_node )->bool {
 			return false;
 		};
-	} else { // 次要的页面算法
-		xpath = cylHtmlTools::XPath( QString( tr( u8R"(div[@class="novelslist2"]/ul/li/)" ) ).toStdWString( ) );
-		htmlNodeSPtrShared = htmlDoc->getHtmlNodeRoots( );
-		vectorHtmlNodeSPtrShared = xpath.buider( htmlNodeSPtrShared );
-		if( vectorHtmlNodeSPtrShared ) {
-			novelNodeXPathInfo.formTypePageGetNovelNameXpath = QString( tr( u8R"(./span[@class="s2"]/a)" ) ).toStdWString( );
-			novelNodeXPathInfo.formTypePageGetNovelUpdateTimeXpath = QString( tr( u8R"(.//span[@class="s7"])" ) ).toStdWString( );
-			novelNodeXPathInfo.formTypePageGetNovelAuthorXpath = QString( tr( u8R"(./span[@class="s4"]/a)" ) ).toStdWString( );
-			novelNodeXPathInfo.formTypePageGetNovelLastUpdateItemXpath = QString( tr( u8R"(./span[@class="s3"]/a)" ) ).toStdWString( );
-			HtmlString continueName = L"小说分类";
-			HtmlString jionKey = QString( tr( u8R"(./span[@class="s1"]/b)" ) ).toStdWString( );
-			novelNodeXPathInfo.check_html_is_first_type_url = [jionKey,continueName]( HtmlNode *html_node )->bool {
-				auto xpath = cylHtmlTools::XPath( jionKey );
-				auto htmlNodes = html_node->xpath( xpath );
-				if( htmlNodes ) {
-					auto buff = htmlNodes->begin( )->get( )->getNodeIncludeContentText( );
-					// 跳过奇特页面
-					if( HtmlStringTools::findNextHtmlStringPotion( buff.get( ), &continueName ) )
-						return true;
-				}
-				return false;
-			};
-			novelNodeXPathInfo.normal_update_time_function = [&]( HtmlString_Shared &html_string_shared )->QString {
-				return QString::fromStdWString( *html_string_shared );
-			};
-		} else {
-			auto typeNme = QString::fromStdWString( type_name );
-			auto msg = QString( "%1 : %2 : %3" ).arg( typeNme ).arg( request_url ).arg( QString( u8" xpath 异常，登出" ) );
-			QUrl url( QString::fromStdWString( request_url ) );
-			instance_function::write_error_info_file( oStream, url, outLogPath, "xpath", "parse", typeNme, ".html", __FILE__, __FUNCTION__, __LINE__, msg, msg );
-			return result;
-		}
+	} //else { // 次要的页面算法
+	//	xpath = cylHtmlTools::XPath( QString( tr( u8R"(div[@class="novelslist2"]/ul/li/)" ) ).toStdWString( ) );
+	//	htmlNodeSPtrShared = htmlDoc->getHtmlNodeRoots( );
+	//	vectorHtmlNodeSPtrShared = xpath.buider( htmlNodeSPtrShared );
+	//	if( vectorHtmlNodeSPtrShared ) {
+	//		novelNodeXPathInfo.formTypePageGetNovelNameXpath = QString( tr( u8R"(./span[@class="s2"]/a)" ) ).toStdWString( );
+	//		novelNodeXPathInfo.formTypePageGetNovelUpdateTimeXpath = QString( tr( u8R"(.//span[@class="s7"])" ) ).toStdWString( );
+	//		novelNodeXPathInfo.formTypePageGetNovelAuthorXpath = QString( tr( u8R"(./span[@class="s4"]/a)" ) ).toStdWString( );
+	//		novelNodeXPathInfo.formTypePageGetNovelLastUpdateItemXpath = QString( tr( u8R"(./span[@class="s3"]/a)" ) ).toStdWString( );
+	//		HtmlString continueName = L"小说分类";
+	//		HtmlString jionKey = QString( tr( u8R"(./span[@class="s1"]/b)" ) ).toStdWString( );
+	//		novelNodeXPathInfo.check_html_is_first_type_url = [jionKey,continueName]( HtmlNode *html_node )->bool {
+	//			auto xpath = cylHtmlTools::XPath( jionKey );
+	//			auto htmlNodes = html_node->xpath( xpath );
+	//			if( htmlNodes ) {
+	//				auto buff = htmlNodes->begin( )->get( )->getNodeIncludeContentText( );
+	//				// 跳过奇特页面
+	//				if( HtmlStringTools::findNextHtmlStringPotion( buff.get( ), &continueName ) )
+	//					return true;
+	//			}
+	//			return false;
+	//		};
+	//		novelNodeXPathInfo.normal_update_time_function = [&]( HtmlString_Shared &html_string_shared )->QString {
+	//			return QString::fromStdWString( *html_string_shared );
+	//		};
+	//	} else
+	//		vectorHtmlNodeSPtrShared = nullptr;
+	//}
+	if( !vectorHtmlNodeSPtrShared ) {
+		auto typeNme = QString::fromStdWString( type_name );
+		auto msg = QString( "%1 : %2 : %3" ).arg( typeNme ).arg( request_url ).arg( QString( u8" xpath 异常，登出" ) );
+		QUrl url( QString::fromStdWString( request_url ) );
+		instance_function::write_error_info_file( oStream, url, outLogPath, "xpath", "parse", typeNme, ".html", __FILE__, __FUNCTION__, __LINE__, msg, msg );
+		return result;
 	}
-
 	HtmlWorkThread::TThreadCall currentThreadRun = [&vectorHtmlNodeSPtrShared,&saveNovelInfos,&result, &type_name,&xpath,&request_url,&htmlText,&novelNodeXPathInfo,this]( HtmlWorkThread * ) {
 		auto outLogPath = outPath + QDir::separator( ) + u8"logs" + QDir::separator( );
 		auto vectorIterator = vectorHtmlNodeSPtrShared->begin( );
@@ -265,6 +275,10 @@ Vector_INovelInfoSPtr RequestNet::formHtmlGetTypePageNovels( const interfacePlug
 					break;
 				}
 				QString fromStdWString = novelNodeXPathInfo.normal_update_time_function( lastTime );
+				if( fromStdWString.length( ) == 0 ) {
+					quitMsg = DateTime_Error_None; // xpath 异常 : 更新时间 找不到
+					break;
+				}
 				QDateTime novelTime = QDateTime::fromString( fromStdWString, timeForm );
 				auto compareDateTime = DateTime::compareDateTime( currentTime, novelTime );
 				int16_t timeToDay = DateTime::getTimeToDay( compareDateTime );
@@ -356,7 +370,7 @@ HtmlDocString RequestNet::formHtmlGetNext( const interfacePlugsType::HtmlDocStri
 		if( htmlNodes ) {
 			auto iterator = htmlNodes->begin( );
 			auto endIterator = htmlNodes->end( );
-			HtmlString wstrNextPageKey = L"下一页";
+			HtmlString wstrNextPageKey = L"&gt;";
 			for( ; iterator != endIterator; ++iterator ) {
 				HtmlNode *element = iterator->get( );
 				HtmlString_Shared contentText = element->getNodeIncludeContentText( );
@@ -369,7 +383,7 @@ HtmlDocString RequestNet::formHtmlGetNext( const interfacePlugsType::HtmlDocStri
 					auto pair = findAttribute->begin( );
 					if( pair == findAttribute->end( ) )
 						continue;
-					result = ( rootUrl.scheme( ) + u8"://" + rootUrl.host( ) + QString::fromStdWString( pair->second.substr( 1, pair->second.length( ) - 2 ) ) ).toStdWString( );
+					result = pair->second.substr( 1, pair->second.length( ) - 2 );
 					break;
 				}
 

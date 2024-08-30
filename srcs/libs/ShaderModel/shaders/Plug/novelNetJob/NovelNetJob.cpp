@@ -28,13 +28,13 @@
 #include <psapi.h>
 #pragma comment (lib,"psapi.lib")
 inline bool releaseMemory( ) {
-	HANDLE hProcess = OpenProcess( PROCESS_ALL_ACCESS, TRUE, GetCurrentProcessId( ) );
-	if( hProcess ) {
-		if( SetProcessWorkingSetSize( hProcess, -1, -1 ) )
-			EmptyWorkingSet( hProcess );//内存整理
-		CloseHandle( hProcess );
-		return true;
-	}
+	//HANDLE hProcess = OpenProcess( PROCESS_ALL_ACCESS, TRUE, GetCurrentProcessId( ) );
+	//if( hProcess ) {
+	//	if( SetProcessWorkingSetSize( hProcess, -1, -1 ) )
+	//		EmptyWorkingSet( hProcess );//内存整理
+	//	CloseHandle( hProcess );
+	//	return true;
+	//}
 	return false;
 }
 #else

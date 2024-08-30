@@ -187,7 +187,7 @@ Vector_INovelInfoSPtr RequestNet::formHtmlGetTypePageNovels( const interfacePlug
 				if( htmlNodes ) {
 					auto buff = htmlNodes->begin( )->get( )->getNodeIncludeContentText( );
 					// 跳过奇特页面
-					if( HtmlStringTools::findNextHtmlStringPotion( buff.get( ), 0, &continueName ) )
+					if( HtmlStringTools::findNextHtmlStringPotion( buff.get( ), &continueName ) )
 						return true;
 				}
 				return false;
@@ -360,7 +360,7 @@ HtmlDocString RequestNet::formHtmlGetNext( const interfacePlugsType::HtmlDocStri
 			for( ; iterator != endIterator; ++iterator ) {
 				HtmlNode *element = iterator->get( );
 				HtmlString_Shared contentText = element->getNodeIncludeContentText( );
-				if( HtmlStringTools::findNextHtmlStringPotion( contentText.get( ), 0, &wstrNextPageKey ) ) {
+				if( HtmlStringTools::findNextHtmlStringPotion( contentText.get( ), &wstrNextPageKey ) ) {
 					auto findAttribute = element->findAttribute( []( const HtmlString &attributeName, const HtmlString &attributeValue ) {
 						if( HtmlStringTools::equRemoveSpaceOverHtmlString( attributeName, L"href" ) )
 							return true;

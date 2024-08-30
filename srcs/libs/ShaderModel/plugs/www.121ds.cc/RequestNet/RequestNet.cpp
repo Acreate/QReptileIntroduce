@@ -331,7 +331,7 @@ HtmlDocString RequestNet::formHtmlGetNext( const interfacePlugsType::HtmlDocStri
 	for( ; iterator != endIterator; ++iterator ) {
 		HtmlNode *element = iterator->get( );
 		HtmlString_Shared contentText = element->getNodeIncludeContentText( );
-		if( HtmlStringTools::findNextHtmlStringPotion( contentText.get( ), 0, &wstrNextPageKey ) ) {
+		if( HtmlStringTools::findNextHtmlStringPotion( contentText.get( ), &wstrNextPageKey ) ) {
 			auto findAttribute = element->findAttribute( []( const HtmlString &attributeName, const HtmlString &attributeValue ) {
 				if( HtmlStringTools::equRemoveSpaceOverHtmlString( attributeName, L"href" ) )
 					return true;

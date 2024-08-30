@@ -779,7 +779,7 @@ NovelDBJob::NovelInfoVector NovelDBJob::removeSubName( const NovelInfoVector &in
 				break;
 			auto &&sharedPtr = remove_name_s.at( key );
 			for( auto &str : *sharedPtr )
-				if( cylHtmlTools::HtmlStringTools::findNextHtmlStringPotion( &name, 0, &str ) ) {
+				if( cylHtmlTools::HtmlStringTools::findNextHtmlStringPotion( &name, &str ) ) {
 					node = nullptr;
 					break;
 				}
@@ -855,7 +855,7 @@ NovelDBJob::NovelInfoVector NovelDBJob::findNovel( const NovelInfoVector &infos,
 					auto &&sharedPtr = find_key.at( key );
 					for( auto &str : *sharedPtr ) {
 						if( nameLen >= key ) {
-							if( cylHtmlTools::HtmlStringTools::findNextHtmlStringPotion( &name, 0, &str ) ) {
+							if( cylHtmlTools::HtmlStringTools::findNextHtmlStringPotion( &name, &str ) ) {
 								writeMutex->lock( );
 								result.emplace_back( node );
 								writeMutex->unlock( );
@@ -863,7 +863,7 @@ NovelDBJob::NovelInfoVector NovelDBJob::findNovel( const NovelInfoVector &infos,
 							}
 						}
 						if( infoLen >= key ) {
-							if( cylHtmlTools::HtmlStringTools::findNextHtmlStringPotion( &info, 0, &str ) ) {
+							if( cylHtmlTools::HtmlStringTools::findNextHtmlStringPotion( &info, &str ) ) {
 								writeMutex->lock( );
 								result.emplace_back( node );
 								writeMutex->unlock( );
@@ -871,7 +871,7 @@ NovelDBJob::NovelInfoVector NovelDBJob::findNovel( const NovelInfoVector &infos,
 							}
 						}
 						if( authLen >= key ) {
-							if( cylHtmlTools::HtmlStringTools::findNextHtmlStringPotion( &auth, 0, &str ) ) {
+							if( cylHtmlTools::HtmlStringTools::findNextHtmlStringPotion( &auth, &str ) ) {
 								writeMutex->lock( );
 								result.emplace_back( node );
 								writeMutex->unlock( );
@@ -879,7 +879,7 @@ NovelDBJob::NovelInfoVector NovelDBJob::findNovel( const NovelInfoVector &infos,
 							}
 						}
 						if( lastItemLen >= key ) {
-							if( cylHtmlTools::HtmlStringTools::findNextHtmlStringPotion( &lastItem, 0, &str ) ) {
+							if( cylHtmlTools::HtmlStringTools::findNextHtmlStringPotion( &lastItem, &str ) ) {
 								writeMutex->lock( );
 								result.emplace_back( node );
 								writeMutex->unlock( );
@@ -925,15 +925,15 @@ bool NovelDBJob::findNovelKey( const interfacePlugsType::INovelInfo_Shared &nove
 		size_t len = iterator->first;
 		auto second = iterator->second;
 		for( auto &str : *second ) {
-			if( novelNameLen > len && cylHtmlTools::HtmlStringTools::findNextHtmlStringPotion( &novelName, 0, &str ) )
+			if( novelNameLen > len && cylHtmlTools::HtmlStringTools::findNextHtmlStringPotion( &novelName, &str ) )
 				return true;
-			if( novelInfoLen > len && cylHtmlTools::HtmlStringTools::findNextHtmlStringPotion( &novelInfo, 0, &str ) )
+			if( novelInfoLen > len && cylHtmlTools::HtmlStringTools::findNextHtmlStringPotion( &novelInfo, &str ) )
 				return true;
-			if( novelAuthLen > len && cylHtmlTools::HtmlStringTools::findNextHtmlStringPotion( &novelAuth, 0, &str ) )
+			if( novelAuthLen > len && cylHtmlTools::HtmlStringTools::findNextHtmlStringPotion( &novelAuth, &str ) )
 				return true;
-			if( novelLastItemLen > len && cylHtmlTools::HtmlStringTools::findNextHtmlStringPotion( &novelLastItem, 0, &str ) )
+			if( novelLastItemLen > len && cylHtmlTools::HtmlStringTools::findNextHtmlStringPotion( &novelLastItem, &str ) )
 				return true;
-			if( novelUrlLen > len && cylHtmlTools::HtmlStringTools::findNextHtmlStringPotion( &novelUrl, 0, &str ) )
+			if( novelUrlLen > len && cylHtmlTools::HtmlStringTools::findNextHtmlStringPotion( &novelUrl, &str ) )
 				return true;
 		}
 	}
