@@ -164,7 +164,7 @@ std::vector< QString > vectorStrAdjustSubStr( std::vector< QString > &str_vector
 	}
 	return std::vector< QString >( lenSort.begin( ), lenSort.end( ) );
 }
-std::vector< QString > vectorStrduplicate( std::vector< QString > &str_vector ) {
+std::vector< QString > vectorStrduplicate( const std::vector< QString > &str_vector ) {
 	std::vector< QString > result;
 	for( auto &str : str_vector ) {
 		auto iterator = result.begin( );

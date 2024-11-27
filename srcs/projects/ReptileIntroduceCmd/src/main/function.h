@@ -88,7 +88,7 @@ std::vector< std::wstring > vectorStrAdjustSubStr( std::vector< std::wstring > &
 /// </summary>
 /// <param name="str_vector">去除字符串</param>
 /// <returns>唯一的元素</returns>
-std::vector< QString > vectorStrduplicate( std::vector< QString > &str_vector );
+std::vector< QString > vectorStrduplicate( const std::vector< QString > &str_vector );
 /// <summary>
 /// 字符串列表排序-名称
 /// </summary>
@@ -96,7 +96,7 @@ std::vector< QString > vectorStrduplicate( std::vector< QString > &str_vector );
 /// <returns>排序结果</returns>
 std::vector< QString > vectorStrSort( std::vector< QString > &str_vector );
 /// <summary>
-/// 字符串列表排序-名称
+/// 字符串列表排序-长度
 /// </summary>
 /// <param name="str_vector">排序列表</param>
 /// <returns>排序结果</returns>
@@ -137,8 +137,12 @@ inline bool findVector( const std::vector< t_value_type > &vector, const t_value
 	return false;
 }
 
+#define ErrorCout_MACRO( msg )  errorCout((msg),  __FILE__, __FUNCTION__, __LINE__)
 inline void errorCout( const std::string &msg, const std::string &erro_file, const std::string &error_call, const size_t error_line ) {
-	std::cerr << "\n===============" << u8"\n\t错误文件: " << erro_file << u8"\n\t调用名称: " << error_call << u8"\n\t信息行数: " << error_line << u8"\n\t错误信息: " << msg << "\n===============" << std::endl;
+	std::cerr << "\n===============\n\t错误文件: " << erro_file << u8"\n\t调用名称: " << error_call << u8"\n\t信息行数: " << error_line << u8"\n\t错误信息: " << msg << "\n===============" << std::endl;
+}
+inline void errorCout( const char* msg, const std::string &erro_file, const std::string &error_call, const size_t error_line ) {
+	std::cerr << "\n===============\n\t错误文件: " << erro_file << u8"\n\t调用名称: " << error_call << u8"\n\t信息行数: " << error_line << u8"\n\t错误信息: " << msg << "\n===============" << std::endl;
 }
 inline void errorCout( const QString &msg, const QString &erro_file, const QString &error_call, const size_t error_line ) {
 	errorCout( msg.toStdString( ), erro_file.toStdString( ), error_call.toStdString( ), error_line );

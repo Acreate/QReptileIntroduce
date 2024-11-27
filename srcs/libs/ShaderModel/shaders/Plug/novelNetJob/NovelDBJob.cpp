@@ -18,7 +18,6 @@
 #include <QUrl>
 #include <mutex>
 #include "../ioFile/IOFile.h"
-#include "../novelBase/NovelBase.h"
 #include "htmlString/HtmlStringTools.h"
 
 QString NovelDBJob::currentTimeForm = QObject::tr( u8R"(yyyy-MM-dd hh:mm:ss)" );
@@ -510,19 +509,19 @@ inline NovelDBJob::NovelInfoVector converNovelBaseVector( cylDB::IResultInfo_Sha
 	allItem->resetColIndex( );
 	auto currentRows = allItem->getCurrentRows( );
 	while( currentRows->size( ) > 0 ) {
-		NovelBase *novelBase = new NovelBase;
-		novelBase->rootUrl = currentRows->at( 0 )->toString( ).toStdWString( );
-		novelBase->novelName = currentRows->at( 1 )->toString( ).toStdWString( );
-		novelBase->info = currentRows->at( 2 )->toString( ).toStdWString( );
-		novelBase->updateTime = currentRows->at( 3 )->toString( ).toStdWString( );
-		novelBase->format = currentRows->at( 4 )->toString( ).toStdWString( );
-		novelBase->lastRequestTime = currentRows->at( 5 )->toString( ).toStdWString( );
-		novelBase->author = currentRows->at( 7 )->toString( ).toStdWString( );
-		novelBase->url = currentRows->at( 8 )->toString( ).toStdWString( );
-		novelBase->lastItem = currentRows->at( 9 )->toString( ).toStdWString( );
-		novelBase->typePageUrl = currentRows->at( 11 )->toString( ).toStdWString( );
-		novelBase->typeName = currentRows->at( 12 )->toString( ).toStdWString( );
-		vectorINovelInfoSPtr.emplace_back( std::shared_ptr< interfacePlugsType::INovelInfo >( novelBase ) );
+		auto novelBase = std::make_shared< interfacePlugsType::INovelInfo >( );
+		novelBase->setRootUrl( currentRows->at( 0 )->toString( ).toStdWString( ) ); // rootUrl
+		novelBase->setNovelName( currentRows->at( 1 )->toString( ).toStdWString( ) ); // novelName
+		novelBase->setNovelInfo( currentRows->at( 2 )->toString( ).toStdWString( ) ); // info
+		novelBase->setNovelUpdateTime( currentRows->at( 3 )->toString( ).toStdWString( ) ); // updateTime
+		novelBase->setNovelUpdateTimeFormat( currentRows->at( 4 )->toString( ).toStdWString( ) ); // format
+		novelBase->setNovelLastRequestGetTime( currentRows->at( 5 )->toString( ).toStdWString( ) ); // lastRequestTime
+		novelBase->setNovelAuthor( currentRows->at( 7 )->toString( ).toStdWString( ) ); // author
+		novelBase->setNovelUrl( currentRows->at( 8 )->toString( ).toStdWString( ) );  // url
+		novelBase->setNovelLastItem( currentRows->at( 9 )->toString( ).toStdWString( ) );  // lastItem
+		novelBase->setNovelUrlAtPageLocation( currentRows->at( 11 )->toString( ).toStdWString( ) );  // typePageUrl
+		novelBase->setNovelTypeName( currentRows->at( 12 )->toString( ).toStdWString( ) );  // typeName
+		vectorINovelInfoSPtr.emplace_back( novelBase );
 		if( !allItem->nextCol( ) )
 			break;
 		currentRows = allItem->getCurrentRows( );
@@ -532,32 +531,28 @@ inline NovelDBJob::NovelInfoVector converNovelBaseVector( cylDB::IResultInfo_Sha
 
 NovelDBJob::NovelInfoVector_Shared NovelDBJob::readDB( OStream *thisOStream, const QString &db_link, const QString &db_name ) {
 	NovelInfoVector_Shared result( std::make_shared< NovelInfoVector >( ) );
-
 	auto dbInterface = cylDB::DBTools::linkDB( db_link );
 	if( dbInterface->link( ) ) {
 		auto depositoryShared = dbInterface->openDepository( db_name );
 		if( depositoryShared ) {
 			QString tabName = db_name.mid( 0, db_name.length( ) - 3 );
-			if( depositoryShared ) {
-				if( depositoryShared->open( ) ) {
-					bool hasTab = depositoryShared->hasTab( tabName );
-					if( hasTab ) {
-						auto allItem = depositoryShared->findItems( tabName, tabFieldNames );
-						if( allItem ) {
-							auto vectorINovelInfoSPtr = converNovelBaseVector( allItem );
-							vectorINovelInfoSPtr = NovelDBJob::identical( vectorINovelInfoSPtr ); // 剔除相同
-							for( auto &novel : vectorINovelInfoSPtr )
-								result->emplace_back( novel );
-						}
+			if( depositoryShared->open( ) ) {
+				bool hasTab = depositoryShared->hasTab( tabName );
+				if( hasTab ) {
+					auto allItem = depositoryShared->findItems( tabName, tabFieldNames );
+					if( allItem ) {
+						auto vectorINovelInfoSPtr = converNovelBaseVector( allItem );
+						vectorINovelInfoSPtr = NovelDBJob::identical( vectorINovelInfoSPtr ); // 剔除相同
+						for( auto &novel : vectorINovelInfoSPtr )
+							result->emplace_back( novel );
 					}
-				} else {
-					auto lastError = depositoryShared->getLastError( );
-					OStream::anyStdCerr( lastError.text( ), __FILE__, __LINE__, __FUNCTION__, thisOStream );
 				}
-
+			} else {
+				auto lastError = depositoryShared->getLastError( );
+				OStream::anyStdCerr( lastError.text( ), __FILE__, __LINE__, __FUNCTION__, thisOStream );
 			}
-		}
 
+		}
 	}
 	if( result->size( ) )
 		return result;
