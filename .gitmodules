@@ -1,0 +1,9 @@
+[submodule "srcs/git/argParser"]
+	path = srcs/git/argParser
+	url = https://github.com/Acreate/argParser.git
+[submodule "srcs/git/htmlCpp"]
+	path = srcs/git/htmlCpp
+	url = https://gitee.com/ChenYLhuman/htmlCpp.git
+[submodule "srcs/git/QtExtendDB"]
+	path = srcs/git/QtExtendDB
+	url = https://gitee.com/ChenYLhuman/QtExtendDB.git
