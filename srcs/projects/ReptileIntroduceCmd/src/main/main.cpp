@@ -1050,7 +1050,7 @@ std::shared_ptr< cylHtmlTools::HtmlWorkThreadPool > getDBFindNovelInfo( const No
 									keyFile = keyFile.mid( 0, indexOf );
 								novel->getNovelTypeName( &name );
 								// 中间路径(-w选项路径/中间路径/小说类型.txt)
-								QString qstrName = QString( u8"%1%2%1%3%1%4%1%5.txt" ).arg( QDir::separator( ) ).arg( u8"export_all" ).arg( keyFile ).arg( orgDbFilePathInfo.fileName( ) ).arg( QString::fromStdWString( name ) );
+								QString qstrName = QString( u8"%1%2%1%3%1%4%1%5.txt" ).arg( QDir::separator( ) ).arg( u8"export_find" ).arg( keyFile ).arg( orgDbFilePathInfo.fileName( ) ).arg( QString::fromStdWString( name ) );
 								auto iterator = novel_infos_write_map->begin( );
 								auto end = novel_infos_write_map->end( );
 
@@ -1181,7 +1181,38 @@ void dbReadWriteChanger( const std::shared_ptr< cylStd::ArgParser > &arg_parser 
 		ErrorCout_MACRO( QString("(%1) 不存在导出的列表。如与信息不匹配，请联系开发人员反馈").arg( qApp->applicationPid( ) ) );
 		return;
 	}
+
 	// 把 novelInfosWriteMap 映射写入磁盘
+	for( auto &outDirPath : exisLegitimateOutDirPath )
+		for( auto &mapIterator : *novelInfosWriteMap ) {
+			QString fileLastBody = mapIterator.first; // 路径尾部
+			auto allFilePathName = outDirPath  + fileLastBody;
+			qint64 writeCount = 0;
+			bool isCreate = Path::creatFilePath( allFilePathName );
+			if( isCreate ) {
+				auto result = NovelDBJob::identical( *mapIterator.second );
+				result = NovelDBJob::sort( result );
+				auto list = NovelDBJob::getNovelNames( result );
+				QStringList novelNameList( list.begin( ), list.end( ) );
+				auto novelNameListJoin = novelNameList.join( "\n" );
+				auto allContents = NovelDBJob::jionNovels( result ) + u8"\n+++++\t小说名称列表\t" + QString::number( novelNameList.size( ) ) + " 个\t+++++++\n" + novelNameListJoin + u8"\n++++++++++++\n";
+				QFile writeFile( allFilePathName );
+				if( writeFile.open( QIODeviceBase::Text | QIODeviceBase::WriteOnly | QIODeviceBase::Truncate ) ) {
+					writeCount = writeFile.write( allContents.toUtf8( ) );
+					writeFile.close( );
+					stdCoutMutex.lock( );
+					std::cout << u8"导出查找结果 : " << allFilePathName.toStdString( ) << std::endl;
+					stdCoutMutex.unlock( );
+				}
+			}
+			if( writeCount == 0 ) {
+				QString msg( u8"(%1) 导出查找结果失败 : %2" );
+				msg = msg.arg( qApp->applicationPid( ) ).arg( allFilePathName );
+				stdCoutMutex.lock( );
+				ErrorCout_MACRO( msg );
+				stdCoutMutex.unlock( );
+			}
+		}
 	return;
 }
 int main( int argc, char *argv[ ] ) {
