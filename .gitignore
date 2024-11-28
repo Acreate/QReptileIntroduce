@@ -13,4 +13,4 @@ _deps
 /builder
 /.vs
 /_ReSharper.Caches
-
+CMakePresets.json
