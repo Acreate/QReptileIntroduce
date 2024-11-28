@@ -35,9 +35,6 @@ set( Cmake_Project_Binary_Dir "${CMAKE_BINARY_DIR}" )
 set( Cmake_Project_Binary_Dir "${PROJECT_BINARY_DIR}" )
 set( Cmake_Project_Binary_File_Name "$<TARGET_FILE:tgt>" )
 
-set( cmake_definitions_out "${CMAKE_CURRENT_LIST_DIR}/${cmake_auto_sub_dir_name}/macro/cmake_to_c_cpp_header_env.h" )
-set( cmake_definitions_org "${cmake_definitions_tmp}/cmake_in/cmake_to_c_cpp_header_env.h.in" )
-
 set( ${project_name_include_dir}_include_dir ${CMAKE_CURRENT_LIST_DIR}  PARENT_SCOPE )
 
 include_directories( ${NovelInfo_include_dir} )
@@ -48,7 +45,7 @@ include_directories( ${IOStream_include_dir} )
 include_directories( ${Path_Tool_include_dir} )
 include_directories( ${QtExtendDB_include_dir} )
 # # 合并源码
-list( APPEND ${SRC_LIST} ${SRC_UI} ${QM_FILES} ${SRC_DATA} ${cmake_definitions_out} )
+list( APPEND ${SRC_LIST} ${SRC_UI} ${QM_FILES} ${SRC_DATA}  )
 
 # # qt_add_library( ${PROJECT_NAME} SHARED
 # # 	${SRC_LIST}
@@ -73,16 +70,6 @@ call_qt_deploy( ${PROJECT_NAME}
 	IOStream
 	QtExtendDB
 )
-
-
-get_target_property( project_type_property  ${PROJECT_NAME} TYPE )
-if( "EXECUTABLE" STREQUAL ${project_type_property} )
-	set( project_type_property_is_exe true )
-else()
-	set( project_type_property_is_exe false )
-endif()
-configure_file( "${cmake_definitions_org}" "${cmake_definitions_out}" )
-
 
 
 string( REPLACE "." "_" project_name_include_dir ${PROJECT_NAME} )

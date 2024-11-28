@@ -15,7 +15,6 @@
 #include "dateTime/DateTime.h"
 
 #include "interface/INovelInfo.h"
-#include "auto_generate_files/macro/cmake_to_c_cpp_header_env.h"
 #include "path/Dir.h"
 #include <DB/sqlite/sqliteResult/SQLiteResult.h>
 #include <QMutex>

@@ -29,10 +29,8 @@ include_directories( ${Path_Tool_include_dir} )
 include_directories( ${argParser_include_dir} )
 include_directories( ${QtExtendDB_include_dir} )
 
-set( cmake_definitions_out "${CMAKE_CURRENT_LIST_DIR}/src/${cmake_auto_sub_dir_name}/macro/cmake_to_c_cpp_header_env.h" )
-
 # # 合并源码
-list( APPEND ${SRC_LIST} ${SRC_UI} ${QM_FILES} ${cmake_definitions_out} )
+list( APPEND ${SRC_LIST} ${SRC_UI} ${QM_FILES} )
 
 qt_add_executable( ${PROJECT_NAME}
 	MANUAL_FINALIZATION
@@ -50,18 +48,7 @@ endif()
 
 copy_dir_path( ${PROJECT_NAME} "${CMAKE_CURRENT_LIST_DIR}/res/ini/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/progress/ini/" )
 
-# 设置变量
-set( Cmake_Project_Name "${PROJECT_NAME}" )
-set( Cmake_Project_Binary_Dir "${CMAKE_BINARY_DIR}" )
-set( Cmake_Project_Binary_Dir "${PROJECT_BINARY_DIR}" )
-set( Cmake_Project_Binary_File_Name "$<TARGET_FILE:tgt>" )
 
-# ## 		CMAKE_EXECUTABLE_SUFFIX	.exe	string
-set( cmake_definitions_org "${cmake_definitions_tmp}/cmake_in/cmake_to_c_cpp_header_env.h.in" )
-configure_file( "${cmake_definitions_org}" "${cmake_definitions_out}" )
-
-message( "源 : ${cmake_definitions_org}" )
-message( "目标 : ${cmake_definitions_out}" )
 
 
 call_qt_deploy( ${PROJECT_NAME}
@@ -85,4 +72,3 @@ unset(SRC_LIST)
 unset(SRC_UI)
 unset(SRC_UI)
 unset(QM_FILES)
-unset(cmake_definitions_out)

@@ -9,7 +9,6 @@
 #include <htmls/htmlTools/HtmlWorkThread/HtmlWorkThread.h>
 #include <qguiapplication.h>
 
-#include "auto_generate_files/macro/cmake_to_c_cpp_header_env.h"
 #include <stream/OStream.h>
 #include <qbrush.h>
 
@@ -34,7 +33,7 @@ QDateTime RequestNet::currentTime;
 int RequestNet::expireDay = 2;
 
 RequestNet::RequestNet( QObject *parent ): QObject( parent ), rootUrl( GET_URL ), oStream( nullptr ), iStream( nullptr ), thisOStream( nullptr ), typeUrlMap( nullptr ) {
-	outPath = Cache_Path_Dir;
+	outPath = "Cache_Path_Dir";
 }
 
 RequestNet::~RequestNet( ) {
