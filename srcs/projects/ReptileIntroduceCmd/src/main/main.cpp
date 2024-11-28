@@ -67,6 +67,8 @@ void showHelp( ) {
 		"-p"
 		u8"  参数" "\n\t\t" u8"路径" u8"\n\t  "
 		u8"说明:\n\t\t" u8"指定输出的路径" "\n\t"
+		"-edb" u8"\n\t  "
+		u8"说明:\n\t\t" u8"全部导出" "\n\t"
 		"-ijtenf"
 		u8"  参数" "\n\t\t" u8"路径[,路径1 [,路径2[,....]]]" u8"\n\t  "
 		u8"说明:\n\t\t" u8"指定跳过名称子关键字存放文件路径-完全匹配小说名称，需要配合 -rdb 与 -w、-fkf 选项使用" "\n\t"
@@ -76,6 +78,7 @@ void showHelp( ) {
 		"-ifkf"
 		u8"  参数" "\n\t\t" u8"路径[,路径1 [,路径2[,....]]]" u8"\n\t  "
 		u8"说明:\n\t\t" u8"指定查找关键字存放文件，需要配合 -rdb 与 -w 选项使用" "\n\t"
+		u8"\n\t\t，当指定路径不存在可用文件时候，自动激活 -edb""\n\t""\n\t"
 		"-t"
 		u8"  参数" "\n\t\t" u8"路径" u8"\n\t  "
 		u8"说明:\n\t\t" u8"指定获取的小说类型配置文件路径-单个类型为一行" "\n\t"
@@ -830,7 +833,7 @@ std::shared_ptr< cylHtmlTools::HtmlWorkThreadPool > getDBNovelsInfo( const std::
 			} else {
 				std_cout_mutex.lock( );
 				QString msg( "\n(进程 id : %1)路径 %2 无法加载小说列表" );
-				ErrorCout_MACRO( msg.arg( qApp->applicationPid(  ) ).arg( absoluteFilePath ) );
+				ErrorCout_MACRO( msg.arg( qApp->applicationPid( ) ).arg( absoluteFilePath ) );
 				std_cout_mutex.unlock( );
 			}
 		} );
@@ -874,7 +877,7 @@ std::shared_ptr< cylHtmlTools::HtmlWorkThreadPool > getFindKeyFileKeyToMap( cons
 	auto functionName = __FUNCTION__;
 	resultPool->setIdleTimeCall( [&,functionName]( cylHtmlTools::HtmlWorkThreadPool *html_work_thread_pool, const unsigned long long &workCount, const unsigned long long &currentWorkCount ) {
 		std_cout_mutex.lock( );
-		std::cout << u8"\n"  << u8"(进程 id : " << qApp->applicationPid( ) << u8") " << functionName << " => 剩余工作数[" << workCount << u8"]:正在工作数[" << currentWorkCount << u8"]<<" << std::endl;
+		std::cout << u8"\n" << u8"(进程 id : " << qApp->applicationPid( ) << u8") " << functionName << " => 剩余工作数[" << workCount << u8"]:正在工作数[" << currentWorkCount << u8"]<<" << std::endl;
 		std_cout_mutex.unlock( );
 		std::this_thread::sleep_for( std::chrono::seconds( 2 ) );
 	} );
@@ -974,13 +977,12 @@ std::shared_ptr< cylHtmlTools::HtmlWorkThreadPool > getDBFilterNovelInfo( const 
 			}
 		} );
 	}
-	resultPool->start( 8
-		, [&]( cylHtmlTools::HtmlWorkThreadPool *html_work_thread_pool, const unsigned long long &modWorkCount, const unsigned long long &currentWorkCount ) {
-			std_cout_mutex.lock( );
-			std::cout << u8"(进程 id : " << qApp->applicationPid( ) << u8")小说列表过滤信息 => 剩余工作数[" << modWorkCount << u8"]:正在工作数[" << currentWorkCount << u8"]<<" << std::endl;
-			std_cout_mutex.unlock( );
-			std::this_thread::sleep_for( std::chrono::seconds( 2 ) );
-		} );
+	resultPool->setIdleTimeCall( [&]( cylHtmlTools::HtmlWorkThreadPool *html_work_thread_pool, const unsigned long long &modWorkCount, const unsigned long long &currentWorkCount ) {
+		std_cout_mutex.lock( );
+		std::cout << u8"(进程 id : " << qApp->applicationPid( ) << u8")小说列表过滤信息 => 剩余工作数[" << modWorkCount << u8"]:正在工作数[" << currentWorkCount << u8"]<<" << std::endl;
+		std_cout_mutex.unlock( );
+		std::this_thread::sleep_for( std::chrono::seconds( 2 ) );
+	} );
 	return resultPool;
 }
 
@@ -1138,6 +1140,11 @@ std::shared_ptr< cylHtmlTools::HtmlWorkThreadPool > writeDiskInForNovels( const 
 void dbReadWriteChanger( const std::shared_ptr< cylStd::ArgParser > &arg_parser ) {
 	if( !arg_parser->getOptionValues( "-rdb" ) )
 		return;
+	auto isExportDbAllNovelInfo = arg_parser->getOptionValues( "-edb" );
+	if( !isExportDbAllNovelInfo || !arg_parser->getOptionValues( "-fkf" ) ) {
+		ErrorCout_MACRO( QString(u8"(进程 id :%1) 选项错误，请使用 -edb 或 -fkf 指定的任务（可并行）").arg( qApp->applicationPid( ) ) );
+		return; // 不存在可读数据库
+	}
 	auto exisDbFilePath = getOptionExisFilePath( arg_parser, "-rdb", ".db" );
 	if( exisDbFilePath.size( ) == 0 ) {
 		ErrorCout_MACRO( QString(u8"(进程 id :%1) 数据库路径错误，请检查 -rdb 指定的路径是否正确").arg( qApp->applicationPid( ) ) );
@@ -1242,22 +1249,31 @@ void dbReadWriteChanger( const std::shared_ptr< cylStd::ArgParser > &arg_parser 
 	}
 	// 存储过滤后的小说信息<写入文件路径, 小说列表>
 	NovelDBJob::NovelTypePairVector_Shared novelInfosWriteMap = std::make_shared< NovelDBJob::NovelTypePairVector >( );
-	std::shared_ptr< cylHtmlTools::HtmlWorkThreadPool > filterOrFindNovelThreaPool = nullptr;
-	if( exisFindFilePathMapKey.size( ) == 0 ) { // 全导出。-w 选项的 export_all 目录
-		filterOrFindNovelThreaPool = getDBFilterNovelInfo( novelInfosMap, novelInfosWriteMap, equJumpKeys, subJumpKeys, stdCoutMutex, insterNovelVectosMutex );
-		if( !filterOrFindNovelThreaPool ) {
+	std::shared_ptr< cylHtmlTools::HtmlWorkThreadPool > exportDBNovelInfoAllThreadPool = nullptr;
+	std::shared_ptr< cylHtmlTools::HtmlWorkThreadPool > exportDBNovelInfoFindThreadPool = nullptr;
+	size_t size = exisFindFilePathMapKey.size( );
+	if( isExportDbAllNovelInfo || size == 0 ) { // 全导出。-w 选项的 export_all 目录
+		exportDBNovelInfoAllThreadPool = getDBFilterNovelInfo( novelInfosMap, novelInfosWriteMap, equJumpKeys, subJumpKeys, stdCoutMutex, insterNovelVectosMutex );
+		if( !exportDBNovelInfoAllThreadPool ) {
 			ErrorCout_MACRO( QString("(进程 id :%1) 全导出功能错误。请联系开发人员反馈").arg( qApp->applicationPid( ) ) );
 			return;
 		}
-	} else {// 查找导出。-w 选项的 export_find  目录
-		filterOrFindNovelThreaPool = getDBFindNovelInfo( novelInfosMap, novelInfosWriteMap, equJumpKeys, subJumpKeys, exisFindFilePathMapKey, stdCoutMutex, insterNovelVectosMutex );
-		if( !filterOrFindNovelThreaPool ) {
+		exportDBNovelInfoAllThreadPool->start( );
+	}
+	if( size ) {// 查找导出。-w 选项的 export_find  目录
+		exportDBNovelInfoFindThreadPool = getDBFindNovelInfo( novelInfosMap, novelInfosWriteMap, equJumpKeys, subJumpKeys, exisFindFilePathMapKey, stdCoutMutex, insterNovelVectosMutex );
+		if( !exportDBNovelInfoFindThreadPool ) {
 			ErrorCout_MACRO( QString("(进程 id :%1) 查找功能错误。请联系开发人员反馈").arg( qApp->applicationPid( ) ) );
 			return;
 		}
+		exportDBNovelInfoFindThreadPool->start( );
 	}
-	while( !filterOrFindNovelThreaPool->isOverJob( ) )
-		qApp->processEvents( );
+	if( exportDBNovelInfoAllThreadPool )
+		while( !exportDBNovelInfoAllThreadPool->isOverJob( ) )
+			qApp->processEvents( );
+	if( exportDBNovelInfoFindThreadPool )
+		while( !exportDBNovelInfoFindThreadPool->isOverJob( ) )
+			qApp->processEvents( );
 	if( novelInfosWriteMap->size( ) == 0 ) {
 		ErrorCout_MACRO( QString("(进程 id :%1) 不存在导出的列表。如与信息不匹配，请联系开发人员反馈").arg( qApp->applicationPid( ) ) );
 		return;
