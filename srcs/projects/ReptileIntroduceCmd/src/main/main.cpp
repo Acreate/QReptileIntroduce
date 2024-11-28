@@ -1084,7 +1084,8 @@ std::shared_ptr< cylHtmlTools::HtmlWorkThreadPool > getDBFindNovelInfo( const No
 std::shared_ptr< cylHtmlTools::HtmlWorkThreadPool > writeDiskInForNovels( const NovelDBJob::NovelTypePairVector_Shared &novel_infos_write_map, const std::vector< QString > &exis_legitimate_out_dir_path, QMutex &std_cout_mutex ) {
 
 	std::shared_ptr< cylHtmlTools::HtmlWorkThreadPool > resultPool = std::make_shared< cylHtmlTools::HtmlWorkThreadPool >( );
-	for( auto &outDirPath : exis_legitimate_out_dir_path )
+	for( auto &outDirPath : exis_legitimate_out_dir_path ) {
+		Path::removePath( outDirPath );
 		for( auto &mapIterator : *novel_infos_write_map )
 			resultPool->appendWork( [&std_cout_mutex, mapIterator,outDirPath]( cylHtmlTools::HtmlWorkThread *html_work_thread ) {
 				QString fileLastBody = mapIterator.first; // 路径尾部
@@ -1115,6 +1116,7 @@ std::shared_ptr< cylHtmlTools::HtmlWorkThreadPool > writeDiskInForNovels( const 
 					std_cout_mutex.unlock( );
 				}
 			} );
+	}
 	resultPool->start( 8
 		, [&]( cylHtmlTools::HtmlWorkThreadPool *html_work_thread_pool, const unsigned long long &modWorkCount, const unsigned long long &currentWorkCount ) {
 			std_cout_mutex.lock( );
