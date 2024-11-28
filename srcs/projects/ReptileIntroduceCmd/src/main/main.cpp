@@ -1141,7 +1141,7 @@ void dbReadWriteChanger( const std::shared_ptr< cylStd::ArgParser > &arg_parser 
 	if( !arg_parser->getOptionValues( "-rdb" ) )
 		return;
 	auto isExportDbAllNovelInfo = arg_parser->getOptionValues( "-edb" );
-	if( !isExportDbAllNovelInfo || !arg_parser->getOptionValues( "-fkf" ) ) {
+	if( !isExportDbAllNovelInfo && !arg_parser->getOptionValues( "-fkf" ) ) {
 		ErrorCout_MACRO( QString(u8"(进程 id :%1) 选项错误，请使用 -edb 或 -fkf 指定的任务（可并行）").arg( qApp->applicationPid( ) ) );
 		return; // 不存在可读数据库
 	}
