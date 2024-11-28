@@ -82,8 +82,8 @@ namespace instance_function {
 			.append( "\n-->" );
 		OStream::anyStdCOut( msg, os );
 		auto path = QString( root_path ).append( QDir::separator( ) )
-										.append( day ).append( QDir::separator( ) )
 										.append( dir_name ).append( QDir::separator( ) )
+										.append( day ).append( QDir::separator( ) )
 										.append( url.host( ) ).append( QDir::separator( ) )
 										.append( error_type )
 										.append( '-' )

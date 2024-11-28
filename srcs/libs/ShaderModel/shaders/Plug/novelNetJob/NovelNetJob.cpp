@@ -454,7 +454,7 @@ void NovelNetJob::novelPageInfoRequestEnd( const QString &type_name, const QUrl 
 	QString writeFilePath;
 	writeFilePath.append( outPath ).append( pathSep ).append( u8"txt_out" ).append( pathSep ).append( rootUrl ).append( pathSep ).append( type_name ).append( u8".txt" );
 	Vector_INovelInfoSPtr_Shared infos = typeNovelsMap.at( type_name );
-	if( Path::creatFilePath( writeFilePath ) ) {
+	/*if( Path::creatFilePath( writeFilePath ) ) {
 		auto result = NovelDBJob::identical( *infos );
 		result = NovelDBJob::sort( result );
 		auto list = NovelDBJob::getNovelNames( result );
@@ -471,7 +471,7 @@ void NovelNetJob::novelPageInfoRequestEnd( const QString &type_name, const QUrl 
 			return;
 		}
 	}
-	std::cout << u8"导出数据库失败 : " << writeFilePath.toStdString( ) << std::endl;
+	std::cout << u8"导出数据库失败 : " << writeFilePath.toStdString( ) << std::endl;*/
 	interfaceThisPtr->novelTypeEnd( root_url.toStdWString( ), type_name.toStdWString( ), url.toString( ).toStdWString( ), *infos );
 	releaseMemory( );
 
