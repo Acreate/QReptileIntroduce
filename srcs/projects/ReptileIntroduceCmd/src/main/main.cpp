@@ -45,65 +45,68 @@ void showVersion( std::shared_ptr< cylStd::ArgParser > &args ) {
 	std::cout << "=======================\n";
 	std::cout << "------------" << std::endl;
 }
-
+/// <summary>
+/// 显示帮助信息
+/// </summary>
+void showHelp( ) {
+	std::cout << "========="
+		"\n"
+		u8"帮助:" "\n\t"
+		"-name" u8"\n\t  "
+		u8"说明:\n\t\t" u8"显示软件帮助信息" "\n\t"
+		"-h" u8"\n\t  "
+		u8"说明:\n\t\t" u8"显示选项帮助信息" "\n\t"
+		"-l" u8"  参数"
+		"\n\t\t" u8"插件路径[,插件路径1[,插件路径2[,...]]]" u8"\n\t  "
+		u8"说明:\n\t\t" u8"加载文件到该程序" "\n\t"
+		"-s"
+		u8"  参数" "\n\t\t" u8"插件路径[,插件路径1[,插件路径2[,...]]]" u8"\n\t  "
+		u8"说明:\n\t\t" u8"开始该文件的工作程序" "\n\t"
+		"-as" u8"\n\t  "
+		u8"说明:\n\t\t" u8"开始所有已加载的插件工作程序" "\n\t"
+		"-p"
+		u8"  参数" "\n\t\t" u8"路径" u8"\n\t  "
+		u8"说明:\n\t\t" u8"指定输出的路径" "\n\t"
+		"-ijtenf"
+		u8"  参数" "\n\t\t" u8"路径[,路径1 [,路径2[,....]]]" u8"\n\t  "
+		u8"说明:\n\t\t" u8"指定跳过名称子关键字存放文件路径-完全匹配小说名称，需要配合 -rdb 与 -w、-fkf 选项使用" "\n\t"
+		"-ijtsnf"
+		u8"  参数" "\n\t\t" u8"路径[,路径1 [,路径2[,....]]]" u8"\n\t  "
+		u8"说明:\n\t\t" u8"指定跳过名称子关键字存放文件路径-段内匹配小说名称，需要配合 -rdb 与 -w、-fkf 选项使用" "\n\t"
+		"-ifkf"
+		u8"  参数" "\n\t\t" u8"路径[,路径1 [,路径2[,....]]]" u8"\n\t  "
+		u8"说明:\n\t\t" u8"指定查找关键字存放文件，需要配合 -rdb 与 -w 选项使用" "\n\t"
+		"-t"
+		u8"  参数" "\n\t\t" u8"路径" u8"\n\t  "
+		u8"说明:\n\t\t" u8"指定获取的小说类型配置文件路径-单个类型为一行" "\n\t"
+		"-rdb" 
+		u8"  参数" "\n\t\t" u8"路径[,路径1 [,路径2[,....]]]" u8"\n\t  "
+		u8"说明:\n\t\t" u8"导出数据库""\n\t"
+		"-fkrrlkse" 
+		u8"  参数" "\n\t\t" u8"路径[,路径1 [,路径2[,....]]]" u8"\n\t  "
+		u8"说明:\n\t\t" u8"获取删除目标的行关键字文件，必须存在有效 -fkrrlkd 选项""\n\t"
+		u8"\n\t\t-fkrrlkss 或 -fkrrlkse 允许同时使用""\n\t"
+		"-fkrrlkss" 
+		u8"  参数" "\n\t\t" u8"路径[,路径1 [,路径2[,....]]]" u8"\n\t  "
+		u8"说明:\n\t\t" u8"获取删除目标的行关键字文件，必须存在有效 -fkrrlkd 选项""\n\t"
+		u8"\n\t\t-fkrrlkss 或 -fkrrlkse 允许同时使用""\n\t"
+		"-fkrrlkd"
+		u8"  参数" "\n\t\t" u8"路径[,路径1 [,路径2[,....]]]" u8"\n\t  "
+		u8"说明:\n\t\t" u8"处理删除目标的行关键字文件，必须存在有效 -fkrrlkss 或 -fkrrlkse 选项"
+		u8"\n\t\t-fkrrlkss 或 -fkrrlkse 允许同时使用""\n\t"
+		"-ex" 
+		u8"  参数" "\n\t\t" u8"天数" u8"\n\t  "
+		u8"说明:\n\t\t" u8"校验过期，将会删除过期小说"
+		"\n"
+		"=========" << std::endl;
+}
 /// <summary>
 /// 输出帮助信息
 /// </summary>
 /// <param name="args">选项解析对象</param>
 void showHelp( std::shared_ptr< cylStd::ArgParser > &args ) {
-	if( args->getOptionValues( "-h" ) || args->getKeys( )->size( ) == 0 )
-		std::cout << "========="
-			"\n"
-			u8"帮助:" "\n\t"
-			"-l" u8"  参数"
-			"\n\t\t" u8"插件路径[,插件路径1[,插件路径2[,...]]]" u8"\n\t  "
-			u8"说明:\n\t\t" u8"加载文件到该程序" "\n\t"
-			"-s"
-			u8"  参数" "\n\t\t" u8"插件路径[,插件路径1[,插件路径2[,...]]]" u8"\n\t  "
-			u8"说明:\n\t\t" u8"开始该文件的工作程序" "\n\t"
-			"-as" u8"\n\t  "
-			u8"说明:\n\t\t" u8"开始所有已加载的插件工作程序" "\n\t"
-			"-p"
-			u8"  参数" "\n\t\t" u8"路径" u8"\n\t  "
-			u8"说明:\n\t\t" u8"指定输出的路径" "\n\t"
-			"-isn"
-			u8"  参数" "\n\t\t" u8"关键字[,关键字1 [,关键字2[,....]]]" u8"\n\t  "
-			u8"说明:\n\t\t" u8"指定跳过名称子字符串关键字，需要配合 -rdb 与 -w 选项使用" "\n\t"
-			"-isnf"
-			u8"  参数" "\n\t\t" u8"路径[,路径1 [,路径2[,....]]]" u8"\n\t  "
-			u8"说明:\n\t\t" u8"指定跳过名称子字符串关键字存放文件" "\n\t"
-			"-ien" u8"  参数" "\n\t\t" u8"关键字[,关键字1 [,关键字2[,....]]]" u8"\n\t  "
-			u8"说明:\n\t\t" u8"指定跳过名称完全匹配关键字，需要配合 -rdb 与 -w 选项使用" "\n\t"
-			"-ienf"
-			u8"  参数" "\n\t\t" u8"路径[,路径1 [,路径2[,....]]]" u8"\n\t  "
-			u8"说明:\n\t\t" u8"指定跳过名称子完全匹配关键字存放文件，需要配合 -rdb 与 -w 选项使用" "\n\t"
-			"-ifk"
-			u8"  参数" "\n\t\t" u8"关键字[,关键字1 [,关键字2[,....]]]" u8"\n\t  "
-			u8"说明:\n\t\t" u8"指定查找关键字，需要配合 -rdb 与 -w 选项使用" "\n\t"
-			"-ifkf"
-			u8"  参数" "\n\t\t" u8"路径[,路径1 [,路径2[,....]]]" u8"\n\t  "
-			u8"说明:\n\t\t" u8"指定查找关键字存放文件，需要配合 -rdb 与 -w 选项使用" "\n\t"
-			"-t"
-			u8"  参数" "\n\t\t" u8"路径" u8"\n\t  "
-			u8"说明:\n\t\t" u8"指定获取的小说类型配置文件路径-单个类型为一行" "\n\t"
-			"-url" u8"\n\t  "
-			u8"说明:\n\t\t" u8"输出加载的插件指向的网络" "\n\t"
-			"-name" u8"\n\t  "
-			u8"说明:\n\t\t" u8"输出程序名称""\n\t"
-			"-edb" u8"\n\t  "
-			u8"  参数" "\n\t\t" u8"路径[,路径1 [,路径2[,....]]]" u8"\n\t  "
-			u8"说明:\n\t\t" u8"导出数据库""\n\t"
-			"-fkrrlks" u8"\n\t  "
-			u8"  参数" "\n\t\t" u8"路径[,路径1 [,路径2[,....]]]" u8"\n\t  "
-			u8"说明:\n\t\t" u8"获取删除目标的行关键字文件，必须存在有效 -fkrrlkd 选项""\n\t"
-			"-fkrrlkd" u8"\n\t  "
-			u8"  参数" "\n\t\t" u8"路径[,路径1 [,路径2[,....]]]" u8"\n\t  "
-			u8"说明:\n\t\t" u8"处理删除目标的行关键字文件，必须存在有效 -fkrrlks 选项""\n\t"
-			"-ex" u8"\n\t  "
-			u8"  参数" "\n\t\t" u8"天数" u8"\n\t  "
-			u8"说明:\n\t\t" u8"校验过期，将会删除过期小说"
-			"\n"
-			"=========" << std::endl;
+	if( args->getOptionValues( "-h" ) )
+		showHelp( );
 }
 
 /// <summary>
@@ -634,6 +637,7 @@ void unmapRemoveIfEquKeys( std::unordered_map< QString, std::vector< QString > >
 		for( auto &key : vector )
 			if( !vectorHasValue( source_equ_keys, key ) )
 				newBuff.emplace_back( key );
+		newBuff = vectorStrAdjustSubStr( newBuff );
 		// 不相等，则需要更新
 		if( newBuff.size( ) != vector.size( ) )
 			if( writeFile( iter.first, QIODeviceBase::ReadWrite | QIODeviceBase::Truncate, newBuff, "\n" ) )
@@ -1270,6 +1274,13 @@ int main( int argc, char *argv[ ] ) {
 	std::wcout.imbue( locale );
 	QCoreApplication application( argc, argv ); // 初始化程序
 	std::shared_ptr< cylStd::ArgParser > argParser = cylStd::ArgParser::parser( argc, argv ); // 命令行参数解析对象
+	auto pairs = argParser->getPairs( );
+	size_t pairsSize = pairs.size( );
+	if( pairsSize == 1 ) {
+		ErrorCout_MACRO( QString(u8"(%1) 没有发生任何有效的行为，请检查选项是否正确") );
+		showHelp( );
+		return 0;
+	}
 	// 显示名称
 	showAppName( argParser );
 	// 显示版本信息
