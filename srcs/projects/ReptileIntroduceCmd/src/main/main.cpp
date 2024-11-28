@@ -869,6 +869,15 @@ void dbReadWriteChanger( const std::shared_ptr< cylStd::ArgParser > &arg_parser 
 	readExisFindFileThreadPool.appendWork( [&exisFindFilePathMapKey, &arg_parser]( cylHtmlTools::HtmlWorkThread *html_work_thread ) {
 		// 查找关键字配置文件
 		auto exisFindFilePath = getOptionExisFilePath( arg_parser, "-fkf" );
+		auto pairs = getFileText( exisFindFilePath );
+		for( auto &iter : pairs ) {
+			auto stringList = iter.second.split( "\n" );
+			std::vector< QString > strBuff;
+			for( auto &str : stringList )
+				if( !removeAllSpace( str ).isEmpty( ) )
+					strBuff.emplace_back( str.toUpper( ) );
+			exisFindFilePathMapKey.insert_or_assign( iter.first, vectorStrLenSort( strBuff ) );
+		}
 	} );
 	// 完全匹配跳过处理线程池
 	cylHtmlTools::HtmlWorkThreadPool readExisJumptEquTitleFileThreadPool;
@@ -878,7 +887,7 @@ void dbReadWriteChanger( const std::shared_ptr< cylStd::ArgParser > &arg_parser 
 		// 获取跳过完全匹配标题关键字配置文件选项路径
 		auto exisFindJumptEquTitleFilePath = getOptionExisFilePath( arg_parser, "-ijtenf" );
 		// 切分跳过完全匹配关键字
-		auto exisFindJumpEquTitleFileKeys = getFileTextSplit( exisFindJumptEquTitleFilePath, { "\n" } , true);
+		auto exisFindJumpEquTitleFileKeys = getFileTextSplit( exisFindJumptEquTitleFilePath, { "\n" }, true );
 		// 长度排序
 		equJumpKeys = vectorStrLenSort( exisFindJumpEquTitleFileKeys );
 
@@ -1002,7 +1011,65 @@ void dbReadWriteChanger( const std::shared_ptr< cylStd::ArgParser > &arg_parser 
 		while( !readBDFileThreadPool.isOverJob( ) )
 			qApp->processEvents( );
 	} else {// 查找导出。-w 选项的 export_find  目录
-		// todo : 查找匹配
+
+		for( auto &iter : *novelInfosMap ) {
+			readBDFileThreadPool.appendWork( [iter,&novelInfosWriteMap,&equJumpKeys,&subJumpKeys,&insterNovelVectosMutex]( cylHtmlTools::HtmlWorkThread *html_work_thread ) {
+				QFileInfo orgDbFilePathInfo( iter.first );
+				// 中间路径(-w选项路径/中间路径/小说类型.txt)
+				QString midDirPath = QString( u8"%1%2%3%2" ).arg( u8"export_all" ).arg( QDir::separator( ) ).arg( orgDbFilePathInfo.fileName( ) );
+				std::unordered_map< QString, NovelDBJob::NovelInfoVector_Shared > typeMap;
+				// 遍历小说
+				interfacePlugsType::HtmlDocString name;
+				for( auto &novel : *iter.second ) {
+					if( novel->getNovelName( &name ) ) {
+						auto qstrName = QString::fromStdWString( name );
+						qstrName = qstrName.toUpper( );
+						for( auto &compEquTitle : equJumpKeys ) {
+							if( compEquTitle == qstrName ) {
+								qstrName = "";
+								break;
+							}
+						}
+						if( qstrName.isEmpty( ) )
+							continue;
+						for( auto &compSubTitle : subJumpKeys ) {
+							if( qstrName.indexOf( compSubTitle ) != -1 ) {
+								qstrName = "";
+								break;
+							}
+						}
+						if( qstrName.isEmpty( ) || novel->getNovelTypeName( &name ) == 0 )
+							continue;
+						qstrName = QString::fromStdWString( name );
+						qstrName = midDirPath + qstrName + u8".txt";
+						auto iterator = typeMap.begin( );
+						auto end = typeMap.end( );
+
+						insterNovelVectosMutex.lock( );
+						for( ; iterator != end; ++iterator )
+							if( iterator->first == qstrName ) {
+								iterator->second->emplace_back( novel );
+								break;
+							}
+						if( iterator == end ) {
+							auto vectorShared = std::make_shared< NovelDBJob::NovelInfoVector >( );
+							vectorShared->emplace_back( novel );
+							typeMap.insert_or_assign( qstrName, vectorShared );
+						}
+						insterNovelVectosMutex.unlock( );
+					}
+				}
+			} );
+		}
+		readBDFileThreadPool.start( 8
+			, [&]( cylHtmlTools::HtmlWorkThreadPool *html_work_thread_pool, const unsigned long long &modWorkCount, const unsigned long long &currentWorkCount ) {
+				stdCoutMutex.lock( );
+				std::cout << u8"小说列表过滤信息 => 剩余工作数[" << modWorkCount << u8"]:正在工作数[" << currentWorkCount << u8"]<<" << std::endl;
+				stdCoutMutex.unlock( );
+				std::this_thread::sleep_for( std::chrono::seconds( 2 ) );
+			} );
+		while( !readBDFileThreadPool.isOverJob( ) )
+			qApp->processEvents( );
 	}
 
 
