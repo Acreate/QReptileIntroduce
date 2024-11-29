@@ -43,9 +43,9 @@ size_t INovelInfo::getNovelLastItem( interfacePlugsType::HtmlDocString *result_l
 	*result_last_item = this->lastItem;
 	return result_last_item->size( );
 }
-size_t INovelInfo::getNovelAttach( void *&result_additional_data ) {
-	result_additional_data = this->additionalData;
-	return result_additional_data != nullptr;
+size_t INovelInfo::getNovelAttach( interfacePlugsType::HtmlDocString *result_additional_data ) {
+	*result_additional_data = this->additionalData;
+	return result_additional_data->size( );
 }
 size_t INovelInfo::getNovelUrlAtPageLocation( interfacePlugsType::HtmlDocString *result_type_page_url ) {
 	*result_type_page_url = this->typePageUrl;
@@ -85,7 +85,7 @@ void INovelInfo::setNovelUrl( const HtmlDocString &url ) {
 void INovelInfo::setNovelLastItem( const HtmlDocString &last_item ) {
 	this->lastItem = last_item;
 }
-void INovelInfo::setNovelAttach( void *result_additional_data ) {
+void INovelInfo::setNovelAttach( interfacePlugsType::HtmlDocString &result_additional_data ) {
 	this->additionalData = result_additional_data;
 }
 void INovelInfo::setNovelUrlAtPageLocation( const HtmlDocString &type_page_url ) {

@@ -19,11 +19,11 @@
 #include <DB/dbInterface/I_DB.h>
 #include <QSqlQuery>
 
-#include "../NovelInfo/NovelInfo.h"
 #include "dateTime/DateTime.h"
 
 #include <interface/instance_function.h>
 #include "../instance_function/NovelNodeXPathInfo.h"
+#include "interface/INovelInfo.h"
 using namespace interfacePlugsType;
 using namespace cylHtmlTools;
 using namespace instance_function;
@@ -224,7 +224,7 @@ Vector_INovelInfoSPtr RequestNet::formHtmlGetTypePageNovels( const interfacePlug
 				//////////// 名称 xpath
 				auto contentText = element->getNodeIncludeContentText( );
 				if( contentText )
-					novelInfoBuffPtr->name = *contentText;
+					novelInfoBuffPtr->novelName = *contentText;
 
 				//////////// 更新时间 xpath
 				xpath = cylHtmlTools::XPath( novelNodeXPathInfo.formTypePageGetNovelUpdateTimeXpath );
@@ -282,7 +282,7 @@ Vector_INovelInfoSPtr RequestNet::formHtmlGetTypePageNovels( const interfacePlug
 				// 成功获取即可输出
 				QString outMsg( u8"[%1]小说(%2):url(%3) -> 解析成功 [%4]" );
 				++novelCount;
-				outMsg = outMsg.arg( novelInfoBuffPtr->typeName ).arg( novelInfoBuffPtr->name ).arg( novelInfoBuffPtr->url ).arg( novelCount );
+				outMsg = outMsg.arg( novelInfoBuffPtr->typeName ).arg( novelInfoBuffPtr->novelName ).arg( novelInfoBuffPtr->url ).arg( novelCount );
 				OStream::anyStdCOut( outMsg, thisOStream );
 				novelInfoBuffPtr = std::make_shared< NovelInfo >( );
 			} else {

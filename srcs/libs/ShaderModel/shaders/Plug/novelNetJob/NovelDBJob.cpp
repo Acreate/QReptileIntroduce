@@ -430,8 +430,7 @@ size_t NovelDBJob::writeDB( OStream *thisOStream, const QString &outPath, const 
 					novel->getNovelUpdateTime( &novelUpdateTime );
 					novel->getNovelUpdateTimeFormat( &novelFormat );
 					novel->getNovelLastItem( &novelLastItem );
-					void *ptr = &novelAdditionalData;
-					novel->getNovelAttach( ptr );
+					novel->getNovelAttach( &novelAdditionalData );
 					sqlQuery->bindValue( ":updateTime", QString::fromStdWString( novelUpdateTime ) );
 					sqlQuery->bindValue( ":format", QString::fromStdWString( novelFormat ) );
 					sqlQuery->bindValue( ":lastRequestTime", requestTime );
@@ -458,8 +457,7 @@ size_t NovelDBJob::writeDB( OStream *thisOStream, const QString &outPath, const 
 					novel->getNovelAuthor( &novelAuthor );
 					novel->getNovelUrl( &novelUrl );
 					novel->getNovelLastItem( &novelLastItem );
-					void *ptr = &novelAdditionalData;
-					novel->getNovelAttach( ptr );
+					novel->getNovelAttach(  &novelAdditionalData );
 					novel->getNovelUrlAtPageLocation( &novelTypePageUrl );
 					novel->getNovelTypeName( &novelTypeName );
 

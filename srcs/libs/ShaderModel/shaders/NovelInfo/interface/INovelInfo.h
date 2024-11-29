@@ -7,7 +7,8 @@
 
 namespace interfacePlugsType {
 	class NOVELINFO_EXPORT INovelInfo {
-		void *additionalData = nullptr;
+	public:
+		interfacePlugsType::HtmlDocString additionalData;
 		interfacePlugsType::HtmlDocString author;
 		interfacePlugsType::HtmlDocString format;
 		interfacePlugsType::HtmlDocString info;
@@ -90,7 +91,7 @@ namespace interfacePlugsType {
 		/// </summary>
 		/// <param name="result_additional_data">直线附加信息的指针，如果为 nullptr 则不存在</param>
 		/// <returns>小说附加信息的长度，如果为 0， 并且 result_additional_data 不等于 nullptr。则指向的内容存在，但为空</returns>
-		virtual size_t getNovelAttach( void *&result_additional_data );
+		virtual size_t getNovelAttach( HtmlDocString *result_additional_data );
 		/// <summary>
 		/// 获取小说解析的页面所在地址
 		/// </summary>
@@ -148,7 +149,7 @@ namespace interfacePlugsType {
 		/// <summary>
 		/// 设置小说附加信息
 		/// </summary>
-		virtual void setNovelAttach( void *result_additional_data );
+		virtual void setNovelAttach( interfacePlugsType::HtmlDocString &result_additional_data );
 		/// <summary>
 		/// 设置小说解析的页面所在地址
 		/// </summary>
@@ -165,9 +166,18 @@ namespace interfacePlugsType {
 		/// <param name="result_serializable_html_doc_string">字符串返回</param>
 		/// <returns>字符串大小</returns>
 		virtual size_t objToHtmlDocString( HtmlDocString *result_serializable_html_doc_string );
+		/// <summary>
+		/// 清理对象
+		/// </summary>
+		virtual void clear( ) {
+			additionalData = author = format = info = lastItem =
+				lastRequestTime = lastRequestTimeFormat =
+				novelName = rootUrl = typeName = typePageUrl = updateTime = url = L"";
+		}
 
 	};
 }
 
 
+using NovelInfo = interfacePlugsType::INovelInfo ;
 #endif // INOVELINFO_H_H_HEAD__FILE__
