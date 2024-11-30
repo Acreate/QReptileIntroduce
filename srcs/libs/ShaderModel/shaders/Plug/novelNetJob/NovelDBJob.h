@@ -227,7 +227,7 @@ public:// - 静态方法
 	/// <param name="novel_keys_map">追加的内容附加信息</param>
 	/// <param name="write_path">写入路径-匹配 novel_keys_map 路径key</param>
 	/// <returns>合并后的小说列表</returns>
-	static interfacePlugsType::Vector_INovelInfoSPtr_Shared inductionNovelsForNameAndAuthor( const interfacePlugsType::Vector_INovelInfoSPtr &novel_info_vector, const std::unordered_map< interfacePlugsType::INovelInfo_Shared, std::unordered_map< interfacePlugsType::HtmlDocString, std::vector< interfacePlugsType::HtmlDocString > > > &novel_keys_map, const interfacePlugsType::HtmlDocString &write_path );
+	static interfacePlugsType::Vector_INovelInfoSPtr_Shared inductionNovelsForNameAndAuthor( const interfacePlugsType::Vector_INovelInfoSPtr &novel_info_vector, const std::unordered_map< interfacePlugsType::HtmlDocString, std::unordered_map< interfacePlugsType::INovelInfo_Shared, std::vector< interfacePlugsType::HtmlDocString > > > &novel_keys_map, const interfacePlugsType::HtmlDocString &write_path );
 
 	/// <summary>
 	/// 整理列表到小说信息，当名称与作者一致时，合并到新小说当中，并且返回合并后的小说内容(小说)

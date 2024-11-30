@@ -879,7 +879,7 @@ std::shared_ptr< cylHtmlTools::HtmlWorkThreadPool > getFindKeyFileKeyToMap( cons
 			inster_read_find_key_map_mutex.lock( );
 			auto begin = save_obj.begin( );
 			auto end = save_obj.end( );
-			auto baseName = QFileInfo( iter.first ).baseName( );
+			auto baseName = getFileBaseName( iter.first );
 			for( ; begin != end; ++begin ) {
 				if( begin->first == baseName ) {
 					std::vector< interfacePlugsType::HtmlDocString > &saveVector = begin->second;
@@ -1083,7 +1083,7 @@ std::shared_ptr< cylHtmlTools::HtmlWorkThreadPool > getDBFindNovelInfo(
 	QMutex &merge_find_keys_novel_infos_map_mutex,
 	NovelDBJob::NovelTypePairVector_Shared &merge_find_keys_novel_infos_map,
 	QMutex &novel_keys_map_mutex,
-	std::unordered_map< interfacePlugsType::INovelInfo_Shared, std::unordered_map< interfacePlugsType::HtmlDocString, std::vector< interfacePlugsType::HtmlDocString > > > &novel_keys_map ) {
+	std::unordered_map< interfacePlugsType::HtmlDocString, std::unordered_map< interfacePlugsType::INovelInfo_Shared, std::vector< interfacePlugsType::HtmlDocString > > > &novel_keys_map ) {
 
 	std::shared_ptr< cylHtmlTools::HtmlWorkThreadPool > resultPool = std::make_shared< cylHtmlTools::HtmlWorkThreadPool >( );
 	const QString firstDirName = u8"export_find"; // 开始名称
@@ -1148,59 +1148,72 @@ std::shared_ptr< cylHtmlTools::HtmlWorkThreadPool > getDBFindNovelInfo(
 							if( keyVectorIterator != keyVectorEnd ) {
 
 								QString keyFile = findSubStrMapIterator.first;
-								auto keyFileToHtmDocString = QFileInfo( keyFile ).baseName( ).toStdWString( );
+								auto keyFileToHtmDocString = getFileBaseName( keyFile ).toStdWString( );
+								cylHtmlTools::HtmlStringTools::removeAllSpace( keyFileToHtmDocString );
 								// 匹配关键字
 								novel_keys_map_mutex.lock( );
 
 								auto novelKeyIterator = novel_keys_map.begin( );
 								auto novelKeyEnd = novel_keys_map.end( );
+
 								for( ; novelKeyIterator != novelKeyEnd; ++novelKeyIterator )
-									if( novelKeyIterator->first->url == novel->url ) {
+									if( cylHtmlTools::HtmlStringTools::equHtmlString( novelKeyIterator->first, keyFileToHtmDocString ) ) {
 										auto &unMap = novelKeyIterator->second;
 										auto unMapIterator = unMap.begin( );
 										auto unMapEnd = unMap.end( );
 										for( ; unMapIterator != unMapEnd; ++unMapIterator ) {
-											if( cylHtmlTools::HtmlStringTools::equHtmlString( unMapIterator->first, keyFileToHtmDocString ) ) {
+											if( unMapIterator->first == novel ) {
 												unMapIterator->second.emplace_back( key );
 												break;
 											}
 										}
 										if( unMapIterator != unMapEnd )
 											break;
+										auto vector = std::vector< interfacePlugsType::HtmlDocString >( );
+										vector.emplace_back( key );
+										novelKeyIterator->second.emplace( novel, vector );
+										novelKeyIterator = novelKeyEnd;
+										break;
 									}
 								if( novelKeyIterator == novelKeyEnd ) {
 									auto vector = std::vector< interfacePlugsType::HtmlDocString >( );
 									vector.emplace_back( key );
-									auto unMap = std::unordered_map< interfacePlugsType::HtmlDocString, std::vector< interfacePlugsType::HtmlDocString > >( );
-									unMap.insert_or_assign( keyFileToHtmDocString, vector );
-									novel_keys_map.insert_or_assign( novel, unMap );
+									auto unMap = std::unordered_map< interfacePlugsType::INovelInfo_Shared, std::vector< interfacePlugsType::HtmlDocString > >( );
+									unMap.emplace( novel, vector );
+									novel_keys_map.emplace( keyFileToHtmDocString, unMap );
 								}
 								novel_keys_map_mutex.unlock( );
 
-								keyFileToHtmDocString = QFileInfo( QString( u8"%1.txt" ).arg( firstDirName ) ).baseName( ).toStdWString( );
+								keyFileToHtmDocString = getFileBaseName( QString( u8"%1.txt" ).arg( firstDirName ) ).toStdWString( );
+								cylHtmlTools::HtmlStringTools::removeAllSpace( keyFileToHtmDocString );
 								novel_keys_map_mutex.lock( );
 								novelKeyIterator = novel_keys_map.begin( );
 								novelKeyEnd = novel_keys_map.end( );
 								for( ; novelKeyIterator != novelKeyEnd; ++novelKeyIterator )
-									if( novelKeyIterator->first->url == novel->url ) {
+									if( cylHtmlTools::HtmlStringTools::equHtmlString( novelKeyIterator->first, keyFileToHtmDocString ) ) {
 										auto &unMap = novelKeyIterator->second;
 										auto unMapIterator = unMap.begin( );
 										auto unMapEnd = unMap.end( );
 										for( ; unMapIterator != unMapEnd; ++unMapIterator ) {
-											if( cylHtmlTools::HtmlStringTools::equHtmlString( unMapIterator->first, keyFileToHtmDocString ) ) {
+											if( unMapIterator->first == novel ) {
 												unMapIterator->second.emplace_back( key );
 												break;
 											}
 										}
 										if( unMapIterator != unMapEnd )
 											break;
+										auto vector = std::vector< interfacePlugsType::HtmlDocString >( );
+										vector.emplace_back( key );
+										novelKeyIterator->second.emplace( novel, vector );
+										novelKeyIterator = novelKeyEnd;
+										break;
 									}
 								if( novelKeyIterator == novelKeyEnd ) {
 									auto vector = std::vector< interfacePlugsType::HtmlDocString >( );
 									vector.emplace_back( key );
-									auto unMap = std::unordered_map< interfacePlugsType::HtmlDocString, std::vector< interfacePlugsType::HtmlDocString > >( );
-									unMap.insert_or_assign( keyFileToHtmDocString, vector );
-									novel_keys_map.insert_or_assign( novel, unMap );
+									auto unMap = std::unordered_map< interfacePlugsType::INovelInfo_Shared, std::vector< interfacePlugsType::HtmlDocString > >( );
+									unMap.emplace( novel, vector );
+									novel_keys_map.emplace( keyFileToHtmDocString, unMap );
 								}
 								novel_keys_map_mutex.unlock( );
 
@@ -1313,7 +1326,7 @@ void writeDisk( QMutex &disk_mute,
 	size_t &write_novel_count,
 	const NovelDBJob::NovelInfoVector &infos,
 	const std::string &callFunctionName,
-	const std::unordered_map< interfacePlugsType::INovelInfo_Shared, std::unordered_map< interfacePlugsType::HtmlDocString, std::vector< interfacePlugsType::HtmlDocString > > > *novel_keys_map = nullptr ) {
+	const std::unordered_map< interfacePlugsType::HtmlDocString, std::unordered_map< interfacePlugsType::INovelInfo_Shared, std::vector< interfacePlugsType::HtmlDocString > > > *novel_keys_map = nullptr ) {
 	disk_mute.lock( );
 	bool isCreate = Path::creatFilePath( all_file_path_name_name );
 	disk_mute.unlock( );
@@ -1406,7 +1419,7 @@ std::shared_ptr< cylHtmlTools::HtmlWorkThreadPool > writeDiskInForNovels( const 
 /// <returns>任务线程池</returns>
 std::shared_ptr< cylHtmlTools::HtmlWorkThreadPool > writeDiskInForInductionNovels(
 	const std::vector< QString > &exis_legitimate_out_dir_path,
-	const std::unordered_map< interfacePlugsType::INovelInfo_Shared, std::unordered_map< interfacePlugsType::HtmlDocString, std::vector< interfacePlugsType::HtmlDocString > > > &novel_keys_map,
+	const std::unordered_map< interfacePlugsType::HtmlDocString, std::unordered_map< interfacePlugsType::INovelInfo_Shared, std::vector< interfacePlugsType::HtmlDocString > > > &novel_keys_map,
 	NovelDBJob::NovelTypePairVector_Shared &novel_type_pair_vector_shared,
 	QMutex &std_cout_mutex,
 	QMutex &disk_mute,
@@ -1566,7 +1579,7 @@ void dbReadWriteChanger( const std::shared_ptr< cylStd::ArgParser > &arg_parser 
 	// 小说查找 key 匹配的映射对象操作锁
 	QMutex novelKeysMapMutex;
 	// 小说查找 key 匹配的映射
-	std::unordered_map< interfacePlugsType::INovelInfo_Shared, std::unordered_map< interfacePlugsType::HtmlDocString, std::vector< interfacePlugsType::HtmlDocString > > > novelKeysMap;
+	std::unordered_map< interfacePlugsType::HtmlDocString, std::unordered_map< interfacePlugsType::INovelInfo_Shared, std::vector< interfacePlugsType::HtmlDocString > > > novelKeysMap;
 	// 小说查找任务线程池对象
 	std::shared_ptr< cylHtmlTools::HtmlWorkThreadPool > exportDBNovelInfoFindThreadPool = nullptr;
 	if( size ) {// 查找导出。-w 选项的 export_find  目录

@@ -964,14 +964,39 @@ QString NovelDBJob::jionNovels( const interfacePlugsType::Vector_INovelInfoSPtr 
 		result = result + jon + QString::number( index + 1 ) + countQString + vector.at( index ) + jon;
 	return result;
 }
-interfacePlugsType::Vector_INovelInfoSPtr_Shared NovelDBJob::inductionNovelsForNameAndAuthor( const interfacePlugsType::Vector_INovelInfoSPtr &novel_info_vector, const std::unordered_map< interfacePlugsType::INovelInfo_Shared, std::unordered_map< interfacePlugsType::HtmlDocString, std::vector< interfacePlugsType::HtmlDocString > > > &novel_keys_map, const interfacePlugsType::HtmlDocString &write_path ) {
+
+/// <summary>
+/// 获取文件的基本名称
+/// </summary>
+/// <param name="filePathInfo">文件路径信息</param>
+/// <returns>文件的基本名称</returns>
+QString getFileBaseName( const QFileInfo &filePathInfo ) {
+	QString absoluteDirPath = filePathInfo.absoluteDir( ).absolutePath( );
+	QString absoluteFilePath = filePathInfo.absoluteFilePath( );
+	QString fileName = absoluteFilePath.remove( 0, absoluteDirPath.size( ) + 1 );
+	qsizetype indexOf = fileName.lastIndexOf( "." );
+	if( indexOf > 0 )
+		return fileName.slice( 0, indexOf );
+	return fileName;
+}
+
+
+/// <summary>
+/// 获取文件的基本名称
+/// </summary>
+/// <param name="filePathInfo">文件路径信息</param>
+/// <returns>文件的基本名称</returns>
+QString getFileBaseName( const QString &filePathInfo ) {
+	return getFileBaseName( QFileInfo( filePathInfo ) );
+}
+interfacePlugsType::Vector_INovelInfoSPtr_Shared NovelDBJob::inductionNovelsForNameAndAuthor( const interfacePlugsType::Vector_INovelInfoSPtr &novel_info_vector, const std::unordered_map< interfacePlugsType::HtmlDocString, std::unordered_map< interfacePlugsType::INovelInfo_Shared, std::vector< interfacePlugsType::HtmlDocString > > > &novel_keys_map, const interfacePlugsType::HtmlDocString &write_path ) {
 	interfacePlugsType::Vector_INovelInfoSPtr_Shared vectorINovelInfoSPtr = std::make_shared< interfacePlugsType::Vector_INovelInfoSPtr >( );
 	interfacePlugsType::Vector_INovelInfoSPtr overNovels; // 已经处理完毕的小说列表
 	interfacePlugsType::Vector_INovelInfoSPtr notProcessedNovels = novel_info_vector; // 未处理小说列表
 	interfacePlugsType::Vector_INovelInfoSPtr notProcessedNovelsBuff; // 未处理小说列表-临时存储
 	auto inputNovelMax = novel_info_vector.size( );
 	size_t startIndex = 1; // 首次使用 notProcessedNovels
-	auto wirtNormalPath = QFileInfo( QString::fromStdWString( write_path ) ).baseName( ).toStdWString( );
+	auto wirtNormalPath = getFileBaseName( QString::fromStdWString( write_path ) ).toStdWString( );
 	for( size_t index = 0; index < inputNovelMax; ++index ) {
 		auto inductionNovel = novel_info_vector.at( index );
 		auto url = inductionNovel->url;
@@ -988,13 +1013,11 @@ interfacePlugsType::Vector_INovelInfoSPtr_Shared NovelDBJob::inductionNovelsForN
 
 		std::vector< cylHtmlTools::HtmlString > atts;
 		for( auto &mapIterator : novel_keys_map ) {
-			auto novelInfo = mapIterator.first;
-			if( novelInfo->url == inductionNovel->url ) {
-				for( auto &filePathAtKeyMap : mapIterator.second )
-					if( cylHtmlTools::HtmlStringTools::equHtmlString( wirtNormalPath, filePathAtKeyMap.first ) )
-						for( auto &key : filePathAtKeyMap.second )
+			if( cylHtmlTools::HtmlStringTools::equHtmlString( wirtNormalPath, mapIterator.first ) )
+				for( auto &novelKeyMapIterator : mapIterator.second )
+					if( novelKeyMapIterator.first == inductionNovel )
+						for( auto &key : novelKeyMapIterator.second )
 							atts.emplace_back( key );
-			}
 		}
 		// 正在实现处理
 		overNovels.emplace_back( inductionNovel );
@@ -1083,14 +1106,11 @@ interfacePlugsType::Vector_INovelInfoSPtr_Shared NovelDBJob::inductionNovelsForN
 						newNovel->lastItem = compNovel->lastItem;
 
 				for( auto &mapIterator : novel_keys_map ) {
-					auto novelInfo = mapIterator.first;
-					if( novelInfo->url == compNovel->url ) {
-						for( auto &filePathAtKeyMap : mapIterator.second ) {
-							if( cylHtmlTools::HtmlStringTools::equHtmlString( wirtNormalPath, filePathAtKeyMap.first ) )
-								for( auto &key : filePathAtKeyMap.second )
+					if( cylHtmlTools::HtmlStringTools::equHtmlString( wirtNormalPath, mapIterator.first ) )
+						for( auto &novelKeyMapIterator : mapIterator.second )
+							if( novelKeyMapIterator.first == inductionNovel )
+								for( auto &key : novelKeyMapIterator.second )
 									atts.emplace_back( key );
-						}
-					}
 				}
 				begin = atts.begin( );
 				end = atts.end( );
