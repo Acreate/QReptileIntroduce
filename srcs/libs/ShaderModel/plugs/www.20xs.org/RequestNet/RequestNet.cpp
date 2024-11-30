@@ -30,12 +30,12 @@ using namespace instance_function;
 QString RequestNet::timeForm = QObject::tr( u8R"(yyyy-MM-dd hh:mm)" );
 QString RequestNet::currentTimeForm = QObject::tr( u8R"(yyyy-MM-dd hh:mm:ss)" );
 QDateTime RequestNet::currentTime;
-int RequestNet::expireDay = 2;
+
 
 RequestNet::RequestNet( QObject *parent ): QObject( parent ), rootUrl( GET_URL ), oStream( nullptr ), iStream( nullptr ), thisOStream( nullptr ), typeUrlMap( nullptr ) {
 	outPath = "Cache_Path_Dir";
+	expireDay = NovelInfo::getExpireDay(  );
 }
-
 RequestNet::~RequestNet( ) {
 }
 size_t RequestNet::getRequestInterval( ) {
@@ -267,7 +267,7 @@ Vector_INovelInfoSPtr RequestNet::formHtmlGetTypePageNovels( const interfacePlug
 				QDateTime novelTime = QDateTime::fromString( fromStdWString, timeForm );
 				auto compareDateTime = DateTime::compareDateTime( currentTime, novelTime );
 				int16_t timeToDay = DateTime::getTimeToDay( compareDateTime );
-				if( abs( timeToDay ) > RequestNet::expireDay ) {
+				if( abs( timeToDay ) > expireDay ) {
 					quitMsg = DateTime_Error_Expire; // xpath 异常 : 更新时间 找不到
 					break;
 				}

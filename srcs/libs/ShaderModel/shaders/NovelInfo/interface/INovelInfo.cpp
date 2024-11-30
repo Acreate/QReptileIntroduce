@@ -2,7 +2,9 @@
 #include <QDateTime>
 #include <QString>
 using namespace interfacePlugsType;
-
+int INovelInfo::getExpireDay( ) {
+	return 2;
+}
 size_t INovelInfo::getRootUrl( HtmlDocString *result_root_url ) {
 	*result_root_url = rootUrl;
 	return rootUrl.size( );

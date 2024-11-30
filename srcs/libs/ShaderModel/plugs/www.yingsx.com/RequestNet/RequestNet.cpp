@@ -31,14 +31,13 @@ using namespace instance_function;
 QString RequestNet::timeForm = QObject::tr( u8R"(yyyy-MM-dd hh:mm:ss)" );
 QString RequestNet::orgCurrentFormToUpdateTimeForm = u8R"(yyyy-%1 hh:mm:ss)";
 QString RequestNet::currentTimeForm = QObject::tr( u8R"(yyyy-MM-dd hh:mm:ss)" );
-int RequestNet::expireDay = 2;
 QDateTime RequestNet::currentTime;
 
 
 RequestNet::RequestNet( QObject *parent ): QObject( parent ), rootUrl( GET_URL ), oStream( nullptr ), iStream( nullptr ), thisOStream( nullptr ), typeUrlMap( nullptr ) {
 	outPath = "Cache_Path_Dir";
+	expireDay = NovelInfo::getExpireDay(  );
 }
-
 RequestNet::~RequestNet( ) {
 }
 size_t RequestNet::getRequestInterval( ) {
@@ -242,7 +241,7 @@ Vector_INovelInfoSPtr RequestNet::formHtmlGetTypePageNovels( const interfacePlug
 				QDateTime novelTime = QDateTime::fromString( fromStdWString, timeForm );
 				auto compareDateTime = DateTime::compareDateTime( currentTime, novelTime );
 				int16_t timeToDay = DateTime::getTimeToDay( compareDateTime );
-				if( abs( timeToDay ) > RequestNet::expireDay ) {
+				if( abs( timeToDay ) > expireDay ) {
 					quitMsg = DateTime_Error_Expire; // xpath 异常 : 更新时间 找不到
 					break;
 				}
@@ -355,7 +354,7 @@ bool RequestNet::isRequestNovelInfoUrl( const interfacePlugsType::INovelInfoPtr 
 }
 void RequestNet::novelTypeEnd( const HtmlDocString &root_url, const HtmlDocString &type_name, const HtmlDocString &url, const interfacePlugsType::Vector_INovelInfoSPtr &saveNovelInfos ) {
 }
-void RequestNet::endHost( const interfacePlugsType::Vector_INovelInfoSPtr &saveNovelInfos) {
+void RequestNet::endHost( const interfacePlugsType::Vector_INovelInfoSPtr &saveNovelInfos ) {
 }
 OStream * RequestNet::setOStream( OStream *o_stream ) {
 	auto oldOStream = this->oStream;

@@ -14,7 +14,6 @@ private:
 	static QString timeForm; // 时间格式
 	static QDateTime currentTime; // 请求时间
 	static QString currentTimeForm; // 当前请求时间的格式
-	static int expireDay; // 过期-日
 public:
 	/// <summary>
 	/// 获取小说的更新时间戳
@@ -26,12 +25,28 @@ private:
 	QUrl rootUrl;
 	OStream *thisOStream;
 	QString outPath;
-
+	
+	int expireDay; // 过期-日
 	std::shared_ptr< interfacePlugsType::Map_HtmlStrK_HtmlStrV > typeUrlMap;
 public:
 	RequestNet( QObject *parent = nullptr );
 	~RequestNet( ) override;
 public: // 实现虚函数
+	
+	/// <summary>
+	/// 设置最大允许请求时间
+	/// </summary>
+	/// <param name="expir_day">请求时间</param>
+	void setExpireDay( int expir_day ) override {
+		expireDay =expir_day;
+	}
+	/// <summary>
+	/// 获取最大允许请求时间
+	/// </summary>
+	/// <returns>请求时间</returns>
+	int getExpireDay( ) override {
+		return expireDay;
+	}
 	/// <summary>
 	/// 设置写入路径
 	/// </summary>

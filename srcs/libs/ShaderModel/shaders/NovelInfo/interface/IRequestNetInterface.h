@@ -24,6 +24,16 @@ namespace interfacePlugsType {
 		}
 	public:
 		/// <summary>
+		/// 设置过期时间
+		/// </summary>
+		/// <param name="expir_day">过期时间</param>
+		virtual void setExpireDay( int expir_day ) = 0;
+		/// <summary>
+		/// 获取请求过期时间
+		/// </summary>
+		/// <returns>过期时间</returns>
+		virtual int getExpireDay( ) = 0;
+		/// <summary>
 		/// 设置写入路径
 		/// </summary>
 		/// <param name="path">路径</param>
@@ -33,12 +43,12 @@ namespace interfacePlugsType {
 		/// </summary>
 		/// <param name="path">返回的路径</param>
 		/// <returns>返回的大小</returns>
-		virtual size_t getOutPath(HtmlDocString* path) = 0;
+		virtual size_t getOutPath( HtmlDocString *path ) = 0;
 		/// <summary>
 		/// 获取建议请求间隔
 		/// </summary>
 		/// <returns>间隔-毫秒</returns>
-		virtual size_t getRequestInterval() = 0;
+		virtual size_t getRequestInterval( ) = 0;
 		/// <summary>
 		/// 初始化之前，被动调用
 		/// 使用对象之前，应该调用该函数一次，并且它必须在 initBefore() 之前

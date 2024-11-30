@@ -8,6 +8,11 @@
 namespace interfacePlugsType {
 	class NOVELINFO_EXPORT INovelInfo {
 	public:
+		/// <summary>
+		/// 建议过期时间
+		/// </summary>
+		static  int getExpireDay();
+	public:
 		interfacePlugsType::HtmlDocString additionalData;
 		interfacePlugsType::HtmlDocString author;
 		interfacePlugsType::HtmlDocString format;
