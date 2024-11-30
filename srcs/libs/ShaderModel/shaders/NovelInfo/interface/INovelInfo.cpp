@@ -108,6 +108,8 @@ size_t INovelInfo::objToHtmlDocString( interfacePlugsType::HtmlDocString *result
 		u8"\t地址: %7\n"
 		u8"\t详情: %8"
 	);
+	auto infoStr = SHARED_PTR_TO_RESULT( info, "" );
+	auto additionalDataStr = ( additionalData.empty( ) ) ? u8"" : QString( u8"\n\t附加信息: %1" ).arg( QString::fromStdWString( additionalData ) );
 	*result_serializable_html_doc_string =
 		result.arg( SHARED_PTR_TO_RESULT( novelName, "" ) )
 			.arg( SHARED_PTR_TO_RESULT( typeName, "" ) )
@@ -116,7 +118,7 @@ size_t INovelInfo::objToHtmlDocString( interfacePlugsType::HtmlDocString *result
 			.arg( SHARED_PTR_TO_RESULT( updateTime, "" ) )
 			.arg( SHARED_PTR_TO_RESULT( lastRequestTime, QDateTime::currentDateTime( ).toString( "yyyy-MM-dd hh:mm:ss" ) ) )
 			.arg( SHARED_PTR_TO_RESULT( url, "" ) )
-			.arg( SHARED_PTR_TO_RESULT( info, "" ) )
+			.arg( QString( u8"%1%2" ).arg( infoStr ).arg( additionalDataStr ) )
 			.toStdWString( );
 
 	return result_serializable_html_doc_string->size( );

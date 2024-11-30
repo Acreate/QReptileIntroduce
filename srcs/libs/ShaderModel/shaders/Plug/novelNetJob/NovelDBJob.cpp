@@ -117,20 +117,20 @@ namespace instance_function {
 		bool hasTab = false;
 		if( dbTextType.isEmpty( ) )
 			dbTextType = "TEXT";
-		hasTab = depositoryShared->createTab( tab_name
-			, { { "rootUrl", dbTextType }
-				, { "novelName", dbTextType }
-				, { "info", dbTextType }
-				, { "updateTime", dbTextType }
-				, { "format", dbTextType }
-				, { "lastRequestTime", dbTextType }
-				, { "lastRequestTimeFormat", dbTextType }
-				, { "author", dbTextType }
-				, { "url", dbTextType }
-				, { "lastItem", dbTextType }
-				, { "additionalData", dbTextType }
-				, { "typePageUrl", dbTextType }
-				, { "typeName", dbTextType }
+		hasTab = depositoryShared->createTab( tab_name,
+			{ { "rootUrl", dbTextType },
+				{ "novelName", dbTextType },
+				{ "info", dbTextType },
+				{ "updateTime", dbTextType },
+				{ "format", dbTextType },
+				{ "lastRequestTime", dbTextType },
+				{ "lastRequestTimeFormat", dbTextType },
+				{ "author", dbTextType },
+				{ "url", dbTextType },
+				{ "lastItem", dbTextType },
+				{ "additionalData", dbTextType },
+				{ "typePageUrl", dbTextType },
+				{ "typeName", dbTextType }
 			} );
 		if( !hasTab )
 			OStream::anyStdCerr( "无法创建正确的 db 文件", __FILE__, __LINE__, __FUNCTION__, thisOStream );
@@ -457,7 +457,7 @@ size_t NovelDBJob::writeDB( OStream *thisOStream, const QString &outPath, const 
 					novel->getNovelAuthor( &novelAuthor );
 					novel->getNovelUrl( &novelUrl );
 					novel->getNovelLastItem( &novelLastItem );
-					novel->getNovelAttach(  &novelAdditionalData );
+					novel->getNovelAttach( &novelAdditionalData );
 					novel->getNovelUrlAtPageLocation( &novelTypePageUrl );
 					novel->getNovelTypeName( &novelTypeName );
 
@@ -883,11 +883,11 @@ NovelDBJob::NovelInfoVector NovelDBJob::findNovel( const NovelInfoVector &infos,
 				}
 			} );
 	}
-	threadPool.start( 8
-		, [&](
-		cylHtmlTools::HtmlWorkThreadPool *html_work_thread_pool
-		, const unsigned long long &i
-		, const unsigned long long & ) {
+	threadPool.start( 8,
+		[&](
+		cylHtmlTools::HtmlWorkThreadPool *html_work_thread_pool,
+		const unsigned long long &i,
+		const unsigned long long & ) {
 			if( call_function )
 				call_function( );
 		} );
@@ -963,4 +963,239 @@ QString NovelDBJob::jionNovels( const interfacePlugsType::Vector_INovelInfoSPtr 
 	for( size_t index = 0; index < count; ++index )
 		result = result + jon + QString::number( index + 1 ) + countQString + vector.at( index ) + jon;
 	return result;
+}
+interfacePlugsType::Vector_INovelInfoSPtr_Shared NovelDBJob::inductionNovelsForNameAndAuthor( const interfacePlugsType::Vector_INovelInfoSPtr &novel_info_vector, const std::unordered_map< interfacePlugsType::INovelInfo_Shared, std::unordered_map< interfacePlugsType::HtmlDocString, std::vector< interfacePlugsType::HtmlDocString > > > &novel_keys_map, const interfacePlugsType::HtmlDocString &write_path ) {
+	interfacePlugsType::Vector_INovelInfoSPtr_Shared vectorINovelInfoSPtr = std::make_shared< interfacePlugsType::Vector_INovelInfoSPtr >( );
+	interfacePlugsType::Vector_INovelInfoSPtr overNovels; // 已经处理完毕的小说列表
+	interfacePlugsType::Vector_INovelInfoSPtr notProcessedNovels = novel_info_vector; // 未处理小说列表
+	interfacePlugsType::Vector_INovelInfoSPtr notProcessedNovelsBuff; // 未处理小说列表-临时存储
+	auto inputNovelMax = novel_info_vector.size( );
+	size_t startIndex = 1; // 首次使用 notProcessedNovels
+	auto wirtNormalPath = QFileInfo( QString::fromStdWString( write_path ) ).baseName( ).toStdWString( );
+	for( size_t index = 0; index < inputNovelMax; ++index ) {
+		auto inductionNovel = novel_info_vector.at( index );
+		auto url = inductionNovel->url;
+		auto overEnd = overNovels.end( );
+		auto finIf = std::find_if( overNovels.begin( ),
+			overEnd,
+			[url]( const interfacePlugsType::INovelInfo_Shared &ptr ) {
+				if( ptr->url == url )
+					return true;
+				return false;
+			} );
+		if( finIf != overEnd )
+			continue; // 已经完成处理
+
+		std::vector< cylHtmlTools::HtmlString > atts;
+		for( auto &mapIterator : novel_keys_map ) {
+			auto novelInfo = mapIterator.first;
+			if( novelInfo->url == inductionNovel->url ) {
+				for( auto &filePathAtKeyMap : mapIterator.second )
+					if( cylHtmlTools::HtmlStringTools::equHtmlString( wirtNormalPath, filePathAtKeyMap.first ) )
+						for( auto &key : filePathAtKeyMap.second )
+							atts.emplace_back( key );
+			}
+		}
+		// 正在实现处理
+		overNovels.emplace_back( inductionNovel );
+		interfacePlugsType::INovelInfo_Shared newNovel = std::make_shared< NovelInfo >( );
+		newNovel->novelName = inductionNovel->novelName; // 配置名称
+		newNovel->url = inductionNovel->url; // 配置 url
+		newNovel->typeName = inductionNovel->typeName; // 配置类型名称
+		newNovel->author = inductionNovel->author; // 配置作者
+		newNovel->lastItem = inductionNovel->lastItem; // 配置最后更新项
+		newNovel->lastRequestTime = inductionNovel->lastRequestTime; // 配置最后获取时间
+		newNovel->updateTime = inductionNovel->updateTime; // 配置最后更新时间
+		newNovel->additionalData = inductionNovel->additionalData; // 追加附加信息
+
+		auto begin = atts.begin( );
+		auto end = atts.end( );
+		if( begin != end )
+			do {
+				newNovel->additionalData = newNovel->additionalData + *begin;
+				++begin;
+				if( begin == end )
+					break;
+				newNovel->additionalData = newNovel->additionalData + L',';
+			} while( true );
+		atts.clear( );
+		vectorINovelInfoSPtr->emplace_back( newNovel );
+		// 从下一个开始比较
+		size_t noProcessCount = notProcessedNovels.size( );
+		for( ; startIndex < noProcessCount; ++startIndex ) {
+			// 比较的小说对象
+			auto compNovel = notProcessedNovels.at( startIndex );
+			if( compNovel->novelName == inductionNovel->novelName && compNovel->author == inductionNovel->author ) { // 正确匹配
+				if( compNovel->info.length( ) > inductionNovel->info.length( ) )
+					newNovel->info = compNovel->info;
+				else
+					newNovel->info = inductionNovel->info;
+				if( !cylHtmlTools::HtmlStringTools::findNextHtmlStringPotion( &newNovel->url, &compNovel->url ) )
+					newNovel->url = newNovel->url + L"\n\t\t" + compNovel->url; // 追加 url
+				if( !cylHtmlTools::HtmlStringTools::findNextHtmlStringPotion( &newNovel->typeName, &compNovel->typeName ) )
+					newNovel->typeName = newNovel->typeName + L"," + compNovel->typeName; // 追加类型名称
+				if( !compNovel->lastItem.empty( ) ) // 追加最后更新项
+					if( !newNovel->lastItem.empty( ) ) { // 如果不为空，则同时分解
+						std::vector< interfacePlugsType::HtmlDocString > compAddDataList;
+						std::vector< interfacePlugsType::HtmlDocString > buff = cylHtmlTools::HtmlStringTools::split( compNovel->lastItem, L'\n' );
+						// 追加到容器
+						for( auto &appStr : buff )
+							if( !cylHtmlTools::HtmlStringTools::removeAllSpace( appStr ).empty( ) ) {
+								auto end = compAddDataList.end( );
+								auto result = std::find_if( compAddDataList.begin( ),
+									end,
+									[&]( const interfacePlugsType::HtmlDocString &compStr ) ->bool {
+										if( cylHtmlTools::HtmlStringTools::equHtmlString( compStr, appStr ) )
+											return true;
+										return false;
+									} );
+								if( result != end )
+									compAddDataList.emplace_back( appStr );
+							}
+						buff = cylHtmlTools::HtmlStringTools::split( newNovel->lastItem, L'\n' );
+						// 追加到容器
+						for( auto &appStr : buff )
+							if( !cylHtmlTools::HtmlStringTools::removeAllSpace( appStr ).empty( ) ) {
+								auto end = compAddDataList.end( );
+								auto result = std::find_if( compAddDataList.begin( ),
+									end,
+									[&]( const interfacePlugsType::HtmlDocString &compStr ) ->bool {
+										if( cylHtmlTools::HtmlStringTools::equHtmlString( compStr, appStr ) )
+											return true;
+										return false;
+									} );
+								if( result != end )
+									compAddDataList.emplace_back( appStr );
+							}
+						auto begin = compAddDataList.begin( );
+						auto end = compAddDataList.end( );
+						if( begin != end ) {
+							newNovel->lastItem.clear( );
+							do {
+								newNovel->lastItem = newNovel->lastItem + *begin;
+								++begin;
+								if( begin == end )
+									break;
+								newNovel->lastItem = newNovel->lastItem + L"\n\t\t";
+							} while( true );
+						}
+					} else // 如果为空，则直接赋值
+						newNovel->lastItem = compNovel->lastItem;
+
+				for( auto &mapIterator : novel_keys_map ) {
+					auto novelInfo = mapIterator.first;
+					if( novelInfo->url == compNovel->url ) {
+						for( auto &filePathAtKeyMap : mapIterator.second ) {
+							if( cylHtmlTools::HtmlStringTools::equHtmlString( wirtNormalPath, filePathAtKeyMap.first ) )
+								for( auto &key : filePathAtKeyMap.second )
+									atts.emplace_back( key );
+						}
+					}
+				}
+				begin = atts.begin( );
+				end = atts.end( );
+				if( begin != end ) {
+					std::vector< cylHtmlTools::HtmlString > split;
+					if( !compNovel->additionalData.empty( ) ) {
+						split = cylHtmlTools::HtmlStringTools::split( compNovel->additionalData, L',' );
+						// 追加到容器
+						for( auto &appStr : split )
+							if( !cylHtmlTools::HtmlStringTools::removeAllSpace( appStr ).empty( ) )
+								atts.emplace_back( appStr );
+					}
+					if( !newNovel->additionalData.empty( ) ) {
+						split = cylHtmlTools::HtmlStringTools::split( newNovel->additionalData, L',' );
+						// 追加到容器
+						for( auto &appStr : split )
+							if( !cylHtmlTools::HtmlStringTools::removeAllSpace( appStr ).empty( ) )
+								atts.emplace_back( appStr );
+					}
+					atts = cylHtmlTools::HtmlStringTools::vectorStrAdjustSubStr( atts );
+					begin = atts.begin( );
+					end = atts.end( );
+					newNovel->additionalData.clear( );
+					if( begin != end )
+						do {
+							newNovel->additionalData = newNovel->additionalData + *begin;
+							++begin;
+							if( begin == end )
+								break;
+							newNovel->additionalData = newNovel->additionalData + L',';
+						} while( true );
+				}
+
+				// 正在实现处理
+				overNovels.emplace_back( compNovel );
+			} else
+				notProcessedNovelsBuff.emplace_back( compNovel );
+		}
+		notProcessedNovels = notProcessedNovelsBuff;
+		startIndex = 0; // 重置访问 notProcessedNovels 的下标
+		notProcessedNovelsBuff.clear( );
+	}
+
+
+	return vectorINovelInfoSPtr;
+}
+interfacePlugsType::Vector_INovelInfoSPtr_Shared NovelDBJob::inductionNovelsForNameAndAuthor( const interfacePlugsType::Vector_INovelInfoSPtr &novel_info_vector ) {
+
+	interfacePlugsType::Vector_INovelInfoSPtr_Shared vectorINovelInfoSPtr = std::make_shared< interfacePlugsType::Vector_INovelInfoSPtr >( );
+	interfacePlugsType::Vector_INovelInfoSPtr overNovels; // 已经处理完毕的小说列表
+	interfacePlugsType::Vector_INovelInfoSPtr notProcessedNovels = novel_info_vector; // 未处理小说列表
+	interfacePlugsType::Vector_INovelInfoSPtr notProcessedNovelsBuff; // 未处理小说列表-临时存储
+	auto inputNovelMax = novel_info_vector.size( );
+	size_t startIndex = 1; // 首次使用 notProcessedNovels
+	for( size_t index = 0; index < inputNovelMax; ++index ) {
+		auto inductionNovel = novel_info_vector.at( index );
+		auto url = inductionNovel->url;
+		auto overEnd = overNovels.end( );
+		auto finIf = std::find_if( overNovels.begin( ),
+			overEnd,
+			[url]( const interfacePlugsType::INovelInfo_Shared &ptr ) {
+				if( ptr->url == url )
+					return true;
+				return false;
+			} );
+		if( finIf != overEnd )
+			continue; // 已经完成处理
+		// 正在实现处理
+		overNovels.emplace_back( inductionNovel );
+		interfacePlugsType::INovelInfo_Shared newNovel = std::make_shared< NovelInfo >( );
+		newNovel->novelName = inductionNovel->novelName; // 配置名称
+		newNovel->url = inductionNovel->url; // 配置 url
+		newNovel->typeName = inductionNovel->typeName; // 配置类型名称
+		newNovel->author = inductionNovel->author; // 配置作者
+		newNovel->lastItem = inductionNovel->lastItem; // 配置最后更新项
+		newNovel->lastRequestTime = inductionNovel->lastRequestTime; // 配置最后获取时间
+		newNovel->updateTime = inductionNovel->updateTime; // 配置最后更新时间
+		newNovel->additionalData = inductionNovel->additionalData; // 追加附加信息
+		vectorINovelInfoSPtr->emplace_back( newNovel );
+		// 从下一个开始比较
+		size_t noProcessCount = notProcessedNovels.size( );
+		for( ; startIndex < noProcessCount; ++startIndex ) {
+			// 比较的小说对象
+			auto compNovel = notProcessedNovels.at( startIndex );
+			if( compNovel->novelName == inductionNovel->novelName && compNovel->author == inductionNovel->author ) { // 正确匹配
+				if( compNovel->info.length( ) > inductionNovel->info.length( ) )
+					newNovel->info = compNovel->info;
+				else
+					newNovel->info = inductionNovel->info;
+				if( !cylHtmlTools::HtmlStringTools::findNextHtmlStringPotion( &newNovel->url, &compNovel->url ) )
+					newNovel->url = newNovel->url + L"\n\t\t" + compNovel->url; // 追加 url
+				if( !cylHtmlTools::HtmlStringTools::findNextHtmlStringPotion( &newNovel->typeName, &compNovel->typeName ) )
+					newNovel->typeName = newNovel->typeName + L"\n\t\t" + compNovel->typeName; // 追加类型名称
+				if( !compNovel->additionalData.empty( ) )
+					newNovel->additionalData = newNovel->additionalData + L"," + compNovel->additionalData;
+				// 正在实现处理
+				overNovels.emplace_back( compNovel );
+			} else
+				notProcessedNovelsBuff.emplace_back( compNovel );
+		}
+		notProcessedNovels = notProcessedNovelsBuff;
+		startIndex = 0; // 重置访问 notProcessedNovels 的下标
+		notProcessedNovelsBuff.clear( );
+	}
+
+
+	return vectorINovelInfoSPtr;
 }
