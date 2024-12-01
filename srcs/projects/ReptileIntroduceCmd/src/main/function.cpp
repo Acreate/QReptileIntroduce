@@ -136,33 +136,30 @@ qsizetype writeIngoreNameFile( const QString &path, const std::vector< QString >
 
 	return 0;
 }
-std::vector< QString > vectorStrAdjustSubStr( std::vector< QString > &str_vector ) {
+std::vector< QString > vectorStrAdjustSubStr( const std::vector< QString > &str_vector ) {
 	if( str_vector.size( ) < 2 )
 		return str_vector;
 	// 长度排序
-	std::list< QString > lenSort;
+	std::vector< QString > clone;
 	for( auto &str : str_vector ) {
-		auto iterator = lenSort.begin( ), end = lenSort.end( );
+		auto iterator = clone.begin( ), end = clone.end( );
 		for( ; iterator != end; ++iterator )
-			if( iterator->length( ) < str.length( ) )
+			if( iterator->length( ) > str.length( ) )
 				break;
-		lenSort.insert( iterator, str );
+		clone.insert( iterator, str );
 	}
-	std::vector< QString > clone( lenSort.begin( ), lenSort.end( ) );
-	lenSort.clear( );
-	size_t listCount = clone.size( );
-	size_t index = 0;
-	size_t subIndex = 0;
-	for( ; index < listCount; ++index ) {
+
+	auto endIndex = clone.size( );
+	for( size_t index = 0; index != endIndex; ++index ) {
 		QString &currentStr = clone[ index ];
-		subIndex = index + 1;
-		for( ; subIndex < listCount; ++subIndex )
-			if( currentStr.indexOf( clone[ subIndex ] ) != -1 )
+		for( auto newIndex = 1 + index; newIndex != endIndex; ++newIndex )
+			if( clone[ newIndex ].indexOf( currentStr ) != -1 ) { // 找到则删除
+				clone.erase( newIndex + clone.begin( ) );
+				endIndex = clone.size( );
 				break;
-		if( subIndex == listCount )
-			lenSort.insert( lenSort.begin( ), currentStr );
+			}
 	}
-	return std::vector< QString >( lenSort.begin( ), lenSort.end( ) );
+	return clone;
 }
 std::vector< QString > vectorStrduplicate( const std::vector< QString > &str_vector ) {
 	std::vector< QString > result;
@@ -284,9 +281,9 @@ void loadFindKeyFiles( const std::shared_ptr< std::vector< cylStd::ArgParser::St
 			decltype(newMap) buff;
 			QString fileName = QFileInfo( iterator->first ).fileName( );
 			auto it = result_file_name_map.begin( ), en = result_file_name_map.end( );
-			auto resultIteraotr = std::find_if( it
-				, en
-				, [&]( const std::pair< QString, LenMap > &pair ) {
+			auto resultIteraotr = std::find_if( it,
+				en,
+				[&]( const std::pair< QString, LenMap > &pair ) {
 					if( pair.first == fileName )
 						return true;
 					return false;
@@ -363,23 +360,23 @@ void runSubProcess( const QString &app_path, QMutex &qt_mutex, size_t &ref_count
 			cmd.append( " -s " );
 			cmd.append( plugFilePath );
 		}
-		QObject::connect( subProcess
-			, &QProcess::readyReadStandardOutput
-			, [=]( ) {
+		QObject::connect( subProcess,
+			&QProcess::readyReadStandardOutput,
+			[=]( ) {
 				QString msg( subProcess->readAllStandardOutput( ) );
 				std::cout << msg.toStdString( ) << std::endl;
 			} );
 
-		QObject::connect( subProcess
-			, &QProcess::readyReadStandardError
-			, [=]( ) {
+		QObject::connect( subProcess,
+			&QProcess::readyReadStandardError,
+			[=]( ) {
 				QString msg( subProcess->readAllStandardError( ) );
 				std::cerr << msg.toStdString( ) << std::endl;
 			} );
 
-		QObject::connect( subProcess
-			, &QProcess::finished
-			, [&,subProcess]( ) {
+		QObject::connect( subProcess,
+			&QProcess::finished,
+			[&,subProcess]( ) {
 				subProcess->deleteLater( );
 				QMutexLocker lock( &qt_mutex );
 				--ref_count;
@@ -412,23 +409,23 @@ void runPrintfUrlSubProcess( const QString &app_path, QMutex &qt_mutex, size_t &
 			cmd.append( " -t " );
 			cmd.append( QString::fromLocal8Bit( optionToString ) );
 		}
-		QObject::connect( subProcess
-			, &QProcess::readyReadStandardOutput
-			, [=]( ) {
+		QObject::connect( subProcess,
+			&QProcess::readyReadStandardOutput,
+			[=]( ) {
 				QString msg( subProcess->readAllStandardOutput( ) );
 				std::cout << msg.toStdString( ) << std::endl;
 			} );
 
-		QObject::connect( subProcess
-			, &QProcess::readyReadStandardError
-			, [=]( ) {
+		QObject::connect( subProcess,
+			&QProcess::readyReadStandardError,
+			[=]( ) {
 				QString msg( subProcess->readAllStandardError( ) );
 				std::cerr << msg.toStdString( ) << std::endl;
 			} );
 
-		QObject::connect( subProcess
-			, &QProcess::finished
-			, [&,subProcess]( ) {
+		QObject::connect( subProcess,
+			&QProcess::finished,
+			[&,subProcess]( ) {
 				QMutexLocker lock( &qt_mutex );
 				subProcess->deleteLater( );
 				--ref_count;
@@ -448,9 +445,9 @@ void loadPrintfUrlLastPlugOnThisProcess( QMutex &qt_mutex, size_t &ref_count, co
 		NovelNetJob *novelNetJob = new NovelNetJob( nullptr, interface.first, interface.second );
 		std::cout << novelNetJob->getUrl( ).toStdString( ) << std::endl;
 		if( findVector( run_plug_path, plugFilePath ) ) {
-			QObject::connect( novelNetJob
-				, &NovelNetJob::endJob
-				, [&]( ) {
+			QObject::connect( novelNetJob,
+				&NovelNetJob::endJob,
+				[&]( ) {
 					QMutexLocker lock( &qt_mutex );
 					--ref_count;
 				} );
@@ -480,9 +477,9 @@ void loadLastPlugOnThisProcess( QMutex &qt_mutex, size_t &ref_count, const QStri
 	if( interface.second ) {
 		NovelNetJob *novelNetJob = new NovelNetJob( nullptr, interface.first, interface.second );
 		if( findVector( run_plug_path, plugFilePath ) ) {
-			QObject::connect( novelNetJob
-				, &NovelNetJob::endJob
-				, [&]( ) {
+			QObject::connect( novelNetJob,
+				&NovelNetJob::endJob,
+				[&]( ) {
 					QMutexLocker lock( &qt_mutex );
 					--ref_count;
 				} );
@@ -502,12 +499,73 @@ void loadLastPlugOnThisProcess( QMutex &qt_mutex, size_t &ref_count, const QStri
 		errorCout( error.toStdString( ), call_function_file_path, call_function_name, call_function_line );
 	}
 }
+QString writeJionStringVector( const QString &write_file_path, const std::vector< QString > &qt_str_vector, const QString &jion ) {
+	auto iterator = qt_str_vector.begin( );
+	auto end = qt_str_vector.end( );
+	QString result;
+	if( iterator != end )
+		do {
+			result.append( *iterator );
+			++iterator;
+			if( iterator == end ) {
+				if( Path::creatFilePath( write_file_path ) ) {
+					QFile write( write_file_path );
+					if( write.open( QIODeviceBase::ReadWrite | QIODeviceBase::Text | QIODeviceBase::Truncate ) ) {
+						write.write( result.toUtf8( ) );
+						write.close( );
+					}
+				}
+				return result;
+			}
+			result.append( jion );
+		} while( true );
+	return result;
+}
 
 std::vector< std::wstring > converToWString( std::vector< QString > &str_vector ) {
 	std::vector< std::wstring > result;
 	for( auto &str : str_vector )
 		result.emplace_back( str.toStdWString( ) );
 	return result;
+}
+bool filterNovelName( const interfacePlugsType::HtmlDocString &name, const std::vector< interfacePlugsType::HtmlDocString > &equ_name_s, const std::vector< interfacePlugsType::HtmlDocString > &sub_name_s ) {
+	for( auto &compEquTitle : equ_name_s )
+		if( cylHtmlTools::HtmlStringTools::equHtmlString( compEquTitle, name ) )
+			return true;
+	for( auto &compSubTitle : sub_name_s )
+		if( cylHtmlTools::HtmlStringTools::findNextHtmlStringPotion( &name, &compSubTitle ) )
+			return true;
+	return false;
+}
+bool findNovelKey( const NovelInfo &novel_info, const std::vector< interfacePlugsType::HtmlDocString > &find_key_s, interfacePlugsType::HtmlDocString *key ) {
+	for( auto &find_key : find_key_s ) {
+		auto keyLen = find_key.length( );
+		if( novel_info.novelName.length( ) >= keyLen && cylHtmlTools::HtmlStringTools::findNextHtmlStringPotion( &novel_info.novelName, &find_key ) ) {
+			*key = find_key;
+			return true;
+		}
+		if( novel_info.info.length( ) >= keyLen && cylHtmlTools::HtmlStringTools::findNextHtmlStringPotion( &novel_info.info, &find_key ) ) {
+			*key = find_key;
+			return true;
+		}
+		if( novel_info.lastItem.length( ) >= keyLen && cylHtmlTools::HtmlStringTools::findNextHtmlStringPotion( &novel_info.lastItem, &find_key ) ) {
+			*key = find_key;
+			return true;
+		}
+		if( novel_info.author.length( ) >= keyLen && cylHtmlTools::HtmlStringTools::findNextHtmlStringPotion( &novel_info.author, &find_key ) ) {
+			*key = find_key;
+			return true;
+		}
+		if( novel_info.url.length( ) >= keyLen && cylHtmlTools::HtmlStringTools::findNextHtmlStringPotion( &novel_info.url, &find_key ) ) {
+			*key = find_key;
+			return true;
+		}
+		if( novel_info.typePageUrl.length( ) >= keyLen && cylHtmlTools::HtmlStringTools::findNextHtmlStringPotion( &novel_info.typePageUrl, &find_key ) ) {
+			*key = find_key;
+			return true;
+		}
+	}
+	return false;
 }
 bool removeFileSourceFilesKeys( const std::vector< std::string > &source_file_s, const std::vector< std::string > &des_file_s ) {
 	std::vector< QString > ingoreNameFiles;
@@ -536,9 +594,9 @@ bool removeFileSourceFilesKeys( const std::vector< std::string > &source_file_s,
 		auto files = pathInfo.second;
 		if( files.size( ) != 0 )
 			for( auto &filePath : files ) {
-				if( std::find_if( begin
-					, end
-					, [&filePath]( QString &comp ) {
+				if( std::find_if( begin,
+					end,
+					[&filePath]( QString &comp ) {
 						if( filePath == comp )
 							return true;
 						return false;
@@ -573,9 +631,9 @@ bool removeFileSourceFilesKeys( const std::vector< std::string > &source_file_s,
 	for( auto &path : destPaths ) {
 		auto keys = readIngoreNameFile( path, { "\n" } );
 		for( auto &key : keys )
-			if( std::find_if( begin
-				, end
-				, [&key]( QString &comp ) {
+			if( std::find_if( begin,
+				end,
+				[&key]( QString &comp ) {
 					if( key == comp )
 						return true;
 					return false;

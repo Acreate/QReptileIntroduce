@@ -17,6 +17,22 @@
 #include "path/Path.h"
 
 /// <summary>
+/// 过滤名称列表
+/// </summary>
+/// <param name="name">判定的名称</param>
+/// <param name="equ_name_s">完全匹配过滤名称列表</param>
+/// <param name="sub_name_s">段内匹配过滤名称列表</param>
+/// <returns>过滤列表当中存在则返回 true，否则返回 false</returns>
+bool filterNovelName( const interfacePlugsType::HtmlDocString &name, const std::vector< interfacePlugsType::HtmlDocString > &equ_name_s, const std::vector< interfacePlugsType::HtmlDocString > &sub_name_s );
+
+/// <summary>
+/// 小说匹配关键字，存在返回 true，否则返回 false
+/// </summary>
+/// <param name="novel_info">匹配小说</param>
+/// <param name="find_key_s">匹配关键字</param>
+/// <returns>存在匹配关键字则返回 true</returns>
+bool findNovelKey( const NovelInfo &novel_info, const std::vector< interfacePlugsType::HtmlDocString > &find_key_s, interfacePlugsType::HtmlDocString *key );
+/// <summary>
 /// 根据源目标的文件内容删除目标文件的内容（关键字为一行删除）
 /// </summary>
 /// <param name="source_file_s">源列表</param>
@@ -76,13 +92,7 @@ qsizetype writeIngoreNameFile( const QString &path, const std::vector< QString >
 /// </summary>
 /// <param name="str_vector">匹配的字符串</param>
 /// <returns>完成匹配的字符串</returns>
-std::vector< QString > vectorStrAdjustSubStr( std::vector< QString > &str_vector );
-/// <summary>
-/// 调整关键字，存在子字符串则不需要源字符串(a -> aa / 其中只保留 a，不保留 aa)
-/// </summary>
-/// <param name="str_vector">匹配的字符串</param>
-/// <returns>完成匹配的字符串</returns>
-std::vector< std::wstring > vectorStrAdjustSubStr( std::vector< std::wstring > &str_vector );
+std::vector< QString > vectorStrAdjustSubStr( const std::vector< QString > &str_vector );
 /// <summary>
 /// 去掉重复字符串
 /// </summary>
@@ -141,7 +151,7 @@ inline bool findVector( const std::vector< t_value_type > &vector, const t_value
 inline void errorCout( const std::string &msg, const std::string &erro_file, const std::string &error_call, const size_t error_line ) {
 	std::cerr << "\n===============\n\t错误文件: " << erro_file << u8"\n\t调用名称: " << error_call << u8"\n\t信息行数: " << error_line << u8"\n\t错误信息: " << msg << "\n===============" << std::endl;
 }
-inline void errorCout( const char* msg, const std::string &erro_file, const std::string &error_call, const size_t error_line ) {
+inline void errorCout( const char *msg, const std::string &erro_file, const std::string &error_call, const size_t error_line ) {
 	std::cerr << "\n===============\n\t错误文件: " << erro_file << u8"\n\t调用名称: " << error_call << u8"\n\t信息行数: " << error_line << u8"\n\t错误信息: " << msg << "\n===============" << std::endl;
 }
 inline void errorCout( const QString &msg, const QString &erro_file, const QString &error_call, const size_t error_line ) {
@@ -336,9 +346,9 @@ public:
 			for( auto &appendAbsDirPath : substrateDir ) {
 				auto iterator = checkPaths.begin( );
 				auto end = checkPaths.end( );
-				if( std::find_if( iterator
-					, end
-					, [&]( const QString &checkPath ) {
+				if( std::find_if( iterator,
+					end,
+					[&]( const QString &checkPath ) {
 						if( checkPath == appendAbsDirPath )
 							return true;
 						return false;
@@ -364,9 +374,9 @@ public:
 			bool isDeleteDir = true;
 			for( ; iterator != end; ++iterator ) {
 				QString absoluteFilePath = iterator->absoluteFilePath( );
-				if( std::find_if( ingPathVectorBegin
-					, ingPathVectorEnd
-					, [&]( const QString &file_abs_path ) {
+				if( std::find_if( ingPathVectorBegin,
+					ingPathVectorEnd,
+					[&]( const QString &file_abs_path ) {
 						if( absoluteFilePath == file_abs_path )
 							return true;
 						return false;
@@ -375,9 +385,9 @@ public:
 					continue;
 				}
 
-				if( std::find_if( removePathVectorBegin
-					, removePathVectorEnd
-					, [&]( const QString &file_abs_path ) {
+				if( std::find_if( removePathVectorBegin,
+					removePathVectorEnd,
+					[&]( const QString &file_abs_path ) {
 						if( absoluteFilePath == file_abs_path )
 							return true;
 						return false;
@@ -398,6 +408,13 @@ public:
 		return removePath;
 	}
 };
-
+/// <summary>
+/// 写入拼接迭代器后的内容到文件
+/// </summary>
+/// <param name="write_file_path">写入文件的路径</param>
+/// <param name="qt_str_vector">被拼接的迭代器</param>
+/// <param name="jion">拼接字符串</param>
+/// <returns>写入内容</returns>
+QString writeJionStringVector( const QString &write_file_path, const std::vector< QString > &qt_str_vector, const QString &jion );
 
 #endif // FUNCTION_H_H_HEAD__FILE__

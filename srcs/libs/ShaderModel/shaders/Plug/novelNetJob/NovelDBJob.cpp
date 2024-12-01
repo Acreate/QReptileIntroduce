@@ -980,7 +980,54 @@ QString getFileBaseName( const QFileInfo &filePathInfo ) {
 	return fileName;
 }
 
+/// <summary>
+/// 拷贝小说信息到新对象
+/// </summary>
+/// <param name="novel_info">被拷贝的对象</param>
+/// <returns>新的对象</returns>
+interfacePlugsType::INovelInfo_Shared cloneNovel( interfacePlugsType::INovelInfo &novel_info ) {
+	interfacePlugsType::INovelInfo_Shared newNovel = std::make_shared< NovelInfo >( );
+	newNovel->novelName = novel_info.novelName; // 配置名称
+	newNovel->url = novel_info.url; // 配置 url
+	newNovel->typeName = novel_info.typeName; // 配置类型名称
+	newNovel->author = novel_info.author; // 配置作者
+	newNovel->lastItem = novel_info.lastItem; // 配置最后更新项
+	newNovel->lastRequestTime = novel_info.lastRequestTime; // 配置最后获取时间
+	newNovel->updateTime = novel_info.updateTime; // 配置最后更新时间
+	newNovel->additionalData = novel_info.additionalData; // 追加附加信息
+	return newNovel;
+}
+/// <summary>
+/// 从 novel_keys_map 查找匹配的信息追加到  interfacePlugsType::INovelInfo::additionalData 当中
+/// </summary>
+/// <param name="append_novel_info">追加的末尾对象</param>
+/// <param name="find_novel_info">novel_keys_map 查找匹配的对象信息</param>
+/// <param name="write_file_path">匹配的路径</param>
+/// <param name="novel_keys_map">信息存储对象</param>
+void appendKeyMapToAdditionDataLast( interfacePlugsType::INovelInfo_Shared append_novel_info, interfacePlugsType::INovelInfo_Shared find_novel_info, const interfacePlugsType::HtmlDocString &write_file_path, const std::unordered_map< interfacePlugsType::HtmlDocString, std::unordered_map< interfacePlugsType::INovelInfo_Shared, std::vector< interfacePlugsType::HtmlDocString > > > &novel_keys_map ) {
 
+	std::vector< cylHtmlTools::HtmlString > atts;
+	for( auto &mapIterator : novel_keys_map ) {
+		if( cylHtmlTools::HtmlStringTools::equHtmlString( write_file_path, mapIterator.first ) )
+			for( auto &novelKeyMapIterator : mapIterator.second )
+				if( novelKeyMapIterator.first == find_novel_info ) {
+					for( auto &key : novelKeyMapIterator.second )
+						atts.emplace_back( key );
+					break;
+				}
+	}
+
+	auto begin = atts.begin( );
+	auto end = atts.end( );
+	if( begin != end )
+		do {
+			append_novel_info->additionalData = append_novel_info->additionalData + *begin;
+			++begin;
+			if( begin == end )
+				break;
+			append_novel_info->additionalData = append_novel_info->additionalData + L',';
+		} while( true );
+}
 /// <summary>
 /// 获取文件的基本名称
 /// </summary>
@@ -996,7 +1043,7 @@ interfacePlugsType::Vector_INovelInfoSPtr_Shared NovelDBJob::inductionNovelsForN
 	interfacePlugsType::Vector_INovelInfoSPtr notProcessedNovelsBuff; // 未处理小说列表-临时存储
 	auto inputNovelMax = novel_info_vector.size( );
 	size_t startIndex = 1; // 首次使用 notProcessedNovels
-	auto wirtNormalPath = getFileBaseName( QString::fromStdWString( write_path ) ).toStdWString( );
+	auto wirtNormalPath = getFileBaseName( QString::fromStdWString( write_path ) ).toUpper( ).toStdWString( );
 	for( size_t index = 0; index < inputNovelMax; ++index ) {
 		auto inductionNovel = novel_info_vector.at( index );
 		auto url = inductionNovel->url;
@@ -1004,44 +1051,17 @@ interfacePlugsType::Vector_INovelInfoSPtr_Shared NovelDBJob::inductionNovelsForN
 		auto finIf = std::find_if( overNovels.begin( ),
 			overEnd,
 			[url]( const interfacePlugsType::INovelInfo_Shared &ptr ) {
-				if( ptr->url == url )
+				if( cylHtmlTools::HtmlStringTools::equHtmlString( ptr->url, url ) )
 					return true;
 				return false;
 			} );
 		if( finIf != overEnd )
 			continue; // 已经完成处理
 
-		std::vector< cylHtmlTools::HtmlString > atts;
-		for( auto &mapIterator : novel_keys_map ) {
-			if( cylHtmlTools::HtmlStringTools::equHtmlString( wirtNormalPath, mapIterator.first ) )
-				for( auto &novelKeyMapIterator : mapIterator.second )
-					if( novelKeyMapIterator.first == inductionNovel )
-						for( auto &key : novelKeyMapIterator.second )
-							atts.emplace_back( key );
-		}
 		// 正在实现处理
 		overNovels.emplace_back( inductionNovel );
-		interfacePlugsType::INovelInfo_Shared newNovel = std::make_shared< NovelInfo >( );
-		newNovel->novelName = inductionNovel->novelName; // 配置名称
-		newNovel->url = inductionNovel->url; // 配置 url
-		newNovel->typeName = inductionNovel->typeName; // 配置类型名称
-		newNovel->author = inductionNovel->author; // 配置作者
-		newNovel->lastItem = inductionNovel->lastItem; // 配置最后更新项
-		newNovel->lastRequestTime = inductionNovel->lastRequestTime; // 配置最后获取时间
-		newNovel->updateTime = inductionNovel->updateTime; // 配置最后更新时间
-		newNovel->additionalData = inductionNovel->additionalData; // 追加附加信息
-
-		auto begin = atts.begin( );
-		auto end = atts.end( );
-		if( begin != end )
-			do {
-				newNovel->additionalData = newNovel->additionalData + *begin;
-				++begin;
-				if( begin == end )
-					break;
-				newNovel->additionalData = newNovel->additionalData + L',';
-			} while( true );
-		atts.clear( );
+		interfacePlugsType::INovelInfo_Shared newNovel = cloneNovel( *inductionNovel );
+		appendKeyMapToAdditionDataLast( newNovel, inductionNovel, wirtNormalPath, novel_keys_map );
 		vectorINovelInfoSPtr->emplace_back( newNovel );
 		// 从下一个开始比较
 		size_t noProcessCount = notProcessedNovels.size( );
@@ -1105,15 +1125,18 @@ interfacePlugsType::Vector_INovelInfoSPtr_Shared NovelDBJob::inductionNovelsForN
 					} else // 如果为空，则直接赋值
 						newNovel->lastItem = compNovel->lastItem;
 
+				std::vector< cylHtmlTools::HtmlString > atts;
 				for( auto &mapIterator : novel_keys_map ) {
 					if( cylHtmlTools::HtmlStringTools::equHtmlString( wirtNormalPath, mapIterator.first ) )
 						for( auto &novelKeyMapIterator : mapIterator.second )
-							if( novelKeyMapIterator.first == inductionNovel )
+							if( novelKeyMapIterator.first == inductionNovel ) {
 								for( auto &key : novelKeyMapIterator.second )
 									atts.emplace_back( key );
+								break;
+							}
 				}
-				begin = atts.begin( );
-				end = atts.end( );
+				auto begin = atts.begin( );
+				auto end = atts.end( );
 				if( begin != end ) {
 					std::vector< cylHtmlTools::HtmlString > split;
 					if( !compNovel->additionalData.empty( ) ) {
