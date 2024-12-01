@@ -1037,37 +1037,23 @@ QString getFileBaseName( const QString &filePathInfo ) {
 	return getFileBaseName( QFileInfo( filePathInfo ) );
 }
 interfacePlugsType::Vector_INovelInfoSPtr_Shared NovelDBJob::inductionNovelsForNameAndAuthor( const interfacePlugsType::Vector_INovelInfoSPtr &novel_info_vector, const std::unordered_map< interfacePlugsType::HtmlDocString, std::unordered_map< interfacePlugsType::INovelInfo_Shared, std::vector< interfacePlugsType::HtmlDocString > > > &novel_keys_map, const interfacePlugsType::HtmlDocString &write_path ) {
-	interfacePlugsType::Vector_INovelInfoSPtr_Shared vectorINovelInfoSPtr = std::make_shared< interfacePlugsType::Vector_INovelInfoSPtr >( );
-	interfacePlugsType::Vector_INovelInfoSPtr overNovels; // 已经处理完毕的小说列表
-	interfacePlugsType::Vector_INovelInfoSPtr notProcessedNovels = novel_info_vector; // 未处理小说列表
-	interfacePlugsType::Vector_INovelInfoSPtr notProcessedNovelsBuff; // 未处理小说列表-临时存储
-	auto inputNovelMax = novel_info_vector.size( );
-	size_t startIndex = 1; // 首次使用 notProcessedNovels
+	interfacePlugsType::Vector_INovelInfoSPtr_Shared vectorINovelInfoSPtr =
+		std::make_shared< interfacePlugsType::Vector_INovelInfoSPtr >( ); // 临时存储未处理的小说列表
+	interfacePlugsType::Vector_INovelInfoSPtr_Shared resultIndutionNovels =
+		std::make_shared< interfacePlugsType::Vector_INovelInfoSPtr >( ); // 合并后返回的小说列表
+	interfacePlugsType::Vector_INovelInfoSPtr_Shared notProcessedNovelsBuff =
+		std::make_shared< interfacePlugsType::Vector_INovelInfoSPtr >( novel_info_vector.begin( ), novel_info_vector.end( ) ); // 遍历的小说列表
+	auto inputNovelMax = notProcessedNovelsBuff->size( );
 	auto wirtNormalPath = getFileBaseName( QString::fromStdWString( write_path ) ).toUpper( ).toStdWString( );
-	for( size_t index = 0; index < inputNovelMax; ++index ) {
-		auto inductionNovel = novel_info_vector.at( index );
-		auto url = inductionNovel->url;
-		auto overEnd = overNovels.end( );
-		auto finIf = std::find_if( overNovels.begin( ),
-			overEnd,
-			[url]( const interfacePlugsType::INovelInfo_Shared &ptr ) {
-				if( cylHtmlTools::HtmlStringTools::equHtmlString( ptr->url, url ) )
-					return true;
-				return false;
-			} );
-		if( finIf != overEnd )
-			continue; // 已经完成处理
-
-		// 正在实现处理
-		overNovels.emplace_back( inductionNovel );
+	while( inputNovelMax ) {
+		auto inductionNovel = notProcessedNovelsBuff->at( 0 );
 		interfacePlugsType::INovelInfo_Shared newNovel = cloneNovel( *inductionNovel );
 		appendKeyMapToAdditionDataLast( newNovel, inductionNovel, wirtNormalPath, novel_keys_map );
-		vectorINovelInfoSPtr->emplace_back( newNovel );
+		resultIndutionNovels->emplace_back( newNovel );
 		// 从下一个开始比较
-		size_t noProcessCount = notProcessedNovels.size( );
-		for( ; startIndex < noProcessCount; ++startIndex ) {
+		for( size_t startIndex = 1; startIndex < inputNovelMax; ++startIndex ) {
 			// 比较的小说对象
-			auto compNovel = notProcessedNovels.at( startIndex );
+			auto compNovel = notProcessedNovelsBuff->at( startIndex );
 			if( compNovel->novelName == inductionNovel->novelName && compNovel->author == inductionNovel->author ) { // 正确匹配
 				if( compNovel->info.length( ) > inductionNovel->info.length( ) )
 					newNovel->info = compNovel->info;
@@ -1166,43 +1152,29 @@ interfacePlugsType::Vector_INovelInfoSPtr_Shared NovelDBJob::inductionNovelsForN
 							newNovel->additionalData = newNovel->additionalData + L',';
 						} while( true );
 				}
-
-				// 正在实现处理
-				overNovels.emplace_back( compNovel );
 			} else
-				notProcessedNovelsBuff.emplace_back( compNovel );
+				vectorINovelInfoSPtr->emplace_back( compNovel );
 		}
-		notProcessedNovels = notProcessedNovelsBuff;
-		startIndex = 0; // 重置访问 notProcessedNovels 的下标
-		notProcessedNovelsBuff.clear( );
+		notProcessedNovelsBuff = vectorINovelInfoSPtr;
+		vectorINovelInfoSPtr = std::make_shared< interfacePlugsType::Vector_INovelInfoSPtr >( );
+		inputNovelMax = notProcessedNovelsBuff->size( );
 	}
 
 
-	return vectorINovelInfoSPtr;
+	return resultIndutionNovels;
 }
 interfacePlugsType::Vector_INovelInfoSPtr_Shared NovelDBJob::inductionNovelsForNameAndAuthor( const interfacePlugsType::Vector_INovelInfoSPtr &novel_info_vector ) {
 
-	interfacePlugsType::Vector_INovelInfoSPtr_Shared vectorINovelInfoSPtr = std::make_shared< interfacePlugsType::Vector_INovelInfoSPtr >( );
-	interfacePlugsType::Vector_INovelInfoSPtr overNovels; // 已经处理完毕的小说列表
-	interfacePlugsType::Vector_INovelInfoSPtr notProcessedNovels = novel_info_vector; // 未处理小说列表
-	interfacePlugsType::Vector_INovelInfoSPtr notProcessedNovelsBuff; // 未处理小说列表-临时存储
-	auto inputNovelMax = novel_info_vector.size( );
-	size_t startIndex = 1; // 首次使用 notProcessedNovels
-	for( size_t index = 0; index < inputNovelMax; ++index ) {
-		auto inductionNovel = novel_info_vector.at( index );
-		auto url = inductionNovel->url;
-		auto overEnd = overNovels.end( );
-		auto finIf = std::find_if( overNovels.begin( ),
-			overEnd,
-			[url]( const interfacePlugsType::INovelInfo_Shared &ptr ) {
-				if( ptr->url == url )
-					return true;
-				return false;
-			} );
-		if( finIf != overEnd )
-			continue; // 已经完成处理
-		// 正在实现处理
-		overNovels.emplace_back( inductionNovel );
+	interfacePlugsType::Vector_INovelInfoSPtr_Shared vectorINovelInfoSPtr =
+		std::make_shared< interfacePlugsType::Vector_INovelInfoSPtr >( ); // 临时存储未处理的小说列表
+	interfacePlugsType::Vector_INovelInfoSPtr_Shared resultIndutionNovels =
+		std::make_shared< interfacePlugsType::Vector_INovelInfoSPtr >( ); // 合并后返回的小说列表
+	interfacePlugsType::Vector_INovelInfoSPtr_Shared notProcessedNovelsBuff =
+		std::make_shared< interfacePlugsType::Vector_INovelInfoSPtr >( novel_info_vector.begin( ), novel_info_vector.end( ) ); // 遍历的小说列表
+	auto inputNovelMax = notProcessedNovelsBuff->size( );
+	while( inputNovelMax ) {
+		auto inductionNovel = novel_info_vector.at( 0 );
+
 		interfacePlugsType::INovelInfo_Shared newNovel = std::make_shared< NovelInfo >( );
 		newNovel->novelName = inductionNovel->novelName; // 配置名称
 		newNovel->url = inductionNovel->url; // 配置 url
@@ -1212,12 +1184,11 @@ interfacePlugsType::Vector_INovelInfoSPtr_Shared NovelDBJob::inductionNovelsForN
 		newNovel->lastRequestTime = inductionNovel->lastRequestTime; // 配置最后获取时间
 		newNovel->updateTime = inductionNovel->updateTime; // 配置最后更新时间
 		newNovel->additionalData = inductionNovel->additionalData; // 追加附加信息
-		vectorINovelInfoSPtr->emplace_back( newNovel );
+		resultIndutionNovels->emplace_back( newNovel );
 		// 从下一个开始比较
-		size_t noProcessCount = notProcessedNovels.size( );
-		for( ; startIndex < noProcessCount; ++startIndex ) {
+		for( size_t startIndex = 1; startIndex < inputNovelMax; ++startIndex ) {
 			// 比较的小说对象
-			auto compNovel = notProcessedNovels.at( startIndex );
+			auto compNovel = novel_info_vector.at( startIndex );
 			if( compNovel->novelName == inductionNovel->novelName && compNovel->author == inductionNovel->author ) { // 正确匹配
 				if( compNovel->info.length( ) > inductionNovel->info.length( ) )
 					newNovel->info = compNovel->info;
@@ -1229,16 +1200,12 @@ interfacePlugsType::Vector_INovelInfoSPtr_Shared NovelDBJob::inductionNovelsForN
 					newNovel->typeName = newNovel->typeName + L"\n\t\t" + compNovel->typeName; // 追加类型名称
 				if( !compNovel->additionalData.empty( ) )
 					newNovel->additionalData = newNovel->additionalData + L"," + compNovel->additionalData;
-				// 正在实现处理
-				overNovels.emplace_back( compNovel );
 			} else
-				notProcessedNovelsBuff.emplace_back( compNovel );
+				vectorINovelInfoSPtr->emplace_back( compNovel );
 		}
-		notProcessedNovels = notProcessedNovelsBuff;
-		startIndex = 0; // 重置访问 notProcessedNovels 的下标
-		notProcessedNovelsBuff.clear( );
+		notProcessedNovelsBuff = vectorINovelInfoSPtr;
+		vectorINovelInfoSPtr = std::make_shared< interfacePlugsType::Vector_INovelInfoSPtr >( );
+		inputNovelMax = notProcessedNovelsBuff->size( );
 	}
-
-
-	return vectorINovelInfoSPtr;
+	return resultIndutionNovels;
 }
