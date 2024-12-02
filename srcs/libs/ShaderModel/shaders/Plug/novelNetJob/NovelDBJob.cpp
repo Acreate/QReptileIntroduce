@@ -605,16 +605,11 @@ interfacePlugsType::Vector_INovelInfoSPtr NovelDBJob::novelVectorIsExpire( const
 	cylHtmlTools::HtmlWorkThreadPool threadPool;
 	std::mutex mutex;
 	for( auto &novel : novel_info_ptr )
-		threadPool.appendWork( [&mutex,&result, novel,expire_day]( cylHtmlTools::HtmlWorkThread *html_work_thread ) {
-			if( novelIsExpire( expire_day, novel.get( ) ) ) {
-				mutex.lock( );
-				result.emplace_back( novel );
-				mutex.unlock( );
-			}
-		} );
-	threadPool.start( );
-	while( !threadPool.isOverJob( ) )
-		qApp->processEvents( );
+		if( novelIsExpire( expire_day, novel.get( ) ) ) {
+			mutex.lock( );
+			result.emplace_back( novel );
+			mutex.unlock( );
+		}
 	return result;
 }
 std::vector< interfacePlugsType::HtmlDocString > NovelDBJob::novelVectorGetNovleUrl( interfacePlugsType::Vector_INovelInfoSPtr &novel_info_ptr ) {
