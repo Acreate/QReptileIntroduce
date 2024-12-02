@@ -558,14 +558,7 @@ NovelDBJob::NovelInfoVector_Shared NovelDBJob::readDB( OStream *thisOStream, con
 }
 
 bool NovelDBJob::novelIsExpire( const size_t &expire_day, const interfacePlugsType::INovelInfoPtr &novel_info_ptr ) {
-	interfacePlugsType::HtmlDocString upTime;
-	interfacePlugsType::HtmlDocString upTimeFrom;
-	interfacePlugsType::HtmlDocString novelUrl;
-	if( !novel_info_ptr->getNovelUpdateTime( &upTime ) )
-		return true;
-	if( !novel_info_ptr->getNovelUpdateTimeFormat( &upTimeFrom ) )
-		return true;
-	QDateTime dateTime = QDateTime::fromString( QString::fromStdWString( upTime ), QString::fromStdWString( upTimeFrom ) );
+	QDateTime dateTime = QDateTime::fromString( QString::fromStdWString( novel_info_ptr->updateTime ), QString::fromStdWString( novel_info_ptr->format ) );
 	auto milliseconds = currentTime - dateTime;
 	auto minutes = std::chrono::duration_cast< std::chrono::minutes >( milliseconds ).count( );
 	auto hours = minutes / 60; // 获取小时
@@ -585,9 +578,7 @@ bool NovelDBJob::novelIsExpire( const size_t &expire_day, const interfacePlugsTy
 		if( day > expire_day )
 			return true;
 	}
-	if( !novel_info_ptr->getNovelLastRequestGetTime( &upTime ) )
-		return true;
-	dateTime = QDateTime::fromString( QString::fromStdWString( upTime ), currentTimeForm );
+	dateTime = QDateTime::fromString( QString::fromStdWString( novel_info_ptr->lastRequestTime ), currentTimeForm );
 	milliseconds = currentTime - dateTime;
 	minutes = std::chrono::duration_cast< std::chrono::minutes >( milliseconds ).count( );
 	hours = minutes / 60; // 获取小时
@@ -611,18 +602,25 @@ bool NovelDBJob::novelIsExpire( const size_t &expire_day, const interfacePlugsTy
 }
 interfacePlugsType::Vector_INovelInfoSPtr NovelDBJob::novelVectorIsExpire( const size_t &expire_day, const interfacePlugsType::Vector_INovelInfoSPtr &novel_info_ptr ) {
 	interfacePlugsType::Vector_INovelInfoSPtr result;
+	cylHtmlTools::HtmlWorkThreadPool threadPool;
+	std::mutex mutex;
 	for( auto &novel : novel_info_ptr )
-		if( novelIsExpire( expire_day, novel.get( ) ) )
-			result.emplace_back( novel );
+		threadPool.appendWork( [&mutex,&result, novel,expire_day]( cylHtmlTools::HtmlWorkThread *html_work_thread ) {
+			if( novelIsExpire( expire_day, novel.get( ) ) ) {
+				mutex.lock( );
+				result.emplace_back( novel );
+				mutex.unlock( );
+			}
+		} );
+	threadPool.start( );
+	while( !threadPool.isOverJob( ) )
+		qApp->processEvents( );
 	return result;
 }
 std::vector< interfacePlugsType::HtmlDocString > NovelDBJob::novelVectorGetNovleUrl( interfacePlugsType::Vector_INovelInfoSPtr &novel_info_ptr ) {
 	std::vector< interfacePlugsType::HtmlDocString > result;
-	interfacePlugsType::HtmlDocString novelUrl;
-	for( auto &novel : novel_info_ptr ) {
-		novel->getNovelUrl( &novelUrl );
-		result.emplace_back( novelUrl );
-	}
+	for( auto &novel : novel_info_ptr )
+		result.emplace_back( novel->url );
 	return result;
 }
 interfacePlugsType::Vector_INovelInfoSPtr NovelDBJob::formVectorINovelInfoRemoveVectorINovelInfo( const interfacePlugsType::Vector_INovelInfoSPtr &src, const interfacePlugsType::Vector_INovelInfoSPtr &des ) {

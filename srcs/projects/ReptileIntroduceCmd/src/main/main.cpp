@@ -887,6 +887,8 @@ std::shared_ptr< cylHtmlTools::HtmlWorkThreadPool > getDBNovelsInfo( const std::
 				std_cout_mutex.unlock( );
 			}
 		} );
+	if( resultPool->getThreadCount( ) == 0 )
+		return nullptr;
 	resultPool->setCallSepMilliseconds( duration );
 	std::string callFunctionName = __FUNCTION__;
 	resultPool->setIdleTimeCall( [&,callFunctionName]( cylHtmlTools::HtmlWorkThreadPool *html_work_thread_pool, const unsigned long long &modWork, const unsigned long long &currentWorkCount ) {
@@ -945,6 +947,8 @@ std::shared_ptr< cylHtmlTools::HtmlWorkThreadPool > getFindKeyFileKeyToMap( cons
 				inster_read_find_key_map_mutex.unlock( );
 			} );
 	}
+	if( resultPool->getThreadCount( ) == 0 )
+		return nullptr;
 	resultPool->setCallSepMilliseconds( duration );
 	std::string callFunctionName = __FUNCTION__;
 	resultPool->setIdleTimeCall( [&,callFunctionName]( cylHtmlTools::HtmlWorkThreadPool *html_work_thread_pool, const unsigned long long &workCount, const unsigned long long &currentWorkCount ) {
@@ -983,7 +987,8 @@ std::shared_ptr< cylHtmlTools::HtmlWorkThreadPool > getFindKeyFileKeyToVector( c
 			}
 		} );
 	}
-
+	if( resultPool->getThreadCount( ) == 0 )
+		return nullptr;
 	resultPool->setCallSepMilliseconds( duration );
 	std::string callFunctionName = __FUNCTION__;
 	resultPool->setIdleTimeCall( [&,callFunctionName]( cylHtmlTools::HtmlWorkThreadPool *html_work_thread_pool, const unsigned long long &workCount, const unsigned long long &currentWorkCount ) {
@@ -1061,6 +1066,8 @@ std::shared_ptr< cylHtmlTools::HtmlWorkThreadPool > getDBFilterNovelInfo( const 
 			} );
 
 
+	if( resultPool->getThreadCount( ) == 0 )
+		return nullptr;
 	resultPool->setCallSepMilliseconds( duration );
 	std::string callFunctionName = __FUNCTION__;
 	resultPool->setIdleTimeCall( [&,callFunctionName]( cylHtmlTools::HtmlWorkThreadPool *html_work_thread_pool, const unsigned long long &workCount, const unsigned long long &currentWorkCount ) {
@@ -1200,6 +1207,8 @@ std::shared_ptr< cylHtmlTools::HtmlWorkThreadPool > getDBFindNovelInfo(
 				} );
 	}
 
+	if( resultPool->getThreadCount( ) == 0 )
+		return nullptr;
 	resultPool->setCallSepMilliseconds( duration );
 	std::string callFunctionName = __FUNCTION__;
 	resultPool->setIdleTimeCall( [&,callFunctionName]( cylHtmlTools::HtmlWorkThreadPool *html_work_thread_pool, const unsigned long long &workCount, const unsigned long long &currentWorkCount ) {
@@ -1300,6 +1309,8 @@ std::shared_ptr< cylHtmlTools::HtmlWorkThreadPool > writeDiskInForNovels( const 
 				writeDisk( disk_mute, count_mute, std_cout_mutex, allFilePathName, write_novel_count, *mapIterator.second, callFunctionName );
 			} );
 	}
+	if( resultPool->getThreadCount( ) == 0 )
+		return nullptr;
 	resultPool->setCallSepMilliseconds( duration );
 	resultPool->setIdleTimeCall( [&,callFunctionName]( cylHtmlTools::HtmlWorkThreadPool *html_work_thread_pool, const unsigned long long &workCount, const unsigned long long &currentWorkCount ) {
 		outStdCountStreamMsg( std_cout_mutex, workCount, currentWorkCount, callFunctionName, u8"正在写入磁盘", __FILE__, __LINE__ );
@@ -1344,6 +1355,8 @@ std::shared_ptr< cylHtmlTools::HtmlWorkThreadPool > writeDiskInForInductionNovel
 				} );
 		}
 	}
+	if( resultPool->getThreadCount( ) == 0 )
+		return nullptr;
 	resultPool->setCallSepMilliseconds( duration );
 	resultPool->setIdleTimeCall( [&,callFunctionName]( cylHtmlTools::HtmlWorkThreadPool *html_work_thread_pool, const unsigned long long &workCount, const unsigned long long &currentWorkCount ) {
 		outStdCountStreamMsg( std_cout_mutex, workCount, currentWorkCount, callFunctionName, u8"正在写入磁盘", __FILE__, __LINE__ );
@@ -1357,16 +1370,7 @@ std::shared_ptr< cylHtmlTools::HtmlWorkThreadPool > writeDiskInForInductionNovel
 void dbReadWriteChanger( const std::shared_ptr< cylStd::ArgParser > &arg_parser ) {
 	if( !arg_parser->getOptionValues( "-rdb" ) )
 		return;
-	auto isExportDbAllNovelInfo = arg_parser->getOptionValues( "-edb" );
-	if( !isExportDbAllNovelInfo && !arg_parser->getOptionValues( "-fkf" ) ) {
-		ErrorCout_MACRO( QString(u8"(进程 id :%1) 选项错误，请使用 -edb 或 -fkf 指定的任务（可并行）").arg( qApp->applicationPid( ) ) );
-		return; // 不存在可读数据库
-	}
-	auto exisDbFilePath = getOptionExisFilePath( arg_parser, "-rdb", ".db" );
-	if( exisDbFilePath.size( ) == 0 ) {
-		ErrorCout_MACRO( QString(u8"(进程 id :%1) 数据库路径错误，请检查 -rdb 指定的路径是否正确").arg( qApp->applicationPid( ) ) );
-		return; // 不存在可读数据库
-	}
+
 	auto expireOption = arg_parser->getOptionValues( "-ex" );
 	size_t expire = 0; // 过期，如果是 0，表示不删除
 	bool hasExOption = false; // 转换失败或者不存在选项则为 false
@@ -1382,12 +1386,12 @@ void dbReadWriteChanger( const std::shared_ptr< cylStd::ArgParser > &arg_parser 
 		if( !hasExOption )
 			ErrorCout_MACRO( QString( u8"(进程 id :%1) 过期选项发生错误，请检查 -ex 是否发生错误" ).arg( qApp->applicationPid( ) ) );
 	}
-	// 查找输出路径
-	auto exisLegitimateOutDirPath = getOptionLegitimateOutDirPath( arg_parser, "-w" );
-	if( !hasExOption && exisLegitimateOutDirPath.size( ) == 0 ) {
-		ErrorCout_MACRO( QString( u8"(进程 id :%1) 输出路径设置错误，请检查 -w 是否发生错误" ).arg( qApp->applicationPid( ) ) );
-		return;
+	auto exisDbFilePath = getOptionExisFilePath( arg_parser, "-rdb", ".db" );
+	if( exisDbFilePath.size( ) == 0 ) {
+		ErrorCout_MACRO( QString(u8"(进程 id :%1) 数据库路径错误，请检查 -rdb 指定的路径是否正确").arg( qApp->applicationPid( ) ) );
+		return; // 不存在可读数据库
 	}
+
 
 	// 线程当中使用输出的锁
 	QMutex stdCoutMutex;
@@ -1431,21 +1435,22 @@ void dbReadWriteChanger( const std::shared_ptr< cylStd::ArgParser > &arg_parser 
 	std::shared_ptr< cylHtmlTools::HtmlWorkThreadPool > readDBThreadpool = getDBNovelsInfo( exisDbFilePath, stdCoutMutex, insterNovelVectosMutex, novelInfosMap, novelCount, expire, hasExOption, equJumpKeys, subJumpKeys );
 
 	if( readDBThreadpool == nullptr ) {
-		ErrorCout_MACRO( QString( u8"(进程 id :%1) -red 功能任务需求任务失败，请与开发者联系" ).arg( qApp->applicationPid( ) ) );
+		ErrorCout_MACRO( QString( u8"(进程 id :%1) -rdb 功能任务需求任务失败，请与开发者联系" ).arg( qApp->applicationPid( ) ) );
 		return;
 	}
 	readDBThreadpool->start( );
 
+
+	auto findKeyFileOption = arg_parser->getOptionValues( "-fkf" );
 	// 保存查找文件的信息<文件路径, 关键字列表>
 	std::unordered_map< QString, std::vector< interfacePlugsType::HtmlDocString > > exisFindFilePathMapKey;
 	// 执行获取查找关键字任务
-	std::shared_ptr< cylHtmlTools::HtmlWorkThreadPool > readFindKeyThreadpool = getFindKeyFileKeyToMap( arg_parser, "-fkf", exisFindFilePathMapKey, stdCoutMutex, insterReadFindKeyMapmutex );
-
-
-	if( readFindKeyThreadpool == nullptr )
-		ErrorCout_MACRO( QString( u8"(进程 id :%1) 没发现 -fkf 功能任务需求" ).arg( qApp->applicationPid( ) ) );
-	else
+	std::shared_ptr< cylHtmlTools::HtmlWorkThreadPool > readFindKeyThreadpool = nullptr;
+	if( findKeyFileOption ) {
+		// 存在选项，则开始
+		readFindKeyThreadpool = getFindKeyFileKeyToMap( arg_parser, "-fkf", exisFindFilePathMapKey, stdCoutMutex, insterReadFindKeyMapmutex );
 		readFindKeyThreadpool->start( );
+	}
 
 	while( !readDBThreadpool->isOverJob( ) )
 		qApp->processEvents( );
@@ -1453,20 +1458,43 @@ void dbReadWriteChanger( const std::shared_ptr< cylStd::ArgParser > &arg_parser 
 	stdCoutMutex.lock( );
 	std::cout << u8"\n(进程 id :" << qApp->applicationPid( ) << u8")累计有效小说数量 :[ " << novelCount << u8" ]\n" << std::endl;
 	stdCoutMutex.unlock( );
-
-	if( readFindKeyThreadpool )
+	size_t size = 0;
+	if( readFindKeyThreadpool ) {
 		while( !readFindKeyThreadpool->isOverJob( ) )
 			qApp->processEvents( );
+		size = exisFindFilePathMapKey.size( );
+		if( size == 0 )
+			ErrorCout_MACRO( QString("(进程 id :%1) 读取查找配置文件失败，请检查选项是否有效").arg( qApp->applicationPid( ) ) );
+	}
 
 	if( novelCount == 0 ) {
 		ErrorCout_MACRO( QString( u8"(进程 id :%1) 数据库无法获取小说信息，请检查 -rdb 是否发生错误" ).arg( qApp->applicationPid( ) ) );
 		return;
 	}
+
+	// 查找输出路径
+	auto exisLegitimateOutDirPath = getOptionLegitimateOutDirPath( arg_parser, "-w" );
+	if( exisLegitimateOutDirPath.size( ) == 0 ) {
+		ErrorCout_MACRO( QString( u8"(进程 id :%1) 输出路径设置错误，请检查 -w 是否发生错误" ).arg( qApp->applicationPid( ) ) );
+		return;
+	}
+
+	auto isExportDbAllNovelInfo = arg_parser->getOptionValues( "-edb" );
+	if( size == 0 && !isExportDbAllNovelInfo ) {
+		if( expireOption ) {
+			stdCoutMutex.lock( );
+			std::cout << u8"\n\n-----------\n" <<
+				u8"已经实现删除过期小说功能，删除单位：" << expire << u8" 天\n\n-----------\n" << std::endl;
+			stdCoutMutex.unlock( );
+		} else
+			ErrorCout_MACRO( QString( u8"(进程 id :%1) 导出选项配置错误，请检查 -edb 或 -fkf 是否有有效" ).arg( qApp->applicationPid( ) ) );
+		return;
+	}
 	// 存储过滤后的小说信息<写入文件路径, 小说列表>
 	NovelDBJob::NovelTypePairVector_Shared novelInfosWriteMap = std::make_shared< NovelDBJob::NovelTypePairVector >( );
 	std::shared_ptr< cylHtmlTools::HtmlWorkThreadPool > exportDBNovelInfoAllThreadPool = nullptr;
-	size_t size = exisFindFilePathMapKey.size( );
-	if( isExportDbAllNovelInfo || size == 0 ) { // 全导出。-w 选项的 export_all 目录
+
+	if( isExportDbAllNovelInfo ) { // 全导出。-w 选项的 export_all 目录
 		exportDBNovelInfoAllThreadPool = getDBFilterNovelInfo( novelInfosMap, novelInfosWriteMap, equJumpKeys, subJumpKeys, stdCoutMutex, insterNovelVectosMutex );
 		if( !exportDBNovelInfoAllThreadPool ) {
 			ErrorCout_MACRO( QString("(进程 id :%1) 全导出功能错误。请联系开发人员反馈").arg( qApp->applicationPid( ) ) );
