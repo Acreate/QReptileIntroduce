@@ -85,7 +85,7 @@ std::vector< QString > readIngoreNameFiles( const std::vector< cylStd::ArgParser
 		for( auto &fileInfo : Path::getPathInfo( QString::fromLocal8Bit( path ) ).second ) {
 			auto currentFilePtah = fileInfo.getCurrentFilePtah( );
 			fileKeys = readIngoreNameFile( currentFilePtah, { "\n" } );
-			fileKeys = vectorStrduplicate( fileKeys );
+			fileKeys = vectorStrDuplicate( fileKeys );
 			fileKeys = vectorStrSort( fileKeys );
 			fileKeys = vectorStrLenSort( fileKeys );
 			writeVector( fileKeys, currentFilePtah, &nameKeys );
@@ -168,7 +168,7 @@ std::vector< QString > vectorStrAdjustSubStr( const std::vector< QString > &str_
 	}
 	return resultVector;
 }
-std::vector< QString > vectorStrduplicate( const std::vector< QString > str_vector ) {
+std::vector< QString > vectorStrDuplicate( const std::vector< QString > str_vector ) {
 
 	auto endIndex = str_vector.size( );
 	if( endIndex < 2 )
@@ -264,7 +264,7 @@ void loadFindKeyFiles( const std::shared_ptr< std::vector< cylStd::ArgParser::St
 		}
 	findKeys = vectorStrAdjustSubStr( findKeys );
 	if( findKeys.size( ) > 0 ) {
-		findKeys = vectorStrduplicate( findKeys );
+		findKeys = vectorStrDuplicate( findKeys );
 		result_file_name_map.emplace( app_name, vectorStrToLenKeyMap( converToWString( findKeys ) ) );
 	}
 	std::unordered_map< QString, std::vector< QString > > pathKeysMap;
@@ -274,7 +274,7 @@ void loadFindKeyFiles( const std::shared_ptr< std::vector< cylStd::ArgParser::St
 			for( auto &filePath : pathInfo.second ) {
 				QString currentFilePtah = filePath.getCurrentFilePtah( );
 				auto vector = readIngoreNameFile( currentFilePtah, { "\n", "·", ",", "、", ",", "`", "~", "。", ".", "，" } );
-				vector = vectorStrduplicate( vector );
+				vector = vectorStrDuplicate( vector );
 				vector = vectorStrAdjustSubStr( vector );
 				writeVector( vector, currentFilePtah );
 				if( vector.size( ) == 0 )
@@ -287,7 +287,7 @@ void loadFindKeyFiles( const std::shared_ptr< std::vector< cylStd::ArgParser::St
 		auto iterator = pathKeysMap.begin( );
 		auto end = pathKeysMap.end( );
 		do {
-			auto newVector = vectorStrduplicate( iterator->second );
+			auto newVector = vectorStrDuplicate( iterator->second );
 			auto newMap = vectorStrToLenKeyMap( converToWString( newVector ) );
 			decltype(newMap) buff;
 			QString fileName = QFileInfo( iterator->first ).fileName( );
@@ -323,7 +323,7 @@ void loadingEquKeyFiles( const std::shared_ptr< std::vector< cylStd::ArgParser::
 			findKeys.emplace_back( removeAllSpace( *it ) );
 	}
 	if( findKeys.size( ) > 0 ) {
-		findKeys = vectorStrduplicate( findKeys );
+		findKeys = vectorStrDuplicate( findKeys );
 		result_map = vectorStrToLenKeyMap( converToWString( findKeys ) );
 	}
 }
@@ -596,7 +596,7 @@ bool removeFileSourceFilesKeys( const std::vector< std::string > &source_file_s,
 		std::cout << u8"没有需要删除的文字" << std::endl;
 		return false;
 	}
-	sourcesPaths = vectorStrduplicate( sourcesPaths );
+	sourcesPaths = vectorStrDuplicate( sourcesPaths );
 	auto begin = sourcesPaths.begin( );
 	auto end = sourcesPaths.end( );
 	for( auto &destFilePath : des_file_s ) {
@@ -621,10 +621,10 @@ bool removeFileSourceFilesKeys( const std::vector< std::string > &source_file_s,
 		std::cout << u8"没有需要被删除的文件路径" << std::endl;
 		return false;
 	}
-	destPaths = vectorStrduplicate( destPaths );
+	destPaths = vectorStrDuplicate( destPaths );
 	for( auto &path : sourcesPaths ) {
 		auto keys = readIngoreNameFile( path, { "\n" } );
-		keys = vectorStrduplicate( keys );
+		keys = vectorStrDuplicate( keys );
 		keys = vectorStrLenSort( keys );
 		writeVector( keys, path );
 		ingoreNameFiles.insert( ingoreNameFiles.end( ), keys.begin( ), keys.end( ) );
@@ -634,7 +634,7 @@ bool removeFileSourceFilesKeys( const std::vector< std::string > &source_file_s,
 		std::cout << u8"没有需要删除的文字" << std::endl;
 		return false;
 	}
-	ingoreNameFiles = vectorStrduplicate( ingoreNameFiles );
+	ingoreNameFiles = vectorStrDuplicate( ingoreNameFiles );
 	ingoreNameFiles = vectorStrLenSort( ingoreNameFiles );
 	begin = ingoreNameFiles.begin( );
 	end = ingoreNameFiles.end( );
@@ -650,7 +650,7 @@ bool removeFileSourceFilesKeys( const std::vector< std::string > &source_file_s,
 					return false;
 				} ) == end )
 				filterKeys.emplace_back( key );
-		filterKeys = vectorStrduplicate( filterKeys );
+		filterKeys = vectorStrDuplicate( filterKeys );
 		filterKeys = vectorStrLenSort( filterKeys );
 		writeVector( filterKeys, path );
 		filterKeys.clear( );

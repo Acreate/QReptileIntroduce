@@ -131,7 +131,7 @@ std::vector< QString > getFilePathsOptionPaths( std::shared_ptr< cylStd::ArgPars
 				filePaths.emplace_back( file.getCurrentFilePtah( ) ); // 存储
 		}
 
-		return vectorStrduplicate( filePaths );
+		return vectorStrDuplicate( filePaths );
 	}
 	return filePaths;
 }
@@ -607,8 +607,9 @@ qint64 writeFile( const QString &file_path, const QFileDevice::OpenMode open_mod
 /// </summary>
 /// <param name="map">文件映射</param>
 /// <param name="split_str_key">切分关键字</param>
+/// <param name="isAdjustSubStr">是否需要取出子字符串</param>
 /// <returns>新映射</returns>
-std::unordered_map< QString, std::vector< QString > > getPairsKey( const std::unordered_map< QString, QString > &map, const QString &split_str_key ) {
+std::unordered_map< QString, std::vector< QString > > getPairsKey( const std::unordered_map< QString, QString > &map, const QString &split_str_key, const bool isAdjustSubStr ) {
 	std::unordered_map< QString, std::vector< QString > > result;
 	for( auto &iter : map ) {
 		auto list = splitMultipleStrList( iter.second, { split_str_key } );
@@ -618,7 +619,13 @@ std::unordered_map< QString, std::vector< QString > > getPairsKey( const std::un
 				saveList.emplace_back( str.toUpper( ) );
 		if( saveList.size( ) == 0 )
 			continue; // 没有关键字，则跳过这次循环
-		saveList = vectorStrAdjustSubStr( saveList );
+		if( isAdjustSubStr )
+			saveList = vectorStrAdjustSubStr( saveList );
+		else {
+			saveList = vectorStrDuplicate( saveList );
+			saveList = vectorStrSort( saveList );
+			saveList = vectorStrLenSort( saveList );
+		}
 		QString filePath = iter.first;
 		if( writeFile( filePath, QIODeviceBase::ReadWrite | QIODeviceBase::Truncate, saveList, "\n" ) )
 			result.insert_or_assign( filePath, saveList );// 只有真正可写内容才允许保存到列表当中
@@ -638,11 +645,14 @@ void unmapRemoveIfEquKeys( std::unordered_map< QString, std::vector< QString > >
 		for( auto &key : vector )
 			if( !vectorHasValue( source_equ_keys, key ) )
 				newBuff.emplace_back( key );
-		newBuff = vectorStrAdjustSubStr( newBuff );
+		newBuff = vectorStrDuplicate( newBuff );
 		// 不相等，则需要更新
-		if( newBuff.size( ) != vector.size( ) )
-			if( writeFile( iter.first, QIODeviceBase::ReadWrite | QIODeviceBase::Truncate, newBuff, "\n" ) )
-				iter.second = newBuff;
+		if( newBuff.size( ) == vector.size( ) )
+			continue;
+		newBuff = vectorStrSort( newBuff );
+		newBuff = vectorStrLenSort( newBuff );
+		if( writeFile( iter.first, QIODeviceBase::ReadWrite | QIODeviceBase::Truncate, newBuff, "\n" ) )
+			iter.second = newBuff;
 	}
 }
 /// <summary>
@@ -654,7 +664,6 @@ void unmapRemoveIfSubKeys( std::unordered_map< QString, std::vector< QString > >
 	for( auto &iter : dest_file_text_map_keys ) {
 		auto vector = iter.second;
 		std::vector< QString > newBuff;
-		std::vector< QString >::iterator findResult;
 		for( auto &key : vector ) {
 			std::function< bool( const QString & ) > check = [&]( const QString &value ) {
 				if( key.indexOf( value ) != -1 )
@@ -667,10 +676,14 @@ void unmapRemoveIfSubKeys( std::unordered_map< QString, std::vector< QString > >
 			if( stdVectorFindIfResult == end )
 				newBuff.emplace_back( key );
 		}
-		// 不相等，则需要更新
-		if( newBuff.size( ) != vector.size( ) )
-			if( writeFile( iter.first, QIODeviceBase::ReadWrite | QIODeviceBase::Truncate, newBuff, "\n" ) )
-				iter.second = newBuff;
+
+		newBuff = vectorStrDuplicate( newBuff );
+		if( vector.size( ) == newBuff.size( ) )
+			continue; // 数量一致，不需要更新目标文件
+		newBuff = vectorStrSort( newBuff );
+		newBuff = vectorStrLenSort( newBuff );
+		if( writeFile( iter.first, QIODeviceBase::ReadWrite | QIODeviceBase::Truncate, newBuff, "\n" ) )
+			iter.second = newBuff;
 	}
 }
 /// <summary>
@@ -697,19 +710,20 @@ void checkKeyFile( std::shared_ptr< cylStd::ArgParser > &args ) {
 	// 获取读写目标
 	auto destFileTextMap = getFileText( dest );
 	// 切分关键字
-	auto destFileTextMapKeys = getPairsKey( destFileTextMap, "\n" );
+	auto destFileTextMapKeys = getPairsKey( destFileTextMap, "\n", false );
 	// 处理完全匹配
 	if( sourceEquCount ) {
 		// 获取读写目标
 		auto sourceEquFileTextMap = getFileText( sourceEqu );
 		// 切分关键字
-		auto sourceEquFileTextMapKeys = getPairsKey( sourceEquFileTextMap, "\n" );
+		auto sourceEquFileTextMapKeys = getPairsKey( sourceEquFileTextMap, "\n", false );
 		// 保存到容器
 		std::vector< QString > sourceEquKeys;
 		for( auto &iter : sourceEquFileTextMapKeys )
 			for( auto &checkStr : iter.second )
 				sourceEquKeys.emplace_back( checkStr );
-		sourceEquKeys = vectorStrAdjustSubStr( sourceEquKeys );
+		sourceEquKeys = vectorStrSort( sourceEquKeys );
+		sourceEquKeys = vectorStrLenSort( sourceEquKeys );
 		unmapRemoveIfEquKeys( destFileTextMapKeys, sourceEquKeys );
 	}
 	// 处理段内匹配
@@ -717,7 +731,7 @@ void checkKeyFile( std::shared_ptr< cylStd::ArgParser > &args ) {
 		// 获取读写目标
 		auto sourceSubFileTextMap = getFileText( sourceSub );
 		// 切分关键字
-		auto sourceSubFileTextMapKeys = getPairsKey( sourceSubFileTextMap, "\n" );
+		auto sourceSubFileTextMapKeys = getPairsKey( sourceSubFileTextMap, "\n", true );
 		// 保存到容器
 		std::vector< QString > sourceSubKeys;
 		for( auto &iter : sourceSubFileTextMapKeys )
