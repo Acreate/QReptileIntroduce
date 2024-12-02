@@ -137,31 +137,42 @@ qsizetype writeIngoreNameFile( const QString &path, const std::vector< QString >
 	return 0;
 }
 std::vector< QString > vectorStrAdjustSubStr( const std::vector< QString > &str_vector ) {
-	if( str_vector.size( ) < 2 )
+	auto endIndex = str_vector.size( );
+	if( endIndex < 2 )
 		return str_vector;
 	// 长度排序
-	std::vector< QString > clone;
+	std::vector< const QString * > clone;
 	for( auto &str : str_vector ) {
 		auto iterator = clone.begin( ), end = clone.end( );
-		for( ; iterator != end; ++iterator )
-			if( iterator->length( ) > str.length( ) )
+		for( ; iterator != end; ++iterator ) {
+			const QString *value = *iterator;
+			if( value->length( ) > str.length( ) )
 				break;
-		clone.insert( iterator, str );
+		}
+		clone.insert( iterator, &str );
 	}
 
-	auto endIndex = clone.size( );
-	for( size_t index = 0; index != endIndex; ++index ) {
-		QString &currentStr = clone[ index ];
-		for( auto newIndex = 1 + index; newIndex != endIndex; ++newIndex )
-			if( clone[ newIndex ].indexOf( currentStr ) != -1 ) { // 找到则删除
-				clone.erase( newIndex + clone.begin( ) );
-				endIndex = clone.size( );
-				break;
-			}
+	std::vector< QString > resultVector;
+	std::vector< const QString * > resultBuffVector;
+	while( endIndex ) {
+		auto startObj = clone.at( 0 );
+		resultVector.emplace_back( *startObj );
+		for( auto newIndex = 1; newIndex < endIndex; ++newIndex ) {
+			const auto &sub = clone.at( newIndex );
+			if( sub->indexOf( *startObj ) == -1 )
+				resultBuffVector.emplace_back( sub );
+		}
+		clone = resultBuffVector;
+		resultBuffVector.clear( );
+		endIndex = clone.size( );
 	}
-	return clone;
+	return resultVector;
 }
-std::vector< QString > vectorStrduplicate( const std::vector< QString > &str_vector ) {
+std::vector< QString > vectorStrduplicate( const std::vector< QString > str_vector ) {
+
+	auto endIndex = str_vector.size( );
+	if( endIndex < 2 )
+		return str_vector;
 	std::vector< QString > result;
 	for( auto &str : str_vector ) {
 		auto iterator = result.begin( );

@@ -92,13 +92,13 @@ qsizetype writeIngoreNameFile( const QString &path, const std::vector< QString >
 /// </summary>
 /// <param name="str_vector">匹配的字符串</param>
 /// <returns>完成匹配的字符串</returns>
-std::vector< QString > vectorStrAdjustSubStr( const std::vector< QString > &str_vector );
+std::vector< QString > vectorStrAdjustSubStr(const std::vector< QString > &str_vector );
 /// <summary>
 /// 去掉重复字符串
 /// </summary>
 /// <param name="str_vector">去除字符串</param>
 /// <returns>唯一的元素</returns>
-std::vector< QString > vectorStrduplicate( const std::vector< QString > &str_vector );
+std::vector< QString > vectorStrduplicate(const  std::vector< QString > str_vector );
 /// <summary>
 /// 字符串列表排序-名称
 /// </summary>

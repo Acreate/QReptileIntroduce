@@ -570,20 +570,6 @@ void runRequestDownloadPlugs( std::shared_ptr< cylStd::ArgParser > &args ) {
 }
 
 /// <summary>
-/// 对文件映射当中的文件内容进行切分，并且整理到新的映射当中 <br/>
-/// 旧映射 => <文件路径,文件内容> <br/>
-/// 新映射 => <文件路径,切分后的内容> 
-/// </summary>
-/// <param name="map">文件映射</param>
-/// <param name="split_str_key_s">切分关键字</param>
-/// <returns>新映射</returns>
-std::unordered_map< QString, std::vector< QString > > getPairsKey( const std::unordered_map< QString, QString > &map, const std::vector< QString > &split_str_key_s ) {
-	std::unordered_map< QString, std::vector< QString > > result;
-	for( auto &iter : map )
-		result.insert_or_assign( iter.first, splitMultipleStrList( iter.second, split_str_key_s ) );
-	return result;
-}
-/// <summary>
 /// 内容写入文件
 /// </summary>
 /// <param name="file_path">文件路径</param>
@@ -632,9 +618,7 @@ std::unordered_map< QString, std::vector< QString > > getPairsKey( const std::un
 				saveList.emplace_back( str.toUpper( ) );
 		if( saveList.size( ) == 0 )
 			continue; // 没有关键字，则跳过这次循环
-		saveList = vectorStrduplicate( saveList );
-		saveList = vectorStrSort( saveList );
-		saveList = vectorStrLenSort( saveList );
+		saveList = vectorStrAdjustSubStr( saveList );
 		QString filePath = iter.first;
 		if( writeFile( filePath, QIODeviceBase::ReadWrite | QIODeviceBase::Truncate, saveList, "\n" ) )
 			result.insert_or_assign( filePath, saveList );// 只有真正可写内容才允许保存到列表当中
@@ -725,8 +709,7 @@ void checkKeyFile( std::shared_ptr< cylStd::ArgParser > &args ) {
 		for( auto &iter : sourceEquFileTextMapKeys )
 			for( auto &checkStr : iter.second )
 				sourceEquKeys.emplace_back( checkStr );
-		sourceEquKeys = vectorStrSort( sourceEquKeys );
-		sourceEquKeys = vectorStrLenSort( sourceEquKeys );
+		sourceEquKeys = vectorStrAdjustSubStr( sourceEquKeys );
 		unmapRemoveIfEquKeys( destFileTextMapKeys, sourceEquKeys );
 	}
 	// 处理段内匹配
@@ -740,8 +723,7 @@ void checkKeyFile( std::shared_ptr< cylStd::ArgParser > &args ) {
 		for( auto &iter : sourceSubFileTextMapKeys )
 			for( auto &checkStr : iter.second )
 				sourceSubKeys.emplace_back( checkStr );
-		sourceSubKeys = vectorStrSort( sourceSubKeys );
-		sourceSubKeys = vectorStrLenSort( sourceSubKeys );
+		sourceSubKeys = vectorStrAdjustSubStr( sourceSubKeys );
 		unmapRemoveIfSubKeys( destFileTextMapKeys, sourceSubKeys );
 	}
 }
