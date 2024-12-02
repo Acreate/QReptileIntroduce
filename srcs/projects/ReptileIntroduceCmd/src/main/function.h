@@ -92,25 +92,27 @@ qsizetype writeIngoreNameFile( const QString &path, const std::vector< QString >
 /// </summary>
 /// <param name="str_vector">匹配的字符串</param>
 /// <returns>完成匹配的字符串</returns>
-std::vector< QString > vectorStrAdjustSubStr(const std::vector< QString > &str_vector );
+std::vector< QString > vectorStrAdjustSubStr( const std::vector< QString > &str_vector );
 /// <summary>
 /// 去掉重复字符串
 /// </summary>
 /// <param name="str_vector">去除字符串</param>
 /// <returns>唯一的元素</returns>
-std::vector< QString > vectorStrDuplicate(const  std::vector< QString > str_vector );
+std::vector< QString > vectorStrDuplicate( const std::vector< QString > str_vector );
 /// <summary>
 /// 字符串列表排序-名称
 /// </summary>
 /// <param name="str_vector">排序列表</param>
+/// <param name="isGreater">是否字符定义末尾到字符定义起始</param>
 /// <returns>排序结果</returns>
-std::vector< QString > vectorStrSort( std::vector< QString > &str_vector );
+std::vector< QString > & vectorStrSort( std::vector< QString > &str_vector, bool isGreater = false );
 /// <summary>
 /// 字符串列表排序-长度
 /// </summary>
 /// <param name="str_vector">排序列表</param>
+/// <param name="isGreater">是否长度最长到最短</param>
 /// <returns>排序结果</returns>
-std::vector< QString > vectorStrLenSort( std::vector< QString > &str_vector );
+std::vector< QString > & vectorStrLenSort( std::vector< QString > &str_vector, bool isGreater = false );
 /// <summary>
 /// 数组转换到以长度为 key 的映射列表 - QString 版本
 /// </summary>

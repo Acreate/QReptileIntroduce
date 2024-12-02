@@ -86,8 +86,8 @@ std::vector< QString > readIngoreNameFiles( const std::vector< cylStd::ArgParser
 			auto currentFilePtah = fileInfo.getCurrentFilePtah( );
 			fileKeys = readIngoreNameFile( currentFilePtah, { "\n" } );
 			fileKeys = vectorStrDuplicate( fileKeys );
-			fileKeys = vectorStrSort( fileKeys );
-			fileKeys = vectorStrLenSort( fileKeys );
+			vectorStrSort( fileKeys );
+			vectorStrLenSort( fileKeys );
 			writeVector( fileKeys, currentFilePtah, &nameKeys );
 		}
 	return nameKeys;
@@ -186,27 +186,35 @@ std::vector< QString > vectorStrDuplicate( const std::vector< QString > str_vect
 	}
 	return result;
 }
-std::vector< QString > vectorStrSort( std::vector< QString > &str_vector ) {
-	std::list< QString > result;
-	for( auto &str : str_vector ) {
-		auto iterator = result.begin( ), end = result.end( );
-		for( ; iterator != end; ++iterator )
-			if( *iterator > str )
-				break;
-		result.insert( iterator, str );
-	}
-	return std::vector< QString >( result.begin( ), result.end( ) );
+std::vector< QString > & vectorStrSort( std::vector< QString > &str_vector, bool isGreater ) {
+	if( isGreater )
+		std::sort( str_vector.begin( ),
+			str_vector.end( ),
+			[]( const QString &left, const QString &right ) {
+				return left > right;
+			} );
+	else
+		std::sort( str_vector.begin( ),
+			str_vector.end( ),
+			[]( const QString &left, const QString &right ) {
+				return left < right;
+			} );
+	return str_vector;
 }
-std::vector< QString > vectorStrLenSort( std::vector< QString > &str_vector ) {
-	std::list< QString > result;
-	for( auto &str : str_vector ) {
-		auto iterator = result.begin( ), end = result.end( );
-		for( ; iterator != end; ++iterator )
-			if( iterator->length( ) > str.length( ) )
-				break;
-		result.insert( iterator, str );
-	}
-	return std::vector< QString >( result.begin( ), result.end( ) );
+std::vector< QString > & vectorStrLenSort( std::vector< QString > &str_vector, bool isGreater ) {
+	if( isGreater )
+		std::sort( str_vector.begin( ),
+			str_vector.end( ),
+			[]( const QString &left, const QString &right ) {
+				return left.length( ) > right.length( );
+			} );
+	else
+		std::sort( str_vector.begin( ),
+			str_vector.end( ),
+			[]( const QString &left, const QString &right ) {
+				return left.length( ) < right.length( );
+			} );
+	return str_vector;
 }
 std::unordered_map< size_t, std::shared_ptr< std::vector< QString > > > vectorStrToLenKeyMap( const std::vector< QString > &str_vector ) {
 	std::unordered_map< size_t, std::shared_ptr< std::vector< QString > > > result;
@@ -625,7 +633,7 @@ bool removeFileSourceFilesKeys( const std::vector< std::string > &source_file_s,
 	for( auto &path : sourcesPaths ) {
 		auto keys = readIngoreNameFile( path, { "\n" } );
 		keys = vectorStrDuplicate( keys );
-		keys = vectorStrLenSort( keys );
+		vectorStrLenSort( keys );
 		writeVector( keys, path );
 		ingoreNameFiles.insert( ingoreNameFiles.end( ), keys.begin( ), keys.end( ) );
 	}
@@ -635,7 +643,7 @@ bool removeFileSourceFilesKeys( const std::vector< std::string > &source_file_s,
 		return false;
 	}
 	ingoreNameFiles = vectorStrDuplicate( ingoreNameFiles );
-	ingoreNameFiles = vectorStrLenSort( ingoreNameFiles );
+	vectorStrLenSort( ingoreNameFiles );
 	begin = ingoreNameFiles.begin( );
 	end = ingoreNameFiles.end( );
 	std::vector< QString > filterKeys;
@@ -651,7 +659,7 @@ bool removeFileSourceFilesKeys( const std::vector< std::string > &source_file_s,
 				} ) == end )
 				filterKeys.emplace_back( key );
 		filterKeys = vectorStrDuplicate( filterKeys );
-		filterKeys = vectorStrLenSort( filterKeys );
+		vectorStrLenSort( filterKeys );
 		writeVector( filterKeys, path );
 		filterKeys.clear( );
 	}

@@ -600,6 +600,26 @@ qint64 writeFile( const QString &file_path, const QFileDevice::OpenMode open_mod
 	}
 	return writeCount;
 }
+
+/// <summary>
+/// 比较难字符串长度的函数
+/// </summary>
+/// <param name="left">左操作数</param>
+/// <param name="right">右操作数</param>
+/// <returns>长度比较结果</returns>
+bool compQStringLen( const QString &left, const QString &right ) {
+	return left.length( ) < right.length( );
+}
+/// <summary>
+/// 比较难字符串本身的函数
+/// </summary>
+/// <param name="left">左操作数</param>
+/// <param name="right">右操作数</param>
+/// <returns>字符串本身比较结果</returns>
+bool compQString( const QString &left, const QString &right ) {
+	return left < right;
+}
+
 /// <summary>
 /// 对文件映射当中的文件内容进行切分，并且整理到新的映射当中 <br/>
 /// 旧映射 => <文件路径,文件内容> <br/>
@@ -623,8 +643,8 @@ std::unordered_map< QString, std::vector< QString > > getPairsKey( const std::un
 			saveList = vectorStrAdjustSubStr( saveList );
 		else {
 			saveList = vectorStrDuplicate( saveList );
-			saveList = vectorStrSort( saveList );
-			saveList = vectorStrLenSort( saveList );
+			std::sort( saveList.begin( ), saveList.end( ), compQString );
+			std::sort( saveList.begin( ), saveList.end( ), compQStringLen );
 		}
 		QString filePath = iter.first;
 		if( writeFile( filePath, QIODeviceBase::ReadWrite | QIODeviceBase::Truncate, saveList, "\n" ) )
@@ -640,7 +660,7 @@ std::unordered_map< QString, std::vector< QString > > getPairsKey( const std::un
 /// <param name="source_equ_keys">相等匹配的关键字</param>
 void unmapRemoveIfEquKeys( std::unordered_map< QString, std::vector< QString > > &dest_file_text_map_keys, const std::vector< QString > &source_equ_keys ) {
 	for( auto &iter : dest_file_text_map_keys ) {
-		auto vector = iter.second;
+		auto &vector = iter.second;
 		std::vector< QString > newBuff;
 		for( auto &key : vector )
 			if( !vectorHasValue( source_equ_keys, key ) )
@@ -649,8 +669,8 @@ void unmapRemoveIfEquKeys( std::unordered_map< QString, std::vector< QString > >
 		// 不相等，则需要更新
 		if( newBuff.size( ) == vector.size( ) )
 			continue;
-		newBuff = vectorStrSort( newBuff );
-		newBuff = vectorStrLenSort( newBuff );
+		std::sort( newBuff.begin( ), newBuff.end( ), compQString );
+		std::sort( newBuff.begin( ), newBuff.end( ), compQStringLen );
 		if( writeFile( iter.first, QIODeviceBase::ReadWrite | QIODeviceBase::Truncate, newBuff, "\n" ) )
 			iter.second = newBuff;
 	}
@@ -662,7 +682,7 @@ void unmapRemoveIfEquKeys( std::unordered_map< QString, std::vector< QString > >
 /// <param name="source_sub_keys">段内匹配的关键字</param>
 void unmapRemoveIfSubKeys( std::unordered_map< QString, std::vector< QString > > &dest_file_text_map_keys, const std::vector< QString > &source_sub_keys ) {
 	for( auto &iter : dest_file_text_map_keys ) {
-		auto vector = iter.second;
+		auto &vector = iter.second;
 		std::vector< QString > newBuff;
 		for( auto &key : vector ) {
 			std::function< bool( const QString & ) > check = [&]( const QString &value ) {
@@ -680,8 +700,8 @@ void unmapRemoveIfSubKeys( std::unordered_map< QString, std::vector< QString > >
 		newBuff = vectorStrDuplicate( newBuff );
 		if( vector.size( ) == newBuff.size( ) )
 			continue; // 数量一致，不需要更新目标文件
-		newBuff = vectorStrSort( newBuff );
-		newBuff = vectorStrLenSort( newBuff );
+		std::sort( newBuff.begin( ), newBuff.end( ), compQString );
+		std::sort( newBuff.begin( ), newBuff.end( ), compQStringLen );
 		if( writeFile( iter.first, QIODeviceBase::ReadWrite | QIODeviceBase::Truncate, newBuff, "\n" ) )
 			iter.second = newBuff;
 	}
@@ -722,8 +742,8 @@ void checkKeyFile( std::shared_ptr< cylStd::ArgParser > &args ) {
 		for( auto &iter : sourceEquFileTextMapKeys )
 			for( auto &checkStr : iter.second )
 				sourceEquKeys.emplace_back( checkStr );
-		sourceEquKeys = vectorStrSort( sourceEquKeys );
-		sourceEquKeys = vectorStrLenSort( sourceEquKeys );
+		std::sort( sourceEquKeys.begin( ), sourceEquKeys.end( ), compQString );
+		std::sort( sourceEquKeys.begin( ), sourceEquKeys.end( ), compQStringLen );
 		unmapRemoveIfEquKeys( destFileTextMapKeys, sourceEquKeys );
 	}
 	// 处理段内匹配
@@ -953,7 +973,7 @@ std::shared_ptr< cylHtmlTools::HtmlWorkThreadPool > getFindKeyFileKeyToVector( c
 			for( auto &str : stringList )
 				if( !removeAllSpace( str ).isEmpty( ) )
 					strBuff.emplace_back( str.toUpper( ) );
-			strBuff = vectorStrLenSort( strBuff );
+			vectorStrLenSort( strBuff );
 			writeJionStringVector( iter.first, strBuff, "\n" );
 			for( auto converQStr : strBuff ) {
 				auto string = converQStr.toStdWString( );
