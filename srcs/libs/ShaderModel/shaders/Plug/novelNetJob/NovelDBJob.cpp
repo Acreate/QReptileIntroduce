@@ -1173,22 +1173,13 @@ interfacePlugsType::Vector_INovelInfoSPtr_Shared NovelDBJob::inductionNovelsForN
 		std::make_shared< interfacePlugsType::Vector_INovelInfoSPtr >( novel_info_vector.begin( ), novel_info_vector.end( ) ); // 遍历的小说列表
 	auto inputNovelMax = notProcessedNovelsBuff->size( );
 	while( inputNovelMax ) {
-		auto inductionNovel = novel_info_vector.at( 0 );
-
-		interfacePlugsType::INovelInfo_Shared newNovel = std::make_shared< NovelInfo >( );
-		newNovel->novelName = inductionNovel->novelName; // 配置名称
-		newNovel->url = inductionNovel->url; // 配置 url
-		newNovel->typeName = inductionNovel->typeName; // 配置类型名称
-		newNovel->author = inductionNovel->author; // 配置作者
-		newNovel->lastItem = inductionNovel->lastItem; // 配置最后更新项
-		newNovel->lastRequestTime = inductionNovel->lastRequestTime; // 配置最后获取时间
-		newNovel->updateTime = inductionNovel->updateTime; // 配置最后更新时间
-		newNovel->additionalData = inductionNovel->additionalData; // 追加附加信息
+		auto inductionNovel = notProcessedNovelsBuff->at( 0 );
+		interfacePlugsType::INovelInfo_Shared newNovel = cloneNovel( *inductionNovel );
 		resultIndutionNovels->emplace_back( newNovel );
 		// 从下一个开始比较
 		for( size_t startIndex = 1; startIndex < inputNovelMax; ++startIndex ) {
 			// 比较的小说对象
-			auto compNovel = novel_info_vector.at( startIndex );
+			auto compNovel = notProcessedNovelsBuff->at( startIndex );
 			if( compNovel->novelName == inductionNovel->novelName && compNovel->author == inductionNovel->author ) { // 正确匹配
 				if( compNovel->info.length( ) > inductionNovel->info.length( ) )
 					newNovel->info = compNovel->info;
