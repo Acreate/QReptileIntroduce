@@ -1542,6 +1542,6 @@ int main( int argc, char *argv[ ] ) {
 	size_t s = msecsSinceEpoch / 1000 % 60; // 获得秒
 	size_t m = msecsSinceEpoch / 1000 / 60 % 60; // 获得分钟
 	size_t h = msecsSinceEpoch / 1000 / 60 / 60; // 获得小时
-	std::cout << u8"\n=============\n=============\n=============\n耗时 : " << h << u8" : " << m << u8" : " << s << u8" : " << msecsSinceEpoch % 60 << "\n=============\n=============\n=============\n" << std::endl;
+	std::cout << u8"\n=============\n=============\n=============\n耗时 : " << h << u8" 时 " << m << u8" 分 " << s << u8" 秒 " << msecsSinceEpoch % 60 << " 毫秒\n=============\n=============\n=============\n" << std::endl;
 	return 0;
 }
