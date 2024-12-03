@@ -319,7 +319,7 @@ std::vector< QString > getFileTextSplit( const std::vector< QString > &file_path
 				}
 			}
 		} );
-	pool.start( 8 );
+	pool.start( );
 	while( !pool.isOverJob( ) )
 		qApp->processEvents( );
 	return result;
@@ -1411,12 +1411,12 @@ void dbReadWriteChanger( const std::shared_ptr< cylStd::ArgParser > &arg_parser 
 	if( readJumpEquKeyThreadpool == nullptr )
 		ErrorCout_MACRO( QString( u8"(进程 id :%1) 没发现 -ijtenf 功能任务需求" ).arg( qApp->applicationPid( ) ) );
 	else
-		readJumpEquKeyThreadpool->start( );
+		readJumpEquKeyThreadpool->start( cylHtmlTools::HtmlWorkThreadPool::getSystemCupCount( ) * 2 );
 
 	if( readJumpSubKeyThreadpool == nullptr )
 		ErrorCout_MACRO( QString( u8"(进程 id :%1) 没发现 -ijtsnf 功能任务需求" ).arg( qApp->applicationPid( ) ) );
 	else
-		readJumpSubKeyThreadpool->start( 16 );
+		readJumpSubKeyThreadpool->start( cylHtmlTools::HtmlWorkThreadPool::getSystemCupCount( ) * 2 );
 
 	if( readJumpSubKeyThreadpool )
 		while( !readJumpSubKeyThreadpool->isOverJob( ) )
@@ -1501,7 +1501,7 @@ void dbReadWriteChanger( const std::shared_ptr< cylStd::ArgParser > &arg_parser 
 			ErrorCout_MACRO( QString("(进程 id :%1) 全导出功能错误。请联系开发人员反馈").arg( qApp->applicationPid( ) ) );
 			return;
 		}
-		exportDBNovelInfoAllThreadPool->start( 16 );
+		exportDBNovelInfoAllThreadPool->start( cylHtmlTools::HtmlWorkThreadPool::getSystemCupCount( ) * 2 );
 	}
 	// 查找关键字合并锁
 	QMutex mergeFindKeysNovelInfosMutex;
@@ -1519,7 +1519,7 @@ void dbReadWriteChanger( const std::shared_ptr< cylStd::ArgParser > &arg_parser 
 			ErrorCout_MACRO( QString("(进程 id :%1) 查找功能错误。请联系开发人员反馈").arg( qApp->applicationPid( ) ) );
 			return;
 		}
-		exportDBNovelInfoFindThreadPool->start( 16 );
+		exportDBNovelInfoFindThreadPool->start( cylHtmlTools::HtmlWorkThreadPool::getSystemCupCount( ) * 2 );
 	}
 	if( exportDBNovelInfoAllThreadPool )
 		while( !exportDBNovelInfoAllThreadPool->isOverJob( ) )
@@ -1541,7 +1541,7 @@ void dbReadWriteChanger( const std::shared_ptr< cylStd::ArgParser > &arg_parser 
 		ErrorCout_MACRO( QString("(进程 id :%1) 写入功能失效。请联系开发人员反馈").arg( qApp->applicationPid( ) ) );
 		return;
 	}
-	writeDiskThreadPool->start( 16 );
+	writeDiskThreadPool->start( cylHtmlTools::HtmlWorkThreadPool::getSystemCupCount( ) * 2 );
 	// 写入归纳
 	if( novelKeysMap.size( ) > 0 ) {
 
