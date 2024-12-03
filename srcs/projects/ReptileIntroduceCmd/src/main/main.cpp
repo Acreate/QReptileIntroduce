@@ -977,6 +977,7 @@ std::shared_ptr< cylHtmlTools::HtmlWorkThreadPool > getFindKeyFileKeyToVector( c
 			for( auto &str : stringList )
 				if( !removeAllSpace( str ).isEmpty( ) )
 					strBuff.emplace_back( str.toUpper( ) );
+			strBuff = vectorStrDuplicate( strBuff );
 			vectorStrLenSort( strBuff );
 			writeJionStringVector( iter.first, strBuff, "\n" );
 			for( auto converQStr : strBuff ) {
