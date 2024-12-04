@@ -493,12 +493,16 @@ NovelNetJob * runPluginToThisProcess( QMutex &qt_mutex, size_t &ref_count, const
 /// </summary>
 /// <param name="args">选项解析对象</param>
 void runRequestDownloadPlugs( std::shared_ptr< cylStd::ArgParser > &args ) {
-
+	auto optionValues = args->getOptionValues( "-l" );
+	if( !optionValues )
+		return;
 	// 请求小说插件文件路径
 	std::vector< QString > plugFilesPath = getFilePathsOptionPaths( args, "-l" );
 	// 如果没有文件，则退出
-	if( plugFilesPath.size( ) == 0 )
-		return;// 找不到插件，则返回 
+	if( plugFilesPath.size( ) == 0 ) {
+		ErrorCout_MACRO( u8"找不到有效的插件地址，请检查 -l 选项指定的路径是否正确" );
+		return;// 找不到插件，则返回
+	}
 
 	// 运行的插件
 	std::vector< QString > runPlugFilesPaths;

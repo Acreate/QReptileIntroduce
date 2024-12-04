@@ -41,7 +41,7 @@ RequestNet::RequestNet( QObject *parent ): QObject( parent ), rootUrl( GET_URL )
 RequestNet::~RequestNet( ) {
 }
 size_t RequestNet::getRequestInterval( ) {
-	return 3000;
+	return 1500;
 }
 int RequestNet::initAfter( ) {
 	thisOStream = OStream::getDefaultOStream( rootUrl.toString( ) );
