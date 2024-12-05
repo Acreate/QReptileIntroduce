@@ -548,38 +548,47 @@ std::vector< std::wstring > converToWString( std::vector< QString > &str_vector 
 	return result;
 }
 bool filterNovelName( const interfacePlugsType::HtmlDocString &name, const std::vector< interfacePlugsType::HtmlDocString > &equ_name_s, const std::vector< interfacePlugsType::HtmlDocString > &sub_name_s ) {
+	auto newName = name;
+	cylHtmlTools::HtmlStringTools::removeAllSpace( newName );
 	for( auto &compEquTitle : equ_name_s )
-		if( cylHtmlTools::HtmlStringTools::equHtmlString( compEquTitle, name ) )
+		if( cylHtmlTools::HtmlStringTools::equHtmlString( compEquTitle, newName ) )
 			return true;
 	for( auto &compSubTitle : sub_name_s )
-		if( cylHtmlTools::HtmlStringTools::findNextHtmlStringPotion( &name, &compSubTitle ) )
+		if( cylHtmlTools::HtmlStringTools::findNextHtmlStringPotion( &newName, &compSubTitle ) )
 			return true;
+	return false;
+}
+inline bool compHtmlKey( interfacePlugsType::HtmlDocString compStr, const interfacePlugsType::HtmlDocString &key, const size_t &key_str_len ) {
+	cylHtmlTools::HtmlStringTools::removeAllSpace( compStr );
+	if( compStr.length( ) >= key_str_len && cylHtmlTools::HtmlStringTools::findNextHtmlStringPotion( &compStr, &key ) )
+		return true;
 	return false;
 }
 bool findNovelKey( const NovelInfo &novel_info, const std::vector< interfacePlugsType::HtmlDocString > &find_key_s, interfacePlugsType::HtmlDocString *key ) {
 	for( auto &find_key : find_key_s ) {
+
 		auto keyLen = find_key.length( );
-		if( novel_info.novelName.length( ) >= keyLen && cylHtmlTools::HtmlStringTools::findNextHtmlStringPotion( &novel_info.novelName, &find_key ) ) {
+		if( compHtmlKey( novel_info.novelName, find_key, keyLen ) ) {
 			*key = find_key;
 			return true;
 		}
-		if( novel_info.info.length( ) >= keyLen && cylHtmlTools::HtmlStringTools::findNextHtmlStringPotion( &novel_info.info, &find_key ) ) {
+		if( compHtmlKey( novel_info.info, find_key, keyLen ) ) {
 			*key = find_key;
 			return true;
 		}
-		if( novel_info.lastItem.length( ) >= keyLen && cylHtmlTools::HtmlStringTools::findNextHtmlStringPotion( &novel_info.lastItem, &find_key ) ) {
+		if( compHtmlKey( novel_info.lastItem, find_key, keyLen ) ) {
 			*key = find_key;
 			return true;
 		}
-		if( novel_info.author.length( ) >= keyLen && cylHtmlTools::HtmlStringTools::findNextHtmlStringPotion( &novel_info.author, &find_key ) ) {
+		if( compHtmlKey( novel_info.author, find_key, keyLen ) ) {
 			*key = find_key;
 			return true;
 		}
-		if( novel_info.url.length( ) >= keyLen && cylHtmlTools::HtmlStringTools::findNextHtmlStringPotion( &novel_info.url, &find_key ) ) {
+		if( compHtmlKey( novel_info.url, find_key, keyLen ) ) {
 			*key = find_key;
 			return true;
 		}
-		if( novel_info.typePageUrl.length( ) >= keyLen && cylHtmlTools::HtmlStringTools::findNextHtmlStringPotion( &novel_info.typePageUrl, &find_key ) ) {
+		if( compHtmlKey( novel_info.typePageUrl, find_key, keyLen ) ) {
 			*key = find_key;
 			return true;
 		}
