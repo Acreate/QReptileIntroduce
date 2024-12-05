@@ -9,15 +9,15 @@ Qt 6.6.2
 
 ## 使用说明
 
-![image-20240329005322018](.README/image-20240329005322018.png)
+![PixPin_2024-12-05_18-45-28](./.README/PixPin_2024-12-05_18-45-28.png)
 
 1.  具备 cmake
 2.  运行时使用 安装，否则无法自动配置 qt 所需要环境（也可以手动使用 qt 的配置环境，如 *deployqt 工具，在 Qt Creator 环境运行）
-3.  先生成目标(运行 1 号可自行程序的安装)
-4.  调用实用工具 [lupdate] (运行 3 号工具)
-5.  使用 Qt Linguist 软件进行翻译
-6.  调用实用工具 [lrelease] (运行 2 号工具)
-7.  调试程序（/运行程序 ）
+3.  先生成目标(运行 1 号的安装任务)
+4.  调用实用工具 [lupdate] (运行 3 号工具-暂时不支持)
+5.  使用 Qt Linguist 软件进行翻译-暂时不支持
+6.  调用实用工具 [lrelease] (运行 2 号工具-暂时不支持)
+7.  调试程序（/运行程序 -调试前需要运行安装任务，或者直接调试安装任务生成的 ReptileIntroduceCmd.exe）
 
 # 软件说明
 
@@ -57,7 +57,7 @@ Qt 6.6.2
 
 加载爬虫插件
 
-## -edb
+#### -edb
 
 激活全导出功能，与 -w 、-rdb 同时使用
 
@@ -103,7 +103,9 @@ Qt 6.6.2
 
 必须存在有效 -fkrrlkd 选项
 
-支持多个文件
+支持多个路径
+
+支持文件与目录路径参数
 
 删除 -fkrrlkd 所有 -fkrrlks 选项指定文件所包含的字符串的行关键字
 
@@ -113,7 +115,9 @@ Qt 6.6.2
 
 必须存在有效 -fkrrlkd 选项
 
-支持多个文件
+支持多个路径
+
+支持文件与目录路径参数
 
 删除 -fkrrlkd 所有 -fkrrlkss 选项指定文件所包含的子字符串的行关键字
 
@@ -123,17 +127,74 @@ Qt 6.6.2
 
 必须存在有效 -fkrrlks 选项
 
-支持多个文件
+支持多个路径
+
+支持文件与目录路径参数
 
 删除 -fkrrlkd 所有 -fkrrlks 选项指定的行关键字
 
-## -rm
+#### -rm
 
 发现有效数据库，但过滤关键字后发现没有需要导出或查找的小说信息时，删除 -w 指定路径
 
-#### 案例 [.\ReptileIntroduceCmd.exe  -fkrrlks ..\findKeys\年代.txt -fkrrlkd ..\findKeys\朝代.txt ]
+## 案例
 
-删除 ..\findKeys\朝代.txt 文件中存在的关键字(行为单位，每个为 ..\findKeys\年代.txt  中的关键字)
+### 案例 1
+
+
+
+-fkrrlkd 删除 [..\filter\equ_names\女频\女频.txt] 文件中存在的关关键字
+
+-fkrrlkss 使用[ ..\filter\sub_names\2024年6月11日.txt] 中的每行关键字去匹配 [..\filter\equ_names\女频\女频.txt]  每个关键字的子字符串，存在子字符串时，删除匹配的整个关键字
+
+-fkrrlkse 使用[..\filter\equ_names\不可读\加密.txt]中的每行关键字去匹配 [..\filter\equ_names\女频\女频.txt]  每个关键字的完整字符串，存在完整字符串时，删除匹配的整个关键字
+
+```bat
+ReptileIntroduceCmd.exe -fkrrlkss ..\filter\sub_names\2024年6月11日.txt -fkrrlkse ..\filter\equ_names\不可读\加密.txt -fkrrlkd ..\filter\equ_names\女频\女频.txt  
+```
+
+### 案例2
+
+-ex 删除 .\\data\\cmd_download_novels_info\\db 下所有合法的过期小说-过期为 3 天
+
+```bat
+
+ReptileIntroduceCmd.exe -rdb .\\data\\cmd_download_novels_info\\dbs -ex 3
+```
+
+### 案例3
+
+读取数据库，并且过滤配置选项中的小说关键字，最后导出全部并查找匹配的小说
+
+-rdb  读取 [.\\data\\cmd_download_novels_info\\dbs] 中的所有数据库
+
+-fkf 使用 [.\\findKeys] 路径中的文件作为关键字，生成查找任务
+
+-ijtenf 使用 [.\\filter\\equ_names] 下的文件作为过滤完全匹配小说名称关键字
+
+-ijtsnf 使用 [.\\filter\\sub_names] 下的文件作为过滤子字符串匹配小说名称关键字
+
+-edb 导出全部过滤后的小说
+
+-rm 如果过滤后的有效小说为 0，则删除 [.\\data\\exports\export_all] 与  [.\\data\\exports\export_find] 
+
+```
+ReptileIntroduceCmd.exe  -rdb .\\data\\cmd_download_novels_info\\dbs -fkf .\\findKeys -ijtenf .\\filter\\equ_names -ijtsnf .\\filter\\sub_names -w .\\data\\exports\\ -edb -rm
+```
+
+### 案例4
+
+-l 指定小说爬虫解析模块
+
+-as 把小说解析模块全部运行
+
+-p 爬虫解析模块解析到的小说存储到该历经下，该选项影响数据与异常日志的位置
+
+-t 解析指定类型-一行一个类型。该选项影响小说爬虫解析模块当中是否解析小说类型的策略
+
+```
+ReptileIntroduceCmd.exe  -l  plug_lib -as -p .\\data\\cmd_download_novels_info -t .\\Release_x64_MSVC\\progress\\ini
+```
 
 ## 插件
 
