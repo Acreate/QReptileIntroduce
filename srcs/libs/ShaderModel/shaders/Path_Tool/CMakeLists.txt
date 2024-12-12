@@ -33,8 +33,13 @@ string(REPLACE "." "_" project_name_include_dir ${PROJECT_NAME})
 set( ${project_name_include_dir}_include_dir ${CMAKE_CURRENT_LIST_DIR}  PARENT_SCOPE )
 
 include_directories( ${UserHread_include_dir} )
+
+
+set( cmake_definitions_env_out "${CMAKE_CURRENT_LIST_DIR}/${cmake_auto_sub_dir_name}/macro/cmake_to_c_cpp_header_env.h" )
+configure_file( ${cmake_definitions_env_in} ${cmake_definitions_env_out} )
+
 # # 合并源码
-list( APPEND ${SRC_LIST} ${SRC_UI} ${QM_FILES} ${SRC_DATA}  )
+list( APPEND ${SRC_LIST} ${SRC_UI} ${QM_FILES} ${SRC_DATA} ${cmake_definitions_env_out} )
 qt_add_library( ${PROJECT_NAME} SHARED
 	${SRC_LIST}
 )

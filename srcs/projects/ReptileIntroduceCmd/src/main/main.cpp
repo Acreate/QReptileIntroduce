@@ -17,6 +17,13 @@
 #include "path/Path.h"
 #include <sstream>
 
+/// <summary>
+/// 文件的 cmake 项目相对路径
+/// </summary>
+static std::string callFileName = getCmakeRootPathBuilderFilePath( __FILE__ ).toStdString( );
+/// <summary>
+/// 输出间隔
+/// </summary>
 static std::chrono::seconds duration( 25 );
 /// <summary>
 /// 显示 app 名称
@@ -282,6 +289,14 @@ void outStdCountStreamMsg( QMutex &std_cout_mutex, const size_t &modWorkCount, c
 	std_cout_mutex.unlock( );
 }
 
+/// @brief 使用 std::cout 输出日志信息
+/// @param Std_Cout_Mutex 输出锁
+/// @param Work_Count 剩余工作数量
+/// @param Current_Work_Count 正在工作数量
+/// @param Call_Function_Name 调用函数名称
+/// @param Msg 输出消息
+#define Out_Std_Count_Stream_Msg_MACRO(Std_Cout_Mutex, Work_Count, Current_Work_Count, Call_Function_Name, Msg) \
+		outStdCountStreamMsg( Std_Cout_Mutex, Work_Count, Current_Work_Count, Call_Function_Name, Msg, callFileName, __LINE__ )
 /// <summary>
 /// 获取文本文件，并且切分到列表
 /// </summary>
@@ -421,7 +436,7 @@ std::vector< QProcess * > runPluginToSubProcess( const QString &app_path, QMutex
 		else if( !subProcess->waitForStarted( ) ) {
 			--ref_count;
 			subProcess->deleteLater( );
-			errorCout( QString( "(进程 id = %1) : %2" ).arg( qApp->applicationPid( ) ).arg( u8"无法正常启动" ), call_function_file_path, call_function_name, call_function_line );
+			errorCoutPath( QString( "(进程 id = %1) : %2" ).arg( qApp->applicationPid( ) ).arg( u8"无法正常启动" ), call_function_file_path, call_function_name, call_function_line );
 		} else
 			result.emplace_back( subProcess );
 		cmd.clear( );
@@ -482,7 +497,7 @@ NovelNetJob * runPluginToThisProcess( QMutex &qt_mutex, size_t &ref_count, const
 	} else {
 		QMutexLocker lock( &qt_mutex );
 		--ref_count;
-		errorCout( QString( "(进程 id = %1) : %2" ).arg( qApp->applicationPid( ) ).arg( error ), call_function_file_path, call_function_name, call_function_line );
+		errorCoutPath( QString( "(进程 id = %1) : %2" ).arg( qApp->applicationPid( ) ).arg( error ), call_function_file_path, call_function_name, call_function_line );
 		return nullptr;
 	}
 }
@@ -863,20 +878,28 @@ std::shared_ptr< cylHtmlTools::HtmlWorkThreadPool > getDBNovelsInfo( const std::
 					std::string callFunctionName = __FUNCTION__;
 					threadPool.setCallSepMilliseconds( duration );
 					threadPool.setIdleTimeCall( [&,callFunctionName]( cylHtmlTools::HtmlWorkThreadPool *html_work_thread_pool, const unsigned long long &modWork, const unsigned long long &currentWork ) {
-						outStdCountStreamMsg( std_cout_mutex, modWork, currentWork, callFunctionName, u8"数据库过滤小说名称进行中", __FILE__, __LINE__ );
+						Out_Std_Count_Stream_Msg_MACRO( std_cout_mutex, modWork, currentWork, callFunctionName, u8"数据库过滤小说名称进行中" );
 					} );
 					std::shared_ptr< NovelDBJob::NovelInfoVector > filterVector = std::make_shared< NovelDBJob::NovelInfoVector >( );
 					QMutex vectorInsterMutex;
+					auto jumpEquNameVectorData = jump_equ_name_vector.data( );
+					auto jumpEquNameVectorDataSize = jump_equ_name_vector.size( );
+
+					auto jumpSubNameVectorData = jump_sub_name_vector.data( );
+					auto jumpSubNameVectorDataSize = jump_sub_name_vector.size( );
 					for( auto &novel : *novelInfoVectorShared )
-						threadPool.appendWork( [novel,&jump_equ_name_vector,&jump_sub_name_vector,&vectorInsterMutex,filterVector]( cylHtmlTools::HtmlWorkThread *html_work_thread ) {
-							interfacePlugsType::HtmlDocString name = novel->novelName; // 小说名称转换为大写
-							name = NovelDBJob::converStringToUpper( name );
-							if( !filterNovelName( name, jump_equ_name_vector, jump_sub_name_vector ) ) {
-								vectorInsterMutex.lock( );
-								filterVector->emplace_back( novel );
-								vectorInsterMutex.unlock( );
-							}
-						} );
+						threadPool.appendWork( [novel,
+								jumpEquNameVectorData, jumpEquNameVectorDataSize,
+								jumpSubNameVectorData, jumpSubNameVectorDataSize,
+								&vectorInsterMutex,filterVector]( cylHtmlTools::HtmlWorkThread *html_work_thread ) {
+								interfacePlugsType::HtmlDocString name = novel->novelName; // 小说名称转换为大写
+								name = NovelDBJob::converStringToUpper( name );
+								if( !filterNovelName( name, jumpEquNameVectorData, jumpEquNameVectorDataSize, jumpSubNameVectorData, jumpSubNameVectorDataSize ) ) {
+									vectorInsterMutex.lock( );
+									filterVector->emplace_back( novel );
+									vectorInsterMutex.unlock( );
+								}
+							} );
 					threadPool.start( );
 					while( !threadPool.isOverJob( ) )
 						qApp->processEvents( );
@@ -900,7 +923,7 @@ std::shared_ptr< cylHtmlTools::HtmlWorkThreadPool > getDBNovelsInfo( const std::
 	resultPool->setCallSepMilliseconds( duration );
 	std::string callFunctionName = __FUNCTION__;
 	resultPool->setIdleTimeCall( [&,callFunctionName]( cylHtmlTools::HtmlWorkThreadPool *html_work_thread_pool, const unsigned long long &modWork, const unsigned long long &currentWorkCount ) {
-		outStdCountStreamMsg( std_cout_mutex, modWork, currentWorkCount, callFunctionName, u8"数据库读取序列信息", __FILE__, __LINE__ );
+		Out_Std_Count_Stream_Msg_MACRO( std_cout_mutex, modWork, currentWorkCount, callFunctionName, u8"数据库读取序列信息" );
 	} );
 
 	return resultPool;
@@ -960,7 +983,7 @@ std::shared_ptr< cylHtmlTools::HtmlWorkThreadPool > getFindKeyFileKeyToMap( cons
 	resultPool->setCallSepMilliseconds( duration );
 	std::string callFunctionName = __FUNCTION__;
 	resultPool->setIdleTimeCall( [&,callFunctionName]( cylHtmlTools::HtmlWorkThreadPool *html_work_thread_pool, const unsigned long long &workCount, const unsigned long long &currentWorkCount ) {
-		outStdCountStreamMsg( std_cout_mutex, workCount, currentWorkCount, callFunctionName, u8"获取关键字文件信息-分发映射-", __FILE__, __LINE__ );
+		Out_Std_Count_Stream_Msg_MACRO( std_cout_mutex, workCount, currentWorkCount, callFunctionName, u8"获取关键字文件信息-分发映射-" );
 	} );
 	return resultPool;
 }
@@ -1001,7 +1024,7 @@ std::shared_ptr< cylHtmlTools::HtmlWorkThreadPool > getFindKeyFileKeyToVector( c
 	resultPool->setCallSepMilliseconds( duration );
 	std::string callFunctionName = __FUNCTION__;
 	resultPool->setIdleTimeCall( [&,callFunctionName]( cylHtmlTools::HtmlWorkThreadPool *html_work_thread_pool, const unsigned long long &workCount, const unsigned long long &currentWorkCount ) {
-		outStdCountStreamMsg( std_cout_mutex, workCount, currentWorkCount, callFunctionName, u8"获取关键字文件信息-序列容器-", __FILE__, __LINE__ );
+		Out_Std_Count_Stream_Msg_MACRO( std_cout_mutex, workCount, currentWorkCount, callFunctionName, u8"获取关键字文件信息-序列容器-" );
 	} );
 	return resultPool;
 }
@@ -1080,7 +1103,7 @@ std::shared_ptr< cylHtmlTools::HtmlWorkThreadPool > getDBFilterNovelInfo( const 
 	resultPool->setCallSepMilliseconds( duration );
 	std::string callFunctionName = __FUNCTION__;
 	resultPool->setIdleTimeCall( [&,callFunctionName]( cylHtmlTools::HtmlWorkThreadPool *html_work_thread_pool, const unsigned long long &workCount, const unsigned long long &currentWorkCount ) {
-		outStdCountStreamMsg( std_cout_mutex, workCount, currentWorkCount, callFunctionName, u8"小说过滤后全导出", __FILE__, __LINE__ );
+		Out_Std_Count_Stream_Msg_MACRO( std_cout_mutex, workCount, currentWorkCount, callFunctionName, u8"小说过滤后全导出" );
 	} );
 	return resultPool;
 }
@@ -1221,7 +1244,7 @@ std::shared_ptr< cylHtmlTools::HtmlWorkThreadPool > getDBFindNovelInfo(
 	resultPool->setCallSepMilliseconds( duration );
 	std::string callFunctionName = __FUNCTION__;
 	resultPool->setIdleTimeCall( [&,callFunctionName]( cylHtmlTools::HtmlWorkThreadPool *html_work_thread_pool, const unsigned long long &workCount, const unsigned long long &currentWorkCount ) {
-		outStdCountStreamMsg( std_cout_mutex, workCount, currentWorkCount, callFunctionName, u8"小说过滤后查找", __FILE__, __LINE__ );
+		Out_Std_Count_Stream_Msg_MACRO( std_cout_mutex, workCount, currentWorkCount, callFunctionName, u8"小说过滤后查找" );
 	} );
 	return resultPool;
 }
@@ -1322,7 +1345,7 @@ std::shared_ptr< cylHtmlTools::HtmlWorkThreadPool > writeDiskInForNovels( const 
 		return nullptr;
 	resultPool->setCallSepMilliseconds( duration );
 	resultPool->setIdleTimeCall( [&,callFunctionName]( cylHtmlTools::HtmlWorkThreadPool *html_work_thread_pool, const unsigned long long &workCount, const unsigned long long &currentWorkCount ) {
-		outStdCountStreamMsg( std_cout_mutex, workCount, currentWorkCount, callFunctionName, u8"正在写入磁盘", __FILE__, __LINE__ );
+		Out_Std_Count_Stream_Msg_MACRO( std_cout_mutex, workCount, currentWorkCount, callFunctionName, u8"正在写入磁盘" );
 	} );
 	return resultPool;
 }
@@ -1368,7 +1391,7 @@ std::shared_ptr< cylHtmlTools::HtmlWorkThreadPool > writeDiskInForInductionNovel
 		return nullptr;
 	resultPool->setCallSepMilliseconds( duration );
 	resultPool->setIdleTimeCall( [&,callFunctionName]( cylHtmlTools::HtmlWorkThreadPool *html_work_thread_pool, const unsigned long long &workCount, const unsigned long long &currentWorkCount ) {
-		outStdCountStreamMsg( std_cout_mutex, workCount, currentWorkCount, callFunctionName, u8"正在写入磁盘", __FILE__, __LINE__ );
+		Out_Std_Count_Stream_Msg_MACRO( std_cout_mutex, workCount, currentWorkCount, callFunctionName, u8"正在写入磁盘" );
 	} );
 	return resultPool;
 }
@@ -1614,7 +1637,6 @@ int main( int argc, char *argv[ ] ) {
 	QCoreApplication application( argc, argv ); // 初始化程序
 
 	auto currentTime = QDateTime::currentDateTime( );
-
 	std::cout << u8"\n=============\n=============\n=============\n开始时间 : " << currentTime.toString( "hh:mm:ss.z" ).toStdString( ) << " \n=============\n=============\n=============\n" << std::endl;
 	std::shared_ptr< cylStd::ArgParser > argParser = cylStd::ArgParser::parser( argc, argv ); // 命令行参数解析对象
 	auto pairs = argParser->getPairs( );

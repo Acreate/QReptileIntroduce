@@ -558,6 +558,19 @@ bool filterNovelName( const interfacePlugsType::HtmlDocString &name, const std::
 			return true;
 	return false;
 }
+bool filterNovelName( const interfacePlugsType::HtmlDocString &name, const interfacePlugsType::HtmlDocString *equ_name_s, const size_t equ_name_count, const interfacePlugsType::HtmlDocString *sub_name_s, const size_t sub_name_count ) {
+	auto newName = name;
+	cylHtmlTools::HtmlStringTools::removeAllSpace( newName );
+	if( equ_name_count )
+		for( size_t index = 0; index < equ_name_count; ++index )
+			if( cylHtmlTools::HtmlStringTools::equHtmlString( equ_name_s[ index ], newName ) )
+				return true;
+	if( sub_name_count )
+		for( size_t index = 0; index < sub_name_count; ++index )
+			if( cylHtmlTools::HtmlStringTools::findNextHtmlStringPotion( &newName, sub_name_s + index ) )
+				return true;
+	return false;
+}
 inline bool compHtmlKey( interfacePlugsType::HtmlDocString compStr, const interfacePlugsType::HtmlDocString &key, const size_t &key_str_len ) {
 	cylHtmlTools::HtmlStringTools::removeAllSpace( compStr );
 	if( compStr.length( ) >= key_str_len && cylHtmlTools::HtmlStringTools::findNextHtmlStringPotion( &compStr, &key ) )

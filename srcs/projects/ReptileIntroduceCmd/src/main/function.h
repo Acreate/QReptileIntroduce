@@ -1,6 +1,7 @@
 ﻿#ifndef FUNCTION_H_H_HEAD__FILE__
 #define FUNCTION_H_H_HEAD__FILE__
 #pragma once
+#include "auto_generate_files/macro/cmake_to_c_cpp_header_env.h"
 #include <iostream>
 #include <qcoreapplication.h>
 #include <QDateTime>
@@ -24,6 +25,17 @@
 /// <param name="sub_name_s">段内匹配过滤名称列表</param>
 /// <returns>过滤列表当中存在则返回 true，否则返回 false</returns>
 bool filterNovelName( const interfacePlugsType::HtmlDocString &name, const std::vector< interfacePlugsType::HtmlDocString > &equ_name_s, const std::vector< interfacePlugsType::HtmlDocString > &sub_name_s );
+
+/// <summary>
+/// 匹配一个名称
+/// </summary>
+/// <param name="name">判定名称</param>
+/// <param name="equ_name_s">完全匹配名称数组起始指针</param>
+/// <param name="equ_name_count">完全匹配名称数组长度</param>
+/// <param name="sub_name_s">段内匹配名称数组起始指针</param>
+/// <param name="sub_name_count">段内匹配名称数组长度</param>
+/// <returns>匹配成功返回 true</returns>
+bool filterNovelName( const interfacePlugsType::HtmlDocString &name, const interfacePlugsType::HtmlDocString *equ_name_s, const size_t equ_name_count, const interfacePlugsType::HtmlDocString *sub_name_s, const size_t sub_name_count );
 
 /// <summary>
 /// 小说匹配关键字，存在返回 true，否则返回 false
@@ -149,16 +161,29 @@ inline bool findVector( const std::vector< t_value_type > &vector, const t_value
 	return false;
 }
 
-#define ErrorCout_MACRO( msg )  errorCout((msg),  __FILE__, __FUNCTION__, __LINE__)
+/// @brief 获取基于 cmakefile 的根路径相对的文件路径
+/// @param builder_path 编译文件的路径
+/// @return 基于 cmake 根路径的相对路径
+inline QString getCmakeRootPathBuilderFilePath( const char *builder_path ) {
+	return QDir( Cmake_Source_Dir ).relativeFilePath( builder_path );
+}
+/// @brief 获取基于 cmakefile 的根路径相对的文件路径
+/// @param builder_path 编译文件的路径
+/// @return 基于 cmake 根路径的相对路径
+inline QString getCmakeRootPathBuilderFilePath( const QString &builder_path ) {
+	return QDir( Cmake_Source_Dir ).relativeFilePath( builder_path );
+}
 inline void errorCout( const std::string &msg, const std::string &erro_file, const std::string &error_call, const size_t error_line ) {
 	std::cerr << "\n===============\n\t错误文件: " << erro_file << u8"\n\t调用名称: " << error_call << u8"\n\t信息行数: " << error_line << u8"\n\t错误信息: " << msg << "\n===============" << std::endl;
 }
 inline void errorCout( const char *msg, const std::string &erro_file, const std::string &error_call, const size_t error_line ) {
 	std::cerr << "\n===============\n\t错误文件: " << erro_file << u8"\n\t调用名称: " << error_call << u8"\n\t信息行数: " << error_line << u8"\n\t错误信息: " << msg << "\n===============" << std::endl;
 }
-inline void errorCout( const QString &msg, const QString &erro_file, const QString &error_call, const size_t error_line ) {
-	errorCout( msg.toStdString( ), erro_file.toStdString( ), error_call.toStdString( ), error_line );
+inline void errorCoutPath( const QString &msg, const QString &erro_file, const QString &error_call, const size_t error_line ) {
+	errorCout( msg.toStdString( ), getCmakeRootPathBuilderFilePath( erro_file ).toStdString( ), error_call.toStdString( ), error_line );
 }
+#define ErrorCout_MACRO( msg )  errorCoutPath((msg),  __FILE__, __FUNCTION__, __LINE__)
+
 using LenMap = std::unordered_map< size_t, std::shared_ptr< std::vector< std::wstring > > >;
 using FileLenMap = std::unordered_map< QString, LenMap >;
 /// <summary>

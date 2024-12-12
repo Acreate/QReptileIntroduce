@@ -29,27 +29,18 @@ include_directories( ${Path_Tool_include_dir} )
 include_directories( ${argParser_include_dir} )
 include_directories( ${QtExtendDB_include_dir} )
 
+set( cmake_definitions_env_out "${CMAKE_CURRENT_LIST_DIR}/${cmake_auto_sub_dir_name}/macro/cmake_to_c_cpp_header_env.h" )
+configure_file( ${cmake_definitions_env_in} ${cmake_definitions_env_out} )
+
 # # 合并源码
-list( APPEND ${SRC_LIST} ${SRC_UI} ${QM_FILES} )
+list( APPEND ${SRC_LIST} ${SRC_UI} ${QM_FILES}  ${cmake_definitions_env_out})
 
 qt_add_executable( ${PROJECT_NAME}
 	MANUAL_FINALIZATION
 	${SRC_LIST}
 )
 
-get_target_property( project_type_property ${PROJECT_NAME} TYPE )
-
-if( "EXECUTABLE" STREQUAL ${project_type_property} )
-	set( project_type_property_is_exe true )
-else()
-	set( project_type_property_is_exe false )
-endif()
-
-
 copy_dir_path( ${PROJECT_NAME} "${CMAKE_CURRENT_LIST_DIR}/res/ini/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/progress/ini/" )
-
-
-
 
 call_qt_deploy( ${PROJECT_NAME}
 	Qt${QT_VERSION_MAJOR}::Gui

@@ -2,20 +2,15 @@
 #define CMAKE_TO_C_CPP_HEADER_ENV_H_H_HEAD__FILE__
 #pragma once
 
-#define qt_version u8"${QT_VERSION}"
-#define Builder_Tools_Clang ${Clang}
-#define Builder_Tools_GNU ${GNU}
-#define Builder_Tools_MSVC ${MSVC}
+#define qt_version u8"${QT_VERSION}" // qt 版本
+#define Builder_Tools_Clang ${Clang} // 使用 clang 编译器
+#define Builder_Tools_GNU ${GNU} // 使用 gnu 编译器
+#define Builder_Tools_MSVC ${MSVC} // 使用 msvc 编译器
 
-#define is_exe ${project_type_property_is_exe}
+#define Cmake_Project_Name u8"${PROJECT_NAME}" // cmake 项目名称
+#define Project_Run_bin u8"${Project_Run_bin}" // cmake 运行目录
+#define Project_Plug_bin u8"${Project_Plug_bin}" // cmake 插件目录
+#define Cmake_Source_Dir u8"${CMAKE_SOURCE_DIR}" // cmake 根目录
 
-#define Cmake_Project_Name u8"${Cmake_Project_Name}"
-#define Project_Run_bin u8"${Project_Run_bin}"
-#define Project_Plug_bin u8"${Project_Plug_bin}"
-#define Cmake_Executable_Suffix u8"${CMAKE_EXECUTABLE_SUFFIX}"
-#define Cmake_Shared_Library_Suffix u8"${CMAKE_SHARED_LIBRARY_SUFFIX}"
-#define project_type u8"${project_type_property}"
-
-#define Cache_Path_Dir u8"${Cache_Path_Dir}"
 
 #endif // CMAKE_TO_C_CPP_HEADER_ENV_H_H_HEAD__FILE__
