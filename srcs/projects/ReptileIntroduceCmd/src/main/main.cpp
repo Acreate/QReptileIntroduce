@@ -1013,6 +1013,7 @@ std::shared_ptr< cylHtmlTools::HtmlWorkThreadPool > getDBNovelsInfo( const std::
 											&vectorInsterMutex,filterVector]( cylHtmlTools::HtmlWorkThread *html_work_thread ) {
 											interfacePlugsType::HtmlDocString name = novel->novelName; // 小说名称转换为大写
 											name = NovelDBJob::converStringToUpper( name );
+											cylHtmlTools::HtmlStringTools::removeAllSpace( name );
 											if( !filterNovelName( name, jump_equ_name_len_map, jump_sub_name_len_map ) ) {
 												vectorInsterMutex.lock( );
 												filterVector->emplace_back( novel );
@@ -1024,18 +1025,19 @@ std::shared_ptr< cylHtmlTools::HtmlWorkThreadPool > getDBNovelsInfo( const std::
 								qApp->processEvents( );
 							inster_novel_vector_map_mutex.lock( );
 							inster_novel_vector_map_obj->emplace_back( absoluteFilePath, filterVector );
-							size = novelInfoVectorShared->size( );
+							size = filterVector->size( );
+							novel_inster_count += size;
 							inster_novel_vector_map_mutex.unlock( );
 						} else {
 							Out_Std_Count_Stream_Msg_MACRO( std_cout_mutex, callFunctionName, QString(u8"数据库( %1 )过滤小说名称进行中").arg( absoluteFilePath).toStdString( ) );
 							inster_novel_vector_map_mutex.lock( );
 							inster_novel_vector_map_obj->emplace_back( absoluteFilePath, novelInfoVectorShared );
 							size = novelInfoVectorShared->size( );
+							novel_inster_count += size;
 							inster_novel_vector_map_mutex.unlock( );
 						}
 
 						Out_Std_Count_Stream_Msg_MACRO( std_cout_mutex, callFunctionName, QString(u8"数据库( %1 ) 有效小说为 : [ %2 ]").arg( absoluteFilePath).arg( size ).toStdString( ) );
-						novel_inster_count += size;
 					} else {
 						std_cout_mutex.lock( );
 						QString msg( "\n(进程 id : %1 )路径[ %2 ]无法加载小说列表" );
@@ -1269,9 +1271,10 @@ void emplaceNovelKeyMap( const QString &save_path, const std::shared_ptr< interf
 /// @param key 段内匹配到的字符串
 /// @param str_vector 子字符串容器
 /// @return true 表示匹配到
-bool getValue( const interfacePlugsType::HtmlDocString *find_key, interfacePlugsType::HtmlDocString *key, const Str_Vector &str_vector ) {
+bool getValue( interfacePlugsType::HtmlDocString find_key, interfacePlugsType::HtmlDocString *key, const Str_Vector &str_vector ) {
+	cylHtmlTools::HtmlStringTools::removeAllSpace( find_key );
 	for( auto &compStr : str_vector )
-		if( cylHtmlTools::HtmlStringTools::findNextHtmlStringPotion( find_key, &compStr ) ) {
+		if( cylHtmlTools::HtmlStringTools::findNextHtmlStringPotion( &find_key, &compStr ) ) {
 			*key = compStr;
 			return true;
 		}
@@ -1294,13 +1297,13 @@ bool lenMapFindNovelKey( const NovelInfo &novel_info, const Len_Map_Str_Vector_S
 		auto lenKey = begin->first;
 		if( maxLen < lenKey )
 			break;
-		if( lenKey <= novelNameLen && getValue( &novel_info.novelName, key, *begin->second ) )
+		if( lenKey <= novelNameLen && getValue( novel_info.novelName, key, *begin->second ) )
 			return true;
-		if( lenKey <= novelInfoLen && getValue( &novel_info.info, key, *begin->second ) )
+		if( lenKey <= novelInfoLen && getValue( novel_info.info, key, *begin->second ) )
 			return true;
-		if( lenKey <= novelLastItemLen && getValue( &novel_info.lastItem, key, *begin->second ) )
+		if( lenKey <= novelLastItemLen && getValue( novel_info.lastItem, key, *begin->second ) )
 			return true;
-		if( lenKey <= novelAuthorLen && getValue( &novel_info.author, key, *begin->second ) )
+		if( lenKey <= novelAuthorLen && getValue( novel_info.author, key, *begin->second ) )
 			return true;
 	}
 	return false;
@@ -1881,48 +1884,51 @@ void dbReadWriteChanger( const std::shared_ptr< cylStd::ArgParser > &arg_parser 
 	}
 	if( novelCount == 0 ) {
 		ErrorCout_MACRO( QString( u8"(进程 id :%1) 数据库过滤后导出小说数量为 0" ).arg( applicationPid ) );
-		if( arg_parser->getOptionValues( "-rm" ) ) {
-			stdCoutMutex.lock( );
+		auto rmOption = arg_parser->getOptionValues( "-rm" );
+		if( rmOption ) {
 			for( auto removePath : exisLegitimateOutDirPath ) {
 				QString pathStart = removePath + QDir::separator( );
-				QFileInfo removePathFileInfo( pathStart + "export_all" );
-
+				QFileInfo removePathFileInfo( pathStart + exportAllDirMidName );
 				if( removePathFileInfo.exists( ) ) {
 					QString absoluteFilePath = removePathFileInfo.absoluteFilePath( );
-					ErrorCout_MACRO( QString( u8"(进程 id :%1) 删除路径 -> %2" ).arg( applicationPid ).arg( absoluteFilePath ) );
+					Out_Std_Count_Stream_Msg_MACRO( stdCoutMutex, callFunctionName, QString( u8"(进程 id :%1) 删除路径 -> %2" ).arg(applicationPid ).arg( absoluteFilePath ).toStdString( ) );
 					if( removePathFileInfo.isFile( ) )
 						QFile( absoluteFilePath ).remove( );
 					else
 						QDir( absoluteFilePath ).removeRecursively( );
 				}
-				removePathFileInfo.setFile( pathStart + "export_find" );
+				removePathFileInfo.setFile( pathStart + exportFindDirMidName );
 				if( removePathFileInfo.exists( ) ) {
 					QString absoluteFilePath = removePathFileInfo.absoluteFilePath( );
-					ErrorCout_MACRO( QString( u8"(进程 id :%1) 删除路径 -> %2" ).arg(applicationPid ).arg( absoluteFilePath ) );
+					Out_Std_Count_Stream_Msg_MACRO( stdCoutMutex, callFunctionName, QString( u8"(进程 id :%1) 删除路径 -> %2" ).arg(applicationPid ).arg( absoluteFilePath ).toStdString( ) );
 					if( removePathFileInfo.isFile( ) )
 						QFile( absoluteFilePath ).remove( );
 					else
 						QDir( absoluteFilePath ).removeRecursively( );
 				}
 			}
-			stdCoutMutex.unlock( );
 		}
 		return;
 	}
-	// 读取的小说个数
-	size_t novelInfo = novelInfosMap->size( );
-
 	// 是否存在 -edb 选项
 	auto isExportDbAllNovelInfo = arg_parser->getOptionValues( "-edb" );
-	if( ( size == 0 && !isExportDbAllNovelInfo ) || novelInfo == 0 ) { // 如果不使用查找选项，不使用全导出选项，则退出程序
+	if( size == 0 && !isExportDbAllNovelInfo ) { // 如果不使用查找选项，不使用全导出选项，则退出程序
 		if( expireOption )
 			Out_Std_Count_Stream_Msg_MACRO( stdCoutMutex, callFunctionName, QString(u8"已经实现删除过期小说功能，删除单位：%1 天").arg( expire).toStdString( ) );
-		else if( novelInfo == 0 )
-			ErrorCout_MACRO( QString( u8"(进程 id :%1) 读取小说信息返回数目为 0，请检查数据库是否存在数据" ).arg(applicationPid ) );
 		else
 			ErrorCout_MACRO( QString( u8"(进程 id :%1) 导出选项配置错误，请检查 -edb 或 -fkf 是否有有效" ).arg(applicationPid ) );
 		return;
 	}
+
+	for( auto &dbPath : exisLegitimateOutDirPath ) {
+		auto absoluteFilePath = dbPath + exportAllDirMidName;
+		if( Path::removePath( absoluteFilePath ) )
+			Out_Std_Count_Stream_Msg_MACRO( stdCoutMutex, callFunctionName, QString( u8"(进程 id :%1) 删除路径 -> %2" ).arg( applicationPid ).arg( absoluteFilePath ) .toStdString( ) );
+		absoluteFilePath = dbPath + exportFindDirMidName;
+		if( Path::removePath( absoluteFilePath ) )
+			Out_Std_Count_Stream_Msg_MACRO( stdCoutMutex, callFunctionName, QString( u8"(进程 id :%1) 删除路径 -> %2" ).arg( applicationPid ).arg( absoluteFilePath ).toStdString( ) );
+	}
+
 	// 存储过滤后的全导出小说信息<写入文件路径, 小说列表>
 	NovelDBJob::NovelTypePairVector_Shared edbNovelInfosWriteMap = std::make_shared< NovelDBJob::NovelTypePairVector >( );
 	std::shared_ptr< cylHtmlTools::HtmlWorkThreadPool > exportDBNovelInfoAllThreadPool = nullptr;
@@ -1984,13 +1990,6 @@ void dbReadWriteChanger( const std::shared_ptr< cylStd::ArgParser > &arg_parser 
 		ErrorCout_MACRO( QString("(进程 id :%1) 不存在导出的列表。如与信息不匹配，请联系开发人员反馈").arg( applicationPid) );
 		return;
 	}
-	if( findResultNovelCount )
-		for( auto &dbPath : exisLegitimateOutDirPath )
-			Path::removePath( dbPath + exportFindDirMidName );
-	if( edbResultNovelCount )
-		for( auto &dbPath : exisLegitimateOutDirPath )
-			Path::removePath( dbPath + exportAllDirMidName );
-
 	Out_Std_Count_Stream_Msg_MACRO( stdCoutMutex, callFunctionName, QString(u8"发现导出返回:[ %1 ] 发现查找返回:[ %2 ]\n").arg( edbResultNovelCount ).arg( findResultNovelCount).toStdString( ) );
 
 	// 把 novelInfosWriteMap 映射写入磁盘
