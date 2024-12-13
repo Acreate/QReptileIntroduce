@@ -579,7 +579,6 @@ inline bool compHtmlKey( interfacePlugsType::HtmlDocString compStr, const interf
 }
 bool findNovelKey( const NovelInfo &novel_info, const std::vector< interfacePlugsType::HtmlDocString > &find_key_s, interfacePlugsType::HtmlDocString *key ) {
 	for( auto &find_key : find_key_s ) {
-
 		auto keyLen = find_key.length( );
 		if( compHtmlKey( novel_info.novelName, find_key, keyLen ) ) {
 			*key = find_key;
