@@ -121,7 +121,7 @@ GET_PATH_CMAKE_DIR_PATH( out_path_list ${CMAKE_CURRENT_SOURCE_DIR}/srcs/libs/Sha
 GET_PATH_CMAKE_DIR_PATH( out_path_list ${CMAKE_CURRENT_SOURCE_DIR}/srcs/libs/ShaderModel/shaders/Tools "CMakeLists.txt" )
 
 GET_PATH_CMAKE_DIR_PATH( out_path_list ${CMAKE_CURRENT_SOURCE_DIR}/srcs/projects/ "CMakeLists.txt" )
-
+ 
 FOREACH( out_dir ${out_path_list} )
 	STRING( REPLACE ${CMAKE_SOURCE_DIR}/ "./" out_path ${out_dir} )
 	MESSAGE( STATUS "正在添加路径 :\t" ${out_dir} )

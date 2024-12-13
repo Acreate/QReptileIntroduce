@@ -18,6 +18,8 @@
 #include "path/Dir.h"
 #include <DB/sqlite/sqliteResult/SQLiteResult.h>
 #include <QMutex>
+
+#include "interface/instance_function.h"
 #include "NovelDBJob.h"
 
 
@@ -68,7 +70,7 @@ inline void error_write_file( const std::chrono::time_point< std::chrono::system
 	msg.append( "\n=========================		try : info" )
 		.append( u8"\n\t当前时间 : " ).append( currentTime ).append( "\n\t" )
 		.append( u8"\n\t执行时间 : " ).append( seconds ).append( "秒\n\t" )
-		.append( u8"\n\t错误文件 : " ).append( file ).append( "\n\t" )
+		.append( u8"\n\t错误文件 : " ).append( instance_function::getCmakeRootPathBuilderFilePath( file ) ).append( "\n\t" )
 		.append( u8"\n\t信息位置 : " ).append( QString::number( line ) )
 		.append( u8"\n\t信息函数 : " ).append( __FUNCTION__ )
 		.append( "\n=========================		try : message" )
@@ -78,14 +80,14 @@ inline void error_write_file( const std::chrono::time_point< std::chrono::system
 		.append( u8"\n\t自由信息 : " ).append( append_msg )
 		.append( "\n=========================" );
 	if( write_root_path.isEmpty( ) )
-		OStream::anyStdCerr( msg, file, line, call_function_name, oStream );
+		OStream::anyStdCerr( msg, instance_function::getCmakeRootPathBuilderFilePath( file ), line, call_function_name, oStream );
 	else {
 		QString errorWriteFilePath = write_root_path;
 		QString host = url.host( );
 		QString timeForm = currentDateTime.toString( "yyyy-MM-dd" );
 		auto sep = QDir::separator( );
 		errorWriteFilePath.append( sep ).append( u8"logs" ).append( sep ).append( u8"log_write_file_s" ).append( sep ).append( host ).append( sep ).append( timeForm ).append( sep ).append( file_name ).append( file_suffix );
-		OStream::anyStdCerr( msg, file, line, call_function_name, errorWriteFilePath, msg, oStream );
+		OStream::anyStdCerr( msg, instance_function::getCmakeRootPathBuilderFilePath( file ), line, call_function_name, errorWriteFilePath, msg, oStream );
 	}
 }
 QString getNormalQString( const QString &q_string ) {
@@ -106,14 +108,14 @@ QString getNormalQString( const QString &q_string ) {
 	return result;
 }
 QStringList NovelNetJob::userAgentHeaderList = {
-	QObject::tr( u8"Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3440.106 Safari/537.36" )
-	, QObject::tr( u8"Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.99 Safari/537.36" )
-	, QObject::tr( u8"Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.186 Safari/537.36" )
-	, QObject::tr( u8"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/62.0.3202.62 Safari/537.36" )
-	, QObject::tr( u8"Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/45.0.2454.101 Safari/537.36" )
-	, QObject::tr( u8"Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 6.0)" )
-	, QObject::tr( u8"Mozilla/5.0 (Macintosh; U; PPC Mac OS X 10.5; en-US; rv:1.9.2.15) Gecko/20110303 Firefox/3.6.15" )
-	, QObject::tr( u8"Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36" )
+		QObject::tr( u8"Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3440.106 Safari/537.36" ),
+		QObject::tr( u8"Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.99 Safari/537.36" ),
+		QObject::tr( u8"Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.186 Safari/537.36" ),
+		QObject::tr( u8"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/62.0.3202.62 Safari/537.36" ),
+		QObject::tr( u8"Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/45.0.2454.101 Safari/537.36" ),
+		QObject::tr( u8"Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 6.0)" ),
+		QObject::tr( u8"Mozilla/5.0 (Macintosh; U; PPC Mac OS X 10.5; en-US; rv:1.9.2.15) Gecko/20110303 Firefox/3.6.15" ),
+		QObject::tr( u8"Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36" )
 };
 size_t NovelNetJob::waiteMilliseconds( const size_t &milliseconds ) {
 	if( milliseconds == 0 )
@@ -394,10 +396,10 @@ void NovelNetJob::slots_requesting_get_root_page_signals( const QUrl &url, QNetw
 }
 
 interfacePlugsType::INovelInfo_Shared NovelNetJob::saveToStoreNovels(
-	interfacePlugsType::Vector_INovelInfoSPtr_Shared &requestedGetVectorINovelInfoSPtrShared
-	, interfacePlugsType::Vector_INovelInfoSPtr_Shared &saveMapNovelInfos
-	, interfacePlugsType::INovelInfo_Shared &novel
-	, QString *result_msg ) {
+		interfacePlugsType::Vector_INovelInfoSPtr_Shared &requestedGetVectorINovelInfoSPtrShared,
+		interfacePlugsType::Vector_INovelInfoSPtr_Shared &saveMapNovelInfos,
+		interfacePlugsType::INovelInfo_Shared &novel,
+		QString *result_msg ) {
 	return nullptr;
 }
 

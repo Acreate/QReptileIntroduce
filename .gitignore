@@ -15,3 +15,4 @@ _deps
 /_ReSharper.Caches
 CMakePresets.json
 cmake_to_c_cpp_header_env.h
+/CMakeSettings.json

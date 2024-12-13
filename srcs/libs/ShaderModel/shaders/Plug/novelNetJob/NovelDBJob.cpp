@@ -19,6 +19,7 @@
 #include <mutex>
 #include "../ioFile/IOFile.h"
 #include "htmlString/HtmlStringTools.h"
+#include "interface/instance_function.h"
 
 QString NovelDBJob::currentTimeForm = QObject::tr( u8R"(yyyy-MM-dd hh:mm:ss)" );
 QDateTime NovelDBJob::currentTime = QDateTime::currentDateTime( );
@@ -118,7 +119,7 @@ namespace instance_function {
 		if( dbTextType.isEmpty( ) )
 			dbTextType = "TEXT";
 		hasTab = depositoryShared->createTab( tab_name,
-			{ { "rootUrl", dbTextType },
+		{ { "rootUrl", dbTextType },
 				{ "novelName", dbTextType },
 				{ "info", dbTextType },
 				{ "updateTime", dbTextType },
@@ -131,7 +132,7 @@ namespace instance_function {
 				{ "additionalData", dbTextType },
 				{ "typePageUrl", dbTextType },
 				{ "typeName", dbTextType }
-			} );
+		} );
 		if( !hasTab )
 			OStream::anyStdCerr( "无法创建正确的 db 文件", __FILE__, __LINE__, __FUNCTION__, thisOStream );
 		return hasTab;
@@ -166,64 +167,6 @@ namespace instance_function {
 	/// 输出错误信息到指定文件
 	/// </summary>
 	/// <param name="os">流，可选为nullptr</param>
-	/// <param name="url">错误的 url - 节选 host 为路径名</param>
-	/// <param name="root_path">根路径</param>
-	/// <param name="dir_name">存储目录-中间目录，写入 路径宏（Cache_Path_Dir）跟后</param>
-	/// <param name="error_type">错误的类型 - 节点路径名</param>
-	/// <param name="error_novel_type_name">错误的小说类型名称 - 节选路径名</param>
-	/// <param name="error_file_suffix">文件路径后缀</param>
-	/// <param name="error_call_path_file_name">错误诞生的文件</param>
-	/// <param name="error_file_call_function_name">错误诞生的描述调用函数</param>
-	/// <param name="error_file_call_function_line">错误诞生的描述行号</param>
-	/// <param name="error_info_text">错误信息</param>
-	/// <param name="error_write_info_content">错误内容</param>
-	/// <returns>成功写入文件返回 true</returns>
-	inline bool write_error_info_file( OStream *os, const QUrl &url, const QString &root_path, const QString &dir_name, const QString &error_type, const QString &error_novel_type_name, const QString &error_file_suffix, const QString &error_call_path_file_name, const QString &error_file_call_function_name, const size_t error_file_call_function_line, const QString &error_info_text, const QString &error_write_info_content ) {
-		QDateTime currentDateTime = QDateTime::currentDateTime( );
-		QString day = currentDateTime.toString( "yyyy_MM_dd" );
-		QString time = currentDateTime.toString( "hh mm ss" );
-
-		QString msg;
-		msg.append( "\n<!--" )
-			.append( "\n=========================		try : info" )
-			.append( u8"\n\t当前时间 : " ).append( day + " " + time ).append( "\n\t" )
-			.append( u8"\n\t错误文件 : " ).append( error_call_path_file_name ).append( "\n\t" )
-			.append( u8"\n\t信息位置 : " ).append( QString::number( error_file_call_function_line ) )
-			.append( u8"\n\t信息函数 : " ).append( error_file_call_function_name )
-			.append( "\n=========================		try : message" )
-			.append( u8"\n\t类型 : " ).append( u8"请求页面" ).append( u8"(" ).append( url.toString( ) ).append( ")" )
-			.append( "\n=========================		user : message" )
-			.append( u8"\n\t自由信息 : " ).append( error_info_text )
-			.append( "\n=========================" )
-			.append( "\n-->" );
-		OStream::anyStdCerr( msg, os );
-		if( error_write_info_content.isEmpty( ) )
-			return false;
-		auto path = QString( root_path ).append( QDir::separator( ) )
-										.append( day ).append( QDir::separator( ) )
-										.append( "write_error_info_file" ).append( QDir::separator( ) )
-										.append( dir_name ).append( QDir::separator( ) )
-										.append( url.host( ) ).append( QDir::separator( ) )
-										.append( error_type )
-										.append( '-' )
-										.append( time )
-										.append( '-' )
-										.append( error_novel_type_name ).append( error_file_suffix );
-
-		Path::creatFilePath( path );
-		QFile writeHtmlFile( path );
-		if( writeHtmlFile.open( QIODeviceBase::WriteOnly | QIODeviceBase::Text | QIODeviceBase::Truncate ) ) {
-			msg.append( '\n' );
-			msg.append( error_write_info_content );
-			writeHtmlFile.write( msg.toUtf8( ) );
-			writeHtmlFile.close( );
-		}
-		return true;
-	}
-	/// <summary>
-	/// 输出错误信息到指定文件
-	/// </summary>
-	/// <param name="os">流，可选为nullptr</param>
 	/// <param name="error_call_path_file_name">错误诞生的文件</param>
 	/// <param name="error_file_call_function_name">错误诞生的描述调用函数</param>
 	/// <param name="error_file_call_function_line">错误诞生的描述行号</param>
@@ -237,7 +180,7 @@ namespace instance_function {
 		msg.append( "\n<!--" )
 			.append( "\n=========================		try : info" )
 			.append( u8"\n\t当前时间 : " ).append( day + " " + time ).append( "\n\t" )
-			.append( u8"\n\t错误文件 : " ).append( error_call_path_file_name ).append( "\n\t" )
+			.append( u8"\n\t错误文件 : " ).append( instance_function::getCmakeRootPathBuilderFilePath( error_call_path_file_name ) ).append( "\n\t" )
 			.append( u8"\n\t信息位置 : " ).append( QString::number( error_file_call_function_line ) )
 			.append( u8"\n\t信息函数 : " ).append( error_file_call_function_name )
 			.append( "\n=========================		user : message" )
@@ -378,9 +321,9 @@ size_t NovelDBJob::writeDB( OStream *thisOStream, const QString &outPath, const 
 	size_t result = 0;
 	if( dbInterface->link( ) ) {
 		cylHtmlTools::HtmlWorkThread::TThreadCall currentThreadRun = [
-				dbInterface, dbName,tabName, outPath, run, thisOStream,
-				&saveNovelInfos, &result
-			]( cylHtmlTools::HtmlWorkThread * ) {
+					dbInterface, dbName,tabName, outPath, run, thisOStream,
+					&saveNovelInfos, &result
+				]( cylHtmlTools::HtmlWorkThread * ) {
 			auto depositoryShared = dbInterface->openDepository( dbName );
 			if( depositoryShared ) {
 				if( !depositoryShared->open( ) ) {
@@ -406,16 +349,16 @@ size_t NovelDBJob::writeDB( OStream *thisOStream, const QString &outPath, const 
 				QString requestTime = currentTime.toString( currentTimeForm );
 				// 开始更新
 				interfacePlugsType::HtmlDocString rootUrl,
-					novelName,
-					novelInfo,
-					novelUpdateTime,
-					novelFormat,
-					novelAuthor,
-					novelUrl,
-					novelLastItem,
-					novelAdditionalData,
-					novelTypePageUrl,
-					novelTypeName;
+						novelName,
+						novelInfo,
+						novelUpdateTime,
+						novelFormat,
+						novelAuthor,
+						novelUrl,
+						novelLastItem,
+						novelAdditionalData,
+						novelTypePageUrl,
+						novelTypeName;
 				saveNovelInfos.at( 0 )->getNovelUrl( &rootUrl );
 				QUrl qUrl( QString::fromStdWString( rootUrl ) );
 				auto rootQStringUrl = qUrl.scheme( ) + "://" + qUrl.host( );
@@ -819,71 +762,71 @@ NovelDBJob::NovelInfoVector NovelDBJob::findNovel( const NovelInfoVector &infos,
 	cylHtmlTools::HtmlWorkThreadPool threadPool; // 线程池
 	for( auto &node : infos ) {
 		threadPool.appendWork( [
-				node,writeMutex
-				,&mapLenKeyS,&find_key,&result
-			]( cylHtmlTools::HtmlWorkThread * ) ->void {
-				// todo : ......
-				interfacePlugsType::HtmlDocString name;
-				interfacePlugsType::HtmlDocString info;
-				interfacePlugsType::HtmlDocString auth;
-				interfacePlugsType::HtmlDocString lastItem;
-				node->getNovelName( &name );
-				node->getNovelInfo( &info );
-				node->getNovelAuthor( &auth );
-				node->getNovelLastItem( &lastItem );
-				size_t nameLen = name.length( );
-				size_t infoLen = info.length( );
-				size_t authLen = auth.length( );
-				size_t lastItemLen = lastItem.length( );
-				for( auto &key : mapLenKeyS ) {
-					if( nameLen < key && infoLen < key && authLen < key && lastItemLen < key )
-						break;
-					auto &&sharedPtr = find_key.at( key );
-					for( auto &str : *sharedPtr ) {
-						if( nameLen >= key ) {
-							if( cylHtmlTools::HtmlStringTools::findNextHtmlStringPotion( &name, &str ) ) {
-								writeMutex->lock( );
-								result.emplace_back( node );
-								writeMutex->unlock( );
-								break; // 小说当属匹配当前子字符串
+					node,writeMutex
+					,&mapLenKeyS,&find_key,&result
+				]( cylHtmlTools::HtmlWorkThread * ) ->void {
+					// todo : ......
+					interfacePlugsType::HtmlDocString name;
+					interfacePlugsType::HtmlDocString info;
+					interfacePlugsType::HtmlDocString auth;
+					interfacePlugsType::HtmlDocString lastItem;
+					node->getNovelName( &name );
+					node->getNovelInfo( &info );
+					node->getNovelAuthor( &auth );
+					node->getNovelLastItem( &lastItem );
+					size_t nameLen = name.length( );
+					size_t infoLen = info.length( );
+					size_t authLen = auth.length( );
+					size_t lastItemLen = lastItem.length( );
+					for( auto &key : mapLenKeyS ) {
+						if( nameLen < key && infoLen < key && authLen < key && lastItemLen < key )
+							break;
+						auto &&sharedPtr = find_key.at( key );
+						for( auto &str : *sharedPtr ) {
+							if( nameLen >= key ) {
+								if( cylHtmlTools::HtmlStringTools::findNextHtmlStringPotion( &name, &str ) ) {
+									writeMutex->lock( );
+									result.emplace_back( node );
+									writeMutex->unlock( );
+									break; // 小说当属匹配当前子字符串
+								}
 							}
-						}
-						if( infoLen >= key ) {
-							if( cylHtmlTools::HtmlStringTools::findNextHtmlStringPotion( &info, &str ) ) {
-								writeMutex->lock( );
-								result.emplace_back( node );
-								writeMutex->unlock( );
-								break; // 小说当属匹配当前子字符串
+							if( infoLen >= key ) {
+								if( cylHtmlTools::HtmlStringTools::findNextHtmlStringPotion( &info, &str ) ) {
+									writeMutex->lock( );
+									result.emplace_back( node );
+									writeMutex->unlock( );
+									break; // 小说当属匹配当前子字符串
+								}
 							}
-						}
-						if( authLen >= key ) {
-							if( cylHtmlTools::HtmlStringTools::findNextHtmlStringPotion( &auth, &str ) ) {
-								writeMutex->lock( );
-								result.emplace_back( node );
-								writeMutex->unlock( );
-								break; // 小说当属匹配当前子字符串
+							if( authLen >= key ) {
+								if( cylHtmlTools::HtmlStringTools::findNextHtmlStringPotion( &auth, &str ) ) {
+									writeMutex->lock( );
+									result.emplace_back( node );
+									writeMutex->unlock( );
+									break; // 小说当属匹配当前子字符串
+								}
 							}
-						}
-						if( lastItemLen >= key ) {
-							if( cylHtmlTools::HtmlStringTools::findNextHtmlStringPotion( &lastItem, &str ) ) {
-								writeMutex->lock( );
-								result.emplace_back( node );
-								writeMutex->unlock( );
-								break; // 小说当属匹配当前子字符串
+							if( lastItemLen >= key ) {
+								if( cylHtmlTools::HtmlStringTools::findNextHtmlStringPotion( &lastItem, &str ) ) {
+									writeMutex->lock( );
+									result.emplace_back( node );
+									writeMutex->unlock( );
+									break; // 小说当属匹配当前子字符串
+								}
 							}
 						}
 					}
-				}
-			} );
+				} );
 	}
 	threadPool.start( 8,
-		[&](
-		cylHtmlTools::HtmlWorkThreadPool *html_work_thread_pool,
-		const unsigned long long &i,
-		const unsigned long long & ) {
-			if( call_function )
-				call_function( );
-		} );
+			[&](
+			cylHtmlTools::HtmlWorkThreadPool *html_work_thread_pool,
+			const unsigned long long &i,
+			const unsigned long long & ) {
+				if( call_function )
+					call_function( );
+			} );
 	threadPool.waiteOverJob( );
 	return result;
 }
@@ -1031,11 +974,11 @@ QString getFileBaseName( const QString &filePathInfo ) {
 }
 interfacePlugsType::Vector_INovelInfoSPtr_Shared NovelDBJob::inductionNovelsForNameAndAuthor( const interfacePlugsType::Vector_INovelInfoSPtr &novel_info_vector, const std::unordered_map< interfacePlugsType::HtmlDocString, std::unordered_map< interfacePlugsType::INovelInfo_Shared, std::vector< interfacePlugsType::HtmlDocString > > > &novel_keys_map, const interfacePlugsType::HtmlDocString &write_path ) {
 	interfacePlugsType::Vector_INovelInfoSPtr_Shared vectorINovelInfoSPtr =
-		std::make_shared< interfacePlugsType::Vector_INovelInfoSPtr >( ); // 临时存储未处理的小说列表
+			std::make_shared< interfacePlugsType::Vector_INovelInfoSPtr >( ); // 临时存储未处理的小说列表
 	interfacePlugsType::Vector_INovelInfoSPtr_Shared resultIndutionNovels =
-		std::make_shared< interfacePlugsType::Vector_INovelInfoSPtr >( ); // 合并后返回的小说列表
+			std::make_shared< interfacePlugsType::Vector_INovelInfoSPtr >( ); // 合并后返回的小说列表
 	interfacePlugsType::Vector_INovelInfoSPtr_Shared notProcessedNovelsBuff =
-		std::make_shared< interfacePlugsType::Vector_INovelInfoSPtr >( novel_info_vector.begin( ), novel_info_vector.end( ) ); // 遍历的小说列表
+			std::make_shared< interfacePlugsType::Vector_INovelInfoSPtr >( novel_info_vector.begin( ), novel_info_vector.end( ) ); // 遍历的小说列表
 	auto inputNovelMax = notProcessedNovelsBuff->size( );
 	auto wirtNormalPath = getFileBaseName( QString::fromStdWString( write_path ) ).toUpper( ).toStdWString( );
 	while( inputNovelMax ) {
@@ -1065,12 +1008,12 @@ interfacePlugsType::Vector_INovelInfoSPtr_Shared NovelDBJob::inductionNovelsForN
 							if( !cylHtmlTools::HtmlStringTools::removeAllSpace( appStr ).empty( ) ) {
 								auto end = compAddDataList.end( );
 								auto result = std::find_if( compAddDataList.begin( ),
-									end,
-									[&]( const interfacePlugsType::HtmlDocString &compStr ) ->bool {
-										if( cylHtmlTools::HtmlStringTools::equHtmlString( compStr, appStr ) )
-											return true;
-										return false;
-									} );
+										end,
+										[&]( const interfacePlugsType::HtmlDocString &compStr ) ->bool {
+											if( cylHtmlTools::HtmlStringTools::equHtmlString( compStr, appStr ) )
+												return true;
+											return false;
+										} );
 								if( result != end )
 									compAddDataList.emplace_back( appStr );
 							}
@@ -1080,12 +1023,12 @@ interfacePlugsType::Vector_INovelInfoSPtr_Shared NovelDBJob::inductionNovelsForN
 							if( !cylHtmlTools::HtmlStringTools::removeAllSpace( appStr ).empty( ) ) {
 								auto end = compAddDataList.end( );
 								auto result = std::find_if( compAddDataList.begin( ),
-									end,
-									[&]( const interfacePlugsType::HtmlDocString &compStr ) ->bool {
-										if( cylHtmlTools::HtmlStringTools::equHtmlString( compStr, appStr ) )
-											return true;
-										return false;
-									} );
+										end,
+										[&]( const interfacePlugsType::HtmlDocString &compStr ) ->bool {
+											if( cylHtmlTools::HtmlStringTools::equHtmlString( compStr, appStr ) )
+												return true;
+											return false;
+										} );
 								if( result != end )
 									compAddDataList.emplace_back( appStr );
 							}
@@ -1159,11 +1102,11 @@ interfacePlugsType::Vector_INovelInfoSPtr_Shared NovelDBJob::inductionNovelsForN
 interfacePlugsType::Vector_INovelInfoSPtr_Shared NovelDBJob::inductionNovelsForNameAndAuthor( const interfacePlugsType::Vector_INovelInfoSPtr &novel_info_vector ) {
 
 	interfacePlugsType::Vector_INovelInfoSPtr_Shared vectorINovelInfoSPtr =
-		std::make_shared< interfacePlugsType::Vector_INovelInfoSPtr >( ); // 临时存储未处理的小说列表
+			std::make_shared< interfacePlugsType::Vector_INovelInfoSPtr >( ); // 临时存储未处理的小说列表
 	interfacePlugsType::Vector_INovelInfoSPtr_Shared resultIndutionNovels =
-		std::make_shared< interfacePlugsType::Vector_INovelInfoSPtr >( ); // 合并后返回的小说列表
+			std::make_shared< interfacePlugsType::Vector_INovelInfoSPtr >( ); // 合并后返回的小说列表
 	interfacePlugsType::Vector_INovelInfoSPtr_Shared notProcessedNovelsBuff =
-		std::make_shared< interfacePlugsType::Vector_INovelInfoSPtr >( novel_info_vector.begin( ), novel_info_vector.end( ) ); // 遍历的小说列表
+			std::make_shared< interfacePlugsType::Vector_INovelInfoSPtr >( novel_info_vector.begin( ), novel_info_vector.end( ) ); // 遍历的小说列表
 	auto inputNovelMax = notProcessedNovelsBuff->size( );
 	while( inputNovelMax ) {
 		auto inductionNovel = notProcessedNovelsBuff->at( 0 );

@@ -6,6 +6,7 @@
 #include "./Dir.h"
 
 #include "../auto_generate_files/export/Path_Tool_export.h"
+#include "../auto_generate_files/macro/cmake_to_c_cpp_header_env.h"
 
 class PATH_TOOL_EXPORT Path {
 public:
@@ -14,6 +15,7 @@ public:
 	static std::pair< DirList, FileList > getPathInfo( const QString &path );
 	static std::pair< DirList, FileList > getDirInfo( const QString &path );
 	static std::pair< DirList, FileList > getFileInfo( const QString &path );
+
 	/// <summary>
 	/// 切分一个路径
 	/// </summary>

@@ -2,12 +2,28 @@
 #define INSTANCE_FUNCTION_H_H_HEAD__FILE__
 #pragma once
 
+#include "../auto_generate_files/macro/cmake_to_c_cpp_header_env.h"
+
 #include "stream/OStream.h"
 #include <QDateTime>
 #include <QDir>
 #include <QUrl>
+
 namespace instance_function {
 	struct NovelNodeXPathInfo;
+	
+	/// @brief 获取基于 cmakefile 的根路径相对的文件路径
+	/// @param builder_path 编译文件的路径
+	/// @return 基于 cmake 根路径的相对路径
+	static QString getCmakeRootPathBuilderFilePath( const QString &builder_path ) {
+		return QDir( Cmake_Source_Dir ).relativeFilePath( builder_path );
+	}
+	/// @brief 获取基于 cmakefile 的根路径相对的文件路径
+	/// @param builder_path 编译文件的路径
+	/// @return 基于 cmake 根路径的相对路径
+	static QString getCmakeRootPathBuilderFilePath( const char *builder_path ) {
+		return QDir( Cmake_Source_Dir ).relativeFilePath( builder_path );
+	}
 	enum Novel_Xpath_Analysis_Error {
 		None// 没有异常
 		, Name_Error_Xpath// 名称 xpath 异常
@@ -71,7 +87,7 @@ namespace instance_function {
 		msg.append( "\n<!--" )
 			.append( "\n=========================		try : info" )
 			.append( u8"\n\t当前时间 : " ).append( day + " " + time ).append( "\n\t" )
-			.append( u8"\n\t错误文件 : " ).append( error_call_path_file_name ).append( "\n\t" )
+			.append( u8"\n\t错误文件 : " ).append( getCmakeRootPathBuilderFilePath( error_call_path_file_name ) ).append( "\n\t" )
 			.append( u8"\n\t信息位置 : " ).append( QString::number( error_file_call_function_line ) )
 			.append( u8"\n\t信息函数 : " ).append( error_file_call_function_name )
 			.append( "\n=========================		try : message" )
