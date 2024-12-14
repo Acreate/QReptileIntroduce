@@ -1760,6 +1760,36 @@ void mergeFindMaps( PathWriteNovelInfoUnMap &merge_find_keys_novelInfos_map, con
 	for( auto &iter : merge_find_keys_export_novel_infos_map )
 		merge_find_keys_novelInfos_map.insert( iter );
 }
+
+/// @brief 删除导出目录（-w 指定生成的 exis_legitimate_out_dir_path 路径对象）
+/// @param exis_legitimate_out_dir_path 起始路径列表
+/// @param stdCoutMutex 输出锁
+/// @param callFunctionName 调用函数名称
+/// @param line 调用行号
+void rmoveExportPath( const std::vector< QString > &exis_legitimate_out_dir_path, QMutex &stdCoutMutex, const std::string &callFunctionName, const size_t &line ) {
+	for( auto removePath : exis_legitimate_out_dir_path ) {
+		QString pathStart = removePath + QDir::separator( );
+		QFileInfo removePathFileInfo( pathStart + exportAllDirMidName );
+		if( removePathFileInfo.exists( ) ) {
+			QString absoluteFilePath = removePathFileInfo.absoluteFilePath( );
+			outStdCountStreamMsg( stdCoutMutex, callFunctionName, QString( u8"(进程 id :%1) 删除路径 -> %2" ).arg( applicationPid ).arg( absoluteFilePath ).toStdString( ), callFileName, line );
+			if( removePathFileInfo.isFile( ) )
+				QFile( absoluteFilePath ).remove( );
+			else
+				QDir( absoluteFilePath ).removeRecursively( );
+		}
+		removePathFileInfo.setFile( pathStart + exportFindDirMidName );
+		if( removePathFileInfo.exists( ) ) {
+			QString absoluteFilePath = removePathFileInfo.absoluteFilePath( );
+			outStdCountStreamMsg( stdCoutMutex, callFunctionName, QString( u8"(进程 id :%1) 删除路径 -> %2" ).arg( applicationPid ).arg( absoluteFilePath ).toStdString( ), callFileName, line );
+			if( removePathFileInfo.isFile( ) )
+				QFile( absoluteFilePath ).remove( );
+			else
+				QDir( absoluteFilePath ).removeRecursively( );
+		}
+	}
+}
+
 /// <summary>
 /// 数据库操作
 /// </summary>
@@ -1885,29 +1915,8 @@ void dbReadWriteChanger( const std::shared_ptr< cylStd::ArgParser > &arg_parser 
 	if( novelCount == 0 ) {
 		ErrorCout_MACRO( QString( u8"(进程 id :%1) 数据库过滤后导出小说数量为 0" ).arg( applicationPid ) );
 		auto rmOption = arg_parser->getOptionValues( "-rm" );
-		if( rmOption ) {
-			for( auto removePath : exisLegitimateOutDirPath ) {
-				QString pathStart = removePath + QDir::separator( );
-				QFileInfo removePathFileInfo( pathStart + exportAllDirMidName );
-				if( removePathFileInfo.exists( ) ) {
-					QString absoluteFilePath = removePathFileInfo.absoluteFilePath( );
-					Out_Std_Count_Stream_Msg_MACRO( stdCoutMutex, callFunctionName, QString( u8"(进程 id :%1) 删除路径 -> %2" ).arg(applicationPid ).arg( absoluteFilePath ).toStdString( ) );
-					if( removePathFileInfo.isFile( ) )
-						QFile( absoluteFilePath ).remove( );
-					else
-						QDir( absoluteFilePath ).removeRecursively( );
-				}
-				removePathFileInfo.setFile( pathStart + exportFindDirMidName );
-				if( removePathFileInfo.exists( ) ) {
-					QString absoluteFilePath = removePathFileInfo.absoluteFilePath( );
-					Out_Std_Count_Stream_Msg_MACRO( stdCoutMutex, callFunctionName, QString( u8"(进程 id :%1) 删除路径 -> %2" ).arg(applicationPid ).arg( absoluteFilePath ).toStdString( ) );
-					if( removePathFileInfo.isFile( ) )
-						QFile( absoluteFilePath ).remove( );
-					else
-						QDir( absoluteFilePath ).removeRecursively( );
-				}
-			}
-		}
+		if( rmOption )
+			rmoveExportPath( exisLegitimateOutDirPath, stdCoutMutex, callFunctionName, __LINE__ );
 		return;
 	}
 	// 是否存在 -edb 选项
@@ -1919,15 +1928,8 @@ void dbReadWriteChanger( const std::shared_ptr< cylStd::ArgParser > &arg_parser 
 			ErrorCout_MACRO( QString( u8"(进程 id :%1) 导出选项配置错误，请检查 -edb 或 -fkf 是否有有效" ).arg(applicationPid ) );
 		return;
 	}
-
-	for( auto &dbPath : exisLegitimateOutDirPath ) {
-		auto absoluteFilePath = dbPath + exportAllDirMidName;
-		if( Path::removePath( absoluteFilePath ) )
-			Out_Std_Count_Stream_Msg_MACRO( stdCoutMutex, callFunctionName, QString( u8"(进程 id :%1) 删除路径 -> %2" ).arg( applicationPid ).arg( absoluteFilePath ) .toStdString( ) );
-		absoluteFilePath = dbPath + exportFindDirMidName;
-		if( Path::removePath( absoluteFilePath ) )
-			Out_Std_Count_Stream_Msg_MACRO( stdCoutMutex, callFunctionName, QString( u8"(进程 id :%1) 删除路径 -> %2" ).arg( applicationPid ).arg( absoluteFilePath ).toStdString( ) );
-	}
+	
+	rmoveExportPath( exisLegitimateOutDirPath, stdCoutMutex, callFunctionName, __LINE__ );
 
 	// 存储过滤后的全导出小说信息<写入文件路径, 小说列表>
 	NovelDBJob::NovelTypePairVector_Shared edbNovelInfosWriteMap = std::make_shared< NovelDBJob::NovelTypePairVector >( );

@@ -274,3 +274,8 @@ endfunction()
 
 实现动态构建插件，实现自QGenericPlugin
 
+# git url
+
+https://github.com/Acreate/QReptileIntroduce
+
+https://gitee.com/ChenYLhuman/QReptileIntroduce
