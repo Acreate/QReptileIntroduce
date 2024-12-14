@@ -965,19 +965,20 @@ bool filterNovelName( const interfacePlugsType::HtmlDocString &name, const Len_M
 /// <param name="inster_novel_vector_map_mutex">插入锁-进行小说插入 inster_novel_vector_map_obj 时将会锁定</param>
 /// <param name="inster_novel_vector_map_obj">小说保存对象</param>
 /// <param name="novel_inster_count">返回小说个数</param>
+/// <param name="db_novel_count">数据库小说数量总统计</param>
 /// <param name="expire">过期选项</param>
 /// <param name="has_ex_option">是否存在过期功能</param>
 /// <param name="jump_equ_name_len_map">跳过完全匹配的标题容器</param>
 /// <param name="jump_sub_name_len_map">跳过段内匹配的标题容器</param>
 /// <param name="is_db_path_ative">如果 db_paths 中存在有效的数据库，该值为 true</param>
 /// <returns>正在执行任务的线程池</returns>
-std::shared_ptr< cylHtmlTools::HtmlWorkThreadPool > getDBNovelsInfo( const std::vector< QString > &db_paths, QMutex &std_cout_mutex, QMutex &inster_novel_vector_map_mutex, NovelDBJob::NovelTypePairVector_Shared &inster_novel_vector_map_obj, size_t &novel_inster_count, const size_t expire, bool has_ex_option, const Len_Map_Str_Vector_S &jump_equ_name_len_map, const Len_Map_Str_Vector_S &jump_sub_name_len_map, bool &is_db_path_ative ) {
+std::shared_ptr< cylHtmlTools::HtmlWorkThreadPool > getDBNovelsInfo( const std::vector< QString > &db_paths, QMutex &std_cout_mutex, QMutex &inster_novel_vector_map_mutex, NovelDBJob::NovelTypePairVector_Shared &inster_novel_vector_map_obj, size_t &novel_inster_count, size_t &db_novel_count, const size_t expire, bool has_ex_option, const Len_Map_Str_Vector_S &jump_equ_name_len_map, const Len_Map_Str_Vector_S &jump_sub_name_len_map, bool &is_db_path_ative ) {
 	std::shared_ptr< cylHtmlTools::HtmlWorkThreadPool > resultPool = std::make_shared< cylHtmlTools::HtmlWorkThreadPool >( );
 	std::string callFunctionName = __FUNCTION__;
 	for( auto &dbPath : db_paths )
 		resultPool->appendWork( [=,&is_db_path_ative,
 					&std_cout_mutex,&inster_novel_vector_map_mutex,
-					&inster_novel_vector_map_obj,&novel_inster_count]( cylHtmlTools::HtmlWorkThread * ) {
+					&inster_novel_vector_map_obj,&novel_inster_count,&db_novel_count]( cylHtmlTools::HtmlWorkThread * ) {
 					QFileInfo fileInfo( dbPath );
 					QString absolutePath = fileInfo.absoluteDir( ).absolutePath( );
 					QString absoluteFilePath = fileInfo.absoluteFilePath( );
@@ -986,6 +987,9 @@ std::shared_ptr< cylHtmlTools::HtmlWorkThreadPool > getDBNovelsInfo( const std::
 					size_t size = 0;
 					// 是否读取到数据库
 					if( novelInfoVectorShared ) {
+						inster_novel_vector_map_mutex.lock( );
+						db_novel_count += novelInfoVectorShared->size( );
+						inster_novel_vector_map_mutex.unlock( );
 						is_db_path_ative = true;
 						// 是否存在删除过期选项
 						if( has_ex_option ) {
@@ -1864,10 +1868,12 @@ void dbReadWriteChanger( const std::shared_ptr< cylStd::ArgParser > &arg_parser 
 	NovelDBJob::NovelTypePairVector_Shared novelInfosMap = std::make_shared< NovelDBJob::NovelTypePairVector >( );
 	// 小说计数
 	size_t novelCount = 0;
+	// 数据库小说总计数
+	size_t dbNovelCount = 0;
 	// 数据库指定路径是有效的
 	bool isDBPathAtive = false;
 	// 执行数据库读取任务
-	std::shared_ptr< cylHtmlTools::HtmlWorkThreadPool > readDBThreadpool = getDBNovelsInfo( exisDbFilePath, stdCoutMutex, insterNovelVectosMutex, novelInfosMap, novelCount, expire, hasExOption, *equJumpKeys, *subJumpKeys, isDBPathAtive );
+	std::shared_ptr< cylHtmlTools::HtmlWorkThreadPool > readDBThreadpool = getDBNovelsInfo( exisDbFilePath, stdCoutMutex, insterNovelVectosMutex, novelInfosMap, novelCount, dbNovelCount, expire, hasExOption, *equJumpKeys, *subJumpKeys, isDBPathAtive );
 
 	if( readDBThreadpool == nullptr ) {
 		ErrorCout_MACRO( QString( u8"(进程 id :%1) -rdb 功能任务需求任务失败，请与开发者联系" ).arg( applicationPid ) );
@@ -1890,8 +1896,6 @@ void dbReadWriteChanger( const std::shared_ptr< cylStd::ArgParser > &arg_parser 
 	while( !readDBThreadpool->isOverJob( ) )
 		qApp->processEvents( );
 
-	Out_Std_Count_Stream_Msg_MACRO( stdCoutMutex, callFunctionName, QString(u8"累计有效小说数量 :[ %1 ]").arg( novelCount).toStdString( ) );
-
 	size_t size = 0; // 查找配置文件个数
 	if( readFindKeyThreadpool ) {
 		while( !readFindKeyThreadpool->isOverJob( ) )
@@ -1905,13 +1909,16 @@ void dbReadWriteChanger( const std::shared_ptr< cylStd::ArgParser > &arg_parser 
 		ErrorCout_MACRO( QString( u8"(进程 id :%1) 数据库无法获取小说信息，请检查 -rdb 是否发生错误" ).arg( applicationPid ) );
 		return;
 	}
-
 	// 查找输出路径
 	auto exisLegitimateOutDirPath = getOptionLegitimateOutDirPath( arg_parser, "-w" );
 	if( exisLegitimateOutDirPath.size( ) == 0 ) {
-		ErrorCout_MACRO( QString( u8"(进程 id :%1) 输出路径设置错误，请检查 -w 是否发生错误" ).arg( applicationPid ) );
+		if( expireOption )
+			Out_Std_Count_Stream_Msg_MACRO( stdCoutMutex, callFunctionName, QString(u8"已经实现删除过期小说功能，删除单位：%1 天。所有数据库小说数量 : [ %2 ]").arg( expire).arg( dbNovelCount ).toStdString( ) );
+		else
+			ErrorCout_MACRO( QString( u8"(进程 id :%1) 输出路径设置错误，请检查 -w 是否发生错误" ).arg( applicationPid ) );
 		return;
 	}
+	Out_Std_Count_Stream_Msg_MACRO( stdCoutMutex, callFunctionName, QString(u8"所有数据库已存量[ %1 ], 累计有效小说数量 :[ %2 ]").arg( dbNovelCount ).arg( novelCount).toStdString( ) );
 	if( novelCount == 0 ) {
 		ErrorCout_MACRO( QString( u8"(进程 id :%1) 数据库过滤后导出小说数量为 0" ).arg( applicationPid ) );
 		auto rmOption = arg_parser->getOptionValues( "-rm" );
@@ -1923,12 +1930,12 @@ void dbReadWriteChanger( const std::shared_ptr< cylStd::ArgParser > &arg_parser 
 	auto isExportDbAllNovelInfo = arg_parser->getOptionValues( "-edb" );
 	if( size == 0 && !isExportDbAllNovelInfo ) { // 如果不使用查找选项，不使用全导出选项，则退出程序
 		if( expireOption )
-			Out_Std_Count_Stream_Msg_MACRO( stdCoutMutex, callFunctionName, QString(u8"已经实现删除过期小说功能，删除单位：%1 天").arg( expire).toStdString( ) );
+			Out_Std_Count_Stream_Msg_MACRO( stdCoutMutex, callFunctionName, QString(u8"已经实现删除过期小说功能，删除单位：%1 天。所有数据库小说数量 : [ %2 ]").arg( expire).arg( dbNovelCount ).toStdString( ) );
 		else
 			ErrorCout_MACRO( QString( u8"(进程 id :%1) 导出选项配置错误，请检查 -edb 或 -fkf 是否有有效" ).arg(applicationPid ) );
 		return;
 	}
-	
+
 	rmoveExportPath( exisLegitimateOutDirPath, stdCoutMutex, callFunctionName, __LINE__ );
 
 	// 存储过滤后的全导出小说信息<写入文件路径, 小说列表>
