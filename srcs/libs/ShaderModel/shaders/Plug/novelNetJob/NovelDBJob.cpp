@@ -134,7 +134,7 @@ namespace instance_function {
 				{ "typeName", dbTextType }
 		} );
 		if( !hasTab )
-			OStream::anyStdCerr( "无法创建正确的 db 文件", __FILE__, __LINE__, __FUNCTION__, thisOStream );
+			OStream::anyStdCerr( "无法创建正确的 db 文件", instance_function::getCmakeRootPathBuilderFilePath( __FILE__ ), __LINE__, __FUNCTION__, thisOStream );
 		return hasTab;
 	}
 	/// <summary>
@@ -320,128 +320,83 @@ size_t NovelDBJob::writeDB( OStream *thisOStream, const QString &outPath, const 
 	auto dbInterface = cylDB::DBTools::linkDB( absolutePath );
 	size_t result = 0;
 	if( dbInterface->link( ) ) {
-		cylHtmlTools::HtmlWorkThread::TThreadCall currentThreadRun = [
-					dbInterface, dbName,tabName, outPath, run, thisOStream,
-					&saveNovelInfos, &result
-				]( cylHtmlTools::HtmlWorkThread * ) {
-			auto depositoryShared = dbInterface->openDepository( dbName );
-			if( depositoryShared ) {
-				if( !depositoryShared->open( ) ) {
-					auto lastError = depositoryShared->getLastError( );
-					OStream::anyStdCerr( lastError.text( ), __FILE__, __LINE__, __FUNCTION__, thisOStream );
-					return;
+		auto depositoryShared = dbInterface->openDepository( dbName );
+		while( depositoryShared ) {
+			if( !depositoryShared->open( ) ) {
+				auto lastError = depositoryShared->getLastError( );
+				OStream::anyStdCerr( lastError.text( ), instance_function::getCmakeRootPathBuilderFilePath( __FILE__ ), __LINE__, __FUNCTION__, thisOStream );
+				break;
+			}
+			bool hasTab = depositoryShared->hasTab( tabName );
+
+			if( !hasTab )
+				if( !instance_function::generate_db_tab( dbInterface, depositoryShared, tabName, thisOStream ) )
+					break;
+
+			auto allItem = depositoryShared->findItems( tabName, tabFieldNames );
+			NovelInfoVector updateList; // 更新列表
+			NovelInfoVector interList; // 插入列表
+			// 分解-插入/更新 列表
+			if( allItem ) {
+				instance_function::separate_list( saveNovelInfos, allItem, updateList, interList );
+			} else
+				interList = saveNovelInfos; // 数据库不存在数据的时候，全部拷贝到插入列表
+			result = interList.size( ) + saveNovelInfos.size( );
+			QString requestTime = currentTime.toString( currentTimeForm );
+
+			QUrl qUrl( QString::fromStdWString( saveNovelInfos.at( 0 )->rootUrl ) );
+			auto rootQStringUrl = qUrl.scheme( ) + "://" + qUrl.host( );
+			auto rootUrl = rootQStringUrl.toStdWString( );
+			auto outLogPath = outPath + QDir::separator( ) + u8"logs" + QDir::separator( );
+			QString cmd = updateCmd.arg( tabName );
+			bool transaction = depositoryShared->transaction( );
+			std::shared_ptr< QSqlQuery > sqlQuery = depositoryShared->generateSqlQuery( );
+			sqlQuery.get( )->prepare( cmd );
+			for( auto &novel : updateList ) {
+				sqlQuery->bindValue( ":updateTime", QString::fromStdWString( novel->updateTime ) );
+				sqlQuery->bindValue( ":format", QString::fromStdWString( novel->format ) );
+				sqlQuery->bindValue( ":lastRequestTime", requestTime );
+				sqlQuery->bindValue( ":lastItem", QString::fromStdWString( novel->lastItem ) );
+				sqlQuery->bindValue( ":additionalData", QString::fromStdWString( novel->additionalData ) );
+				sqlQuery->bindValue( ":url", QString::fromStdWString( novel->url ) );
+				if( !depositoryShared->exec( sqlQuery.get( ) ) ) {
+					instance_function::write_error_info_file( thisOStream, QUrl( " " ), outLogPath, "db_updateList", "db_error", "update", "db.log", instance_function::getCmakeRootPathBuilderFilePath( __FILE__ ), __FUNCTION__, __LINE__, "无法更新正确的小说内容", "无法更新正确的小说内容" );
+					--result;
 				}
-				bool hasTab = depositoryShared->hasTab( tabName );
-
-				if( !hasTab )
-					if( !instance_function::generate_db_tab( dbInterface, depositoryShared, tabName, thisOStream ) )
-						return;
-
-				auto allItem = depositoryShared->findItems( tabName, tabFieldNames );
-				NovelInfoVector updateList; // 更新列表
-				NovelInfoVector interList; // 插入列表
-				// 分解-插入/更新 列表
-				if( allItem ) {
-					instance_function::separate_list( saveNovelInfos, allItem, updateList, interList );
-				} else
-					interList = saveNovelInfos; // 数据库不存在数据的时候，全部拷贝到插入列表
-				result = interList.size( ) + saveNovelInfos.size( );
-				QString requestTime = currentTime.toString( currentTimeForm );
-				// 开始更新
-				interfacePlugsType::HtmlDocString rootUrl,
-						novelName,
-						novelInfo,
-						novelUpdateTime,
-						novelFormat,
-						novelAuthor,
-						novelUrl,
-						novelLastItem,
-						novelAdditionalData,
-						novelTypePageUrl,
-						novelTypeName;
-				saveNovelInfos.at( 0 )->getNovelUrl( &rootUrl );
-				QUrl qUrl( QString::fromStdWString( rootUrl ) );
-				auto rootQStringUrl = qUrl.scheme( ) + "://" + qUrl.host( );
-				rootUrl = rootQStringUrl.toStdWString( );
-				auto outLogPath = outPath + QDir::separator( ) + u8"logs" + QDir::separator( );
-				QString cmd = updateCmd.arg( tabName );
-				bool transaction = depositoryShared->transaction( );
-				std::shared_ptr< QSqlQuery > sqlQuery = depositoryShared->generateSqlQuery( );
-				sqlQuery.get( )->prepare( cmd );
-				for( auto &novel : updateList ) {
-					novel->getNovelUrl( &novelUrl );
-					novel->getNovelUpdateTime( &novelUpdateTime );
-					novel->getNovelUpdateTimeFormat( &novelFormat );
-					novel->getNovelLastItem( &novelLastItem );
-					novel->getNovelAttach( &novelAdditionalData );
-					sqlQuery->bindValue( ":updateTime", QString::fromStdWString( novelUpdateTime ) );
-					sqlQuery->bindValue( ":format", QString::fromStdWString( novelFormat ) );
-					sqlQuery->bindValue( ":lastRequestTime", requestTime );
-					sqlQuery->bindValue( ":lastItem", QString::fromStdWString( novelLastItem ) );
-					sqlQuery->bindValue( ":additionalData", QString::fromStdWString( novelAdditionalData ) );
-					sqlQuery->bindValue( ":url", QString::fromStdWString( novelUrl ) );
-					if( !depositoryShared->exec( sqlQuery.get( ) ) ) {
-						instance_function::write_error_info_file( thisOStream, QUrl( " " ), outLogPath, "db_updateList", "db_error", "update", "db.log", __FILE__, __FUNCTION__, __LINE__, "无法更新正确的小说内容", "无法更新正确的小说内容" );
-						--result;
-					}
+			}
+			if( transaction )
+				depositoryShared->commit( );
+			transaction = depositoryShared->transaction( );
+			cmd = insterCmd.arg( tabName );
+			sqlQuery.get( )->prepare( cmd );
+			QStringList tabValues;
+			sqlQuery->bindValue( ":rootUrl", rootQStringUrl );
+			for( auto &novel : interList ) {
+				sqlQuery->bindValue( ":novelName", QString::fromStdWString( novel->novelName ) );
+				sqlQuery->bindValue( ":info", QString::fromStdWString( novel->info ) );
+				sqlQuery->bindValue( ":updateTime", QString::fromStdWString( novel->updateTime ) );
+				sqlQuery->bindValue( ":format", QString::fromStdWString( novel->format ) );
+				sqlQuery->bindValue( ":lastRequestTime", requestTime );
+				sqlQuery->bindValue( ":lastRequestTimeFormat", currentTimeForm );
+				sqlQuery->bindValue( ":author", QString::fromStdWString( novel->author ) );
+				sqlQuery->bindValue( ":url", QString::fromStdWString( novel->url ) );
+				sqlQuery->bindValue( ":lastItem", QString::fromStdWString( novel->lastItem ) );
+				sqlQuery->bindValue( ":additionalData", QString::fromStdWString( novel->additionalData ) );
+				sqlQuery->bindValue( ":typePageUrl", QString::fromStdWString( novel->typePageUrl ) );
+				sqlQuery->bindValue( ":typeName", QString::fromStdWString( novel->typeName ) );
+				if( !depositoryShared->exec( sqlQuery.get( ) ) ) {
+					instance_function::write_error_info_file( thisOStream, QUrl( " " ), outLogPath, "db_interList", "db_error", "inster", "db.log", instance_function::getCmakeRootPathBuilderFilePath( __FILE__ ), __FUNCTION__, __LINE__, "无法插入正确的小说内容", "无法插入正确的小说内容" );
+					--result;
 				}
-				if( transaction )
-					depositoryShared->commit( );
-				transaction = depositoryShared->transaction( );
-				cmd = insterCmd.arg( tabName );
-				sqlQuery.get( )->prepare( cmd );
-				QStringList tabValues;
-				sqlQuery->bindValue( ":rootUrl", rootQStringUrl );
-				for( auto &novel : interList ) {
-					novel->getNovelName( &novelName );
-					novel->getNovelInfo( &novelInfo );
-					novel->getNovelUpdateTime( &novelUpdateTime );
-					novel->getNovelUpdateTimeFormat( &novelFormat );
-					novel->getNovelAuthor( &novelAuthor );
-					novel->getNovelUrl( &novelUrl );
-					novel->getNovelLastItem( &novelLastItem );
-					novel->getNovelAttach( &novelAdditionalData );
-					novel->getNovelUrlAtPageLocation( &novelTypePageUrl );
-					novel->getNovelTypeName( &novelTypeName );
-
-					sqlQuery->bindValue( ":novelName", QString::fromStdWString( novelName ) );
-					sqlQuery->bindValue( ":info", QString::fromStdWString( novelInfo ) );
-					sqlQuery->bindValue( ":updateTime", QString::fromStdWString( novelUpdateTime ) );
-					sqlQuery->bindValue( ":format", QString::fromStdWString( novelFormat ) );
-					sqlQuery->bindValue( ":lastRequestTime", requestTime );
-					sqlQuery->bindValue( ":lastRequestTimeFormat", currentTimeForm );
-					sqlQuery->bindValue( ":author", QString::fromStdWString( novelAuthor ) );
-					sqlQuery->bindValue( ":url", QString::fromStdWString( novelUrl ) );
-					sqlQuery->bindValue( ":lastItem", QString::fromStdWString( novelLastItem ) );
-					sqlQuery->bindValue( ":additionalData", QString::fromStdWString( novelAdditionalData ) );
-					sqlQuery->bindValue( ":typePageUrl", QString::fromStdWString( novelTypePageUrl ) );
-					sqlQuery->bindValue( ":typeName", QString::fromStdWString( novelTypeName ) );
-					if( !depositoryShared->exec( sqlQuery.get( ) ) ) {
-						instance_function::write_error_info_file( thisOStream, QUrl( " " ), outLogPath, "db_interList", "db_error", "inster", "db.log", __FILE__, __FUNCTION__, __LINE__, "无法插入正确的小说内容", "无法插入正确的小说内容" );
-						--result;
-					}
-				}
-
-				if( transaction )
-					depositoryShared->commit( );
-				sqlQuery.reset( );
-				depositoryShared->close( );
 			}
 
-		};
-		cylHtmlTools::HtmlWorkThread thread( nullptr, currentThreadRun, nullptr );
-		thread.start( );
-		auto currentTime = std::chrono::system_clock::now( ).time_since_epoch( );
-		auto instance = qApp;
-		while( thread.isRun( ) ) {
-			auto epoch = std::chrono::system_clock::now( ).time_since_epoch( );
-			auto duration = currentTime - epoch;
-			run( duration );
-			currentTime = epoch;
-			instance->processEvents( );
+			if( transaction )
+				depositoryShared->commit( );
+			sqlQuery.reset( );
+			depositoryShared->close( );
+			break;
 		}
 	}
-
 	return result;
 }
 
@@ -490,7 +445,7 @@ NovelDBJob::NovelInfoVector_Shared NovelDBJob::readDB( OStream *thisOStream, con
 				}
 			} else {
 				auto lastError = depositoryShared->getLastError( );
-				OStream::anyStdCerr( lastError.text( ), __FILE__, __LINE__, __FUNCTION__, thisOStream );
+				OStream::anyStdCerr( lastError.text( ), instance_function::getCmakeRootPathBuilderFilePath( __FILE__ ), __LINE__, __FUNCTION__, thisOStream );
 			}
 
 		}
@@ -623,7 +578,7 @@ NovelDBJob::NovelInfoVector_Shared NovelDBJob::removeExpireDB( OStream *thisOStr
 					}
 				} else {
 					auto lastError = depositoryShared->getLastError( );
-					OStream::anyStdCerr( lastError.text( ), __FILE__, __LINE__, __FUNCTION__, thisOStream );
+					OStream::anyStdCerr( lastError.text( ), instance_function::getCmakeRootPathBuilderFilePath( __FILE__ ), __LINE__, __FUNCTION__, thisOStream );
 				}
 
 			}
@@ -651,7 +606,7 @@ void NovelDBJob::removeNovelVectorDB( OStream *thisOStream, const QString &db_li
 						for( auto &novelUrl : novel_url_vector ) {
 							query->bindValue( ":url", QString::fromStdWString( novelUrl ) );
 							if( !depositoryShared->exec( query ) )
-								instance_function::write_error_info_file( nullptr, __FILE__, __FUNCTION__, __LINE__, "无法删除指定项目" );
+								instance_function::write_error_info_file( nullptr, instance_function::getCmakeRootPathBuilderFilePath( __FILE__ ), __FUNCTION__, __LINE__, "无法删除指定项目" );
 						}
 						if( transaction )
 							depositoryShared->commit( );
@@ -659,7 +614,7 @@ void NovelDBJob::removeNovelVectorDB( OStream *thisOStream, const QString &db_li
 				}
 			} else {
 				auto lastError = depositoryShared->getLastError( );
-				OStream::anyStdCerr( lastError.text( ), __FILE__, __LINE__, __FUNCTION__, thisOStream );
+				OStream::anyStdCerr( lastError.text( ), instance_function::getCmakeRootPathBuilderFilePath( __FILE__ ), __LINE__, __FUNCTION__, thisOStream );
 			}
 
 		}

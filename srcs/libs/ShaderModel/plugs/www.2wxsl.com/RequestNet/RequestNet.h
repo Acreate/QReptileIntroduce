@@ -12,7 +12,6 @@ class RequestNet : public QObject, public IRequestNetInterface {
 	Q_OBJECT;
 	Q_INTERFACES( IRequestNetInterface )
 private:
-	static QString timeForm; // 时间格式
 	/// <summary>
 	/// 从原始(currentTime)格式获取字符串时候的格式化字符串
 	/// <code>

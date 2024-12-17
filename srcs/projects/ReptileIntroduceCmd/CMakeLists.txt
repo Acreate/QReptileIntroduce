@@ -21,7 +21,6 @@ file( GLOB_RECURSE SRC_UI
 
 include_directories( ${NovelInfo_include_dir} )
 include_directories( ${UserHread_include_dir} )
-include_directories( ${Tools_include_dir} )
 include_directories( ${IOStream_include_dir} )
 include_directories( ${HtmlTools_include_dir} )
 include_directories( ${Plug_include_dir} )
@@ -48,7 +47,6 @@ call_qt_deploy( ${PROJECT_NAME}
 	Qt${QT_VERSION_MAJOR}::Network
 	Qt${QT_VERSION_MAJOR}::Core5Compat
 	NovelInfo
-	Tools
 	HtmlTools
 	Path_Tool
 	Plug

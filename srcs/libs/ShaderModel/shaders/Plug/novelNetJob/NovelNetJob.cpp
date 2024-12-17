@@ -6,11 +6,10 @@
 #include "htmls/htmlTools/XPath/XPath.h"
 #include "htmls/htmlTools/HtmlWorkThread/HtmlWorkThread.h"
 #include "htmls/HtmlNode/HtmlNode.h"
-#include "thread/FileThread.h"
 #include <qguiapplication.h>
 #include <unordered_map>
 #include <iostream>
-#include "../../../../../git/QtExtendDB/srcs/QtExtendDB/nameSpace/cylDB.h"
+#include "nameSpace/cylDB.h"
 #include "../ioFile/IOFile.h"
 #include "dateTime/DateTime.h"
 
@@ -19,6 +18,7 @@
 #include <DB/sqlite/sqliteResult/SQLiteResult.h>
 #include <QMutex>
 
+#include "htmls/htmlTools/HtmlWorkThread/HtmlWorkThreadPool.h"
 #include "interface/instance_function.h"
 #include "NovelDBJob.h"
 
@@ -197,7 +197,7 @@ QNetworkReply * NovelNetJob::requestUrl( QNetworkAccessManager *&result, const Q
 		waiteMilliseconds( 20 );
 	while( !networkReply->isFinished( ) )
 		waiteMilliseconds( 200 );
-	callFunction( networkReply, __FILE__, __LINE__, __FUNCTION__ );
+	callFunction( networkReply, instance_function::getCmakeRootPathBuilderFilePath( __FILE__ ), __LINE__, __FUNCTION__ );
 	return networkReply;
 }
 QNetworkReply * NovelNetJob::requestUrl( QNetworkAccessManager *&result, const QNetworkRequest &network_request, const QUrl &url, TimePoint &last_request_time_point, size_t &sep_ms ) {
@@ -316,7 +316,7 @@ bool NovelNetJob::start( ) {
 		else
 			return hasErrorRunCode( q_network_reply, call_file_path_name, call_line, call_name );
 	};
-	auto networkReply = requestGet( url, requestMaxCount, requestMaxMilliseconds, u8"首页请求失败", u8".root_request.error.log", callFunction, __FILE__, __FUNCTION__, __LINE__ );
+	auto networkReply = requestGet( url, requestMaxCount, requestMaxMilliseconds, u8"首页请求失败", u8".root_request.error.log", callFunction, instance_function::getCmakeRootPathBuilderFilePath( __FILE__ ), __FUNCTION__, __LINE__ );
 	this->interfaceThisPtr->initBefore( );
 	if( !networkReply )
 		emit requested_get_web_page_signals_end( url );
@@ -339,7 +339,8 @@ void NovelNetJob::slots_requesting_get_root_page_signals( const QUrl &url, QNetw
 	if( !mapHtmlStrKHtmlStrV ) {
 		QString msg;
 		msg.append( u8"首页异常 : " ).append( u8"(没有找到类型节点)结束" ).append( u8"(" ).append( rootUrl ).append( ")" );
-		OStream::anyStdCerr( msg, __FILE__, __LINE__, __FUNCTION__, oStream );
+		OStream::anyStdCerr( msg, instance_function::getCmakeRootPathBuilderFilePath( __FILE__ ), __LINE__, __FUNCTION__, oStream );
+		emit endJob( );
 		return;
 	}
 	this->typeNovelsMap.clear( );
@@ -369,7 +370,7 @@ void NovelNetJob::slots_requesting_get_root_page_signals( const QUrl &url, QNetw
 	while( requestVectorIterator != requestVectorEnd ) {
 		auto typeNmae = requestVectorIterator->first;
 		auto qUrl = requestVectorIterator->second;
-		auto networkReply = requestGet( qUrl, requestMaxCount, requestMaxMilliseconds, u8"类型页面请求失败", u8".type_request.error.log", __FILE__, __FUNCTION__, __LINE__ );
+		auto networkReply = requestGet( qUrl, requestMaxCount, requestMaxMilliseconds, u8"类型页面请求失败", u8".type_request.error.log", instance_function::getCmakeRootPathBuilderFilePath( __FILE__ ), __FUNCTION__, __LINE__ );
 		if( !networkReply )
 			continue;
 		++pageIndex;
@@ -379,7 +380,7 @@ void NovelNetJob::slots_requesting_get_root_page_signals( const QUrl &url, QNetw
 		auto newQUrl = getPageInfo( typeNmae, qUrl, html );
 		while( !newQUrl.isEmpty( ) ) {
 			qUrl = newQUrl;
-			networkReply = requestGet( qUrl, requestMaxCount, requestMaxMilliseconds, u8"下一页类型请求失败", u8".type_request_next.error.log", __FILE__, __FUNCTION__, __LINE__ );
+			networkReply = requestGet( qUrl, requestMaxCount, requestMaxMilliseconds, u8"下一页类型请求失败", u8".type_request_next.error.log", instance_function::getCmakeRootPathBuilderFilePath( __FILE__ ), __FUNCTION__, __LINE__ );
 			if( !networkReply )
 				break; // 请求失败，则终止
 			++pageIndex;
@@ -426,7 +427,7 @@ QString NovelNetJob::getPageInfo( const QString &type_name, const QUrl &type_url
 		if( interfaceThisPtr->isRequestNovelInfoUrl( novel.get( ) ) ) {				// 如果小说需要到详情页申请，则临时存储
 			auto resultINovelShared = saveToStoreNovels( requestedGetVectorINovelInfoSPtrShared, saveMapNovelInfos, novel, &resultMsg );
 			if( !resultINovelShared.get( ) )  // 存在错误消息，即没有存储
-				OStream::anyStdCerr( resultMsg, __FILE__, __LINE__, __FUNCTION__, oStream );
+				OStream::anyStdCerr( resultMsg, instance_function::getCmakeRootPathBuilderFilePath( __FILE__ ), __LINE__, __FUNCTION__, oStream );
 			else
 				requestedGetVectorINovelInfoSPtrShared->emplace_back( resultINovelShared );
 		} else
@@ -452,28 +453,7 @@ void NovelNetJob::novelPageInfoRequestEnd( const QString &type_name, const QUrl 
 	std::cout << u8"-----------------------" << std::endl;
 	auto rootUrl = url.host( );
 	auto root_url = url.scheme( ) + "://" + rootUrl;
-	auto pathSep = QDir::separator( );
-	QString writeFilePath;
-	writeFilePath.append( outPath ).append( pathSep ).append( u8"txt_out" ).append( pathSep ).append( rootUrl ).append( pathSep ).append( type_name ).append( u8".txt" );
 	Vector_INovelInfoSPtr_Shared infos = typeNovelsMap.at( type_name );
-	/*if( Path::creatFilePath( writeFilePath ) ) {
-		auto result = NovelDBJob::identical( *infos );
-		result = NovelDBJob::sort( result );
-		auto list = NovelDBJob::getNovelNames( result );
-		QStringList novelNameList( list.begin( ), list.end( ) );
-		auto novelNameListJoin = novelNameList.join( "\n" );
-		auto allContents = NovelDBJob::jionNovels( result ) + u8"\n+++++\t小说名称列表\t" + QString::number( novelNameList.size( ) ) + " 个\t+++++++\n" + novelNameListJoin + u8"\n++++++++++++\n";
-		QFile writeFile( writeFilePath );
-		if( writeFile.open( QIODeviceBase::Text | QIODeviceBase::WriteOnly | QIODeviceBase::Truncate ) ) {
-			writeFile.write( allContents.toUtf8( ) );
-			writeFile.close( );
-			OStream::anyStdCOut( QString( u8"================\n\t路径: (%1)\n\t写入数量 : [%2]\n\t类型计数 : [%3]\n================\n" ).arg( writeFilePath ).arg( result.size( ) ).arg( typeCount ), oStream );
-			interfaceThisPtr->novelTypeEnd( root_url.toStdWString( ), type_name.toStdWString( ), url.toString( ).toStdWString( ), *infos );
-			releaseMemory( );
-			return;
-		}
-	}
-	std::cout << u8"导出数据库失败 : " << writeFilePath.toStdString( ) << std::endl;*/
 	interfaceThisPtr->novelTypeEnd( root_url.toStdWString( ), type_name.toStdWString( ), url.toString( ).toStdWString( ), *infos );
 	releaseMemory( );
 
@@ -482,44 +462,57 @@ void NovelNetJob::novelPageInfoRequestEnd( const QString &type_name, const QUrl 
 
 void NovelNetJob::slots_requested_get_web_page_signals_end( const QUrl &url ) {
 	Vector_INovelInfoSPtr_Shared novelInfoSPtr( std::make_shared< Vector_INovelInfoSPtr >( ) );
-
+	cylHtmlTools::HtmlWorkThreadPool threadPool;
 	auto mapIterator = typeNovelsMap.begin( );
 	auto mapEnd = typeNovelsMap.end( );
 	if( mapIterator != mapEnd ) {
-		cylHtmlTools::HtmlWorkThread::TThreadCall currentThreadRun = [&]( cylHtmlTools::HtmlWorkThread * ) {
-			for( ; mapIterator != mapEnd; ++mapIterator )
-				for( auto &novel : *mapIterator->second )
-					novelInfoSPtr->emplace_back( novel );
-		};
-		cylHtmlTools::HtmlWorkThread thread( nullptr, currentThreadRun, nullptr );
-		thread.start( );
-		auto nowTimeDuration = NovelNetJob::getCurrentTimeDuration( );
-		while( thread.isRun( ) ) {
-			long long timeDurationToMilliseconds = getTimeDurationToMilliseconds( getCurrentTimeDuration( ) - nowTimeDuration );
-			if( timeDurationToMilliseconds > 2000 ) {
-				auto msg = QString( "===========" )
-							.append( "\n\t" ).append( "正在合并小说列表" )
-							.append( "\n\t" ).append( __FILE__ )
-							.append( "\n\t" ).append( QString::number( __LINE__ ) )
-							.append( "\n\t" ).append( "===========" );
-				OStream::anyStdCOut( msg, oStream );
-				nowTimeDuration = getCurrentTimeDuration( );
-			}
-			qApp->processEvents( );
-		}
+		QMutex qMutex;
+		qMutex.lock( );
+		threadPool.appendWork( [&qMutex]( cylHtmlTools::HtmlWorkThread *html_work_thread ) {
+			qMutex.lock( );
+			qMutex.unlock( );
+		} );
+		threadPool.setCallSepMilliseconds( 2000 );
+		threadPool.setIdleTimeCall( [this]( cylHtmlTools::HtmlWorkThreadPool *html_work_thread_pool, const unsigned long long &mod_count, const unsigned long long &current_count ) {
+			auto msg = QString( "===========" )
+						.append( "\n\t消息 : " ).append( QString( u8"剩余工作数量:[ %1 ], 正在工作数量:[ %2 ]" ).arg( mod_count ).arg( current_count ) )
+						.append( "\n\t\t" ).append( "正在合并小说列表" )
+						.append( "\n\t文件 : " ).append( instance_function::getCmakeRootPathBuilderFilePath( __FILE__ ) )
+						.append( "\n\t行号 : " ).append( QString::number( __LINE__ ) )
+						.append( "\n" ).append( "===========" );
+			OStream::anyStdCOut( msg, oStream );
+		} );
+		threadPool.setWorkCount( 8 );
+		threadPool.start( );
+		for( ; mapIterator != mapEnd; ++mapIterator )
+			for( auto &novel : *mapIterator->second )
+				novelInfoSPtr->emplace_back( novel );
+		QGuiApplication *guiApplication = qApp;
+		qMutex.unlock( ); // 合并完毕，即可解锁线程
+		while( !threadPool.isOverJob( ) )
+			guiApplication->processEvents( );
 		if( novelInfoSPtr->size( ) > 0 ) {
 			auto run = [this]( const Duration &duration ) {
 				if( getTimeDurationToMilliseconds( duration ) < 2000 )
 					return false;
 				auto msg = QString( "===========" )
-							.append( "\n\t" ).append( "正在存储数据库" )
-							.append( "\n\t" ).append( __FILE__ )
-							.append( "\n\t" ).append( QString::number( __LINE__ ) )
+							.append( "\n\t消息 : " ).append( "正在存储数据库" )
+							.append( "\n\t文件 : " ).append( instance_function::getCmakeRootPathBuilderFilePath( __FILE__ ) )
+							.append( "\n\t行号 : " ).append( QString::number( __LINE__ ) )
 							.append( "\n\t" ).append( "===========" );
 				return true;
 			};
+
+
 			QString dbPath = outPath + QDir::separator( ) + "dbs" + QDir::separator( ) + url.host( ) + ".db";
-			NovelDBJob::writeDB( oStream, dbPath, *novelInfoSPtr, run );
+			auto writeCount = NovelDBJob::writeDB( oStream, dbPath, *novelInfoSPtr, run );
+			auto msg = QString( "===========" )
+						.append( "\n\t消息 : " ).append( QString( u8"写入小说数量:[ %1 ]" ).arg( writeCount ) )
+						.append( "\n\t\t" ).append( QString( u8"写入路径完成 [ %1 ]" ).arg( dbPath ) )
+						.append( "\n\t文件 : " ).append( instance_function::getCmakeRootPathBuilderFilePath( __FILE__ ) )
+						.append( "\n\t行号 : " ).append( QString::number( __LINE__ ) )
+						.append( "\n" ).append( "===========" );
+			OStream::anyStdCOut( msg, oStream );
 		}
 	}
 

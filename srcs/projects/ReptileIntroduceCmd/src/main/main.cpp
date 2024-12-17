@@ -17,6 +17,8 @@
 #include "path/Path.h"
 #include <sstream>
 
+#include "interface/instance_function.h"
+
 using NovelInfo_Shared = interfacePlugsType::INovelInfo_Shared; // 小说信息指针
 using NovelInfoKeyPair = std::pair< NovelInfo_Shared, QStringList >; // 小说关键字映射
 using NovelInfoKeyPairVector = std::vector< NovelInfoKeyPair >; // 多小说映射
@@ -411,7 +413,7 @@ QString getFileBaseName( const QString &filePathInfo ) {
 /// <param name="call_function_name">调用该函数的函数名称-错误时使用</param>
 /// <param name="call_function_line">调用该函数的行数-错误时使用</param>
 /// <param name="out_path_values">请求完成路径选项</param>
-std::vector< QProcess * > runPluginToSubProcess( const QString &app_path, QMutex &qt_mutex, size_t &ref_count, const std::vector< QString > &novel_plug_paths, const QString &request_type_name_options, const QString &out_path_values, const char *call_function_file_path, const char *call_function_name, const size_t &call_function_line ) {
+std::vector< QProcess * > runPluginToSubProcess( const QString &app_path, QMutex &qt_mutex, size_t &ref_count, const std::vector< QString > &novel_plug_paths, const QString &request_type_name_options, const QString &out_path_values, const std::string &call_function_file_path, const char *call_function_name, const size_t &call_function_line ) {
 	QStringList cmd; // 命令行
 	std::vector< QProcess * > result; // 返回进程列表
 	QString currentPath = QDir::currentPath( ); // 当前工作路径
@@ -433,20 +435,20 @@ std::vector< QProcess * > runPluginToSubProcess( const QString &app_path, QMutex
 				&QProcess::readyReadStandardOutput,
 				[=]( ) {
 					QString msg( subProcess->readAllStandardOutput( ) );
-					std::cout << u8"(进程 id :" << subProcess->processId( ) << ")[readyReadStandardOutput] : " << msg.toStdString( ) << std::endl;
+					std::cout << u8"(进程 id : " << subProcess->processId( ) << " )[readyReadStandardOutput] : " << msg.toStdString( ) << std::endl;
 				} );
 
 		QObject::connect( subProcess,
 				&QProcess::readyReadStandardError,
 				[=]( ) {
 					QString msg( subProcess->readAllStandardError( ) );
-					std::cerr << u8"(进程 id :" << subProcess->processId( ) << ")[readyReadStandardError] : " << msg.toStdString( ) << std::endl;
+					std::cerr << u8"(进程 id : " << subProcess->processId( ) << " )[readyReadStandardError] : " << msg.toStdString( ) << std::endl;
 				} );
 
 		QObject::connect( subProcess,
 				&QProcess::finished,
 				[&ref_count,&qt_mutex,subProcess]( ) {
-					std::cout << u8"子进程结束(进程 id :" << subProcess->processId( ) << ")  " << std::endl;
+					std::cout << u8"子进程结束(进程 id : " << subProcess->processId( ) << " )  " << std::endl;
 					subProcess->deleteLater( );
 					QMutexLocker lock( &qt_mutex );
 					--ref_count;
@@ -473,7 +475,7 @@ std::vector< QProcess * > runPluginToSubProcess( const QString &app_path, QMutex
 		else if( !subProcess->waitForStarted( ) ) {
 			--ref_count;
 			subProcess->deleteLater( );
-			errorCoutPath( QString( "(进程 id = %1) : %2" ).arg( applicationPid ).arg( u8"无法正常启动" ), call_function_file_path, call_function_name, call_function_line );
+			errorCoutPath( QString( "( 进程 id = %1 ) : %2 " ).arg( applicationPid ).arg( u8" 无法正常启动 " ), call_function_file_path.c_str( ), call_function_name, call_function_line );
 		} else
 			result.emplace_back( subProcess );
 		cmd.clear( );
@@ -492,16 +494,16 @@ std::vector< QProcess * > runPluginToSubProcess( const QString &app_path, QMutex
 /// <param name="call_function_name">调用该函数的函数名称-错误时使用</param>
 /// <param name="call_function_line">调用该函数的行数-错误时使用</param>
 /// <returns>返回插件对象</returns>
-NovelNetJob * runPluginToThisProcess( QMutex &qt_mutex, size_t &ref_count, const QString &out_path, const std::vector< QString > &reques_type_names_vector, const QString &novel_plug_path, const char *call_function_file_path, const char *call_function_name, const size_t &call_function_line ) {
+NovelNetJob * runPluginToThisProcess( QMutex &qt_mutex, size_t &ref_count, const QString &out_path, const std::vector< QString > &reques_type_names_vector, const QString &novel_plug_path, const std::string &call_function_file_path, const char *call_function_name, const size_t &call_function_line ) {
 	// 加载第一个插件
 	QString error;
 	auto plugInterFace = LoadPlug::getIRequestNetInterface( novel_plug_path, error );
 	if( plugInterFace.second ) {
 		NovelNetJob *novelNetJob = new NovelNetJob( nullptr, plugInterFace.first, plugInterFace.second );
+		auto stdString = novelNetJob->getUrl( ).toStdString( );
 		bool *isRun = new bool( true );
 		std::thread *thread = new std::thread( [=]( ) {
 			auto cur = std::chrono::system_clock::now( );
-			auto stdString = novelNetJob->getUrl( ).toStdString( );
 			auto cStr = stdString.c_str( );
 			long long second = 0, min = 0;
 			while( *isRun ) {
@@ -512,11 +514,11 @@ NovelNetJob * runPluginToThisProcess( QMutex &qt_mutex, size_t &ref_count, const
 				std::cout << u8"\n(进程 id : " << applicationPid << u8") 正在运行 : " << cStr << u8"(运行时间: " << min << " 分 " << second << " 秒);" << std::endl;
 				std::this_thread::sleep_for( duration );
 			}
-			std::cout << u8"运行结束 : " << cStr << u8"(运行时间: " << min << " 分 " << second << " 秒);" << std::endl;
+			std::cout << u8"运行结束 : " << cStr << u8"( 运行时间: " << min << " 分 " << second << " 秒 );" << std::endl;
 		} );
 		QObject::connect( novelNetJob,
 				&NovelNetJob::endJob,
-				[&,isRun,thread,novelNetJob]( ) {
+				[&qt_mutex,&ref_count,isRun,thread,novelNetJob,stdString]( ) {
 					*isRun = false;
 					thread->join( );
 					QMutexLocker lock( &qt_mutex );
@@ -534,7 +536,7 @@ NovelNetJob * runPluginToThisProcess( QMutex &qt_mutex, size_t &ref_count, const
 	} else {
 		QMutexLocker lock( &qt_mutex );
 		--ref_count;
-		errorCoutPath( QString( "(进程 id = %1) : %2" ).arg( applicationPid ).arg( error ), call_function_file_path, call_function_name, call_function_line );
+		errorCoutPath( QString( "(进程 id = %1) : %2" ).arg( applicationPid ).arg( error ), call_function_file_path.c_str( ), call_function_name, call_function_line );
 		return nullptr;
 	}
 }
@@ -618,8 +620,8 @@ void runRequestDownloadPlugs( std::shared_ptr< cylStd::ArgParser > &args ) {
 	runPlugFilesPaths.erase( begin );
 	for( auto &optionValue : requestNamesTypeFilePaths )
 		typeNameOption.append( optionValue ).append( " " );
-	auto runPlug = runPluginToThisProcess( mutex, count, requestOutPath, nameTypes, firstPlugFilePath, __FILE__, __FUNCTION__, __LINE__ );
-	auto subProcessRunPlug = runPluginToSubProcess( appFilePath, mutex, count, runPlugFilesPaths, typeNameOption, requestOutPath, __FILE__, __FUNCTION__, __LINE__ );
+	auto runPlug = runPluginToThisProcess( mutex, count, requestOutPath, nameTypes, firstPlugFilePath, callFileName, __FUNCTION__, __LINE__ );
+	auto subProcessRunPlug = runPluginToSubProcess( appFilePath, mutex, count, runPlugFilesPaths, typeNameOption, requestOutPath, callFileName, __FUNCTION__, __LINE__ );
 	// count 记录任务数量，任务为 0 时，退出循环，主进程重新掌控 cpu 时间
 	while( count )
 		qApp->processEvents( );
@@ -1520,6 +1522,40 @@ void spliteAppendDataField( std::vector< NovelInfo_Shared > &novelInfos ) {
 			} while( true ) ;
 	}
 }
+
+/// @brief 对导出列表进行排序
+/// @param write_info_vector 导出的列表
+void novelInfoExportSort( std::vector< NovelInfo_Shared > &write_info_vector ) {
+	std::list< std::pair< qint64, interfacePlugsType::INovelInfo_Shared > > nameSort, // 名称排序容器
+			timeSort; // 日期排序容器
+	auto timeForm = NovelDBJob::getCurrentTimeForm( );
+	for( auto &novelSPtr : write_info_vector ) {
+		auto comp_ptr = novelSPtr.get( )->novelName;
+		auto iterator = nameSort.begin( ), end = nameSort.end( );
+		for( ; iterator != end; ++iterator )
+			if( comp_ptr > iterator->second.get( )->novelName )
+				break;
+		auto updateTime = novelSPtr.get( )->updateTime;
+		QString fromStdWString = QString::fromStdWString( updateTime );
+		QDateTime dateTime = QDateTime::fromString( fromStdWString, timeForm );
+		qint64 mSecsSinceEpoch = dateTime.toMSecsSinceEpoch( );
+		auto makePair = std::make_pair( mSecsSinceEpoch, novelSPtr );
+		nameSort.insert( iterator, makePair );
+	}
+
+
+	for( auto &novelSPtr : nameSort ) {
+		auto comp_ptr = novelSPtr.first;
+		auto iterator = timeSort.begin( ), end = timeSort.end( );
+		for( ; iterator != end; ++iterator )
+			if( comp_ptr > iterator->first )
+				break;
+		timeSort.insert( iterator, novelSPtr );
+	}
+	write_info_vector.clear( );
+	for( auto &novelSPtr : timeSort )
+		write_info_vector.emplace_back( novelSPtr.second );
+}
 /// <summary>
 /// 写入查找关键字路径
 /// </summary>
@@ -1577,7 +1613,8 @@ void writeDisk( QMutex &disk_mute,
 	writeInfoVector = *NovelDBJob::inductionNovelsForNameAndAuthor( writeInfoVector );
 	auto fileBaseName = getFileBaseName( all_file_path_name_name );
 	spliteAppendDataField( writeInfoVector );
-	writeInfoVector = NovelDBJob::sort( writeInfoVector );
+	// writeInfoVector = NovelDBJob::sort( writeInfoVector );
+	novelInfoExportSort( writeInfoVector );
 	auto list = NovelDBJob::getNovelNames( writeInfoVector );
 	QStringList novelNameList( list.begin( ), list.end( ) );
 	auto novelNameListJoin = novelNameList.join( "\n" );
@@ -1633,7 +1670,8 @@ void writeDisk( QMutex &disk_mute,
 	if( isCreate ) {
 		auto result = NovelDBJob::identical( infos );
 		result = *NovelDBJob::inductionNovelsForNameAndAuthor( result );
-		result = NovelDBJob::sort( result );
+		/*result = NovelDBJob::sort( result );*/
+		novelInfoExportSort( result );
 		auto list = NovelDBJob::getNovelNames( result );
 		QStringList novelNameList( list.begin( ), list.end( ) );
 		auto novelNameListJoin = novelNameList.join( "\n" );

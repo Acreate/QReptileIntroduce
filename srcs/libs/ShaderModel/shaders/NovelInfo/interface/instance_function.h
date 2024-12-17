@@ -11,7 +11,7 @@
 
 namespace instance_function {
 	struct NovelNodeXPathInfo;
-	
+
 	/// @brief 获取基于 cmakefile 的根路径相对的文件路径
 	/// @param builder_path 编译文件的路径
 	/// @return 基于 cmake 根路径的相对路径
@@ -87,7 +87,7 @@ namespace instance_function {
 		msg.append( "\n<!--" )
 			.append( "\n=========================		try : info" )
 			.append( u8"\n\t当前时间 : " ).append( day + " " + time ).append( "\n\t" )
-			.append( u8"\n\t错误文件 : " ).append( getCmakeRootPathBuilderFilePath( error_call_path_file_name ) ).append( "\n\t" )
+			.append( u8"\n\t错误文件 : " ).append( instance_function::getCmakeRootPathBuilderFilePath( error_call_path_file_name ) ).append( "\n\t" )
 			.append( u8"\n\t信息位置 : " ).append( QString::number( error_file_call_function_line ) )
 			.append( u8"\n\t信息函数 : " ).append( error_file_call_function_name )
 			.append( "\n=========================		try : message" )

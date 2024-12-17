@@ -35,7 +35,6 @@ set( Cmake_Project_Binary_File_Name "$<TARGET_FILE:tgt>" )
 set( ${project_name_include_dir}_include_dir ${CMAKE_CURRENT_LIST_DIR} PARENT_SCOPE )
 
 include_directories( ${NovelInfo_include_dir} )
-include_directories( ${Tools_include_dir} )
 include_directories( ${UserHread_include_dir} )
 include_directories( ${HtmlTools_include_dir} )
 include_directories( ${IOStream_include_dir} )
@@ -64,7 +63,6 @@ call_qt_deploy( ${PROJECT_NAME}
 	Qt${QT_VERSION_MAJOR}::Core5Compat
 	Qt${QT_VERSION_MAJOR}::Sql
 	NovelInfo
-	Tools
 	HtmlTools
 	Path_Tool
 	IOStream

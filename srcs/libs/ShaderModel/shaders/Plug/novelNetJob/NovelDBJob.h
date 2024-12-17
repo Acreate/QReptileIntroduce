@@ -29,6 +29,9 @@ private: // - 静态成员变量
 	static QString deleteCmd; // 删除命令
 
 public:// - 静态方法
+	static QString getCurrentTimeForm( ) {
+		return currentTimeForm;
+	}
 	/// <summary>
 	/// 对小说列表进行排序，并且返回结果
 	/// </summary>

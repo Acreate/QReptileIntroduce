@@ -118,7 +118,6 @@ LIST( APPEND out_path_list ${plug_path_list} )
 GET_PATH_CMAKE_DIR_PATH( out_path_list ${CMAKE_CURRENT_SOURCE_DIR}/srcs/libs/UserHread/defineMorc "CMakeLists.txt" )
 GET_PATH_CMAKE_DIR_PATH( out_path_list ${CMAKE_CURRENT_SOURCE_DIR}/srcs/libs/ShaderModel/shaders/NovelInfo "CMakeLists.txt" )
 GET_PATH_CMAKE_DIR_PATH( out_path_list ${CMAKE_CURRENT_SOURCE_DIR}/srcs/libs/ShaderModel/shaders/Plug "CMakeLists.txt" )
-GET_PATH_CMAKE_DIR_PATH( out_path_list ${CMAKE_CURRENT_SOURCE_DIR}/srcs/libs/ShaderModel/shaders/Tools "CMakeLists.txt" )
 
 GET_PATH_CMAKE_DIR_PATH( out_path_list ${CMAKE_CURRENT_SOURCE_DIR}/srcs/projects/ "CMakeLists.txt" )
  
