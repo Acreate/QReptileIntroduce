@@ -19,7 +19,7 @@ class PLUG_EXPORT NovelNetJob : public QObject {
 	Q_OBJECT;
 public:
 	using Duration = std::chrono::system_clock::time_point::duration;
-	using TimePoint =  std::chrono::time_point< std::chrono::system_clock >;
+	using TimePoint = std::chrono::time_point< std::chrono::system_clock >;
 	using NetworkmanagerConnectFunction = std::function< bool( QNetworkReply *q_network_reply, const QString call_file_path_name, size_t call_line, const QString call_name ) >;
 private: // - 装饰指针
 	QObject *interfaceObjPtr; // 小说基于 qt 框架的指针
@@ -76,7 +76,7 @@ public: //- 静态调用
 	/// 获取当前时间戳
 	/// </summary>
 	/// <returns>返回时间戳</returns>
-	static  std::chrono::time_point< std::chrono::system_clock > getCurrentTimePoint( ) {
+	static std::chrono::time_point< std::chrono::system_clock > getCurrentTimePoint( ) {
 		return std::chrono::system_clock::now( );
 	}
 	/// <summary>
@@ -191,8 +191,9 @@ private: //- 网络
 	/// <param name="call_finle_path_name">应该填入调用该函数的文件路径( __FILE__ )</param>
 	/// <param name="call_function_name">应该填入调用该函数的函数名( __FUNCTION__ )</param>
 	/// <param name="call_line">应该填入调用该函数的行数( __LINE__ )</param>
+	/// <param name="old_url">上一页 url</param>
 	/// <returns>应答体</returns>
-	QNetworkReply * requestGet( const QUrl &url, const size_t requestMaxCount, const size_t requestMaxMs, const QString &error_msg, const QString &error_file_append_base_name, const NetworkmanagerConnectFunction &call_function, const QString &call_finle_path_name, const QString &call_function_name, const size_t call_line );
+	QNetworkReply * requestGet( const QUrl &url, const size_t requestMaxCount, const size_t requestMaxMs, const QString &error_msg, const QString &error_file_append_base_name, const NetworkmanagerConnectFunction &call_function, const QString &call_finle_path_name, const QString &call_function_name, const size_t call_line, const QString &old_url );
 	/// <summary>
 	/// 发送 get 请求
 	/// </summary>
@@ -204,8 +205,9 @@ private: //- 网络
 	/// <param name="call_finle_path_name">应该填入调用该函数的文件路径( __FILE__ )</param>
 	/// <param name="call_function_name">应该填入调用该函数的函数名( __FUNCTION__ )</param>
 	/// <param name="call_line">应该填入调用该函数的行数( __LINE__ )</param>
+	/// <param name="old_url">上次请求网址</param>
 	/// <returns>应答体</returns>
-	QNetworkReply * requestGet( const QUrl &url, const size_t requestMaxCount, const size_t requestMaxMs, const QString &error_msg, const QString &error_file_append_base_name, const QString &call_finle_path_name, const QString &call_function_name, const size_t call_line );
+	QNetworkReply * requestGet( const QUrl &url, const size_t requestMaxCount, const size_t requestMaxMs, const QString &error_msg, const QString &error_file_append_base_name, const QString &call_finle_path_name, const QString &call_function_name, const size_t call_line, const QString &old_url );
 private:
 	/// <summary>
 	/// 存储小说到仓库
@@ -216,10 +218,10 @@ private:
 	/// <param name="result_msg">如果返回为 nullptr，则该值保存错误消息</param>
 	/// <returns>解析得到的小说</returns>
 	interfacePlugsType::INovelInfo_Shared saveToStoreNovels(
-		interfacePlugsType::Vector_INovelInfoSPtr_Shared &requestedGetVectorINovelInfoSPtrShared
-		, interfacePlugsType::Vector_INovelInfoSPtr_Shared &saveMapNovelInfos
-		, interfacePlugsType::INovelInfo_Shared &novel
-		, QString *result_msg );
+			interfacePlugsType::Vector_INovelInfoSPtr_Shared &requestedGetVectorINovelInfoSPtrShared,
+			interfacePlugsType::Vector_INovelInfoSPtr_Shared &saveMapNovelInfos,
+			interfacePlugsType::INovelInfo_Shared &novel,
+			QString *result_msg );
 	/// <summary>
 	/// 请求页面信息，并且返回下一页。
 	/// </summary>

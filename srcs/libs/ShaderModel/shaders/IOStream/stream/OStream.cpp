@@ -73,7 +73,7 @@ QStringList OStream::anyStdCerr( const QString &msg, const QString &fileName, si
 	msgList << msg;
 	msgList << u8"--------------------------------------------";
 	msgList << u8"--------------------------------------------";
-	buff.append( fileName ).append( u8"\n\t调用: " ).append( call_fun_name ).append( u8"\n\t第 " ).append( QString( u8"%1" ).arg( line ) ).append( u8" 行" );
+	buff.append( u8"\n\t文件名:" ).append( fileName ).append( u8"\n\t调用: " ).append( call_fun_name ).append( u8"\n\t第 " ).append( QString( u8"%1" ).arg( line ) ).append( u8" 行" );
 	msgList << buff;
 	msgList << u8"============================================";
 	buff = msgList.join( "\n" );

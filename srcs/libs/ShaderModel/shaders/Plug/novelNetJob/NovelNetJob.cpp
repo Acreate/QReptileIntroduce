@@ -90,6 +90,41 @@ inline void error_write_file( const std::chrono::time_point< std::chrono::system
 		OStream::anyStdCerr( msg, instance_function::getCmakeRootPathBuilderFilePath( file ), line, call_function_name, errorWriteFilePath, msg, oStream );
 	}
 }
+
+
+/// <summary>
+/// 输出信息到流
+/// </summary>
+/// <param name="nowTimeDuration">执行的开始点</param>
+/// <param name="oStream">可选输出流</param>
+/// <param name="networkReply">请求体</param>
+/// <param name="file">错误文件</param>
+/// <param name="call_function_name">调用函数名称</param>
+/// <param name="line">信息行数</param>
+/// <param name="append_msg">写入信息</param>
+inline void error_write_iostream( const std::chrono::time_point< std::chrono::system_clock > &nowTimeDuration, OStream *oStream, QNetworkReply *networkReply, const QString &file, const QString &call_function_name, size_t line, const QString &append_msg ) {
+	QDateTime currentDateTime = QDateTime::currentDateTime( );
+	QString currentTime = currentDateTime.toString( "yyyy_MM_dd hh-mm-ss" );
+	auto currentTimeDuration = std::chrono::system_clock::now( ) - nowTimeDuration;
+	long long timeDurationToMilliseconds = std::chrono::duration_cast< std::chrono::milliseconds >( currentTimeDuration ).count( );
+	QString seconds( QString::number( timeDurationToMilliseconds / 1000 ) ); // 秒
+	QString msg;
+	auto url = networkReply->url( );
+	msg.append( "\n=========================		try : info" )
+		.append( u8"\n\t当前时间 : " ).append( currentTime )
+		.append( u8"\n\t执行时间 : " ).append( seconds ).append( "秒" )
+		.append( u8"\n\t错误文件 : " ).append( instance_function::getCmakeRootPathBuilderFilePath( file ) )
+		.append( u8"\n\t信息位置 : " ).append( QString::number( line ) )
+		.append( u8"\n\t信息函数 : " ).append( __FUNCTION__ )
+		.append( "\n=========================		try : message" )
+		.append( u8"\n\t错误信息 : " ).append( getErrorQStr( networkReply->error( ) ) )
+		.append( u8"\n\t类型 : " ).append( u8"请求页面" ).append( u8"(" ).append( url.toString( ) ).append( ")" )
+		.append( "\n=========================		user : message" )
+		.append( u8"\n\t自由信息 : " ).append( append_msg )
+		.append( "\n=========================" );
+	OStream::anyStdCerr( msg, instance_function::getCmakeRootPathBuilderFilePath( file ), line, call_function_name, oStream );
+}
+
 QString getNormalQString( const QString &q_string ) {
 	QString result;
 	qsizetype length = q_string.length( );
@@ -218,20 +253,25 @@ QNetworkReply * NovelNetJob::requestUrl( QNetworkAccessManager *&result, const Q
 		waiteMilliseconds( 200 );
 	return networkReply;
 }
-QNetworkReply * NovelNetJob::requestGet( const QUrl &url, const size_t requestMaxCount, const size_t requestMaxMs, const QString &error_msg, const QString &error_file_append_base_name, const NetworkmanagerConnectFunction &call_function, const QString &call_finle_path_name, const QString &call_function_name, const size_t call_line ) {
+QNetworkReply * NovelNetJob::requestGet( const QUrl &url, const size_t requestMaxCount, const size_t requestMaxMs, const QString &error_msg, const QString &error_file_append_base_name, const NetworkmanagerConnectFunction &call_function, const QString &call_finle_path_name, const QString &call_function_name, const size_t call_line, const QString &old_url ) {
 	auto requestReplyTime = getCurrentTimePoint( );
 	size_t requestCount = 0;
 	do {
 		auto networkReply = requestUrl( this->networkAccessManager, this->networkRequest, url, this->requestTime, this->sepMs, call_function, call_finle_path_name, call_function_name, call_line );
-		if( networkReply->error( ) == QNetworkReply::NoError )
+		QNetworkReply::NetworkError networkError = networkReply->error( );
+		if( networkError == QNetworkReply::NoError )
 			return networkReply;
+		QString msg( u8"请求网址 : (%1) 异常 : [ %2 ], 正在重新获取请求 : [ %3/%4 : %5 毫秒] ( 上次请求网址 : %6 )" );
+
+		auto newRequestTime = getCurrentTimePoint( );
+		auto commonType = newRequestTime - requestTime;
+		auto milliseconds = getTimeDurationToMilliseconds( commonType );
+		msg = msg.arg( url.host( ) ).arg( networkError ).arg( requestCount ).arg( requestMaxCount ).arg( milliseconds ).arg( old_url );
+		error_write_iostream( requestTime, oStream, networkReply, call_function_name, call_finle_path_name, call_line, msg );
 		this->networkRequest.setHeader( QNetworkRequest::UserAgentHeader, getRandomUserAgentHeader( ) );
-		if( requestMaxCount ) {
-			++requestCount;
-			if( requestCount > requestMaxCount ) {
-				error_write_file( requestTime, oStream, networkReply, call_function_name, call_finle_path_name, call_line, error_msg + u8"-请求次数超出限制", outPath, QDateTime::currentDateTime( ).toString( "hh-mm-ss" ), ".root_request.error.log" );
-				break;
-			}
+		if( requestMaxCount && requestCount++ > requestMaxCount ) {
+			error_write_file( requestTime, oStream, networkReply, call_function_name, call_finle_path_name, call_line, error_msg + u8"-请求次数超出限制", outPath, QDateTime::currentDateTime( ).toString( "hh-mm-ss" ), ".root_request.error.log" );
+			break;
 		}
 		if( requestMaxMs ) {
 			auto compTime = getTimeDurationToMilliseconds( getCurrentTimePoint( ) - requestReplyTime );
@@ -244,23 +284,30 @@ QNetworkReply * NovelNetJob::requestGet( const QUrl &url, const size_t requestMa
 	} while( true ) ;
 	return nullptr;
 }
-QNetworkReply * NovelNetJob::requestGet( const QUrl &url, const size_t requestMaxCount, const size_t requestMaxMs, const QString &error_msg, const QString &error_file_append_base_name, const QString &call_finle_path_name, const QString &call_function_name, const size_t call_line ) {
+QNetworkReply * NovelNetJob::requestGet( const QUrl &url, const size_t requestMaxCount, const size_t requestMaxMs, const QString &error_msg, const QString &error_file_append_base_name, const QString &call_finle_path_name, const QString &call_function_name, const size_t call_line, const QString &old_url ) {
 	auto instance = qApp;
 	auto requestReplyTime = getCurrentTimePoint( );
 	size_t requestCount = 0;
 	do {
 		auto networkReply = requestUrl( this->networkAccessManager, this->networkRequest, url, this->requestTime, this->sepMs );
-		if( networkReply->error( ) == QNetworkReply::NoError ) {
+		QNetworkReply::NetworkError networkError = networkReply->error( );
+		if( networkError == QNetworkReply::NoError ) {
 			interfaceThisPtr->initBefore( );
 			return networkReply;
 			break;
 		}
-		if( requestMaxCount ) {
-			++requestCount;
-			if( requestCount > requestMaxCount ) {
-				error_write_file( requestTime, oStream, networkReply, call_function_name, call_finle_path_name, call_line, error_msg + u8"-请求次数超出限制", outPath, QDateTime::currentDateTime( ).toString( "hh-mm-ss" ), ".root_request.error.log" );
-				break;
-			}
+
+		QString msg( u8"请求网址 : (%1) 异常 : [ %2 ], 正在重新获取请求 : [ %3/%4 : %5 毫秒 ]( 上次请求网址 : %6 )" );
+
+		auto newRequestTime = getCurrentTimePoint( );
+		auto commonType = newRequestTime - requestTime;
+		auto milliseconds = getTimeDurationToMilliseconds( commonType );
+		msg = msg.arg( url.host( ) ).arg( networkError ).arg( requestCount ).arg( requestMaxCount ).arg( milliseconds ).arg( old_url );
+		error_write_iostream( requestTime, oStream, networkReply, call_function_name, call_finle_path_name, call_line, msg );
+
+		if( requestMaxCount && requestCount++ > requestMaxCount ) {
+			error_write_file( requestTime, oStream, networkReply, call_function_name, call_finle_path_name, call_line, error_msg + u8"-请求次数超出限制", outPath, QDateTime::currentDateTime( ).toString( "hh-mm-ss" ), ".root_request.error.log" );
+			break;
 		}
 		if( requestMaxMs ) {
 			auto compTime = getTimeDurationToMilliseconds( getCurrentTimePoint( ) - requestReplyTime );
@@ -316,7 +363,7 @@ bool NovelNetJob::start( ) {
 		else
 			return hasErrorRunCode( q_network_reply, call_file_path_name, call_line, call_name );
 	};
-	auto networkReply = requestGet( url, requestMaxCount, requestMaxMilliseconds, u8"首页请求失败", u8".root_request.error.log", callFunction, instance_function::getCmakeRootPathBuilderFilePath( __FILE__ ), __FUNCTION__, __LINE__ );
+	auto networkReply = requestGet( url, requestMaxCount, requestMaxMilliseconds, u8"首页请求失败", u8".root_request.error.log", callFunction, instance_function::getCmakeRootPathBuilderFilePath( __FILE__ ), __FUNCTION__, __LINE__, qstrUrl );
 	this->interfaceThisPtr->initBefore( );
 	if( !networkReply )
 		emit requested_get_web_page_signals_end( url );
@@ -370,7 +417,7 @@ void NovelNetJob::slots_requesting_get_root_page_signals( const QUrl &url, QNetw
 	while( requestVectorIterator != requestVectorEnd ) {
 		auto typeNmae = requestVectorIterator->first;
 		auto qUrl = requestVectorIterator->second;
-		auto networkReply = requestGet( qUrl, requestMaxCount, requestMaxMilliseconds, u8"类型页面请求失败", u8".type_request.error.log", instance_function::getCmakeRootPathBuilderFilePath( __FILE__ ), __FUNCTION__, __LINE__ );
+		auto networkReply = requestGet( qUrl, requestMaxCount, requestMaxMilliseconds, u8"类型页面请求失败", u8".type_request.error.log", instance_function::getCmakeRootPathBuilderFilePath( __FILE__ ), __FUNCTION__, __LINE__, "none" );
 		if( !networkReply )
 			continue;
 		++pageIndex;
@@ -379,8 +426,9 @@ void NovelNetJob::slots_requesting_get_root_page_signals( const QUrl &url, QNetw
 		auto html = std::make_shared< cylHtmlTools::HtmlString >( QString( readAll ).toStdWString( ) );
 		auto newQUrl = getPageInfo( typeNmae, qUrl, html );
 		while( !newQUrl.isEmpty( ) ) {
+			auto oldUrl = qUrl;
 			qUrl = newQUrl;
-			networkReply = requestGet( qUrl, requestMaxCount, requestMaxMilliseconds, u8"下一页类型请求失败", u8".type_request_next.error.log", instance_function::getCmakeRootPathBuilderFilePath( __FILE__ ), __FUNCTION__, __LINE__ );
+			networkReply = requestGet( qUrl, requestMaxCount, requestMaxMilliseconds, u8"下一页请求失败", u8".type_request_next.error.log", instance_function::getCmakeRootPathBuilderFilePath( __FILE__ ), __FUNCTION__, __LINE__, oldUrl );
 			if( !networkReply )
 				break; // 请求失败，则终止
 			++pageIndex;
