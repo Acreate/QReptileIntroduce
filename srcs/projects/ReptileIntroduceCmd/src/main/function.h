@@ -28,7 +28,8 @@
 using NovelInfo_Shared = interfacePlugsType::INovelInfo_Shared; // 小说信息指针
 using NovelInfoKeyPair = std::pair< NovelInfo_Shared, QStringList >; // 小说关键字映射
 using NovelInfoKeyPairVector = std::vector< NovelInfoKeyPair >; // 多小说映射
-using PathWriteNovelInfoUnMap = std::unordered_map< QString, NovelInfoKeyPairVector >; // 多路径小说映射
+using PathNovelPair = std::pair< QString, NovelInfoKeyPairVector >;
+using PathWriteNovelInfoUnMap = std::vector< PathNovelPair >; // 多路径小说映射
 
 extern const QString exportFindDirMidName; // 查找的中间名称 (-fkf 选项)
 
@@ -485,13 +486,13 @@ std::shared_ptr< cylHtmlTools::HtmlWorkThreadPool > writeDiskInForInductionNovel
 /// <param name="merge_find_keys_export_novel_infos_map">合并的全体对象</param>
 inline void mergeFindMaps( PathWriteNovelInfoUnMap &merge_find_keys_novelInfos_map, const PathWriteNovelInfoUnMap &merge_find_keys_types_novel_infos_map, const PathWriteNovelInfoUnMap &merge_find_keys_dbs_novel_infos_map, const PathWriteNovelInfoUnMap &merge_find_keys_export_key_novel_infos_map, const PathWriteNovelInfoUnMap &merge_find_keys_export_novel_infos_map ) {
 	for( auto &iter : merge_find_keys_types_novel_infos_map )
-		merge_find_keys_novelInfos_map.insert( iter );
+		merge_find_keys_novelInfos_map.emplace_back( iter );
 	for( auto &iter : merge_find_keys_dbs_novel_infos_map )
-		merge_find_keys_novelInfos_map.insert( iter );
+		merge_find_keys_novelInfos_map.emplace_back( iter );
 	for( auto &iter : merge_find_keys_export_key_novel_infos_map )
-		merge_find_keys_novelInfos_map.insert( iter );
+		merge_find_keys_novelInfos_map.emplace_back( iter );
 	for( auto &iter : merge_find_keys_export_novel_infos_map )
-		merge_find_keys_novelInfos_map.insert( iter );
+		merge_find_keys_novelInfos_map.emplace_back( iter );
 }
 
 /// @brief 查找子字符串的值
@@ -581,6 +582,15 @@ inline void outStdCountStreamMsg( QMutex &std_cout_mutex, const size_t &mod_work
 	msg << u8"\n(进程 id : " << applicationPid << u8", 线程 id : " << std::this_thread::get_id( ) << u8" ) => [ " << call_function_name << u8" ] " << work_name << u8" => 剩余工作数[" << mod_work_count << u8"]:正在工作数[" << current_work_count << u8"] << " << file_name << " : " << line;
 	std::cout << msg.str( ) << std::endl;
 	std_cout_mutex.unlock( );
+}
+
+/// <summary>
+/// 获取文件的基本名称
+/// </summary>
+/// <param name="filePathInfo">文件路径信息</param>
+/// <returns>文件的基本名称</returns>
+inline QString getFileBaseName( const interfacePlugsType::HtmlDocString &filePathInfo ) {
+	return getFileBaseName( QFileInfo( QString::fromStdWString( filePathInfo ) ) );
 }
 
 /// <summary>

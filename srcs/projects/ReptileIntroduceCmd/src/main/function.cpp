@@ -1108,7 +1108,7 @@ void emplaceNovelKeyMap( const QString &save_path, const std::shared_ptr< interf
 	// 没有找到匹配小说
 	std::vector< std::pair< interfacePlugsType::INovelInfo_Shared, QStringList > > pairVector;
 	pairVector.emplace_back( makePair );
-	merge_find_keys_novel_infos_map.insert_or_assign( save_path, pairVector );
+	merge_find_keys_novel_infos_map.emplace_back( std::make_pair( save_path, pairVector ) );
 }
 bool lenMapFindNovelKey( const NovelInfo &novel_info, const Len_Map_Str_Vector_S &find_key_map, interfacePlugsType::HtmlDocString *key ) {
 	size_t novelNameLen = novel_info.novelName.length( ); // 名车长度
@@ -1370,6 +1370,13 @@ void writeDisk( QMutex &disk_mute, QMutex &count_mute, QMutex &std_cout_mutex, c
 		writeInfoVector.emplace_back( novelInfoShared );
 	}
 
+	// 排序
+	std::sort( writeInfoVector.begin( ),
+			writeInfoVector.end( ),
+			[]( const NovelInfo_Shared &left, const NovelInfo_Shared &right ) {
+				return left->url > right->url;
+			} );
+
 	writeInfoVector = *NovelDBJob::inductionNovelsForNameAndAuthor( writeInfoVector );
 	auto fileBaseName = getFileBaseName( all_file_path_name_name );
 	spliteAppendDataField( writeInfoVector );
@@ -1413,6 +1420,14 @@ void writeDisk( QMutex &disk_mute, QMutex &count_mute, QMutex &std_cout_mutex, c
 	disk_mute.unlock( );
 	if( isCreate ) {
 		auto result = NovelDBJob::identical( infos );
+
+		// 排序
+		std::sort( result.begin( ),
+				result.end( ),
+				[]( const interfacePlugsType::INovelInfo_Shared &left, const interfacePlugsType::INovelInfo_Shared &right ) {
+					return left->url > right->url;
+				} );
+
 		result = *NovelDBJob::inductionNovelsForNameAndAuthor( result );
 		/*result = NovelDBJob::sort( result );*/
 		novelInfoExportSort( result );
@@ -1634,6 +1649,7 @@ void dbReadWriteChanger( const std::shared_ptr< cylStd::ArgParser > &arg_parser 
 		ErrorCout_MACRO( QString( u8"(进程 id :%1) 数据库无法获取小说信息，请检查 -rdb 是否发生错误" ).arg( applicationPid ) );
 		return;
 	}
+
 	// 查找输出路径
 	auto exisLegitimateOutDirPath = getOptionLegitimateOutDirPath( arg_parser, "-w" );
 	if( exisLegitimateOutDirPath.size( ) == 0 ) {
@@ -1725,7 +1741,6 @@ void dbReadWriteChanger( const std::shared_ptr< cylStd::ArgParser > &arg_parser 
 		return;
 	}
 	Out_Std_Count_Stream_Msg_MACRO( stdCoutMutex, callFunctionName, QString(u8"发现导出返回:[ %1 ] 发现查找返回:[ %2 ]\n").arg( edbResultNovelCount ).arg( findResultNovelCount).toStdString( ) );
-
 	// 把 novelInfosWriteMap 映射写入磁盘
 	size_t saveNovelCount = 0;
 	QMutex diskMute; // 磁盘操作锁
