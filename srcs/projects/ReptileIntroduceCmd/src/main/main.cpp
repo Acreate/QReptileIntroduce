@@ -11,14 +11,14 @@ int main( int argc, char *argv[ ] ) {
 	std::wcout.imbue( locale );
 
 	QCoreApplication application( argc, argv ); // 初始化程序
-	applicationPid = qApp->applicationPid( );
+	applicationPid = std::to_string( qApp->applicationPid( ) );
 
 	std::shared_ptr< cylStd::ArgParser > argParser = cylStd::ArgParser::parser( argc, argv ); // 命令行参数解析对象
 	showStartRunTime( argParser );
 	auto pairs = argParser->getPairs( );
 	size_t pairsSize = pairs.size( );
 	if( pairsSize == 1 ) {
-		ErrorCout_MACRO( QString(u8"(进程 id :%1) 没有发生任何有效的行为，请检查选项是否正确").arg(applicationPid ) );
+		ErrorCout_MACRO( QString(u8"(进程 id :%1) 没有发生任何有效的行为，请检查选项是否正确").arg(applicationPid .c_str( )) );
 		showHelp( );
 		return 0;
 	}

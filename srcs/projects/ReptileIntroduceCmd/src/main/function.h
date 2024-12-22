@@ -113,7 +113,7 @@ extern std::string callFileName;
 /// 输出间隔
 /// </summary>
 extern std::chrono::seconds duration;
-extern qint64 applicationPid; // app id
+extern std::string applicationPid; // app id
 extern Time runTime; // app 起始运行时间
 /// <summary>
 /// 获取编译信息
