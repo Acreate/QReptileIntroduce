@@ -1,12 +1,15 @@
-﻿
+﻿#include "./function.h"
 
-#include "./function.h"
+using time_point = std::chrono::system_clock::time_point;
+#define Time_Fommatting( Formmation_String, Time_Object ) \
+	std::cout << "e.g ( "<< Formmation_String <<" ) : "<<  Time_Object.toFormattingLocalString( Formmation_String ) << std::endl
 int main( int argc, char *argv[ ] ) {
 
 	std::locale locale( "zh_CN.UTF8" );
 	std::locale::global( locale );
 	std::cout.imbue( locale );
 	std::wcout.imbue( locale );
+
 	QCoreApplication application( argc, argv ); // 初始化程序
 	applicationPid = qApp->applicationPid( );
 	auto currentTime = QDateTime::currentDateTime( );

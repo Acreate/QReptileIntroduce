@@ -15,7 +15,7 @@
 const QString exportFindDirMidName = u8"export_find"; // 查找的中间名称 (-fkf 选项)
 
 const QString exportAllDirMidName = u8"export_all"; // 全部导出的中间名称 (-edb 选项)
-
+Time runTime; // 开始时间
 /// <summary>
 /// 文件的 cmake 项目相对路径
 /// </summary>
@@ -60,6 +60,79 @@ QString getBuilderInfo( ) {
 	}
 #endif
 	return compilerString;
+}
+std::chrono::seconds getRunSepSec( ) {
+	Time newTime;
+	auto speTime = newTime - runTime;
+	return speTime.toDuration< std::chrono::seconds >( ); // 获取秒
+}
+std::chrono::milliseconds getRunSepMill( ) {
+	Time newTime;
+	auto speTime = newTime - runTime;
+	return speTime.toDuration< std::chrono::milliseconds >( ); // 获取毫秒
+}
+std::chrono::minutes getRunSepMin( ) {
+	Time newTime;
+	auto speTime = newTime - runTime;
+	return speTime.toDuration< std::chrono::minutes >( ); // 获取分钟
+}
+bool getRunSepSecAndMill( size_t &sec, size_t &mill ) {
+	Time newTime;
+	auto speTime = newTime - runTime;
+	auto duration = speTime.toDuration< std::chrono::milliseconds >( ); // 获取毫秒
+	long long count = duration.count( );
+	if( count < 0 )
+		return false;
+	sec = count / 1000; // 秒
+	mill = count % 1000; // 毫秒
+	return true;
+}
+bool getRunSepSecAndMillAndMin( size_t &min, size_t &sec, size_t &mill ) {
+	Time newTime;
+	auto speTime = newTime - runTime;
+	auto duration = speTime.toDuration< std::chrono::milliseconds >( ); // 获取毫秒
+	long long count = duration.count( );
+	if( count < 0 )
+		return false;
+	mill = count % 1000; // 毫秒
+	sec = count / 1000 % 60; // 秒
+	min = count / 1000 / 60; // 分钟
+	return true;
+}
+bool getRunSepSecAndMillAndMinAndHour( size_t &hour, size_t &min, size_t &sec, size_t &mill ) {
+	Time newTime;
+	auto speTime = newTime - runTime;
+	auto duration = speTime.toDuration< std::chrono::milliseconds >( ); // 获取毫秒
+	long long count = duration.count( );
+	if( count < 0 )
+		return false;
+	mill = count % 1000; // 毫秒
+	sec = count / 1000 % 60; // 秒
+	min = count / 1000 / 60 % 60; // 分钟
+	hour = count / 1000 / 60 / 60; // 小时
+	return true;
+}
+std::string getRunSepSecAndMillAndMinAndHourToStdString( ) {
+	Time newTime;
+	std::string result;
+	auto speTime = newTime - runTime;
+	auto duration = speTime.toDuration< std::chrono::milliseconds >( ); // 获取毫秒
+	long long count = duration.count( );
+	if( count < 0 )
+		return result;
+	size_t mill = count % 1000; // 毫秒
+	size_t sec = count / 1000 % 60; // 秒
+	size_t min = count / 1000 / 60 % 60; // 分钟
+	size_t hour = count / 1000 / 60 / 60; // 小时
+	if( hour > 0 )
+		result = std::to_string( hour ) + " h " + std::to_string( min ) + " m " + std::to_string( sec ) + " s " + std::to_string( mill ) + " ms";
+	else if( min > 0 )
+		result = std::to_string( min ) + " m " + std::to_string( sec ) + " s " + std::to_string( mill ) + " ms";
+	else if( sec > 0 )
+		result = std::to_string( sec ) + " s " + std::to_string( mill ) + " ms";
+	else
+		result = std::to_string( mill ) + " ms";
+	return result;
 }
 
 QString writeVector( const std::vector< QString > &vector, const QString &write_file_path, std::vector< QString > *result_key_s = nullptr ) {
@@ -376,11 +449,11 @@ std::vector< QString > splitMultipleStrList( const QString &split_str_obj, const
 	}
 	return resultSplitList;
 }
-void outStdCountStreamMsg( QMutex &std_cout_mutex, const std::string &call_function_name, const std::string &work_name, const std::string &file_name, const size_t line ) {
+void outStdCountStreamMsg( QMutex &std_cout_mutex, const std::string &call_function_name, const std::string &work_msg, const std::string &file_name, const size_t line ) {
 	std_cout_mutex.lock( );
 	std::stringstream msg;
-	msg << u8"\n(进程 id : " << applicationPid << u8", 线程 id : " << std::this_thread::get_id( ) << u8" ) => [ " << call_function_name << u8" ] " << work_name << u8" << " << file_name << " : " << line;
-	std::cout << msg.str( ) << std::endl;
+	msg << u8"\n(进程 id : " << applicationPid << u8", 线程 id : " << std::this_thread::get_id( ) << u8" ) => [ " << call_function_name << u8" ] " << work_msg << u8" << " << file_name << " : " << line;
+	std::cout << msg.str( ) << "\t: " << getRunSepSecAndMillAndMinAndHourToStdString( ) << std::endl;
 	std_cout_mutex.unlock( );
 }
 std::vector< QString > getFileTextSplit( const std::vector< QString > &file_paths, const std::vector< QString > &split_vector, bool is_remove_space ) {
@@ -427,6 +500,8 @@ QString getFileBaseName( const QFileInfo &filePathInfo ) {
 		return fileName.slice( 0, indexOf );
 	return fileName;
 }
+
+
 std::vector< QProcess * > runPluginToSubProcess( const QString &app_path, QMutex &qt_mutex, size_t &ref_count, const std::vector< QString > &novel_plug_paths, const QString &request_type_name_options, const QString &out_path_values, const std::string &call_function_file_path, const char *call_function_name, const size_t &call_function_line ) {
 	QStringList cmd; // 命令行
 	std::vector< QProcess * > result; // 返回进程列表
@@ -449,20 +524,20 @@ std::vector< QProcess * > runPluginToSubProcess( const QString &app_path, QMutex
 				&QProcess::readyReadStandardOutput,
 				[=]( ) {
 					QString msg( subProcess->readAllStandardOutput( ) );
-					std::cout << u8"(进程 id : " << subProcess->processId( ) << " )[readyReadStandardOutput] : " << msg.toStdString( ) << std::endl;
+					std::cout << u8"(进程 id : " << subProcess->processId( ) << " )[readyReadStandardOutput] : " << msg.toStdString( ) << "\t: " << getRunSepSecAndMillAndMinAndHourToStdString( ) << "\n===============" << std::endl;
 				} );
 
 		QObject::connect( subProcess,
 				&QProcess::readyReadStandardError,
 				[=]( ) {
 					QString msg( subProcess->readAllStandardError( ) );
-					std::cerr << u8"(进程 id : " << subProcess->processId( ) << " )[readyReadStandardError] : " << msg.toStdString( ) << std::endl;
+					std::cerr << u8"(进程 id : " << subProcess->processId( ) << " )[readyReadStandardError] : " << msg.toStdString( ) << "\t: " << getRunSepSecAndMillAndMinAndHourToStdString( ) << "\n===============" << std::endl;
 				} );
 
 		QObject::connect( subProcess,
 				&QProcess::finished,
 				[&ref_count,&qt_mutex,subProcess]( ) {
-					std::cout << u8"子进程结束(进程 id : " << subProcess->processId( ) << " )  " << std::endl;
+					std::cout << u8"子进程结束(进程 id : " << subProcess->processId( ) << " )  " << "\t: " << getRunSepSecAndMillAndMinAndHourToStdString( ) << "\n===============" << std::endl;
 					subProcess->deleteLater( );
 					QMutexLocker lock( &qt_mutex );
 					--ref_count;
@@ -471,15 +546,15 @@ std::vector< QProcess * > runPluginToSubProcess( const QString &app_path, QMutex
 		QObject::connect( subProcess,
 				&QProcess::started,
 				[cmd,app_path,subProcess]( ) {
-					QString msg( u8"子进程运行(进程 id :%1) :\n\t%2 %3 " );
-					std::cout << msg.arg( subProcess->processId( ) ).arg( app_path ).arg( cmd.join( " " ) ).toStdString( ).c_str( ) << std::endl;
+					QString msg( u8"子进程运行(进程 id : %1 ) :\n\t%2 %3 " );
+					std::cout << msg.arg( subProcess->processId( ) ).arg( app_path ).arg( cmd.join( " " ) ).toStdString( ).c_str( ) << "\t: " << getRunSepSecAndMillAndMinAndHourToStdString( ) << "\n===============" << std::endl;
 				} );
 
 		QObject::connect( subProcess,
 				&QProcess::errorOccurred,
 				[cmd,app_path,subProcess]( QProcess::ProcessError error ) {
-					QString msg( u8"子进程异常(进程 id :%1) :\n\t%2 %3 \n\t:: (%4) =>:(%5)" );
-					std::cout << msg.arg( subProcess->processId( ) ).arg( app_path ).arg( cmd.join( " " ) ).arg( error ).arg( subProcess->errorString( ) ).toStdString( ).c_str( ) << std::endl;
+					QString msg( u8"子进程异常(进程 id : %1 ) :\n\t%2 %3 \n\t:: (%4) =>:(%5)" );
+					std::cout << msg.arg( subProcess->processId( ) ).arg( app_path ).arg( cmd.join( " " ) ).arg( error ).arg( subProcess->errorString( ) ).toStdString( ).c_str( ) << "\t: " << getRunSepSecAndMillAndMinAndHourToStdString( ) << "\n===============" << std::endl;
 				} );
 		subProcess->setWorkingDirectory( currentPath );
 		subProcess->setProgram( app_path );
@@ -505,18 +580,12 @@ NovelNetJob * runPluginToThisProcess( QMutex &qt_mutex, size_t &ref_count, const
 		auto stdString = novelNetJob->getUrl( ).toStdString( );
 		bool *isRun = new bool( true );
 		std::thread *thread = new std::thread( [=]( ) {
-			auto cur = std::chrono::system_clock::now( );
 			auto cStr = stdString.c_str( );
-			long long second = 0, min = 0;
 			while( *isRun ) {
-				auto runTime = std::chrono::system_clock::now( ) - cur;
-				second = std::chrono::duration_cast< std::chrono::seconds >( runTime ).count( );
-				min = second / 60;
-				second = second % 60;
-				std::cout << u8"\n(进程 id : " << applicationPid << u8") 正在运行 : " << cStr << u8"(运行时间: " << min << " 分 " << second << " 秒);" << std::endl;
+				std::cout << u8"\n(进程 id : " << applicationPid << u8") 正在运行 : " << cStr << u8"(运行时间: " << getRunSepSecAndMillAndMinAndHourToStdString( ) << " )" << std::endl;
 				std::this_thread::sleep_for( duration );
 			}
-			std::cout << u8"运行结束 : " << cStr << u8"( 运行时间: " << min << " 分 " << second << " 秒 );" << std::endl;
+			std::cout << u8"运行结束 : " << cStr << u8"( 运行时间: " << getRunSepSecAndMillAndMinAndHourToStdString( ) << " )" << std::endl;
 		} );
 		QObject::connect( novelNetJob,
 				&NovelNetJob::endJob,
@@ -585,20 +654,20 @@ void runRequestDownloadPlugs( std::shared_ptr< cylStd::ArgParser > &args ) {
 		}
 	}
 	if( runPlugFilesPaths.size( ) == 0 ) {// 找不到插件，则返回 
-		ErrorCout_MACRO( QString( u8"(进程 id :%1)没有发件有效的插件路径，请检查 -s 是否发生错误" ).arg(applicationPid ) );
+		ErrorCout_MACRO( QString( u8"(进程 id : %1 )没有发件有效的插件路径，请检查 -s 是否发生错误" ).arg(applicationPid ) );
 		return;
 	}
 	// 请求类型文件路径
 	std::vector< QString > requestNamesTypeFilePaths = getFilePathsOptionPaths( args, "-t" );
 	if( requestNamesTypeFilePaths.size( ) == 0 ) {
-		ErrorCout_MACRO( QString( u8"(进程 id :%1)没有发现 -t 选项（该选项用于发现获取类型名称的文件路径）" ).arg( applicationPid) );
+		ErrorCout_MACRO( QString( u8"(进程 id : %1 )没有发现 -t 选项（该选项用于发现获取类型名称的文件路径）" ).arg( applicationPid) );
 		return;
 	}
 	// 获取所有文件内容
 	auto nameTypes = getFileTextSplit( requestNamesTypeFilePaths, { "\n" }, true );
 	// 合并文件内容
 	if( nameTypes.size( ) == 0 ) {
-		ErrorCout_MACRO( QString( u8"(进程 id :%1)没有发现需要获取的类型名称" ).arg( applicationPid ) );
+		ErrorCout_MACRO( QString( u8"(进程 id : %1 )没有发现需要获取的类型名称" ).arg( applicationPid ) );
 		return;
 	}
 	// 请求小说输出路径
@@ -1339,7 +1408,7 @@ void writeDisk( QMutex &disk_mute, QMutex &count_mute, QMutex &std_cout_mutex, c
 	if( !isCreate ) {
 		// 无法创建，则返回
 		std_cout_mutex.lock( );
-		QString msg( u8"(进程 id :%1, 线程 id : %2 ) 路径创建失败 : \"%3\" => (数量为 : %4)" );
+		QString msg( u8"(进程 id : %1 , 线程 id : %2 ) 路径创建失败 : \"%3\" => (数量为 : %4)" );
 		std::stringstream ss;
 		ss << std::this_thread::get_id( );
 		msg = msg.arg( applicationPid ).arg( QString::fromStdString( ss.str( ) ) ).arg( all_file_path_name_name ).arg( 0 );
@@ -1353,7 +1422,7 @@ void writeDisk( QMutex &disk_mute, QMutex &count_mute, QMutex &std_cout_mutex, c
 	if( data == nullptr || dataSize == 0 ) {
 		// 没有数据。则返回
 		std_cout_mutex.lock( );
-		QString msg( u8"(进程 id :%1, 线程 id : %2 ) 导出结果失败 : \"%3\" => (数量为 : %4)" );
+		QString msg( u8"(进程 id : %1 , 线程 id : %2 ) 导出结果失败 : \"%3\" => (数量为 : %4)" );
 		std::stringstream ss;
 		ss << std::this_thread::get_id( );
 		msg = msg.arg( applicationPid ).arg( QString::fromStdString( ss.str( ) ) ).arg( all_file_path_name_name ).arg( 0 );
@@ -1399,12 +1468,12 @@ void writeDisk( QMutex &disk_mute, QMutex &count_mute, QMutex &std_cout_mutex, c
 			count_mute.unlock( );
 			// 添加输出
 			std_cout_mutex.lock( );
-			std::cout << u8"(进程 id : " << std::to_string( applicationPid ) << u8", 线程 id : " << std::this_thread::get_id( ) << u8" ) => [ " << callFunctionName << u8" ]导出结果 => \"" << all_file_path_name_name.toStdString( ) << u8"\" => (数量为 : " << writeCount << u8" )" << std::endl;
+			std::cout << u8"(进程 id : " << std::to_string( applicationPid ) << u8", 线程 id : " << std::this_thread::get_id( ) << u8" ) => [ " << callFunctionName << u8" ]导出结果 => \"" << all_file_path_name_name.toStdString( ) << u8"\" => (数量为 : " << writeCount << u8" )" << "\t: " << getRunSepSecAndMillAndMinAndHourToStdString( ) << std::endl;
 			std_cout_mutex.unlock( );
 		}
 	} else {
 		std_cout_mutex.lock( );
-		QString msg( u8"(进程 id :%1, 线程 id : %2 ) 导出结果失败 : \"%3\" => (数量为 : %4)" );
+		QString msg( u8"(进程 id : %1 , 线程 id : %2 ) 导出结果失败 : \"%3\" => (数量为 : %4)" );
 		std::stringstream ss;
 		ss << std::this_thread::get_id( );
 		msg = msg.arg( applicationPid ).arg( QString::fromStdString( ss.str( ) ) ).arg( all_file_path_name_name ).arg( writeCount );
@@ -1445,12 +1514,12 @@ void writeDisk( QMutex &disk_mute, QMutex &count_mute, QMutex &std_cout_mutex, c
 				writeFile.write( allContents.toUtf8( ) );
 				writeFile.close( );
 				std_cout_mutex.lock( );
-				std::cout << u8"(进程 id : " << std::to_string( applicationPid ) << u8", 线程 id : " << std::this_thread::get_id( ) << u8" ) => [ " << callFunctionName << u8" ]导出结果 => \"" << all_file_path_name_name.toStdString( ) << u8"\" => (数量为 : " << writeCount << u8" )" << std::endl;
+				std::cout << u8"(进程 id : " << std::to_string( applicationPid ) << u8", 线程 id : " << std::this_thread::get_id( ) << u8" ) => [ " << callFunctionName << u8" ]导出结果 => \"" << all_file_path_name_name.toStdString( ) << u8"\" => (数量为 : " << writeCount << u8" )" << "\t: " << getRunSepSecAndMillAndMinAndHourToStdString( ) << std::endl;
 				std_cout_mutex.unlock( );
 			}
 		} else {
 			std_cout_mutex.lock( );
-			QString msg( u8"(进程 id :%1, 线程 id : %2 ) 导出结果失败 : \"%3\" => (数量为 : %4)" );
+			QString msg( u8"(进程 id : %1 , 线程 id : %2 ) 导出结果失败 : \"%3\" => (数量为 : %4)" );
 			std::stringstream ss;
 			ss << std::this_thread::get_id( );
 			msg = msg.arg( applicationPid ).arg( QString::fromStdString( ss.str( ) ) ).arg( all_file_path_name_name ).arg( writeCount );
@@ -1459,7 +1528,7 @@ void writeDisk( QMutex &disk_mute, QMutex &count_mute, QMutex &std_cout_mutex, c
 		}
 	} else {
 		std_cout_mutex.lock( );
-		QString msg( u8"(进程 id :%1, 线程 id : %2 ) 导出查找结果失败 : \"%3\" => (无法创建文件)" );
+		QString msg( u8"(进程 id : %1 , 线程 id : %2 ) 导出查找结果失败 : \"%3\" => (无法创建文件)" );
 		std::stringstream ss;
 		ss << std::this_thread::get_id( );
 		msg = msg.arg( applicationPid ).arg( QString::fromStdString( ss.str( ) ) ).arg( all_file_path_name_name );
@@ -1521,7 +1590,7 @@ void rmoveExportPath( const std::vector< QString > &exis_legitimate_out_dir_path
 		QFileInfo removePathFileInfo( pathStart + exportAllDirMidName );
 		if( removePathFileInfo.exists( ) ) {
 			QString absoluteFilePath = removePathFileInfo.absoluteFilePath( );
-			outStdCountStreamMsg( stdCoutMutex, callFunctionName, QString( u8"(进程 id :%1) 删除路径 -> %2" ).arg( applicationPid ).arg( absoluteFilePath ).toStdString( ), callFileName, line );
+			Out_Std_Count_Stream_Msg_MACRO( stdCoutMutex, callFunctionName, QString( u8"删除路径 -> %1" ).arg( absoluteFilePath ).toStdString( ) );
 			if( removePathFileInfo.isFile( ) )
 				QFile( absoluteFilePath ).remove( );
 			else
@@ -1530,7 +1599,7 @@ void rmoveExportPath( const std::vector< QString > &exis_legitimate_out_dir_path
 		removePathFileInfo.setFile( pathStart + exportFindDirMidName );
 		if( removePathFileInfo.exists( ) ) {
 			QString absoluteFilePath = removePathFileInfo.absoluteFilePath( );
-			outStdCountStreamMsg( stdCoutMutex, callFunctionName, QString( u8"(进程 id :%1) 删除路径 -> %2" ).arg( applicationPid ).arg( absoluteFilePath ).toStdString( ), callFileName, line );
+			Out_Std_Count_Stream_Msg_MACRO( stdCoutMutex, callFunctionName, QString( u8"删除路径 -> %1" ).arg( absoluteFilePath ).toStdString( ) );
 			if( removePathFileInfo.isFile( ) )
 				QFile( absoluteFilePath ).remove( );
 			else
@@ -1556,11 +1625,11 @@ void dbReadWriteChanger( const std::shared_ptr< cylStd::ArgParser > &arg_parser 
 			}
 		}
 		if( !hasExOption )
-			ErrorCout_MACRO( QString( u8"(进程 id :%1) 过期选项发生错误，请检查 -ex 是否发生错误" ).arg(applicationPid) );
+			ErrorCout_MACRO( QString( u8"(进程 id : %1 ) 过期选项发生错误，请检查 -ex 是否发生错误" ).arg(applicationPid) );
 	}
 	auto exisDbFilePath = getOptionExisFilePath( arg_parser, "-rdb", ".db" );
 	if( exisDbFilePath.size( ) == 0 ) {
-		ErrorCout_MACRO( QString(u8"(进程 id :%1) 数据库路径错误，请检查 -rdb 指定的路径是否正确").arg(applicationPid ) );
+		ErrorCout_MACRO( QString(u8"(进程 id : %1 ) 数据库路径错误，请检查 -rdb 指定的路径是否正确").arg(applicationPid ) );
 		return; // 不存在可读数据库
 	}
 
@@ -1580,12 +1649,12 @@ void dbReadWriteChanger( const std::shared_ptr< cylStd::ArgParser > &arg_parser 
 	std::shared_ptr< cylHtmlTools::HtmlWorkThreadPool > readJumpSubKeyThreadpool = getFindKeyFileKeyToVector( arg_parser, "-ijtsnf", subJumpKeys, stdCoutMutex, insterReadFindKeyMapmutex );
 
 	if( readJumpEquKeyThreadpool == nullptr )
-		ErrorCout_MACRO( QString( u8"(进程 id :%1) 没发现 -ijtenf 功能任务需求" ).arg(applicationPid ) );
+		ErrorCout_MACRO( QString( u8"(进程 id : %1 ) 没发现 -ijtenf 功能任务需求" ).arg(applicationPid ) );
 	else
 		readJumpEquKeyThreadpool->start( cylHtmlTools::HtmlWorkThreadPool::getSystemCupCount( ) * 2 );
 
 	if( readJumpSubKeyThreadpool == nullptr )
-		ErrorCout_MACRO( QString( u8"(进程 id :%1) 没发现 -ijtsnf 功能任务需求" ).arg( applicationPid) );
+		ErrorCout_MACRO( QString( u8"(进程 id : %1 ) 没发现 -ijtsnf 功能任务需求" ).arg( applicationPid) );
 	else
 		readJumpSubKeyThreadpool->start( cylHtmlTools::HtmlWorkThreadPool::getSystemCupCount( ) * 2 );
 
@@ -1616,7 +1685,7 @@ void dbReadWriteChanger( const std::shared_ptr< cylStd::ArgParser > &arg_parser 
 	std::shared_ptr< cylHtmlTools::HtmlWorkThreadPool > readDBThreadpool = getDBNovelsInfo( exisDbFilePath, stdCoutMutex, insterNovelVectosMutex, novelInfosMap, novelCount, dbNovelCount, expire, hasExOption, *equJumpKeys, *subJumpKeys, isDBPathAtive );
 
 	if( readDBThreadpool == nullptr ) {
-		ErrorCout_MACRO( QString( u8"(进程 id :%1) -rdb 功能任务需求任务失败，请与开发者联系" ).arg( applicationPid ) );
+		ErrorCout_MACRO( QString( u8"(进程 id : %1 ) -rdb 功能任务需求任务失败，请与开发者联系" ).arg( applicationPid ) );
 		return;
 	}
 	readDBThreadpool->start( );
@@ -1642,11 +1711,11 @@ void dbReadWriteChanger( const std::shared_ptr< cylStd::ArgParser > &arg_parser 
 			qApp->processEvents( );
 		size = exisFindFilePathMapKey.size( );
 		if( size == 0 )
-			ErrorCout_MACRO( QString("(进程 id :%1) 读取查找配置文件失败，请检查选项是否有效").arg( applicationPid ) );
+			ErrorCout_MACRO( QString("(进程 id : %1 ) 读取查找配置文件失败，请检查选项是否有效").arg( applicationPid ) );
 	}
 
 	if( !isDBPathAtive ) {
-		ErrorCout_MACRO( QString( u8"(进程 id :%1) 数据库无法获取小说信息，请检查 -rdb 是否发生错误" ).arg( applicationPid ) );
+		ErrorCout_MACRO( QString( u8"(进程 id : %1 ) 数据库无法获取小说信息，请检查 -rdb 是否发生错误" ).arg( applicationPid ) );
 		return;
 	}
 
@@ -1656,12 +1725,12 @@ void dbReadWriteChanger( const std::shared_ptr< cylStd::ArgParser > &arg_parser 
 		if( expireOption )
 			Out_Std_Count_Stream_Msg_MACRO( stdCoutMutex, callFunctionName, QString(u8"已经实现删除过期小说功能，删除单位：%1 天。所有数据库小说数量 : [ %2 ]").arg( expire).arg( dbNovelCount ).toStdString( ) );
 		else
-			ErrorCout_MACRO( QString( u8"(进程 id :%1) 输出路径设置错误，请检查 -w 是否发生错误" ).arg( applicationPid ) );
+			ErrorCout_MACRO( QString( u8"(进程 id : %1 ) 输出路径设置错误，请检查 -w 是否发生错误" ).arg( applicationPid ) );
 		return;
 	}
 	Out_Std_Count_Stream_Msg_MACRO( stdCoutMutex, callFunctionName, QString(u8"所有数据库已存量[ %1 ], 累计有效小说数量 :[ %2 ]").arg( dbNovelCount ).arg( novelCount).toStdString( ) );
 	if( novelCount == 0 ) {
-		ErrorCout_MACRO( QString( u8"(进程 id :%1) 数据库过滤后导出小说数量为 0" ).arg( applicationPid ) );
+		ErrorCout_MACRO( QString( u8"(进程 id : %1 ) 数据库过滤后导出小说数量为 0" ).arg( applicationPid ) );
 		auto rmOption = arg_parser->getOptionValues( "-rm" );
 		if( rmOption )
 			rmoveExportPath( exisLegitimateOutDirPath, stdCoutMutex, callFunctionName, __LINE__ );
@@ -1673,7 +1742,7 @@ void dbReadWriteChanger( const std::shared_ptr< cylStd::ArgParser > &arg_parser 
 		if( expireOption )
 			Out_Std_Count_Stream_Msg_MACRO( stdCoutMutex, callFunctionName, QString(u8"已经实现删除过期小说功能，删除单位：%1 天。所有数据库小说数量 : [ %2 ]").arg( expire).arg( dbNovelCount ).toStdString( ) );
 		else
-			ErrorCout_MACRO( QString( u8"(进程 id :%1) 导出选项配置错误，请检查 -edb 或 -fkf 是否有有效" ).arg(applicationPid ) );
+			ErrorCout_MACRO( QString( u8"(进程 id : %1 ) 导出选项配置错误，请检查 -edb 或 -fkf 是否有有效" ).arg(applicationPid ) );
 		return;
 	}
 
@@ -1686,7 +1755,7 @@ void dbReadWriteChanger( const std::shared_ptr< cylStd::ArgParser > &arg_parser 
 	if( isExportDbAllNovelInfo ) { // 全导出。-w 选项的 export_all 目录
 		exportDBNovelInfoAllThreadPool = getDBFilterNovelInfo( novelInfosMap, edbNovelInfosWriteMap, stdCoutMutex, insterNovelVectosMutex );
 		if( !exportDBNovelInfoAllThreadPool ) {
-			ErrorCout_MACRO( QString("(进程 id :%1) 全导出功能错误。请联系开发人员反馈").arg( applicationPid ) );
+			ErrorCout_MACRO( QString("(进程 id : %1 ) 全导出功能错误。请联系开发人员反馈").arg( applicationPid ) );
 			return;
 		}
 		exportDBNovelInfoAllThreadPool->start( cylHtmlTools::HtmlWorkThreadPool::getSystemCupCount( ) * 2 );
@@ -1708,7 +1777,7 @@ void dbReadWriteChanger( const std::shared_ptr< cylStd::ArgParser > &arg_parser 
 	if( size ) {// 查找导出。-w 选项的 export_find  目录
 		exportDBNovelInfoFindThreadPool = getDBFindNovelInfo( novelInfosMap, exisFindFilePathMapKey, stdCoutMutex, mergeFindKeysTypesNovelInfosMapMutex, mergeFindKeysTypesNovelInfosMap, mergeFindKeysDbsNovelInfosMapMutex, mergeFindKeysDbsNovelInfosMap, mergeFindKeysExportKeyNovelInfosMapMutex, mergeFindKeysExportKeyNovelInfosMap, mergeFindKeysExportNovelInfosMapMutex, mergeFindKeysExportNovelInfosMap, insterMapThreadPoolMutex, insterMapThreadPool );
 		if( !exportDBNovelInfoFindThreadPool ) {
-			ErrorCout_MACRO( QString("(进程 id :%1) 查找功能错误。请联系开发人员反馈").arg(applicationPid ) );
+			ErrorCout_MACRO( QString("(进程 id : %1 ) 查找功能错误。请联系开发人员反馈").arg(applicationPid ) );
 			return;
 		}
 		exportDBNovelInfoFindThreadPool->start( );
@@ -1721,12 +1790,12 @@ void dbReadWriteChanger( const std::shared_ptr< cylStd::ArgParser > &arg_parser 
 	if( exportDBNovelInfoFindThreadPool ) {
 		while( !exportDBNovelInfoFindThreadPool->isOverJob( ) )
 			qApp->processEvents( );
-		Out_Std_Count_Stream_Msg_MACRO( stdCoutMutex, callFunctionName, QString(u8"开始使用插入功能").arg( applicationPid).toStdString( ) );
+		Out_Std_Count_Stream_Msg_MACRO( stdCoutMutex, callFunctionName, QString(u8"开始使用插入功能").toStdString( ) );
 		// 开始保存到映射列表
 		insterMapThreadPool->start( );
 		while( !insterMapThreadPool->isOverJob( ) )
 			qApp->processEvents( );
-		Out_Std_Count_Stream_Msg_MACRO( stdCoutMutex, callFunctionName, QString(u8"合并所有匹配小说").arg( applicationPid).toStdString( ) );
+		Out_Std_Count_Stream_Msg_MACRO( stdCoutMutex, callFunctionName, QString(u8"合并所有匹配小说").toStdString( ) );
 		mergeFindMaps( mergeFindKeysNovelInfosMap, // 合并到该对象
 				mergeFindKeysTypesNovelInfosMap, // 类型映射对象
 				mergeFindKeysDbsNovelInfosMap, // 数据库映射对象
@@ -1737,7 +1806,7 @@ void dbReadWriteChanger( const std::shared_ptr< cylStd::ArgParser > &arg_parser 
 	size_t edbResultNovelCount = edbNovelInfosWriteMap->size( ); // -edb 返回小说数量
 	size_t findResultNovelCount = mergeFindKeysNovelInfosMap.size( ); // -fkf 返回小说数量
 	if( edbResultNovelCount == 0 && findResultNovelCount == 0 ) {
-		ErrorCout_MACRO( QString("(进程 id :%1) 不存在导出的列表。如与信息不匹配，请联系开发人员反馈").arg( applicationPid) );
+		ErrorCout_MACRO( QString("(进程 id : %1 ) 不存在导出的列表。如与信息不匹配，请联系开发人员反馈").arg( applicationPid) );
 		return;
 	}
 	Out_Std_Count_Stream_Msg_MACRO( stdCoutMutex, callFunctionName, QString(u8"发现导出返回:[ %1 ] 发现查找返回:[ %2 ]\n").arg( edbResultNovelCount ).arg( findResultNovelCount).toStdString( ) );

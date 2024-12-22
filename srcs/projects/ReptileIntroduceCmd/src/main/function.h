@@ -25,6 +25,76 @@
 
 #include "dateTime/DateTime.h"
 
+
+class Time {
+private:
+	using Ratio = std::ratio< 1, 10000000 >;
+	using Duration = std::chrono::duration< long long, Ratio >;
+	using Clock = std::chrono::system_clock;
+	using TimePoint = std::chrono::time_point< Clock >;
+	TimePoint current_time;
+public:
+	Time( ) : Time( Clock::now( ) ) {
+	}
+	explicit Time( const TimePoint &current_time )
+		: current_time( current_time ) { }
+
+	template< class Conver_Duration_Type >
+	Conver_Duration_Type toDuration( ) const {
+		return std::chrono::duration_cast< Conver_Duration_Type >( current_time.time_since_epoch( ) );
+	}
+	/// @brief 格式化输出-utc 时间 \n
+	/// %Y - xxxx 年 \n
+	/// %m - xx 月 \n
+	/// %d - xx 日 \n
+	/// %H - xx 小时 \n
+	/// %M - xx 分钟 \n
+	/// %S - xx 秒	 \n
+	/// @see std::put_time
+	/// @param formatting_string 格式化字符串
+	/// @return 格式化后的字符串
+	std::string toFormattingUtcString( const std::string &formatting_string ) {
+		std::time_t tt = Clock::to_time_t( current_time );
+		std::tm tm = *std::gmtime( &tt ); //GMT (UTC)
+		std::stringstream ss;
+		ss << std::put_time( &tm, formatting_string.c_str( ) );
+		return ss.str( );
+	}
+	/// @brief 格式化输出-本地时间 \n
+	/// %Y - xxxx 年 \n
+	/// %m - xx 月 \n
+	/// %d - xx 日 \n
+	/// %H - xx 小时 \n
+	/// %M - xx 分钟 \n
+	/// %S - xx 秒	 \n
+	/// @see std::put_time
+	/// @param formatting_string 格式化字符串
+	/// @return 格式化后的字符串
+	std::string toFormattingLocalString( const std::string &formatting_string ) {
+		std::time_t tt = Clock::to_time_t( current_time );
+		std::tm tm = *std::localtime( &tt ); //Locale time-zone, usually UTC by default.
+		std::stringstream ss;
+		ss << std::put_time( &tm, formatting_string.c_str( ) );
+		return ss.str( );
+	}
+
+	/// @brief 获取时间点
+	/// @return 时间点
+	TimePoint getCurrentTime( ) const { return current_time; }
+	/// @brief 设置新的时间点
+	/// @param current_time 新的时间点
+	void setCurrentTime( const TimePoint &current_time ) { this->current_time = current_time; }
+	/// @brief 更新当前时间
+	void updateTimeDate( ) {
+		current_time = Clock::now( );
+	}
+	Time operator-( const Time &right ) {
+		Duration duration = this->current_time - right.current_time;
+		auto ms = std::chrono::duration_cast< std::chrono::milliseconds >( duration );
+		return Time( TimePoint( ms ) );
+	}
+};
+
 using NovelInfo_Shared = interfacePlugsType::INovelInfo_Shared; // 小说信息指针
 using NovelInfoKeyPair = std::pair< NovelInfo_Shared, QStringList >; // 小说关键字映射
 using NovelInfoKeyPairVector = std::vector< NovelInfoKeyPair >; // 多小说映射
@@ -44,12 +114,42 @@ extern std::string callFileName;
 /// </summary>
 extern std::chrono::seconds duration;
 extern qint64 applicationPid; // app id
+extern Time runTime; // app 起始运行时间
 /// <summary>
 /// 获取编译信息
 /// </summary>
 /// <returns>编译信息</returns>
 QString getBuilderInfo( );
-
+/// @brief 获取基于运行时间后的秒数
+/// @return 秒
+std::chrono::seconds getRunSepSec( );
+/// @brief 获取基于运行时间后的毫秒
+/// @return 毫秒
+std::chrono::milliseconds getRunSepMill( );
+/// @brief 获取基于运行时间后的分钟
+/// @return 毫秒
+std::chrono::minutes getRunSepMin( );
+/// @brief 获取基于运行时间的偏移秒钟与毫秒
+/// @param sec 返回的秒
+/// @param mill 返回的毫秒
+/// @return 失败返回 false
+bool getRunSepSecAndMill( size_t &sec, size_t &mill );
+/// @brief 获取分钟、秒钟与毫秒
+/// @param min 分钟
+/// @param sec 秒钟
+/// @param mill 毫秒
+/// @return 失败返回 false
+bool getRunSepSecAndMillAndMin( size_t &min, size_t &sec, size_t &mill );
+/// @brief 获取基于运行时间的偏移时、分、秒以及毫秒
+/// @param hour 时
+/// @param min 分
+/// @param sec 秒
+/// @param mill 毫秒
+/// @return 失败返回false
+bool getRunSepSecAndMillAndMinAndHour( size_t &hour, size_t &min, size_t &sec, size_t &mill );
+/// @brief 获取基于运行时间便宜时间的字符串
+/// @return 字符串
+std::string getRunSepSecAndMillAndMinAndHourToStdString( );
 /// @brief 删除导出目录（-w 指定生成的 exis_legitimate_out_dir_path 路径对象）
 /// @param exis_legitimate_out_dir_path 起始路径列表
 /// @param stdCoutMutex 输出锁
@@ -156,10 +256,10 @@ std::vector< QString > splitMultipleStrList( const QString &split_str_obj, const
 /// </summary>
 /// <param name="std_cout_mutex">输出锁</param>
 /// <param name="call_function_name">调用函数名称</param>
-/// <param name="work_name">工作名称</param>
+/// <param name="work_msg">输出消息</param>
 /// <param name="file_name">调用文件名</param>
 /// <param name="line">调用行号</param>
-void outStdCountStreamMsg( QMutex &std_cout_mutex, const std::string &call_function_name, const std::string &work_name, const std::string &file_name, const size_t line );
+void outStdCountStreamMsg( QMutex &std_cout_mutex, const std::string &call_function_name, const std::string &work_msg, const std::string &file_name, const size_t line );
 
 /// <summary>
 /// 获取文本文件，并且切分到列表
@@ -558,10 +658,14 @@ inline bool compQString( const QString &left, const QString &right ) {
 }
 
 inline void errorCout( const std::string &msg, const std::string &erro_file, const std::string &error_call, const size_t error_line ) {
-	std::cerr << "\n===============\n\t错误文件: " << erro_file << u8"\n\t调用名称: " << error_call << u8"\n\t信息行数: " << error_line << u8"\n\t错误信息: " << msg << "\n===============" << std::endl;
+	size_t sec, mill;
+	getRunSepSecAndMill( sec, mill );
+	std::cerr << "\n===============\n\t错误文件: " << erro_file << u8"\n\t调用名称: " << error_call << u8"\n\t信息行数: " << error_line << u8"\n\t错误信息: " << msg << "\t: " << getRunSepSecAndMillAndMinAndHourToStdString( ) << "\n===============" << std::endl;
 }
 inline void errorCout( const char *msg, const std::string &erro_file, const std::string &error_call, const size_t error_line ) {
-	std::cerr << "\n===============\n\t错误文件: " << erro_file << u8"\n\t调用名称: " << error_call << u8"\n\t信息行数: " << error_line << u8"\n\t错误信息: " << msg << "\n===============" << std::endl;
+	size_t sec, mill;
+	getRunSepSecAndMill( sec, mill );
+	std::cerr << "\n===============\n\t错误文件: " << erro_file << u8"\n\t调用名称: " << error_call << u8"\n\t信息行数: " << error_line << u8"\n\t错误信息: " << msg << "\t: " << getRunSepSecAndMillAndMinAndHourToStdString( ) << "\n===============" << std::endl;
 }
 inline void errorCoutPath( const QString &msg, const QString &erro_file, const QString &error_call, const size_t error_line ) {
 	errorCout( msg.toStdString( ), instance_function::getCmakeRootPathBuilderFilePath( erro_file ).toStdString( ), error_call.toStdString( ), error_line );
@@ -573,14 +677,16 @@ inline void errorCoutPath( const QString &msg, const QString &erro_file, const Q
 /// <param name="mod_work_count">剩余工作数</param>
 /// <param name="current_work_count">当前工作数</param>
 /// <param name="call_function_name">调用函数名称</param>
-/// <param name="work_name">工作名称</param>
+/// <param name="work_msg">输出消息</param>
 /// <param name="file_name">调用文件名</param>
 /// <param name="line">调用行号</param>
-inline void outStdCountStreamMsg( QMutex &std_cout_mutex, const size_t &mod_work_count, const size_t &current_work_count, const std::string &call_function_name, const std::string &work_name, const std::string &file_name, const size_t line ) {
+inline void outStdCountStreamMsg( QMutex &std_cout_mutex, const size_t &mod_work_count, const size_t &current_work_count, const std::string &call_function_name, const std::string &work_msg, const std::string &file_name, const size_t line ) {
 	std_cout_mutex.lock( );
+	size_t sec, mill;
+	getRunSepSecAndMill( sec, mill );
 	std::stringstream msg;
-	msg << u8"\n(进程 id : " << applicationPid << u8", 线程 id : " << std::this_thread::get_id( ) << u8" ) => [ " << call_function_name << u8" ] " << work_name << u8" => 剩余工作数[" << mod_work_count << u8"]:正在工作数[" << current_work_count << u8"] << " << file_name << " : " << line;
-	std::cout << msg.str( ) << std::endl;
+	msg << u8"\n(进程 id : " << applicationPid << u8", 线程 id : " << std::this_thread::get_id( ) << u8" ) => [ " << call_function_name << u8" ] " << work_msg << u8" => 剩余工作数[" << mod_work_count << u8"]:正在工作数[" << current_work_count << u8"] << " << file_name << " : " << line;
+	std::cout << msg.str( ) << "\t: " << getRunSepSecAndMillAndMinAndHourToStdString( ) << "\n===============" << std::endl;
 	std_cout_mutex.unlock( );
 }
 
@@ -609,7 +715,7 @@ inline QString getFileBaseName( const QString &filePathInfo ) {
 
 /// @brief 使用 std::cout 输出日志信息
 /// @param Std_Cout_Mutex 输出锁
-/// @param Work_Count 剩余工作数量
+/// @param Mod_Work_Count 剩余工作数量
 /// @param Current_Work_Count 正在工作数量
 /// @param Call_Function_Name 调用函数名称
 /// @param Msg 输出消息
@@ -618,7 +724,6 @@ inline QString getFileBaseName( const QString &filePathInfo ) {
 
 /// @brief 使用 std::cout 输出日志信息
 /// @param Std_Cout_Mutex 输出锁
-/// @param Work_Count 剩余工作数量
 /// @param Current_Work_Count 正在工作数量
 /// @param Call_Function_Name 调用函数名称
 /// @param Msg 输出消息
