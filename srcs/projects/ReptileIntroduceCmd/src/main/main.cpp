@@ -12,9 +12,9 @@ int main( int argc, char *argv[ ] ) {
 
 	QCoreApplication application( argc, argv ); // 初始化程序
 	applicationPid = qApp->applicationPid( );
-	auto currentTime = QDateTime::currentDateTime( );
-	std::cout << u8"\n=============\n=============\n=============\n开始时间 : " << currentTime.toString( "hh:mm:ss.z" ).toStdString( ) << " \n=============\n=============\n=============\n" << std::endl;
+
 	std::shared_ptr< cylStd::ArgParser > argParser = cylStd::ArgParser::parser( argc, argv ); // 命令行参数解析对象
+	showStartRunTime( argParser );
 	auto pairs = argParser->getPairs( );
 	size_t pairsSize = pairs.size( );
 	if( pairsSize == 1 ) {
@@ -34,15 +34,8 @@ int main( int argc, char *argv[ ] ) {
 	checkKeyFile( argParser );
 	// 数据库操作
 	dbReadWriteChanger( argParser );
-	auto dateTime = QDateTime::currentDateTime( );
 
-	std::cout << u8"\n=============\n=============\n=============\n结束时间 : " << dateTime.toString( "hh:mm:ss.z" ).toStdString( ) << " \n=============\n=============\n=============\n" << std::endl;
-	qint64 dateTimeMSecsSinceEpoch = dateTime.toMSecsSinceEpoch( ); // 获取毫秒
-	qint64 currentTimeMSecsSinceEpoch = currentTime.toMSecsSinceEpoch( ); // 获取毫秒
-	size_t msecsSinceEpoch = abs( dateTimeMSecsSinceEpoch - currentTimeMSecsSinceEpoch );
-	size_t s = msecsSinceEpoch / 1000 % 60; // 获得秒
-	size_t m = msecsSinceEpoch / 1000 / 60 % 60; // 获得分钟
-	size_t h = msecsSinceEpoch / 1000 / 60 / 60; // 获得小时
-	std::cout << u8"\n=============\n=============\n=============\n耗时 : " << h << u8" 时 " << m << u8" 分 " << s << u8" 秒 " << msecsSinceEpoch % 60 << " 毫秒\n=============\n=============\n=============\n" << std::endl;
+	showEndRunTime( argParser );
+	showRunTime( argParser );
 	return 0;
 }

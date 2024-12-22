@@ -285,11 +285,14 @@ QString getFileBaseName( const QFileInfo &filePathInfo );
 /// <param name="ref_count">引用计数</param>
 /// <param name="novel_plug_paths">插件路径</param>
 /// <param name="request_type_name_options">请求名称选项参数</param>
+/// <param name="is_nsts_option">是否使用输出开始运行时间选项 - false 表示不输出</param>
+/// <param name="is_nste_option">是否使用输出结束运行时间选项 - false 表示不输出</param>
+/// <param name="is_nsnstr_option">是否使用输出运行市场 - false 表示不输出</param>
 /// <param name="call_function_file_path">调用该函数的文件路径-错误时使用</param>
 /// <param name="call_function_name">调用该函数的函数名称-错误时使用</param>
 /// <param name="call_function_line">调用该函数的行数-错误时使用</param>
 /// <param name="out_path_values">请求完成路径选项</param>
-std::vector< QProcess * > runPluginToSubProcess( const QString &app_path, QMutex &qt_mutex, size_t &ref_count, const std::vector< QString > &novel_plug_paths, const QString &request_type_name_options, const QString &out_path_values, const std::string &call_function_file_path, const char *call_function_name, const size_t &call_function_line );
+std::vector< QProcess * > runPluginToSubProcess( const QString &app_path, QMutex &qt_mutex, size_t &ref_count, const std::vector< QString > &novel_plug_paths, const QString &request_type_name_options, bool is_nsts_option, bool is_nste_option, bool is_nsnstr_option, const QString &out_path_values, const std::string &call_function_file_path, const char *call_function_name, const size_t &call_function_line );
 /// <summary>
 /// 在当前进程中运行爬虫
 /// </summary>
@@ -575,7 +578,15 @@ std::shared_ptr< cylHtmlTools::HtmlWorkThreadPool > writeDiskInForInductionNovel
 		QMutex &disk_mute,
 		QMutex &count_mute,
 		size_t &write_novel_count );
-
+/// @brief 显示运行时间
+/// @param arg_parser 运行时参数对象
+void showRunTime( const std::shared_ptr< cylStd::ArgParser > &arg_parser );
+/// @brief 显示开始运行时间
+/// @param arg_parser 运行时参数对象
+void showStartRunTime( const std::shared_ptr< cylStd::ArgParser > &arg_parser );
+/// @brief 显示结束运行时间
+/// @param arg_parser 运行时参数对象
+void showEndRunTime( const std::shared_ptr< cylStd::ArgParser > &arg_parser );
 /// <summary>
 /// 合并映射对象
 /// </summary>
@@ -686,7 +697,7 @@ inline void outStdCountStreamMsg( QMutex &std_cout_mutex, const size_t &mod_work
 	getRunSepSecAndMill( sec, mill );
 	std::stringstream msg;
 	msg << u8"\n(进程 id : " << applicationPid << u8", 线程 id : " << std::this_thread::get_id( ) << u8" ) => [ " << call_function_name << u8" ] " << work_msg << u8" => 剩余工作数[" << mod_work_count << u8"]:正在工作数[" << current_work_count << u8"] << " << file_name << " : " << line;
-	std::cout << msg.str( ) << "\t: " << getRunSepSecAndMillAndMinAndHourToStdString( ) << "\n===============" << std::endl;
+	std::cout << msg.str( ) << "\t: " << getRunSepSecAndMillAndMinAndHourToStdString( ) << std::endl;
 	std_cout_mutex.unlock( );
 }
 

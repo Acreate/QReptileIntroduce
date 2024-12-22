@@ -502,10 +502,13 @@ QString getFileBaseName( const QFileInfo &filePathInfo ) {
 }
 
 
-std::vector< QProcess * > runPluginToSubProcess( const QString &app_path, QMutex &qt_mutex, size_t &ref_count, const std::vector< QString > &novel_plug_paths, const QString &request_type_name_options, const QString &out_path_values, const std::string &call_function_file_path, const char *call_function_name, const size_t &call_function_line ) {
+std::vector< QProcess * > runPluginToSubProcess( const QString &app_path, QMutex &qt_mutex, size_t &ref_count, const std::vector< QString > &novel_plug_paths, const QString &request_type_name_options, bool is_nsts_option, bool is_nste_option, bool is_nsnstr_option, const QString &out_path_values, const std::string &call_function_file_path, const char *call_function_name, const size_t &call_function_line ) {
 	QStringList cmd; // 命令行
 	std::vector< QProcess * > result; // 返回进程列表
 	QString currentPath = QDir::currentPath( ); // 当前工作路径
+	is_nsts_option = !is_nsts_option;
+	is_nste_option = !is_nste_option;
+	is_nsnstr_option = !is_nsnstr_option;
 	for( const QString &plugFilePath : novel_plug_paths ) {
 		auto subProcess = new QProcess;
 		cmd.append( " -l " );
@@ -519,7 +522,12 @@ std::vector< QProcess * > runPluginToSubProcess( const QString &app_path, QMutex
 
 		cmd.append( " -t " );
 		cmd.append( request_type_name_options );
-
+		if( is_nsts_option )
+			cmd.append( " -nsts " );
+		if( is_nste_option )
+			cmd.append( " -nste " );
+		if( is_nsnstr_option )
+			cmd.append( " -nstr " );
 		QObject::connect( subProcess,
 				&QProcess::readyReadStandardOutput,
 				[=]( ) {
@@ -686,7 +694,10 @@ void runRequestDownloadPlugs( std::shared_ptr< cylStd::ArgParser > &args ) {
 	for( auto &optionValue : requestNamesTypeFilePaths )
 		typeNameOption.append( optionValue ).append( " " );
 	auto runPlug = runPluginToThisProcess( mutex, count, requestOutPath, nameTypes, firstPlugFilePath, callFileName, __FUNCTION__, __LINE__ );
-	auto subProcessRunPlug = runPluginToSubProcess( appFilePath, mutex, count, runPlugFilesPaths, typeNameOption, requestOutPath, callFileName, __FUNCTION__, __LINE__ );
+	auto isNstsOption = args->getOptionValues( "-dssts" ); // 存在，则输出子进程的开始时间
+	auto isNsteOption = args->getOptionValues( "-dsste" ); // 存在，则输出子进程的结束时间
+	auto isNnstrOption = args->getOptionValues( "-dsnstr" ); // 存在，则输出子进程的结束时间
+	auto subProcessRunPlug = runPluginToSubProcess( appFilePath, mutex, count, runPlugFilesPaths, typeNameOption, ( isNstsOption ? true : false ), ( isNsteOption ? true : false ), ( isNnstrOption ? true : false ), requestOutPath, callFileName, __FUNCTION__, __LINE__ );
 	// count 记录任务数量，任务为 0 时，退出循环，主进程重新掌控 cpu 时间
 	while( count )
 		qApp->processEvents( );
@@ -1583,6 +1594,25 @@ std::shared_ptr< cylHtmlTools::HtmlWorkThreadPool > writeDiskInForInductionNovel
 		Out_Std_Thread_Pool_Count_Stream_Msg_MACRO( std_cout_mutex, workCount, currentWorkCount, callFunctionName, u8"正在写入磁盘" );
 	} );
 	return resultPool;
+}
+void showRunTime( const std::shared_ptr< cylStd::ArgParser > &arg_parser ) {
+	if( arg_parser->getOptionValues( "-nstr" ) )
+		return;
+	auto sepSecAndMillAndMinAndHourToStdString = getRunSepSecAndMillAndMinAndHourToStdString( );
+	std::cout << u8"\n============= 进程 id : " << applicationPid << "\n=============\n=============\n耗时 : " << sepSecAndMillAndMinAndHourToStdString << " \n=============\n=============\n=============\n" << std::endl;
+}
+void showStartRunTime( const std::shared_ptr< cylStd::ArgParser > &arg_parser ) {
+	if( arg_parser->getOptionValues( "-nsts" ) )
+		return;
+	auto currentTime = QDateTime::currentDateTime( );
+	std::cout << u8"\n============= 进程 id : " << applicationPid << "\n=============\n=============\n开始时间 : " << currentTime.toString( "hh:mm:ss.z" ).toStdString( ) << " \n=============\n=============\n=============\n" << std::endl;
+}
+void showEndRunTime( const std::shared_ptr< cylStd::ArgParser > &arg_parser ) {
+	if( arg_parser->getOptionValues( "-nste" ) )
+		return;
+	auto dateTime = QDateTime::currentDateTime( );
+	std::cout << u8"\n============= 进程 id : " << applicationPid << "\n=============\n=============\n结束时间 : " << dateTime.toString( "hh:mm:ss.z" ).toStdString( ) << " \n=============\n=============\n=============\n" << std::endl;
+
 }
 void rmoveExportPath( const std::vector< QString > &exis_legitimate_out_dir_path, QMutex &stdCoutMutex, const std::string &callFunctionName, const size_t &line ) {
 	for( auto removePath : exis_legitimate_out_dir_path ) {
