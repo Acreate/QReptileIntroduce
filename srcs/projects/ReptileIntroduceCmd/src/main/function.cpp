@@ -950,64 +950,83 @@ std::shared_ptr< cylHtmlTools::HtmlWorkThreadPool > getDBNovelsInfo( const std::
 					size_t size = 0;
 					// 是否读取到数据库
 					if( novelInfoVectorShared ) {
-						inster_novel_vector_map_mutex.lock( );
-						db_novel_count += novelInfoVectorShared->size( );
-						inster_novel_vector_map_mutex.unlock( );
-						is_db_path_ative = true;
-						// 是否存在删除过期选项
-						if( has_ex_option ) {
-							auto isExpire = NovelDBJob::novelVectorIsExpire( expire, *novelInfoVectorShared );
-							if( isExpire.size( ) > 0 ) {
-								auto novelUrlVector = NovelDBJob::novelVectorGetNovleUrl( isExpire );
-								NovelDBJob::removeNovelVectorDB( nullptr, absolutePath, fileName, novelUrlVector );
-								*novelInfoVectorShared = NovelDBJob::formVectorINovelInfoRemoveVectorINovelInfo( *novelInfoVectorShared, isExpire );
+						size_t readDBNovelInfoCount = novelInfoVectorShared->size( );
+						while( readDBNovelInfoCount != 0 ) {
+							// 是否存在删除过期选项
+							if( has_ex_option ) {
+								auto isExpire = NovelDBJob::novelVectorIsExpire( expire, *novelInfoVectorShared );
+								if( isExpire.size( ) > 0 ) {
+									auto novelUrlVector = NovelDBJob::novelVectorGetNovleUrl( isExpire );
+									NovelDBJob::removeNovelVectorDB( nullptr, absolutePath, fileName, novelUrlVector );
+									*novelInfoVectorShared = NovelDBJob::formVectorINovelInfoRemoveVectorINovelInfo( *novelInfoVectorShared, isExpire );
+								}
+							}
+							readDBNovelInfoCount = novelInfoVectorShared->size( );
+							inster_novel_vector_map_mutex.lock( );
+							db_novel_count += readDBNovelInfoCount;
+							is_db_path_ative = true;
+							inster_novel_vector_map_mutex.unlock( );
+							if( readDBNovelInfoCount == 0 )
+								break;
+							auto jumpEquNameVectorDataSize = jump_equ_name_len_map.size( ); // 相等过滤
+							auto jumpSubNameVectorDataSize = jump_sub_name_len_map.size( ); // 子过滤
+							if( jumpSubNameVectorDataSize || jumpEquNameVectorDataSize ) {
+								// 存在过滤，则开始过滤
+								std::shared_ptr< NovelDBJob::NovelInfoVector > filterVector = std::make_shared< NovelDBJob::NovelInfoVector >( );
+								QMutex vectorInsterMutex;
+								cylHtmlTools::HtmlWorkThreadPool threadPool;
+								threadPool.setCallSepMilliseconds( duration );
+								threadPool.setIdleTimeCall( [&,callFunctionName]( cylHtmlTools::HtmlWorkThreadPool *html_work_thread_pool, const unsigned long long &modWork, const unsigned long long &currentWork ) {
+									Out_Std_Thread_Pool_Count_Stream_Msg_MACRO( std_cout_mutex, modWork, currentWork, callFunctionName, QString(u8"数据库( %1 )过滤小说名称进行中").arg( absoluteFilePath).toStdString( ) );
+								} );
+								for( auto &novel : *novelInfoVectorShared )
+									threadPool.appendWork( [novel,
+												jump_equ_name_len_map, jumpEquNameVectorDataSize,
+												jump_sub_name_len_map, jumpSubNameVectorDataSize,
+												&vectorInsterMutex,filterVector]( cylHtmlTools::HtmlWorkThread *html_work_thread ) {
+												interfacePlugsType::HtmlDocString name = novel->novelName; // 小说名称转换为大写
+												name = NovelDBJob::converStringToUpper( name );
+												cylHtmlTools::HtmlStringTools::removeAllSpace( name );
+												if( !filterNovelName( name, jump_equ_name_len_map, jump_sub_name_len_map ) ) {
+													vectorInsterMutex.lock( );
+													filterVector->emplace_back( novel );
+													vectorInsterMutex.unlock( );
+												}
+											} );
+								threadPool.start( );
+								while( !threadPool.isOverJob( ) )
+									qApp->processEvents( );
+								inster_novel_vector_map_mutex.lock( );
+								inster_novel_vector_map_obj->emplace_back( absoluteFilePath, filterVector );
+								size = filterVector->size( );
+								novel_inster_count += size;
+								inster_novel_vector_map_mutex.unlock( );
+
+							} else {
+								Out_Std_Count_Stream_Msg_MACRO( std_cout_mutex, callFunctionName, QString(u8"数据库( %1 )过滤小说名称进行中").arg( absoluteFilePath).toStdString( ) );
+								inster_novel_vector_map_mutex.lock( );
+								inster_novel_vector_map_obj->emplace_back( absoluteFilePath, novelInfoVectorShared );
+								size = novelInfoVectorShared->size( );
+								novel_inster_count += size;
+								inster_novel_vector_map_mutex.unlock( );
+							}
+							break;
+						}
+						if( readDBNovelInfoCount == 0 ) {						 // 如果数据库数量为 0
+							if( Path::removePath( absoluteFilePath ) ) {
+								QString msg( "( 进程 id : %1 ) 路径 [ %2 ] 加载数量为 0，删除行为成功" );
+								Out_Std_Count_Stream_Msg_MACRO( std_cout_mutex, callFunctionName, msg.arg( applicationPid.c_str( )).arg( absoluteFilePath ).toStdString( ) );
+							} else {
+								std_cout_mutex.lock( );
+								QString msg( "( 进程 id : %1 ) 路径 [ %2 ] 加载数量为 0，删除行为操作失败" );
+								ErrorCout_FunctionName_MACRO( msg.arg( applicationPid.c_str( )).arg( absoluteFilePath ), callFunctionName.c_str( ) );
+								std_cout_mutex.unlock( );
 							}
 						}
-						auto jumpEquNameVectorDataSize = jump_equ_name_len_map.size( ); // 相等过滤
-						auto jumpSubNameVectorDataSize = jump_sub_name_len_map.size( ); // 子过滤
-						if( jumpSubNameVectorDataSize || jumpEquNameVectorDataSize ) { // 存在过滤，则开始过滤
-							std::shared_ptr< NovelDBJob::NovelInfoVector > filterVector = std::make_shared< NovelDBJob::NovelInfoVector >( );
-							QMutex vectorInsterMutex;
-							cylHtmlTools::HtmlWorkThreadPool threadPool;
-							threadPool.setCallSepMilliseconds( duration );
-							threadPool.setIdleTimeCall( [&,callFunctionName]( cylHtmlTools::HtmlWorkThreadPool *html_work_thread_pool, const unsigned long long &modWork, const unsigned long long &currentWork ) {
-								Out_Std_Thread_Pool_Count_Stream_Msg_MACRO( std_cout_mutex, modWork, currentWork, callFunctionName, QString(u8"数据库( %1 )过滤小说名称进行中").arg( absoluteFilePath).toStdString( ) );
-							} );
-							for( auto &novel : *novelInfoVectorShared )
-								threadPool.appendWork( [novel,
-											jump_equ_name_len_map, jumpEquNameVectorDataSize,
-											jump_sub_name_len_map, jumpSubNameVectorDataSize,
-											&vectorInsterMutex,filterVector]( cylHtmlTools::HtmlWorkThread *html_work_thread ) {
-											interfacePlugsType::HtmlDocString name = novel->novelName; // 小说名称转换为大写
-											name = NovelDBJob::converStringToUpper( name );
-											cylHtmlTools::HtmlStringTools::removeAllSpace( name );
-											if( !filterNovelName( name, jump_equ_name_len_map, jump_sub_name_len_map ) ) {
-												vectorInsterMutex.lock( );
-												filterVector->emplace_back( novel );
-												vectorInsterMutex.unlock( );
-											}
-										} );
-							threadPool.start( );
-							while( !threadPool.isOverJob( ) )
-								qApp->processEvents( );
-							inster_novel_vector_map_mutex.lock( );
-							inster_novel_vector_map_obj->emplace_back( absoluteFilePath, filterVector );
-							size = filterVector->size( );
-							novel_inster_count += size;
-							inster_novel_vector_map_mutex.unlock( );
-						} else {
-							Out_Std_Count_Stream_Msg_MACRO( std_cout_mutex, callFunctionName, QString(u8"数据库( %1 )过滤小说名称进行中").arg( absoluteFilePath).toStdString( ) );
-							inster_novel_vector_map_mutex.lock( );
-							inster_novel_vector_map_obj->emplace_back( absoluteFilePath, novelInfoVectorShared );
-							size = novelInfoVectorShared->size( );
-							novel_inster_count += size;
-							inster_novel_vector_map_mutex.unlock( );
-						}
-
 						Out_Std_Count_Stream_Msg_MACRO( std_cout_mutex, callFunctionName, QString(u8"数据库( %1 ) 有效小说为 : [ %2 ]").arg( absoluteFilePath).arg( size ).toStdString( ) );
 					} else {
 						std_cout_mutex.lock( );
-						QString msg( "\n(进程 id : %1 )路径[ %2 ]无法加载小说列表" );
+						QString msg( "( 进程 id : %1 )路径[ %2 ]无法加载小说列表" );
 						ErrorCout_MACRO( msg.arg( applicationPid.c_str( )).arg( absoluteFilePath ) );
 						std_cout_mutex.unlock( );
 					}

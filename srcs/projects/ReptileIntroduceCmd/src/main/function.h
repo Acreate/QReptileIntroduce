@@ -722,7 +722,12 @@ inline QString getFileBaseName( const QString &filePathInfo ) {
 
 /// @brief 向错误输出输出一个信息
 /// @param msg 输出的错误信息
-#define ErrorCout_MACRO( msg )  errorCoutPath((msg),  __FILE__, __FUNCTION__, __LINE__)
+#define ErrorCout_MACRO( msg )  errorCoutPath((msg),  callFileName.c_str(  ) , __FUNCTION__, __LINE__)
+
+/// @brief 使用错误输出输出信息
+/// @param msg 输出的错误信息
+/// @param function 输出的函数名称
+#define ErrorCout_FunctionName_MACRO( msg , function )  errorCoutPath((msg),  callFileName.c_str() , function, __LINE__)
 
 /// @brief 使用 std::cout 输出日志信息
 /// @param Std_Cout_Mutex 输出锁
