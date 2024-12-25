@@ -57,9 +57,7 @@ QStringList OStream::anyStdCerr( const QString &msg, const QString &fileName, si
 		if( Path::creatFilePath( write_path ) ) {
 			QFile writeHtmlFile( write_path );
 			if( writeHtmlFile.open( QIODeviceBase::WriteOnly | QIODeviceBase::Text | QIODeviceBase::Truncate ) ) {
-				auto buff = msgList.join( "" );
-				buff = write_content + u8"\n" + buff;
-				writeHtmlFile.write( buff.toUtf8( ) );
+				writeHtmlFile.write( write_content.toUtf8( ) );
 				writeHtmlFile.close( );
 			}
 		}
