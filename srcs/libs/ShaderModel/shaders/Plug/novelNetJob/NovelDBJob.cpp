@@ -455,59 +455,28 @@ NovelDBJob::NovelInfoVector_Shared NovelDBJob::readDB( OStream *thisOStream, con
 	return nullptr;
 }
 
-bool NovelDBJob::novelIsExpire( const size_t &expire_day, const interfacePlugsType::INovelInfoPtr &novel_info_ptr ) {
-	QDateTime dateTime = QDateTime::fromString( QString::fromStdWString( novel_info_ptr->updateTime ), QString::fromStdWString( novel_info_ptr->format ) );
+bool NovelDBJob::novelIsExpire( size_t expire_day, const interfacePlugsType::INovelInfoPtr &novel_info_ptr ) {
+	expire_day = expire_day * 24 * 60 * 60 * 1000; // 获取天数到分钟的时间
+
+	QString updateTime = QString::fromStdWString( novel_info_ptr->lastRequestTime );
+	QDateTime dateTime = QDateTime::fromString( updateTime, currentTimeForm );
 	auto milliseconds = currentTime - dateTime;
-	auto minutes = std::chrono::duration_cast< std::chrono::minutes >( milliseconds ).count( );
-	auto hours = minutes / 60; // 获取小时
-	auto duration = hours / 24; // 获取天数
-	auto day = abs( duration );
-	if( day > expire_day )
+	if( milliseconds.count( ) > expire_day )
 		return true;
-	minutes = minutes % 60; // 剩余分钟
-	if( minutes > 0 ) {
-		day += 1;
-		if( day > expire_day )
-			return true;
-	}
-	hours = hours % 24; // 剩余小时
-	if( hours > 0 ) {
-		day += 1;
-		if( day > expire_day )
-			return true;
-	}
-	dateTime = QDateTime::fromString( QString::fromStdWString( novel_info_ptr->lastRequestTime ), currentTimeForm );
+	updateTime = QString::fromStdWString( novel_info_ptr->updateTime );
+	QString updateTimeFormat = QString::fromStdWString( novel_info_ptr->format );
+	dateTime = QDateTime::fromString( updateTime, updateTimeFormat );
 	milliseconds = currentTime - dateTime;
-	minutes = std::chrono::duration_cast< std::chrono::minutes >( milliseconds ).count( );
-	hours = minutes / 60; // 获取小时
-	duration = hours / 24; // 获取天数
-	day = abs( duration );
-	if( day > expire_day )
+	if( milliseconds.count( ) > expire_day )
 		return true;
-	minutes = minutes % 60; // 剩余分钟
-	if( minutes > 0 ) {
-		day += 1;
-		if( day > expire_day )
-			return true;
-	}
-	hours = hours % 24; // 剩余小时
-	if( hours > 0 ) {
-		day += 1;
-		if( day > expire_day )
-			return true;
-	}
 	return false;
 }
 interfacePlugsType::Vector_INovelInfoSPtr NovelDBJob::novelVectorIsExpire( const size_t &expire_day, const interfacePlugsType::Vector_INovelInfoSPtr &novel_info_ptr ) {
 	interfacePlugsType::Vector_INovelInfoSPtr result;
 	cylHtmlTools::HtmlWorkThreadPool threadPool;
-	std::mutex mutex;
 	for( auto &novel : novel_info_ptr )
-		if( novelIsExpire( expire_day, novel.get( ) ) ) {
-			mutex.lock( );
+		if( novelIsExpire( expire_day, novel.get( ) ) )
 			result.emplace_back( novel );
-			mutex.unlock( );
-		}
 	return result;
 }
 std::vector< interfacePlugsType::HtmlDocString > NovelDBJob::novelVectorGetNovleUrl( interfacePlugsType::Vector_INovelInfoSPtr &novel_info_ptr ) {

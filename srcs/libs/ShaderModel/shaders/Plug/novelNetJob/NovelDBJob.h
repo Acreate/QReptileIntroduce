@@ -93,7 +93,7 @@ public:// - 静态方法
 	/// <param name="expire_day">过期天数</param>
 	/// <param name="novel_info_ptr">校验小说指针对象</param>
 	/// <returns>true 表示过期</returns>
-	static bool novelIsExpire( const size_t &expire_day, const interfacePlugsType::INovelInfoPtr &novel_info_ptr );
+	static bool novelIsExpire( size_t expire_day, const interfacePlugsType::INovelInfoPtr &novel_info_ptr );
 	/// <summary>
 	/// 校验小说是否过期-列表
 	/// </summary>
