@@ -183,8 +183,8 @@ void NovelNetJob::initObj( ) {
 }
 void NovelNetJob::initObjProperty( ) {
 	outPath = QDir::currentPath( ) + QDir::separator( ) + "novel_net_job" + QDir::separator( );
-	requestMaxCount = 1500;
-	requestMaxMilliseconds = 4 * 60 * 1000;
+	requestMaxCount = 15;
+	requestMaxMilliseconds = 60 * 1000;
 	sepMs = interfaceThisPtr->getRequestInterval( );
 	requestTime = NovelNetJob::getCurrentTimePoint( );
 	interfaceThisPtr->setOStream( oStream );
@@ -295,7 +295,6 @@ QNetworkReply * NovelNetJob::requestGet( const QUrl &url, const size_t requestMa
 		if( networkError == QNetworkReply::NoError ) {
 			interfaceThisPtr->initBefore( );
 			return networkReply;
-			break;
 		}
 
 		QString msg( u8"请求网址 : (%1) 异常 : [ %2 ], 正在重新获取请求 : [ %3/%4 : %5 毫秒 ]( 上次请求网址 : %6 )" );
