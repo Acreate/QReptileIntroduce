@@ -120,7 +120,69 @@ namespace instance_function {
 		}
 		return true;
 	}
+	namespace error {
+		namespace root {
+			namespace xpath {
+				/// @brief 根页面请求返回为空内容
+				/// @param request_url 请求链接
+				/// @param outLogPath 输出路径
+				/// @param html_text 解析的 html 文件内容
+				/// @param call_code_file 错误文件路径名称
+				/// @param call_function_name 调用函数名称
+				/// @param line 调用所在行
+				/// @param oStream 输出流-可选
+				inline void write_error_info_file( const QString &request_url, const QString &outLogPath, const QString &html_text, const QString &call_code_file, const QString &call_function_name, decltype(__LINE__) line, OStream *oStream = nullptr ) {
+					auto msg = QString( "%1 : %2" ).arg( request_url ).arg( QString( u8"xpath 异常，登出" ) );
+					QUrl url( request_url );
+					instance_function::write_error_info_file( oStream, url, outLogPath, "html_doc", "parse", u8"root", ".html", call_code_file, call_function_name, line, msg, html_text );
+					OStream::anyStdCerr( msg, call_code_file, line, call_function_name, oStream );
+				}
+			}
+			namespace htmlDoc {
+				/// @brief 根页面请求返回为空内容
+				/// @param request_url 请求链接
+				/// @param outLogPath 输出路径
+				/// @param call_code_file 错误文件路径名称
+				/// @param call_function_name 调用函数名称
+				/// @param line 调用所在行
+				/// @param oStream 输出流-可选
+				inline void write_error_info_file( const QString &request_url, const QString &outLogPath, const QString &call_code_file, const QString &call_function_name, decltype(__LINE__) line, OStream *oStream = nullptr ) {
+					auto msg = QString( "%1 : %2" ).arg( request_url ).arg( QString( u8"获取页面为空，登出" ) );
+					QUrl url( request_url );
+					instance_function::write_error_info_file( oStream, url, outLogPath, "html_doc", "parse", u8"root", ".html", call_code_file, call_function_name, line, msg, "" );
+					OStream::anyStdCerr( msg, call_code_file, line, call_function_name, oStream );
+				}
+			}
+		}
+		namespace type {
+			namespace xpath {
+				/// @brief 类型页面解析错误异常信息
+				/// @param type_name 类型
+				/// @param request_url 请求地址
+				/// @param oStream 输出流-可选
+				/// @param outLogPath 日志路径
+				/// @param html_text html 文本
+				/// @param call_code_file 调用函数文件路径名称
+				/// @param call_function_name 调用函数名称
+				/// @param line 调用行数
+				inline void write_error_info_file( const QString &type_name, const QString &request_url, const QString &outLogPath, const QString &html_text, const QString &call_code_file, const QString &call_function_name, decltype(__LINE__) line, OStream *oStream = nullptr ) {
+					auto msg = QString( "%1 : %2 : %3" ).arg( type_name ).arg( request_url ).arg( QString( u8"xpath 异常，登出" ) );
+					QUrl url( request_url );
+					instance_function::write_error_info_file( oStream, url, outLogPath, "xpath", "parse", type_name, ".html", call_code_file, call_function_name, line, msg, html_text );
+				}
+			}
+			namespace htmlDoc {
+				inline void write_error_info_file( const QString &type_name, const QString &request_url, const QString &outLogPath, const QString &html_text, const QString &call_code_file, const QString &call_function_name, decltype(__LINE__) line, OStream *oStream = nullptr ) {
+					auto msg = QString( "%1 : %2 : %3" ).arg( type_name ).arg( request_url ).arg( QString( u8"文档为空" ) );
+					QUrl url( request_url );
+					instance_function::write_error_info_file( oStream, url, outLogPath, "html_doc", "parse", type_name, ".html", instance_function::getCmakeRootPathBuilderFilePath( __FILE__ ), __FUNCTION__, __LINE__, msg, "" );
+				}
+			}
+
+		}
+
+
+	}
+
 }
-
-
 #endif // INSTANCE_FUNCTION_H_H_HEAD__FILE__

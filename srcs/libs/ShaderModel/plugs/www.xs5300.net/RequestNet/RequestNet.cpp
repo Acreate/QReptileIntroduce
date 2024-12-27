@@ -77,18 +77,18 @@ void RequestNet::deleteMember( ) {
 Map_HtmlStrK_HtmlStrV * RequestNet::formHtmlGetTypeTheUrls( const interfacePlugsType::HtmlDocString &url, const HtmlDocString &htmlText ) {	// todo : 首页获取类型
 	auto removeBothSpaceHtmlText = htmlText;
 	HtmlStringTools::removeBothSpace( removeBothSpaceHtmlText );
-
+	
+	
+	auto outLogPath = outPath + QDir::separator( ) + u8"logs" + QDir::separator( );
 	if( removeBothSpaceHtmlText.size( ) == 0 ) {
-		auto msg = QString( "%1 : %2" ).arg( QString::fromStdWString( url ) ).arg( QString( u8"使用空字符串进行解析异常，登出" ) );
-		OStream::anyStdCerr( msg, instance_function::getCmakeRootPathBuilderFilePath( __FILE__ ), __LINE__, __FUNCTION__, thisOStream );
+		instance_function::error::root::htmlDoc::write_error_info_file( QString::fromStdWString( url ), outLogPath, instance_function::getCmakeRootPathBuilderFilePath( __FILE__ ), __FUNCTION__, __LINE__, oStream );
 		return nullptr;
 	}
 	auto stdWString( std::make_shared< HtmlString >( removeBothSpaceHtmlText ) );
 	auto result = std::make_shared< Map_HtmlStrK_HtmlStrV >( );
 	auto htmlDoc = cylHtmlTools::HtmlDoc::parse( stdWString );
 	if( !htmlDoc.get( ) ) {
-		auto msg = QString( "%1 : %2" ).arg( QString::fromStdWString( url ) ).arg( QString( u8" HtmlDoc::parse 异常，登出" ) );
-		OStream::anyStdCerr( msg, instance_function::getCmakeRootPathBuilderFilePath( __FILE__ ), __LINE__, __FUNCTION__, thisOStream );
+		instance_function::error::root::xpath::write_error_info_file( QString::fromStdWString( url ), outLogPath, QString::fromStdWString( removeBothSpaceHtmlText ), instance_function::getCmakeRootPathBuilderFilePath( __FILE__ ), __FUNCTION__, __LINE__, oStream );
 		return nullptr;
 	}
 
@@ -98,8 +98,8 @@ Map_HtmlStrK_HtmlStrV * RequestNet::formHtmlGetTypeTheUrls( const interfacePlugs
 	auto htmlNodeSPtrShared = htmlDoc->getHtmlNodeRoots( );
 	auto vectorHtmlNodeSPtrShared = xpath.buider( htmlNodeSPtrShared );
 	if( !vectorHtmlNodeSPtrShared ) {
-		auto msg = QString( "%1 : %2 " ).arg( QString::fromStdWString( url ) ).arg( QString( u8" xpath 异常，登出" ) );
-		OStream::anyStdCerr( msg, instance_function::getCmakeRootPathBuilderFilePath( __FILE__ ), __LINE__, __FUNCTION__, thisOStream );
+
+		instance_function::error::root::xpath::write_error_info_file( QString::fromStdWString( url ), outLogPath, QString::fromStdWString( removeBothSpaceHtmlText ), instance_function::getCmakeRootPathBuilderFilePath( __FILE__ ), __FUNCTION__, __LINE__, oStream );
 		return nullptr;
 	}
 	auto vectorIterator = vectorHtmlNodeSPtrShared->begin( );
@@ -132,10 +132,7 @@ Vector_INovelInfoSPtr RequestNet::formHtmlGetTypePageNovels( const interfacePlug
 	auto htmlDoc = cylHtmlTools::HtmlDoc::parse( htmlText );
 	auto outLogPath = outPath + QDir::separator( ) + u8"logs" + QDir::separator( );
 	if( !htmlDoc ) {
-		auto typeNme = QString::fromStdWString( type_name );
-		auto msg = QString( "%1 : %2 : %3" ).arg( typeNme ).arg( request_url ).arg( QString( u8" HtmlDoc::parse 异常，登出" ) );
-		QUrl url( QString::fromStdWString( request_url ) );
-		instance_function::write_error_info_file( oStream, url, outLogPath, "formHtmlGetTypePageNovels", "parse", typeNme, ".html", instance_function::getCmakeRootPathBuilderFilePath( __FILE__ ), __FUNCTION__, __LINE__, msg, msg );
+		instance_function::error::type::htmlDoc::write_error_info_file( QString::fromStdWString( type_name ), QString::fromStdWString( request_url ), outLogPath, QString::fromStdWString( htmlText ), instance_function::getCmakeRootPathBuilderFilePath( __FILE__ ), __FUNCTION__, __LINE__, oStream );
 		return result;
 	}
 	htmlDoc->analysisBrotherNode( );
@@ -165,10 +162,7 @@ Vector_INovelInfoSPtr RequestNet::formHtmlGetTypePageNovels( const interfacePlug
 		};
 	}
 	if( !vectorHtmlNodeSPtrShared ) {
-		auto typeNme = QString::fromStdWString( type_name );
-		auto msg = QString( "%1 : %2 : %3" ).arg( typeNme ).arg( request_url ).arg( QString( u8" xpath 异常，登出" ) );
-		QUrl url( QString::fromStdWString( request_url ) );
-		instance_function::write_error_info_file( oStream, url, outLogPath, "xpath", "parse", typeNme, ".html", instance_function::getCmakeRootPathBuilderFilePath( __FILE__ ), __FUNCTION__, __LINE__, msg, msg );
+		instance_function::error::type::xpath::write_error_info_file( QString::fromStdWString( type_name ), QString::fromStdWString( request_url ), outLogPath, QString::fromStdWString( htmlText ), instance_function::getCmakeRootPathBuilderFilePath( __FILE__ ), __FUNCTION__, __LINE__, oStream );
 		return result;
 	}
 	auto vectorIterator = vectorHtmlNodeSPtrShared->begin( );
