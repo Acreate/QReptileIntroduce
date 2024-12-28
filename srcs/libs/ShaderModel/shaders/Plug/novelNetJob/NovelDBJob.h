@@ -32,6 +32,22 @@ public:// - 静态方法
 	static QString getCurrentTimeForm( ) {
 		return currentTimeForm;
 	}
+	/// @brief 移除所有空格
+	/// @param remove_obj 移除对象
+	static void removeAllSpace( QString &remove_obj ) {
+		size_t leftLen = remove_obj.length( );
+		QString::value_type *buff = new QString::value_type [ leftLen ];
+		size_t index = 0, buffIndex = 0;
+		for( ; index < leftLen; ++index ) {
+			auto value = remove_obj.at( index );
+			if( value.isSpace( ) || !value.isPrint( ) )
+				continue;
+			buff[ buffIndex ] = value;
+			++buffIndex;
+		}
+		remove_obj = QString( buff, buffIndex );
+		delete[] buff;
+	}
 	/// <summary>
 	/// 对小说列表进行排序，并且返回结果
 	/// </summary>

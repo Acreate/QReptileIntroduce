@@ -376,9 +376,13 @@ QString NovelNetJob::getUrl( ) const {
 		return "";
 	cylHtmlTools::HtmlStringTools::removeBothSpace( resultUrl );
 	return QString::fromStdWString( resultUrl );
+
 }
+
 void NovelNetJob::slots_requesting_get_root_page_signals( const QUrl &url, QNetworkReply *request_connect ) {
 	QString rootUrl = url.scheme( ) + u8"://" + url.host( );
+
+	OStream::anyStdCOut( "从( " + rootUrl + " ) 解析小说类型链接信息 ", oStream );
 	QString htmlText( request_connect->readAll( ) );
 	if( htmlText.isEmpty( ) )
 		return;
@@ -403,9 +407,11 @@ void NovelNetJob::slots_requesting_get_root_page_signals( const QUrl &url, QNetw
 			if( *getTypeNamelistIterator == typeName )
 				break;
 		if( getTypeNamelistIterator != getTypeNamelistEnd ) {
-			requests.emplace( typeName, QString::fromStdWString( iterator->second ) ); // 等待处理
+			auto urlLink = QString::fromStdWString( iterator->second );
+			requests.emplace( typeName, urlLink ); // 等待处理
 			this->typeNovelsMap.emplace( typeName, std::make_shared< Vector_INovelInfoSPtr >( ) );
 			++typeCount;
+			OStream::anyStdCOut( "从( " + rootUrl + " ) 获得类型信息( " + typeName + " ) [ " + urlLink + " ] ", oStream );
 		}
 		++iterator;
 	} while( iterator != end );
@@ -414,32 +420,38 @@ void NovelNetJob::slots_requesting_get_root_page_signals( const QUrl &url, QNetw
 	auto requestVectorIterator = requests.begin( );
 	auto requestVectorEnd = requests.end( );
 	size_t pageIndex = 0;
+	size_t requestCount = 1;
 	while( requestVectorIterator != requestVectorEnd ) {
+		++requestCount;
 		auto typeNmae = requestVectorIterator->first;
 		auto qUrl = requestVectorIterator->second;
+		OStream::anyStdCOut( "类型页面请求 ( " + typeNmae + " ) [ " + qUrl + " ] ", oStream );
 		auto networkReply = requestGet( qUrl, requestMaxCount, requestMaxMilliseconds, u8"类型页面请求失败", u8".type_request.error.log", __FILE__, __FUNCTION__, __LINE__, "none", u8"requestGet_type_log" );
-		if( !networkReply )
-			continue;
-		++pageIndex;
-		OStream::anyStdCOut( u8"发现 " + typeNmae + "(" + qUrl + ")" + "[" + QString::number( typeCount ) + "]", oStream );
-		auto readAll = networkReply->readAll( );
-		auto html = std::make_shared< cylHtmlTools::HtmlString >( QString( readAll ).toStdWString( ) );
-		auto newQUrl = getPageInfo( typeNmae, qUrl, html );
-		while( !newQUrl.isEmpty( ) ) {
-			auto oldUrl = qUrl;
-			qUrl = newQUrl;
-			networkReply = requestGet( qUrl, requestMaxCount, requestMaxMilliseconds, u8"下一页请求失败", u8".type_request_next.error.log", __FILE__, __FUNCTION__, __LINE__, oldUrl, u8"next_page_request_get_error_log" );
-			if( !networkReply )
-				break; // 请求失败，则终止
+		if( networkReply ) {
 			++pageIndex;
-			readAll = networkReply->readAll( );
-			html = std::make_shared< cylHtmlTools::HtmlString >( QString( readAll ).toStdWString( ) );
-			newQUrl = getPageInfo( typeNmae, qUrl, html );
-		}
+			auto readAll = networkReply->readAll( );
+			auto html = std::make_shared< cylHtmlTools::HtmlString >( QString( readAll ).toStdWString( ) );
+			auto newQUrl = getPageInfo( typeNmae, qUrl, html );
+			NovelDBJob::removeAllSpace( newQUrl );
+			while( !newQUrl.isEmpty( ) || newQUrl.length( ) > 0 ) {
+				auto oldUrl = qUrl;
+				qUrl = newQUrl;
+				networkReply = requestGet( qUrl, requestMaxCount, requestMaxMilliseconds, u8"下一页请求失败", u8".type_request_next.error.log", __FILE__, __FUNCTION__, __LINE__, oldUrl, u8"next_page_request_get_error_log" );
+				if( !networkReply )
+					break; // 请求失败，则终止
+				++pageIndex;
+				readAll = networkReply->readAll( );
+				html = std::make_shared< cylHtmlTools::HtmlString >( QString( readAll ).toStdWString( ) );
+				newQUrl = getPageInfo( typeNmae, qUrl, html );
+				NovelDBJob::removeAllSpace( newQUrl );
+			}
+		} else if( requestMaxCount > requestCount )
+			continue;
 		// 小说类型页面终止
 		novelPageInfoRequestEnd( typeNmae, qUrl, pageIndex );
 		--typeCount;
 		++requestVectorIterator;
+
 	}
 	emit requested_get_web_page_signals_end( rootUrl );
 }
@@ -466,10 +478,14 @@ QString NovelNetJob::getPageInfo( const QString &type_name, const QUrl &type_url
 		}
 
 	QString typePageUrl = type_url.toString( );
+	OStream::anyStdCOut( u8"获取小说 " + type_name + "(" + typePageUrl + ")" + "[" + QString::number( typeCount ) + "]", oStream );
 	auto novelInfos = interfaceThisPtr->formHtmlGetTypePageNovels( type_name.toStdWString( ), typePageUrl.toStdWString( ), *html_string, *saveMapNovelInfos, nullptr );
 	QString resultMsg;
-	if( novelInfos.size( ) == 0 ) // 没有小说则终止
+	if( novelInfos.size( ) == 0 ) {
+		// 没有小说则终止
+		OStream::anyStdCOut( u8"没有发现小说 " + type_name + "(" + typePageUrl + ")" + "[" + QString::number( typeCount ) + "]", oStream );
 		return "";
+	}
 	// 鉴定小说
 	for( auto &novel : novelInfos ) {
 		if( interfaceThisPtr->isRequestNovelInfoUrl( novel.get( ) ) ) {				// 如果小说需要到详情页申请，则临时存储
@@ -483,15 +499,25 @@ QString NovelNetJob::getPageInfo( const QString &type_name, const QUrl &type_url
 	}
 	auto requestedGetVectorIterator = requestedGetVectorINovelInfoSPtrShared->begin( );
 	auto requestedGetVectorEnd = requestedGetVectorINovelInfoSPtrShared->end( );
+	size_t novelSaveCount = 0;
 	if( requestedGetVectorIterator != requestedGetVectorEnd ) {
 		auto vectorPtr = saveMapNovelInfos.get( );
-		for( ; requestedGetVectorIterator != requestedGetVectorEnd; ++requestedGetVectorIterator )
+		for( ; requestedGetVectorIterator != requestedGetVectorEnd; ++requestedGetVectorIterator ) {
 			vectorPtr->emplace_back( *requestedGetVectorIterator );
+			++novelSaveCount;
+		}
 	}
+
+	OStream::anyStdCOut( u8"获取小说个数为 " + type_name + "(" + typePageUrl + ")" + "[" + QString::number( typeCount ) + "] = " + QString::number( novelSaveCount ), oStream );
+	OStream::anyStdCOut( u8"获取下一页 " + type_name + "(" + typePageUrl + ")" + "[" + QString::number( typeCount ) + "]", oStream );
 	auto formHtmlGetNext = interfaceThisPtr->formHtmlGetNext( type_name.toStdWString( ), typePageUrl.toStdWString( ), *html_string, *saveMapNovelInfos, *requestedGetVectorINovelInfoSPtrShared );
-	if( formHtmlGetNext.empty( ) )
+	if( formHtmlGetNext.empty( ) ) {
+		OStream::anyStdCOut( u8"不存在下一页 " + type_name + "(" + typePageUrl + ")" + "[" + QString::number( typeCount ) + "]", oStream );
 		return "";
-	return QString::fromStdWString( formHtmlGetNext );  // 正常执行完毕
+	}
+	auto nextPageUrl = QString::fromStdWString( formHtmlGetNext );
+	OStream::anyStdCOut( u8"返回下一页 " + type_name + "(" + typePageUrl + ")" + "[" + QString::number( typeCount ) + "] -> { " + nextPageUrl + " }", oStream );
+	return nextPageUrl;  // 正常执行完毕
 }
 
 
