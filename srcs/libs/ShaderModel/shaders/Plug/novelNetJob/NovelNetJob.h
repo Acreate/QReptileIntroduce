@@ -182,7 +182,7 @@ private: //- 网络
 	/// <returns>应答体</returns>
 	QNetworkReply * requestUrl( QNetworkAccessManager *&result, const QNetworkRequest &network_request, const QUrl &url, TimePoint &last_request_time_point, size_t &sep_ms );
 	/// <summary>
-	/// 发送 get 请求
+	/// 网站请求=发送 get 请求
 	/// </summary>
 	/// <param name="url">请求的 url</param>
 	/// <param name="requestMaxCount">最大请求次数，如果等于 0，则忽略次数</param>
@@ -196,9 +196,9 @@ private: //- 网络
 	/// <param name="old_url">上一页 url</param>
 	/// <param name="file_start">日志写入的开始文件夹名称</param>
 	/// <returns>应答体</returns>
-	QNetworkReply * requestGet( const QUrl &url, const size_t requestMaxCount, const size_t requestMaxMs, const QString &error_msg, const QString &error_file_append_base_name, const NetworkmanagerConnectFunction &call_function, const QString &call_finle_path_name, const QString &call_function_name, const size_t call_line, const QString &old_url, const QString &file_start );
+	QNetworkReply * requestRootGet( const QUrl &url, const size_t requestMaxCount, const size_t requestMaxMs, const QString &error_msg, const QString &error_file_append_base_name, const NetworkmanagerConnectFunction &call_function, const QString &call_finle_path_name, const QString &call_function_name, const size_t call_line, const QString &old_url, const QString &file_start );
 	/// <summary>
-	/// 发送 get 请求
+	/// 类型页面请求=发送 get 请求
 	/// </summary>
 	/// <param name="url">请求的 url</param>
 	/// <param name="requestMaxCount">最大请求次数，如果等于 0，则忽略次数</param>
@@ -211,7 +211,7 @@ private: //- 网络
 	/// <param name="old_url">上次请求网址</param>
 	/// <param name="file_start">日志开始写入的开始文件夹名称</param>
 	/// <returns>应答体</returns>
-	QNetworkReply * requestGet( const QUrl &url, const size_t requestMaxCount, const size_t requestMaxMs, const QString &error_msg, const QString &error_file_append_base_name, const QString &call_finle_path_name, const QString &call_function_name, const size_t call_line, const QString &old_url, const QString &file_start );
+	QNetworkReply * requestPageGet( const QUrl &url, const size_t requestMaxCount, const size_t requestMaxMs, const QString &error_msg, const QString &error_file_append_base_name, const QString &call_finle_path_name, const QString &call_function_name, const size_t call_line, const QString &old_url, const QString &file_start );
 private:
 	/// <summary>
 	/// 存储小说到仓库

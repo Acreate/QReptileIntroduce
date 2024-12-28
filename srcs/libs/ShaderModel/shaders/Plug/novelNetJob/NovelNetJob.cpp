@@ -161,7 +161,7 @@ size_t NovelNetJob::waiteMilliseconds( const size_t &milliseconds ) {
 	do {
 		auto duration = timePoint - point;
 		auto nowPoint = getTimeDurationToMilliseconds( duration );
-		if( nowPoint > milliseconds )
+		if( nowPoint > 0 && nowPoint > milliseconds )
 			break;
 		qApp->processEvents( );
 		timePoint = std::chrono::system_clock::now( );
@@ -237,24 +237,25 @@ QNetworkReply * NovelNetJob::requestUrl( QNetworkAccessManager *&result, const Q
 	return networkReply;
 }
 QNetworkReply * NovelNetJob::requestUrl( QNetworkAccessManager *&result, const QNetworkRequest &network_request, const QUrl &url, TimePoint &last_request_time_point, size_t &sep_ms ) {
-	auto newRequestTime = getCurrentTimePoint( );
-	auto commonType = newRequestTime - last_request_time_point;
-	auto milliseconds = getTimeDurationToMilliseconds( commonType );
-	if( milliseconds < sep_ms )
+	auto newRequestTime = getCurrentTimePoint( ); // 获取当前时间点
+	auto commonType = newRequestTime - last_request_time_point; // 当前时间点减去上次请求时间
+	auto milliseconds = getTimeDurationToMilliseconds( commonType ); // 获取分差
+	if( milliseconds > 0 && milliseconds < sep_ms ) // 如果未到请求间隔，则开始等待
 		waiteMilliseconds( sep_ms - milliseconds );
-	last_request_time_point = getCurrentTimePoint( );
+	last_request_time_point = getCurrentTimePoint( ); // 重新初始化上次请求时间
 	if( result == nullptr )
-		result = new QNetworkAccessManager;
+		result = new QNetworkAccessManager; // 如果请求管理为 null，则申请一个对象
 	auto networkRequest = network_request;
 	networkRequest.setUrl( url );
-	QNetworkReply *networkReply = result->get( networkRequest );
-	while( !networkReply->isRunning( ) )
-		waiteMilliseconds( 20 );
-	while( !networkReply->isFinished( ) )
-		waiteMilliseconds( 200 );
+	QNetworkReply *networkReply = result->get( networkRequest ); // 开始 get 请求
+	auto app = qApp;
+	while( !networkReply->isRunning( ) ) // 没有结束。则处理时间
+		app->processEvents( );
+	while( !networkReply->isFinished( ) ) // 没有结束。则处理时间
+		app->processEvents( );
 	return networkReply;
 }
-QNetworkReply * NovelNetJob::requestGet( const QUrl &url, const size_t requestMaxCount, const size_t requestMaxMs, const QString &error_msg, const QString &error_file_append_base_name, const NetworkmanagerConnectFunction &call_function, const QString &call_finle_path_name, const QString &call_function_name, const size_t call_line, const QString &old_url, const QString &file_start ) {
+QNetworkReply * NovelNetJob::requestRootGet( const QUrl &url, const size_t requestMaxCount, const size_t requestMaxMs, const QString &error_msg, const QString &error_file_append_base_name, const NetworkmanagerConnectFunction &call_function, const QString &call_finle_path_name, const QString &call_function_name, const size_t call_line, const QString &old_url, const QString &file_start ) {
 	auto requestReplyTime = getCurrentTimePoint( );
 	size_t requestCount = 0;
 	do {
@@ -275,8 +276,8 @@ QNetworkReply * NovelNetJob::requestGet( const QUrl &url, const size_t requestMa
 			break;
 		}
 		if( requestMaxMs ) {
-			auto compTime = getTimeDurationToMilliseconds( getCurrentTimePoint( ) - requestReplyTime );
-			if( compTime > requestMaxMs ) {
+			auto compTime = getTimeDurationToMilliseconds( getCurrentTimePoint( ) - requestReplyTime ); // 获取第一次请求的时间差
+			if( compTime > 0 && compTime > requestMaxMs ) { // 差大于最大请求时间，则退出请求循环
 				error_write_file( requestTime, oStream, networkReply, call_finle_path_name, call_function_name, call_line, error_msg + u8"-请求时间超出限制", outPath, QDateTime::currentDateTime( ).toString( "hh-mm-ss" ), ".root_request.error.log", file_start );
 				break;
 			}
@@ -285,7 +286,7 @@ QNetworkReply * NovelNetJob::requestGet( const QUrl &url, const size_t requestMa
 	} while( true ) ;
 	return nullptr;
 }
-QNetworkReply * NovelNetJob::requestGet( const QUrl &url, const size_t requestMaxCount, const size_t requestMaxMs, const QString &error_msg, const QString &error_file_append_base_name, const QString &call_finle_path_name, const QString &call_function_name, const size_t call_line, const QString &old_url, const QString &file_start ) {
+QNetworkReply * NovelNetJob::requestPageGet( const QUrl &url, const size_t requestMaxCount, const size_t requestMaxMs, const QString &error_msg, const QString &error_file_append_base_name, const QString &call_finle_path_name, const QString &call_function_name, const size_t call_line, const QString &old_url, const QString &file_start ) {
 	auto instance = qApp;
 	auto requestReplyTime = getCurrentTimePoint( );
 	size_t requestCount = 0;
@@ -311,7 +312,7 @@ QNetworkReply * NovelNetJob::requestGet( const QUrl &url, const size_t requestMa
 		}
 		if( requestMaxMs ) {
 			auto compTime = getTimeDurationToMilliseconds( getCurrentTimePoint( ) - requestReplyTime );
-			if( compTime > requestMaxMs ) {
+			if( compTime > 0 && compTime > requestMaxMs ) {
 				error_write_file( requestTime, oStream, networkReply, call_finle_path_name, call_function_name, call_line, error_msg + u8"-请求时间超出限制", outPath, QDateTime::currentDateTime( ).toString( "hh-mm-ss" ), ".root_request.error.log", file_start );
 				break;
 			}
@@ -363,7 +364,7 @@ bool NovelNetJob::start( ) {
 		else
 			return hasErrorRunCode( q_network_reply, call_file_path_name, call_line, call_name );
 	};
-	auto networkReply = requestGet( url, requestMaxCount, requestMaxMilliseconds, u8"首页请求失败", u8".root_request.error.log", callFunction, __FILE__, __FUNCTION__, __LINE__, qstrUrl, u8"request_root_start_requestGet" );
+	auto networkReply = requestRootGet( url, requestMaxCount, requestMaxMilliseconds, u8"首页请求失败", u8".root_request.error.log", callFunction, __FILE__, __FUNCTION__, __LINE__, qstrUrl, u8"request_root_start_requestGet" );
 	this->interfaceThisPtr->initBefore( );
 	if( !networkReply )
 		emit requested_get_web_page_signals_end( url );
@@ -427,7 +428,7 @@ void NovelNetJob::slots_requesting_get_root_page_signals( const QUrl &url, QNetw
 		auto qUrl = requestVectorIterator->second;
 		OStream::anyStdCOut( "类型( " + typeNmae + " ) [ " + qUrl + " ] 页面请求", oStream );
 		auto startRequestTimePoint = std::chrono::system_clock::now( );
-		auto networkReply = requestGet( qUrl, requestMaxCount, requestMaxMilliseconds, u8"类型页面请求失败", u8".type_request.error.log", __FILE__, __FUNCTION__, __LINE__, "none", u8"requestGet_type_log" );
+		auto networkReply = requestPageGet( qUrl, requestMaxCount, requestMaxMilliseconds, u8"类型页面请求失败", u8".type_request.error.log", __FILE__, __FUNCTION__, __LINE__, "none", u8"requestGet_type_log" );
 		if( networkReply ) {
 			++pageIndex;
 			auto readAll = networkReply->readAll( );
@@ -437,7 +438,7 @@ void NovelNetJob::slots_requesting_get_root_page_signals( const QUrl &url, QNetw
 			while( !newQUrl.isEmpty( ) || newQUrl.length( ) > 0 ) {
 				auto oldUrl = qUrl;
 				qUrl = newQUrl;
-				networkReply = requestGet( qUrl, requestMaxCount, requestMaxMilliseconds, u8"下一页请求失败", u8".type_request_next.error.log", __FILE__, __FUNCTION__, __LINE__, oldUrl, u8"next_page_request_get_error_log" );
+				networkReply = requestPageGet( qUrl, requestMaxCount, requestMaxMilliseconds, u8"下一页请求失败", u8".type_request_next.error.log", __FILE__, __FUNCTION__, __LINE__, oldUrl, u8"next_page_request_get_error_log" );
 				if( !networkReply )
 					break; // 请求失败，则终止
 				++pageIndex;
@@ -494,7 +495,7 @@ QString NovelNetJob::getPageInfo( const QString &type_name, const QUrl &type_url
 	QString resultMsg;
 	if( novelInfos.size( ) == 0 ) {
 		// 没有小说则终止
-		OStream::anyStdCOut( "( " + type_name + " => " + typePageUrl + " ) 序列 : " + QString::number( typeCount ) + " ] 没有发现小说", oStream );
+		OStream::anyStdCOut( "( " + type_name + " => " + typePageUrl + " ) 序列 : [ " + QString::number( typeCount ) + " ] 没有发现小说", oStream );
 		return "";
 	}
 	// 鉴定小说
