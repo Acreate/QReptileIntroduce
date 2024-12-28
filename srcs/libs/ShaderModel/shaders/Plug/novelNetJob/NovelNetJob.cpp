@@ -426,6 +426,7 @@ void NovelNetJob::slots_requesting_get_root_page_signals( const QUrl &url, QNetw
 		auto typeNmae = requestVectorIterator->first;
 		auto qUrl = requestVectorIterator->second;
 		OStream::anyStdCOut( "类型( " + typeNmae + " ) [ " + qUrl + " ] 页面请求", oStream );
+		auto startRequestTimePoint = std::chrono::system_clock::now( );
 		auto networkReply = requestGet( qUrl, requestMaxCount, requestMaxMilliseconds, u8"类型页面请求失败", u8".type_request.error.log", __FILE__, __FUNCTION__, __LINE__, "none", u8"requestGet_type_log" );
 		if( networkReply ) {
 			++pageIndex;
@@ -445,13 +446,23 @@ void NovelNetJob::slots_requesting_get_root_page_signals( const QUrl &url, QNetw
 				newQUrl = getPageInfo( typeNmae, qUrl, html );
 				NovelDBJob::removeAllSpace( newQUrl );
 			}
-		} else if( requestMaxCount > requestCount )
+		} else if( requestMaxCount > requestCount ) {
+			auto endRequestTimePoint = std::chrono::system_clock::now( );
+			auto sepTimePoint = endRequestTimePoint - startRequestTimePoint;
+			auto sepRequestTimePointMs = std::chrono::duration_cast< std::chrono::milliseconds >( sepTimePoint ).count( );
+			if( sepRequestTimePointMs < sepMs )
+				waiteMilliseconds( sepRequestTimePointMs - sepMs );
 			continue;
+		}
+		auto endRequestTimePoint = std::chrono::system_clock::now( );
+		auto sepTimePoint = endRequestTimePoint - startRequestTimePoint;
+		auto sepRequestTimePointMs = std::chrono::duration_cast< std::chrono::milliseconds >( sepTimePoint ).count( );
+		if( sepRequestTimePointMs < sepMs )
+			waiteMilliseconds( sepRequestTimePointMs - sepMs );
 		// 小说类型页面终止
 		novelPageInfoRequestEnd( typeNmae, qUrl, pageIndex );
 		--typeCount;
 		++requestVectorIterator;
-
 	}
 	emit requested_get_web_page_signals_end( rootUrl );
 }
