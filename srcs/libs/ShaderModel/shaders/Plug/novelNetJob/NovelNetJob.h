@@ -58,7 +58,9 @@ public: //- 静态调用
 		qint64 qsizetype = userAgentHeaderList.size( );
 		qint64 size = abs( qsizetype - 1 );
 		if( size > 0 ) {
-			size_t index = rand( ) % size + 0.5;
+			auto timePoint = std::chrono::system_clock::now( );
+			auto currentTimeMill = std::chrono::duration_cast< std::chrono::milliseconds >( timePoint.time_since_epoch( ) );
+			size_t index = currentTimeMill.count( ) * rand( ) % size + 0.5;
 			if( index > qsizetype )
 				return userAgentHeaderList.last( );
 			return userAgentHeaderList[ index ];
