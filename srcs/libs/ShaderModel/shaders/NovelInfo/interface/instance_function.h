@@ -97,15 +97,16 @@ namespace instance_function {
 			.append( "\n=========================" )
 			.append( "\n-->" );
 		OStream::anyStdCOut( msg, os );
-		auto path = QString( root_path ).append( QDir::separator( ) )
-										.append( dir_name ).append( QDir::separator( ) )
-										.append( day ).append( QDir::separator( ) )
-										.append( url.host( ) ).append( QDir::separator( ) )
-										.append( error_type )
-										.append( '-' )
-										.append( time )
-										.append( '-' )
-										.append( error_novel_type_name ).append( error_file_suffix );
+		auto path = QString( root_path )
+					.append( QDir::separator( ) )
+					.append( day ).append( QDir::separator( ) )
+					.append( dir_name ).append( QDir::separator( ) )
+					.append( url.host( ) ).append( QDir::separator( ) )
+					.append( error_type )
+					.append( '-' )
+					.append( time )
+					.append( '-' )
+					.append( error_novel_type_name ).append( error_file_suffix );
 		QFileInfo fileInfo( path );
 		auto dir = fileInfo.dir( );
 		if( !dir.exists( ) )

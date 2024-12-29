@@ -10,7 +10,10 @@
 #include <memory>
 #include <unordered_map>
 #include <chrono>
+#include <mutex>
+#include <thread>
 
+#include "htmls/htmlTools/HtmlWorkThread/HtmlWorkThreadPool.h"
 #include "nameSpace/cylHtmlTools.h"
 
 
@@ -29,7 +32,6 @@ private: // - 网络
 	QNetworkAccessManager *networkAccessManager; // 网络请求体
 	int32_t typeCount; // 小说类型的数量
 	size_t sepMs; // 等待查询间隔
-	std::shared_ptr< QMutex > netMutex; // 锁
 	TimePoint requestTime; // 请求时间
 	size_t runStatus; // 记录对象的运行状态
 	int requestMaxCount; // 记录最大请求次数
@@ -40,7 +42,11 @@ private: // 配置
 	QStringList getTypeNamelist; // 获取的小说类型列表
 	QString outPath; // 输出路径
 	QString inPath; // 输入路径
-
+private:
+	std::shared_ptr< std::thread >showMessageThread; // 工作线程输出信息
+	std::shared_ptr< std::mutex > showMessageThreadMutex; // 工作线程信息输出锁
+	size_t currentThreadLine; // 存储当前工作函数
+	std::string currentMsg; // 存储当前工作信息
 private: //-静态成员
 	static QStringList userAgentHeaderList; // 所有的浏览器 UserAgentHeader
 public: //- 静态调用

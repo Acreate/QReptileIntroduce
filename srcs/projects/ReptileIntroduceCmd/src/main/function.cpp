@@ -1214,9 +1214,9 @@ bool lenMapFindNovelKey( const NovelInfo &novel_info, const Len_Map_Str_Vector_S
 	size_t novelInfoLen = novel_info.info.length( ); // 详情长度
 	size_t novelLastItemLen = novel_info.lastItem.length( ); // 最后更新项长度
 	size_t novelAuthorLen = novel_info.author.length( ); // 作者长度
-	size_t maxLen = min( novelNameLen, novelInfoLen );
-	maxLen = max( maxLen, novelLastItemLen );
-	maxLen = max( maxLen, novelAuthorLen );
+	size_t maxLen = std::min( novelNameLen, novelInfoLen );
+	maxLen = std::max( maxLen, novelLastItemLen );
+	maxLen = std::max( maxLen, novelAuthorLen );
 	for( auto begin = find_key_map.begin( ), end = find_key_map.end( ); begin != end; ++begin ) {
 		auto lenKey = begin->first;
 		if( maxLen < lenKey )
