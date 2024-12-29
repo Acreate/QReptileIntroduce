@@ -61,7 +61,7 @@ const QString currentFilePathName = instance_function::getCmakeRootPathBuilderFi
 		showMessageThreadMutex->lock( ); \
 		currentThreadLine = line; \
 		currentMsg = msg; \
-		currentMsg.append( u8" 函数名称 : [" ).append( __FUNCTION__ ).append(u8" ] "); \
+		currentMsg.append( u8" 函数名称 : [ " ).append( __FUNCTION__ ).append(u8" ] "); \
 		showMessageThreadMutex->unlock( ); \
 	} while(false)
 /// @brief 自动设置当前行，并且设置 1 个信息
@@ -465,9 +465,7 @@ QNetworkReply * NovelNetJob::requestUrl( QNetworkAccessManager *&result, const Q
 QNetworkReply * NovelNetJob::requestRootGet( const QUrl &url, const size_t requestMaxCount, const size_t requestMaxMs, const QString &error_msg, const QString &error_file_append_base_name, const NetworkmanagerConnectFunction &call_function, const QString &call_finle_path_name, const QString &call_function_name, const size_t call_line, const QString &old_url, const QString &file_start ) {
 	auto stdString = url.toString( ).toStdString( );
 
-	QString msg = u8"开始请求[ " + QString::fromStdString( stdString ) + u8" ]";
-	Set_Current_Show_Message_Auto_Line( msg.toStdString( ) );
-	OStream::anyStdCOut( msg, oStream );
+	QString msg;
 
 	auto requestReplyTime = getCurrentTimePoint( );
 	size_t requestCount = 0;
@@ -499,21 +497,17 @@ QNetworkReply * NovelNetJob::requestRootGet( const QUrl &url, const size_t reque
 				break;
 			}
 		}
-
+		msg = u8"重新请求[ " + QString::fromStdString( stdString ) + u8" ]";
+		Set_Current_Show_Message_Auto_Line( msg.toStdString( ) );
+		OStream::anyStdCOut( msg, oStream );
 	} while( true ) ;
-	msg = u8"结束请求[ " + QString::fromStdString( stdString ) + u8" ]";
-	Set_Current_Show_Message_Auto_Line( msg.toStdString( ) );
-	OStream::anyStdCerr( msg, instance_function::getCmakeRootPathBuilderFilePath( __FILE__ ), __LINE__, __FUNCTION__, oStream );
 	return nullptr;
 }
 QNetworkReply * NovelNetJob::requestPageGet( const QUrl &url, const size_t requestMaxCount, const size_t requestMaxMs, const QString &error_msg, const QString &error_file_append_base_name, const QString &call_finle_path_name, const QString &call_function_name, const size_t call_line, const QString &old_url, const QString &file_start ) {
 
 
 	auto stdString = url.toString( ).toStdString( );
-	QString msg = u8"开始请求[ " + QString::fromStdString( stdString ) + u8" ]";
-	Set_Current_Show_Message_Auto_Line( msg.toStdString( ) );
-	OStream::anyStdCOut( msg, oStream );
-
+	QString msg;
 	auto instance = qApp;
 	auto requestReplyTime = getCurrentTimePoint( );
 	size_t requestCount = 0;
@@ -530,7 +524,7 @@ QNetworkReply * NovelNetJob::requestPageGet( const QUrl &url, const size_t reque
 				return networkReply;
 			}
 
-			QString msg( u8"请求网址 : (%1) 异常 : [ %2 ], 正在重新获取请求 : [ %3/%4 : %5 毫秒 ]( 上次请求网址 : %6 )" );
+			msg = u8"请求网址 : (%1) 异常 : [ %2 ], 正在重新获取请求 : [ %3/%4 : %5 毫秒 ]( 上次请求网址 : %6 )";
 			auto newRequestTime = getCurrentTimePoint( );
 			auto commonType = newRequestTime - requestTime;
 			auto milliseconds = getTimeDurationToMilliseconds( commonType );
@@ -555,10 +549,11 @@ QNetworkReply * NovelNetJob::requestPageGet( const QUrl &url, const size_t reque
 		}
 
 		instance->processEvents( );
-	} while( true ) ;
-	msg = u8"结束请求[ " + QString::fromStdString( stdString ) + u8" ]";
-	Set_Current_Show_Message_Auto_Line( msg.toStdString( ) );
-	OStream::anyStdCOut( msg, oStream );
+
+		msg = u8"重新请求[ " + QString::fromStdString( stdString ) + u8" ]";
+		Set_Current_Show_Message_Auto_Line( msg.toStdString( ) );
+		OStream::anyStdCOut( msg, oStream );
+	} while( true ) ;;
 	return nullptr;
 }
 bool NovelNetJob::start( ) {
@@ -786,7 +781,7 @@ QString NovelNetJob::getPageInfo( const QString &type_name, const QUrl &type_url
 		msg = "( " + type_name + " => " + typePageUrl + " ) 序列 : [ " + QString::number( typeCount ) + " ] 没有发现小说";
 		OStream::anyStdCOut( msg, oStream );
 		Set_Current_Show_Message_Auto_Line( msg.toStdString( ) );
-		error_write_file( requestTime, oStream, type_url, currentFilePathName, __FUNCTION__, __LINE__, msg + u8"-没有发现小说", outPath, QDateTime::currentDateTime( ).toString( "hh-mm-ss" ), ".result_novel_size_is_zero.error.html", "page", QString::fromStdWString( *html_string ) );
+		//error_write_file( requestTime, oStream, type_url, currentFilePathName, __FUNCTION__, __LINE__, msg + u8"-没有发现小说", outPath, QDateTime::currentDateTime( ).toString( "hh-mm-ss" ), ".result_novel_size_is_zero.error.html", "page", QString::fromStdWString( *html_string ) );
 		return "";
 	}
 	// 鉴定小说
