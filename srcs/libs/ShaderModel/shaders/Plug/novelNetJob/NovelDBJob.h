@@ -35,7 +35,11 @@ public:// - 静态方法
 	/// @brief 移除所有空格
 	/// @param remove_obj 移除对象
 	static void removeAllSpace( QString &remove_obj ) {
+		if( remove_obj.isEmpty( ) )
+			return;
 		size_t leftLen = remove_obj.length( );
+		if( leftLen == 0 )
+			return;
 		QString::value_type *buff = new QString::value_type [ leftLen ];
 		size_t index = 0, buffIndex = 0;
 		for( ; index < leftLen; ++index ) {
@@ -45,7 +49,10 @@ public:// - 静态方法
 			buff[ buffIndex ] = value;
 			++buffIndex;
 		}
-		remove_obj = QString( buff, buffIndex );
+		if( buffIndex == 0 )
+			remove_obj = "";
+		else
+			remove_obj = QString( buff, buffIndex );
 		delete[] buff;
 	}
 	/// <summary>

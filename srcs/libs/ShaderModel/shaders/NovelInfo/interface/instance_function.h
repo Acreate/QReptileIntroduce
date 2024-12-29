@@ -80,7 +80,8 @@ namespace instance_function {
 	/// <returns>成功写入文件返回 true</returns>
 	inline bool write_error_info_file( OStream *os, const QUrl &url, const QString &root_path, const QString &dir_name, const QString &error_type, const QString &error_novel_type_name, const QString &error_file_suffix, const QString &error_call_path_file_name, const QString &error_file_call_function_name, const size_t error_file_call_function_line, const QString &error_info_text, const QString &error_write_info_content ) {
 		QDateTime currentDateTime = QDateTime::currentDateTime( );
-		QString day = currentDateTime.toString( "yyyy_MM_dd" );
+		QString timeForm = currentDateTime.toString( "yyyy-MM-dd" );
+		QString day = currentDateTime.toString( timeForm );
 		QString time = currentDateTime.toString( "hh mm ss" );
 
 		QString msg;
