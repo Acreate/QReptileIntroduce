@@ -164,7 +164,7 @@ namespace instance_function {
 		return result;
 	}
 	/// <summary>
-	/// 输出错误信息到指定文件
+	/// 输出错误信息到指定流
 	/// </summary>
 	/// <param name="os">流，可选为nullptr</param>
 	/// <param name="error_call_path_file_name">错误诞生的文件</param>
@@ -172,7 +172,7 @@ namespace instance_function {
 	/// <param name="error_file_call_function_line">错误诞生的描述行号</param>
 	/// <param name="error_info_text">错误信息</param>
 	/// <returns>成功写入文件返回 true</returns>
-	inline bool write_error_info_file( OStream *os, const QString &error_call_path_file_name, const QString &error_file_call_function_name, const size_t error_file_call_function_line, const QString &error_info_text ) {
+	inline bool write_error_info_ostream_error( OStream *os, const QString &error_call_path_file_name, const QString &error_file_call_function_name, const size_t error_file_call_function_line, const QString &error_info_text ) {
 		QDateTime currentDateTime = QDateTime::currentDateTime( );
 		QString day = currentDateTime.toString( "yyyy_MM_dd" );
 		QString time = currentDateTime.toString( "hh mm ss" );
@@ -558,11 +558,15 @@ NovelDBJob::NovelInfoVector_Shared NovelDBJob::removeExpireDB( OStream *thisOStr
 		return result;
 	return nullptr;
 }
-void NovelDBJob::removeNovelVectorDB( OStream *thisOStream, const QString &db_link, const QString &db_name, const std::vector< interfacePlugsType::HtmlDocString > &novel_url_vector ) {
+void NovelDBJob::removeNovelVectorDB( OStream *thisOStream, const QString &db_link, const QString &db_name, const std::vector< interfacePlugsType::HtmlDocString > &novel_url_vector, const QString &outPath ) {
 	auto dbInterface = cylDB::DBTools::linkDB( db_link );
 	if( dbInterface->link( ) ) {
 		auto depositoryShared = dbInterface->openDepository( db_name );
 		if( depositoryShared ) {
+			QString outLogPath;
+			bool logIsWrite = !outPath.isEmpty( );
+			if( logIsWrite )
+				outLogPath = outPath + QDir::separator( ) + u8"logs" + QDir::separator( );
 			QString tabName = db_name.mid( 0, db_name.length( ) - 3 );
 			if( depositoryShared ) {
 				if( depositoryShared->open( ) ) {
@@ -575,7 +579,10 @@ void NovelDBJob::removeNovelVectorDB( OStream *thisOStream, const QString &db_li
 						for( auto &novelUrl : novel_url_vector ) {
 							query->bindValue( ":url", QString::fromStdWString( novelUrl ) );
 							if( !depositoryShared->exec( query ) )
-								instance_function::write_error_info_file( nullptr, instance_function::getCmakeRootPathBuilderFilePath( __FILE__ ), __FUNCTION__, __LINE__, "无法删除指定项目" );
+								if( logIsWrite ) // 写入
+									instance_function::write_error_info_file( thisOStream, QUrl( " " ), outLogPath, "db_remove_list", "db_error", "remove", "db.log", instance_function::getCmakeRootPathBuilderFilePath( __FILE__ ), __FUNCTION__, __LINE__, "无法删除指定项目", "无法删除指定项目" );
+								else // 纯输出
+									instance_function::write_error_info_ostream_error( nullptr, instance_function::getCmakeRootPathBuilderFilePath( __FILE__ ), __FUNCTION__, __LINE__, "无法删除指定项目" );
 						}
 						if( transaction )
 							depositoryShared->commit( );

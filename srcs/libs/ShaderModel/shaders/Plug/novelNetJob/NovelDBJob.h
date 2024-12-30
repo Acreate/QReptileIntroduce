@@ -108,8 +108,9 @@ public:// - 静态方法
 	/// <param name="db_link">链接对象</param>
 	/// <param name="db_name">数据库名称</param>
 	/// <param name="novel_url_vector">删除的列表</param>
+	/// <param name="outPath">日志根路径，字符串为空时，纯输出，不写入日志</param>
 	/// <returns>删除元素</returns>
-	static void removeNovelVectorDB( OStream *thisOStream, const QString &db_link, const QString &db_name, const std::vector< interfacePlugsType::HtmlDocString > &novel_url_vector );
+	static void removeNovelVectorDB( OStream *thisOStream, const QString &db_link, const QString &db_name, const std::vector< interfacePlugsType::HtmlDocString > &novel_url_vector, const QString &outPath );
 	/// <summary>
 	/// 校验小说是否过期-单对象
 	/// </summary>

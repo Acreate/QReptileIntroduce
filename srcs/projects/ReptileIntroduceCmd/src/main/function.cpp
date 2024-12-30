@@ -943,9 +943,10 @@ std::shared_ptr< cylHtmlTools::HtmlWorkThreadPool > getDBNovelsInfo( const std::
 					&std_cout_mutex,&inster_novel_vector_map_mutex,
 					&inster_novel_vector_map_obj,&novel_inster_count,&db_novel_count]( cylHtmlTools::HtmlWorkThread * ) {
 					QFileInfo fileInfo( dbPath );
-					QString absolutePath = fileInfo.absoluteDir( ).absolutePath( );
-					QString absoluteFilePath = fileInfo.absoluteFilePath( );
-					QString fileName = fileInfo.fileName( );
+					QString absolutePath = fileInfo.absoluteDir( ).absolutePath( ); // 数据库所在文件夹名称路径
+					QString absoluteFilePath = fileInfo.absoluteFilePath( );  // 数据库文件路径名称
+					QString fileName = fileInfo.fileName( ); // 数据库基本名称
+					QString dbDirTopLevePath = QFileInfo( absolutePath ).absoluteDir( ).absolutePath( ); // 数据库目录的父级目录
 					std::shared_ptr< NovelDBJob::NovelInfoVector > novelInfoVectorShared = NovelDBJob::readDB( nullptr, absolutePath, fileName );
 					size_t size = 0;
 					// 是否读取到数据库
@@ -957,7 +958,7 @@ std::shared_ptr< cylHtmlTools::HtmlWorkThreadPool > getDBNovelsInfo( const std::
 								auto isExpire = NovelDBJob::novelVectorIsExpire( expire, *novelInfoVectorShared );
 								if( isExpire.size( ) > 0 ) {
 									auto novelUrlVector = NovelDBJob::novelVectorGetNovleUrl( isExpire );
-									NovelDBJob::removeNovelVectorDB( nullptr, absolutePath, fileName, novelUrlVector );
+									NovelDBJob::removeNovelVectorDB( nullptr, absolutePath, fileName, novelUrlVector, dbDirTopLevePath );
 									*novelInfoVectorShared = NovelDBJob::formVectorINovelInfoRemoveVectorINovelInfo( *novelInfoVectorShared, isExpire );
 								}
 							}

@@ -229,7 +229,7 @@ Vector_INovelInfoSPtr RequestNet::formHtmlGetTypePageNovels( const interfacePlug
 			QString fromStdWString = novelNodeXPathInfo.normal_update_time_function( lastTime );
 			QDateTime novelTime = QDateTime::fromString( fromStdWString, currentTimeForm );
 			auto compareDateTime = DateTime::compareDateTime( currentTime, novelTime );
-			int16_t timeToDay = DateTime::getTimeToDay( compareDateTime );
+			int16_t timeToDay = DateTime::getMillisecondsTimeToDay( compareDateTime );
 			if( abs( timeToDay ) > expireDay ) {
 				quitMsg = DateTime_Error_Expire; // xpath 异常 : 更新时间 找不到
 				line = __LINE__;

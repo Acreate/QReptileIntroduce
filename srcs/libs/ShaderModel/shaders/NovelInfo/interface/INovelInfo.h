@@ -11,7 +11,7 @@ namespace interfacePlugsType {
 		/// <summary>
 		/// 建议过期时间
 		/// </summary>
-		static  int getExpireDay();
+		static int getExpireDay( );
 	public:
 		interfacePlugsType::HtmlDocString additionalData;
 		interfacePlugsType::HtmlDocString author;
@@ -176,13 +176,13 @@ namespace interfacePlugsType {
 		/// </summary>
 		virtual void clear( ) {
 			additionalData = author = format = info = lastItem =
-				lastRequestTime = lastRequestTimeFormat =
-				novelName = rootUrl = typeName = typePageUrl = updateTime = url = L"";
+					lastRequestTime = lastRequestTimeFormat =
+					novelName = rootUrl = typeName = typePageUrl = updateTime = url = L"";
 		}
 
 	};
 }
 
 
-using NovelInfo = interfacePlugsType::INovelInfo ;
+using NovelInfo = interfacePlugsType::INovelInfo;
 #endif // INOVELINFO_H_H_HEAD__FILE__

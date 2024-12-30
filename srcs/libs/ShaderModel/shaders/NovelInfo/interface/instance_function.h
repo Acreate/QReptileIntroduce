@@ -8,6 +8,7 @@
 #include <QDateTime>
 #include <QDir>
 #include <QUrl>
+#include <dateTime/DateTime.h>
 
 namespace instance_function {
 	struct NovelNodeXPathInfo;
@@ -98,9 +99,11 @@ namespace instance_function {
 			.append( "\n=========================" )
 			.append( "\n-->" );
 		OStream::anyStdCOut( msg, os );
+		auto runStartInitTime = DateTime::getRunStartInitTime( );
+		auto stringOnLocal = DateTime::toStringOnLocal( "%Y 年 %m 月 %d 日 - %H 时 %M 分 %S 秒", runStartInitTime );
 		auto path = QString( root_path )
 					.append( QDir::separator( ) )
-					.append( day ).append( QDir::separator( ) )
+					.append( QString::fromStdString( stringOnLocal ) ).append( QDir::separator( ) )
 					.append( dir_name ).append( QDir::separator( ) )
 					.append( url.host( ) ).append( QDir::separator( ) )
 					.append( error_type )
