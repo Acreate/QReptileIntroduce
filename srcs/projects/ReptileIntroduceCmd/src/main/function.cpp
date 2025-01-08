@@ -383,7 +383,7 @@ void showHelp( std::shared_ptr< cylStd::ArgParser > &args ) {
 	if( args->getOptionValues( "-h" ) )
 		showHelp( );
 }
-std::vector< QString > getFilePathsOptionPaths( std::shared_ptr< cylStd::ArgParser > &args, const cylStd::ArgParser::String &option ) {
+std::vector< QString > getFilePathsOptionPaths( const std::shared_ptr< cylStd::ArgParser > &args, const cylStd::ArgParser::String &option ) {
 	std::vector< QString > filePaths;
 	auto optionValues = args->getOptionValues( option );
 	if( optionValues ) {
@@ -805,6 +805,56 @@ void unmapRemoveIfSubKeys( std::unordered_map< QString, std::vector< QString > >
 		if( writeFile( iter.first, QIODeviceBase::ReadWrite | QIODeviceBase::Truncate, newBuff, "\n" ) )
 			iter.second = newBuff;
 	}
+}
+void checkFindKeYFiles( const std::shared_ptr< cylStd::ArgParser > &arg_parser ) {
+	// 读写文件列表
+	auto dest = getFilePathsOptionPaths( arg_parser, "-sff" );
+	if( dest.size( ) == 0 )
+		return;
+	QMutex stdCountMutex;
+	auto callFunctionName = __FUNCTION__;
+	auto threadPools = new cylHtmlTools::HtmlWorkThreadPool( );
+	for( auto &filePath : dest )
+		threadPools->appendWork( [&,filePath]( cylHtmlTools::HtmlWorkThread *html_work_thread ) {
+			QFile file( filePath );
+			Out_Std_Count_Stream_Msg_MACRO( stdCountMutex, callFunctionName, QString(u8"匹配查找文件路径 : [ %1 ]").arg( filePath ).toStdString( ) );
+			if( file.exists( ) && file.open( QIODeviceBase::ReadOnly | QIODeviceBase::Text ) ) {
+				auto byteArray = file.readAll( );
+				file.close( );
+				auto splites = splite( byteArray, { "\n", ",", "，", "。", ".", ":", "|", "-", "—", "_" } );
+				qsizetype spliteCount = splites.size( );
+				if( spliteCount > 0 ) {
+					Out_Std_Count_Stream_Msg_MACRO( stdCountMutex, callFunctionName, QString(u8"发现查找文件个数 : [ %1 ] -> ( %2 )").arg( filePath ).arg( spliteCount ).toStdString( ) );
+					std::vector< QString > writeList;
+					for( auto &str : splites )
+						if( !removeAllSpace( str ).isEmpty( ) )
+							writeList.emplace_back( str );
+					writeList = vectorStrAdjustSubStr( writeList );
+					spliteCount = writeList.size( );
+					Out_Std_Count_Stream_Msg_MACRO( stdCountMutex, callFunctionName, QString(u8"重新写入文件 : [ %1 ] -> ( %2 )").arg( filePath ).arg( spliteCount ).toStdString( ) );
+					if( spliteCount > 0 ) {
+						writeFile( filePath, writeList, "\n" );
+					}
+					Out_Std_Count_Stream_Msg_MACRO( stdCountMutex, callFunctionName, QString(u8"写入完毕 : [ %1 ] -> ( %2 )").arg( filePath ).arg( spliteCount ).toStdString( ) );
+				} else {
+					stdCountMutex.lock( );
+					ErrorCout_FunctionName_MACRO( QString(u8"数据错误异常 : [ %1 ] -> ( %2 )").arg( filePath ).arg( spliteCount ), callFunctionName );
+					stdCountMutex.unlock( );
+				}
+			} else {
+				stdCountMutex.lock( );
+				ErrorCout_FunctionName_MACRO( QString(u8"打开错误 : [ %1 ] -> 无法打开或者不存在").arg( filePath ), callFunctionName );
+				stdCountMutex.unlock( );
+			}
+		} );
+	threadPools->setIdleTimeCall( [&stdCountMutex,&callFunctionName]( cylHtmlTools::HtmlWorkThreadPool *html_work_thread_pool, const unsigned long long &modWork, const unsigned long long &currentWork ) {
+		Out_Std_Thread_Pool_Count_Stream_Msg_MACRO( stdCountMutex, modWork, currentWork, callFunctionName, QString(u8"查找文件过滤当中").toStdString( ) );
+	} );
+	threadPools->setWorkCount( threadPools->getSystemCupCount( ) * 2 );
+	threadPools->start( );
+	auto app = qApp;
+	while( !threadPools->isOverJob( ) )
+		app->processEvents( );
 }
 void checkKeyFile( std::shared_ptr< cylStd::ArgParser > &args ) {
 	// 读写文件列表

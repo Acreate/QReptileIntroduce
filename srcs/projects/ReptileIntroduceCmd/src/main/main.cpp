@@ -1,8 +1,5 @@
 ﻿#include "./function.h"
 
-using time_point = std::chrono::system_clock::time_point;
-#define Time_Fommatting( Formmation_String, Time_Object ) \
-	std::cout << "e.g ( "<< Formmation_String <<" ) : "<<  Time_Object.toFormattingLocalString( Formmation_String ) << std::endl
 int main( int argc, char *argv[ ] ) {
 
 	std::locale locale( "zh_CN.UTF8" );
@@ -30,6 +27,8 @@ int main( int argc, char *argv[ ] ) {
 	showHelp( argParser );
 	// 运行插件
 	runRequestDownloadPlugs( argParser );
+	// 检查查找关键字文件，并且排序，切分
+	checkFindKeYFiles(argParser);
 	// 检查关键字文件
 	checkKeyFile( argParser );
 	// 数据库操作

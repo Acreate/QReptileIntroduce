@@ -226,7 +226,7 @@ void showHelp( std::shared_ptr< cylStd::ArgParser > &args );
 /// <param name="args">选项对象</param>
 /// <param name="option">选项名称</param>
 /// <returns>存在的文件列表</returns>
-std::vector< QString > getFilePathsOptionPaths( std::shared_ptr< cylStd::ArgParser > &args, const cylStd::ArgParser::String &option );
+std::vector< QString > getFilePathsOptionPaths( const std::shared_ptr< cylStd::ArgParser > &args, const cylStd::ArgParser::String &option );
 /// <summary>
 /// 获取首个非文件地址。（路径不存在，则返回该地址）
 /// </summary>
@@ -324,6 +324,17 @@ void runRequestDownloadPlugs( std::shared_ptr< cylStd::ArgParser > &args );
 /// <returns>写入个数</returns>
 qint64 writeFile( const QString &file_path, const QFileDevice::OpenMode open_mode, const std::vector< QString > &write_content_vector, const QString &jion_str );
 
+/// <summary>
+/// 内容写入文件
+/// </summary>
+/// <param name="file_path">文件路径</param>
+/// <param name="write_content_vector">写入内容</param>
+/// <param name="jion_str">拼接字符串</param>
+/// <returns>写入个数</returns>
+inline qint64 writeFile( const QString &file_path, const std::vector< QString > &write_content_vector, const QString &jion_str ) {
+	return writeFile( file_path, QIODeviceBase::ReadWrite | QIODeviceBase::Truncate, write_content_vector, jion_str );
+}
+
 /// @brief 移除字符串所有空字符
 /// @param str 移除的字符串对象
 /// @return 返回移除后的字符串对象
@@ -352,6 +363,9 @@ void unmapRemoveIfEquKeys( std::unordered_map< QString, std::vector< QString > >
 /// <param name="dest_file_text_map_keys">映射</param>
 /// <param name="source_sub_keys">段内匹配的关键字</param>
 void unmapRemoveIfSubKeys( std::unordered_map< QString, std::vector< QString > > &dest_file_text_map_keys, const std::vector< QString > &source_sub_keys );
+/// @brief 用于检查关键字文件，并且处理完善查找关键字文件内容
+/// @param arg_parser 参数列表解析对象
+void checkFindKeYFiles( const std::shared_ptr< cylStd::ArgParser > &arg_parser );
 /// <summary>
 /// 用于处理查找配置关键字文件内容
 /// </summary>
