@@ -33,7 +33,6 @@
 #  define IOSTREAM_DEPRECATED_NO_EXPORT IOSTREAM_NO_EXPORT IOSTREAM_DEPRECATED
 #endif
 
-/* NOLINTNEXTLINE(readability-avoid-unconditional-preprocessor-if) */
 #if 0 /* DEFINE_NO_DEPRECATED */
 #  ifndef IOSTREAM_NO_DEPRECATED
 #    define IOSTREAM_NO_DEPRECATED

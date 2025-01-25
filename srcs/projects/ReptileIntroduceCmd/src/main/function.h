@@ -24,7 +24,68 @@
 #include "interface/instance_function.h"
 
 #include "dateTime/DateTime.h"
+/// @brief 路径管理对象
+class PathManage {
+	std::filesystem::path currentPath;
+	std::vector< std::filesystem::path > updateFileVector;
+	std::mutex objMutex;
+public:
+	PathManage( const std::filesystem::path &current_path )
+		: currentPath( current_path ) { }
+	PathManage( const PathManage &other )
+		: currentPath( other.currentPath ),
+		updateFileVector( other.updateFileVector ) { }
+	PathManage( PathManage &&other ) noexcept
+		: currentPath( std::move(other.currentPath) ),
+		updateFileVector( std::move(other.updateFileVector) ) { }
+	PathManage & operator=( const PathManage &other ) {
+		if( this == &other )
+			return *this;
+		currentPath = other.currentPath;
+		updateFileVector = other.updateFileVector;
+		return *this;
+	}
+	PathManage & operator=( PathManage &&other ) noexcept {
+		if( this == &other )
+			return *this;
+		currentPath = std::move( other.currentPath );
+		updateFileVector = std::move( other.updateFileVector );
+		return *this;
+	}
+	std::filesystem::path getCurrentPath( ) const { return currentPath; }
+	/// @brief 路径是否存在，不存在则返回 false
+	/// @return 存在返回 true
+	bool exists( ) const {
+		return std::filesystem::exists( currentPath );
+	}
+	/// @brief 对象路径下是否不存在文件，不存在返回 true
+	/// @return 不存在文件或者路径不存在则返回 true
+	bool isEmptyDir( ) const {
+		if( !std::filesystem::is_directory( currentPath ) )
+			return false; // 是文件，或者不存在，返回 false
+		if( !std::filesystem::exists( currentPath ) )
+			return true;
+		std::filesystem::recursive_directory_iterator directoryIterator( currentPath );
+		std::filesystem::recursive_directory_iterator endIterator;
+		for( ; directoryIterator != endIterator; ++directoryIterator )
+			if( !directoryIterator->is_directory( ) )
+				return false;
+		return true;
+	}
+	/// @brief 添加更新路径-不存在或者是文件夹，则添加失败
+	/// @param update_path 更新的路径
+	/// @result 失败返回 false
+	bool updateFilePath( const std::filesystem::path &update_path );
+	/// @brief 返回旧文件
+	/// @return 旧文件列表 
+	std::vector< std::filesystem::path > getOldPath( );
+	/// @brief 获取空文件夹-该路径下只存在文件夹，不存在文件的文件夹
+	/// @return 空文件夹列表
+	std::vector< std::filesystem::path > getEmptyDir( );
 
+	virtual ~PathManage( ) {
+	}
+};
 
 class Time {
 private:
@@ -199,7 +260,6 @@ std::vector< QString > & vectorStrLenSort( std::vector< QString > &str_vector, b
 /// <returns>写入内容</returns>
 QString writeJionStringVector( const QString &write_file_path, const std::vector< QString > &qt_str_vector, const QString &jion );
 
-
 /// <summary>
 /// 显示 app 名称
 /// </summary>
@@ -234,7 +294,6 @@ std::vector< QString > getFilePathsOptionPaths( const std::shared_ptr< cylStd::A
 /// <param name="option">选项名称</param>
 /// <returns>首个文件夹地址</returns>
 QString getFirstDirPathsOptionPath( std::shared_ptr< cylStd::ArgParser > &args, const cylStd::ArgParser::String &option );
-
 
 /// <summary>
 /// 获取文本文件
@@ -306,7 +365,6 @@ std::vector< QProcess * > runPluginToSubProcess( const QString &app_path, QMutex
 /// <param name="call_function_line">调用该函数的行数-错误时使用</param>
 /// <returns>返回插件对象</returns>
 NovelNetJob * runPluginToThisProcess( QMutex &qt_mutex, size_t &ref_count, const QString &out_path, const std::vector< QString > &reques_type_names_vector, const QString &novel_plug_path, const std::string &call_function_file_path, const char *call_function_name, const size_t &call_function_line );
-
 
 /// <summary>
 /// 运行小说请求插件
@@ -391,8 +449,7 @@ using Str_Vector = std::vector< interfacePlugsType::HtmlDocString >; // 字符�
 using Str_Vector_S = std::shared_ptr< Str_Vector >; // 字符串序列对象指针
 using Len_Pair = std::pair< size_t, Str_Vector_S >;
 using Len_Map_Str_Vector_S = std::vector< Len_Pair >; // 长度匹配的字符串序列映射对象
-using Len_Map_Str_Vector_S_Shared = std::shared_ptr< Len_Map_Str_Vector_S >;// 长度匹配的字符串序列映射对象指针
-
+using Len_Map_Str_Vector_S_Shared = std::shared_ptr< Len_Map_Str_Vector_S >; // 长度匹配的字符串序列映射对象指针
 
 /// @brief 查找长度映射对象当中是否存在指定字符串
 /// @param inster_map_obj_shared_ptr 查找的长度匹配映射对象
@@ -501,19 +558,19 @@ bool lenMapFindNovelKey( const NovelInfo &novel_info, const Len_Map_Str_Vector_S
 /// <param name="inster_map_thread_pool">插入任务线程池对象</param>
 /// <returns>任务执行线程池</returns>
 std::shared_ptr< cylHtmlTools::HtmlWorkThreadPool > getDBFindNovelInfo(
-		const NovelDBJob::NovelTypePairVector_Shared &novel_type_pair_vector_shared,
-		const std::unordered_map< QString, std::vector< interfacePlugsType::HtmlDocString > > &exis_find_file_path_map_key,
-		QMutex &std_cout_mutex,
-		QMutex &merge_find_keys_types_novel_infos_map_mutex,
-		PathWriteNovelInfoUnMap &merge_find_keys_types_novel_infos_map,
-		QMutex &merge_find_keys_dbs_novel_infos_map_mutex,
-		PathWriteNovelInfoUnMap &merge_find_keys_dbs_novel_infos_map,
-		QMutex &merge_find_keys_export_key_novel_infos_map_mutex,
-		PathWriteNovelInfoUnMap &merge_find_keys_export_key_novel_infos_map,
-		QMutex &merge_find_keys_export_novel_infos_map_mutex,
-		PathWriteNovelInfoUnMap &merge_find_keys_export_novel_infos_map,
-		QMutex &inster_map_thread_pool_mutex,
-		std::shared_ptr< cylHtmlTools::HtmlWorkThreadPool > &inster_map_thread_pool );
+	const NovelDBJob::NovelTypePairVector_Shared &novel_type_pair_vector_shared,
+	const std::unordered_map< QString, std::vector< interfacePlugsType::HtmlDocString > > &exis_find_file_path_map_key,
+	QMutex &std_cout_mutex,
+	QMutex &merge_find_keys_types_novel_infos_map_mutex,
+	PathWriteNovelInfoUnMap &merge_find_keys_types_novel_infos_map,
+	QMutex &merge_find_keys_dbs_novel_infos_map_mutex,
+	PathWriteNovelInfoUnMap &merge_find_keys_dbs_novel_infos_map,
+	QMutex &merge_find_keys_export_key_novel_infos_map_mutex,
+	PathWriteNovelInfoUnMap &merge_find_keys_export_key_novel_infos_map,
+	QMutex &merge_find_keys_export_novel_infos_map_mutex,
+	PathWriteNovelInfoUnMap &merge_find_keys_export_novel_infos_map,
+	QMutex &inster_map_thread_pool_mutex,
+	std::shared_ptr< cylHtmlTools::HtmlWorkThreadPool > &inster_map_thread_pool );
 
 /// <summary>
 /// 调整关键字，存在子字符串则不需要源字符串(a -> aa / 其中只保留 a，不保留 aa)
@@ -540,12 +597,12 @@ void novelInfoExportSort( std::vector< NovelInfo_Shared > &write_info_vector );
 /// <param name="infos">写入信息</param>
 /// <param name="callFunctionName">调用名称</param>
 void writeDisk( QMutex &disk_mute,
-		QMutex &count_mute,
-		QMutex &std_cout_mutex,
-		const QString &all_file_path_name_name,
-		size_t &write_novel_count,
-		const NovelInfoKeyPairVector &infos,
-		const std::string &callFunctionName );
+				QMutex &count_mute,
+				QMutex &std_cout_mutex,
+				const QString &all_file_path_name_name,
+				size_t &write_novel_count,
+				const NovelInfoKeyPairVector &infos,
+				const std::string &callFunctionName );
 /// <summary>
 /// 文件小说写入磁盘
 /// </summary>
@@ -557,12 +614,12 @@ void writeDisk( QMutex &disk_mute,
 /// <param name="infos">小说列表</param>
 /// <param name="callFunctionName">调用者-函数名称</param>
 void writeDisk( QMutex &disk_mute,
-		QMutex &count_mute,
-		QMutex &std_cout_mutex,
-		const QString &all_file_path_name_name,
-		size_t &write_novel_count,
-		const NovelDBJob::NovelInfoVector &infos,
-		const std::string &callFunctionName );
+				QMutex &count_mute,
+				QMutex &std_cout_mutex,
+				const QString &all_file_path_name_name,
+				size_t &write_novel_count,
+				const NovelDBJob::NovelInfoVector &infos,
+				const std::string &callFunctionName );
 
 /// <summary>
 /// 执行写入磁盘任务
@@ -573,8 +630,9 @@ void writeDisk( QMutex &disk_mute,
 /// <param name="disk_mute">磁盘文件、路径操作锁</param>
 /// <param name="count_mute">计数锁</param>
 /// <param name="write_novel_count">写入计数返回引用变量-不重计，直接累加</param>
+/// <param name="path_manages">存储修改路径</param>
 /// <returns>任务线程池对象</returns>
-std::shared_ptr< cylHtmlTools::HtmlWorkThreadPool > writeDiskInForNovels( const NovelDBJob::NovelTypePairVector_Shared &novel_infos_write_map, const std::vector< QString > &exis_legitimate_out_dir_path, QMutex &std_cout_mutex, QMutex &disk_mute, QMutex &count_mute, size_t &write_novel_count );
+std::shared_ptr< cylHtmlTools::HtmlWorkThreadPool > writeDiskInForNovels( const NovelDBJob::NovelTypePairVector_Shared &novel_infos_write_map, const std::vector< QString > &exis_legitimate_out_dir_path, QMutex &std_cout_mutex, QMutex &disk_mute, QMutex &count_mute, size_t &write_novel_count, std::vector< PathManage > &path_manages );
 /// <summary>
 /// 激活查找归纳任务
 /// </summary>
@@ -584,14 +642,16 @@ std::shared_ptr< cylHtmlTools::HtmlWorkThreadPool > writeDiskInForNovels( const 
 /// <param name="disk_mute">磁盘读写锁</param>
 /// <param name="count_mute">写入计数锁</param>
 /// <param name="write_novel_count">写入计数-不重计，直接累加</param>
+/// <param name="path_manages">存储写入路径</param>
 /// <returns>任务线程池</returns>
 std::shared_ptr< cylHtmlTools::HtmlWorkThreadPool > writeDiskInForInductionNovels(
-		const std::vector< QString > &exis_legitimate_out_dir_path,
-		const PathWriteNovelInfoUnMap &novel_keys_map,
-		QMutex &std_cout_mutex,
-		QMutex &disk_mute,
-		QMutex &count_mute,
-		size_t &write_novel_count );
+	const std::vector< QString > &exis_legitimate_out_dir_path,
+	const PathWriteNovelInfoUnMap &novel_keys_map,
+	QMutex &std_cout_mutex,
+	QMutex &disk_mute,
+	QMutex &count_mute,
+	size_t &write_novel_count,
+	std::vector< PathManage > &path_manages );
 /// @brief 显示运行时间
 /// @param arg_parser 运行时参数对象
 void showRunTime( const std::shared_ptr< cylStd::ArgParser > &arg_parser );
@@ -733,7 +793,6 @@ inline QString getFileBaseName( const QString &filePathInfo ) {
 	return getFileBaseName( QFileInfo( filePathInfo ) );
 }
 
-
 /// @brief 向错误输出输出一个信息
 /// @param msg 输出的错误信息
 #define ErrorCout_MACRO( msg )  errorCoutPath((msg),  callFileName.c_str(  ) , __FUNCTION__, __LINE__)
@@ -775,12 +834,12 @@ bool vectorFindValue( const std::vector< TValue > &check_vector, const TValue &c
 	std::_Vector_const_iterator< std::_Vector_val< std::_Simple_types< TValue > > > iteratorBegin = check_vector.begin( );
 	std::_Vector_const_iterator< std::_Vector_val< std::_Simple_types< TValue > > > end = check_vector.end( );
 	result_iterator = std::find_if( iteratorBegin,
-			end,
-			[&]( const TValue &it ) {
-				if( check_key == it )
-					return true;
-				return false;
-			} );
+									end,
+									[&] ( const TValue &it ) {
+										if( check_key == it )
+											return true;
+										return false;
+									} );
 	return result_iterator != end;
 }
 
