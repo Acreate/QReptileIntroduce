@@ -28,7 +28,7 @@ std::string applicationPid; // app id
 
 bool PathManage::updateFilePath( const std::filesystem::path &update_path ) {
 	objMutex.lock( );
-	if( std::filesystem::is_directory( update_path ) | !std::filesystem::exists( update_path ) ) {
+	if( std::filesystem::is_directory( update_path ) ) {
 		objMutex.unlock( );
 		return false;
 	}
@@ -91,6 +91,13 @@ std::vector< std::filesystem::path > PathManage::getEmptyDir( ) {
 	}
 	objMutex.unlock( );
 	return result;
+}
+std::vector< std::filesystem::path > PathManage::getUpdateFileVector( ) {
+
+	objMutex.lock( );
+	auto clone = std::vector< std::filesystem::path >( updateFileVector.begin( ), updateFileVector.end( ) );
+	objMutex.unlock( );
+	return clone;
 }
 QString getBuilderInfo( ) {
 
@@ -2008,6 +2015,12 @@ void dbReadWriteChanger( const std::shared_ptr< cylStd::ArgParser > &arg_parser 
 	Out_Std_Count_Stream_Msg_MACRO( stdCoutMutex, callFunctionName, QString(u8"累计写入小说数量 :[ %1 ]\n").arg( saveNovelCount ).toStdString( ) );
 	/// 开始删除路径
 	for( auto &pathmanage : exisLegitimateOutDirPathPathManage ) {
+		Out_Std_Count_Stream_Msg_MACRO( stdCoutMutex, callFunctionName, QString(u8"(进程 id : %1 ) 正在检查写入文件列表\n").arg( applicationPid.c_str( ) ).toStdString( ) );
+		auto updateList = pathmanage.getUpdateFileVector( );
+		for( auto &outFilePath : updateList )
+			Out_Std_Count_Stream_Msg_MACRO( stdCoutMutex, callFunctionName, QString(u8"(进程 id : %1 ) 发现更新路径 :[ %2 ]\n").arg( applicationPid.c_str( ) ).arg( outFilePath .string( ).c_str( ) ).toStdString( ) );
+
+		Out_Std_Count_Stream_Msg_MACRO( stdCoutMutex, callFunctionName, QString(u8"(进程 id : %1 ) 正在删除旧文件列表\n").arg( applicationPid.c_str( ) ).toStdString( ) );
 		auto oldPath = pathmanage.getOldPath( );
 		for( auto &removepath : oldPath )
 			try {
@@ -2019,8 +2032,9 @@ void dbReadWriteChanger( const std::shared_ptr< cylStd::ArgParser > &arg_parser 
 				auto removeAbsolutePath = std::filesystem::absolute( removepath ).string( );
 				ErrorCout_MACRO( QString("(进程 id : %1 ) 路径[%2]删除错误,信息:[%3]").arg( applicationPid.c_str( ) ).arg( removeAbsolutePath.c_str( ) ).arg(exception.what( )) );
 			}
-		auto emptyDir = pathmanage.getEmptyDir( );
 
+		Out_Std_Count_Stream_Msg_MACRO( stdCoutMutex, callFunctionName, QString(u8"(进程 id : %1 ) 正在删除空目录列表\n").arg( applicationPid.c_str( ) ).toStdString( ) );
+		auto emptyDir = pathmanage.getEmptyDir( );
 		for( auto &removepath : emptyDir )
 			try {
 				if( std::filesystem::remove_all( removepath ) )

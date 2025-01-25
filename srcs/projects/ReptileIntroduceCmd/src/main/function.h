@@ -36,8 +36,8 @@ public:
 		: currentPath( other.currentPath ),
 		updateFileVector( other.updateFileVector ) { }
 	PathManage( PathManage &&other ) noexcept
-		: currentPath( std::move(other.currentPath) ),
-		updateFileVector( std::move(other.updateFileVector) ) { }
+		: currentPath( std::move( other.currentPath ) ),
+		updateFileVector( std::move( other.updateFileVector ) ) { }
 	PathManage & operator=( const PathManage &other ) {
 		if( this == &other )
 			return *this;
@@ -82,7 +82,7 @@ public:
 	/// @brief 获取空文件夹-该路径下只存在文件夹，不存在文件的文件夹
 	/// @return 空文件夹列表
 	std::vector< std::filesystem::path > getEmptyDir( );
-
+	std::vector< std::filesystem::path > getUpdateFileVector( );
 	virtual ~PathManage( ) {
 	}
 };
