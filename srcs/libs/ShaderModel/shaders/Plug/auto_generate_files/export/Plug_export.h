@@ -33,6 +33,7 @@
 #  define PLUG_DEPRECATED_NO_EXPORT PLUG_NO_EXPORT PLUG_DEPRECATED
 #endif
 
+/* NOLINTNEXTLINE(readability-avoid-unconditional-preprocessor-if) */
 #if 0 /* DEFINE_NO_DEPRECATED */
 #  ifndef PLUG_NO_DEPRECATED
 #    define PLUG_NO_DEPRECATED

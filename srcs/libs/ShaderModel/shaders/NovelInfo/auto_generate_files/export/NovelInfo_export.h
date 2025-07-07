@@ -33,6 +33,7 @@
 #  define NOVELINFO_DEPRECATED_NO_EXPORT NOVELINFO_NO_EXPORT NOVELINFO_DEPRECATED
 #endif
 
+/* NOLINTNEXTLINE(readability-avoid-unconditional-preprocessor-if) */
 #if 0 /* DEFINE_NO_DEPRECATED */
 #  ifndef NOVELINFO_NO_DEPRECATED
 #    define NOVELINFO_NO_DEPRECATED

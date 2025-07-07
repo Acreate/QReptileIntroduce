@@ -33,6 +33,7 @@
 #  define PATH_TOOL_DEPRECATED_NO_EXPORT PATH_TOOL_NO_EXPORT PATH_TOOL_DEPRECATED
 #endif
 
+/* NOLINTNEXTLINE(readability-avoid-unconditional-preprocessor-if) */
 #if 0 /* DEFINE_NO_DEPRECATED */
 #  ifndef PATH_TOOL_NO_DEPRECATED
 #    define PATH_TOOL_NO_DEPRECATED

@@ -891,7 +891,7 @@ void checkFindKeYFiles( const std::shared_ptr< cylStd::ArgParser > &arg_parser )
 			if( file.exists( ) && file.open( QIODeviceBase::ReadOnly | QIODeviceBase::Text ) ) {
 				auto byteArray = file.readAll( );
 				file.close( );
-				auto splites = splite( byteArray, {"\n", ",", "，", "。", ".", ":", "|", "-", "—", "_"} );
+				auto splites = splite( byteArray, {"\n", ",", "，", "。", ".", ":", "|", "-", "—", "_", "、", "\\", "/"} );
 				qsizetype spliteCount = splites.size( );
 				if( spliteCount > 0 ) {
 					Out_Std_Count_Stream_Msg_MACRO( stdCountMutex, callFunctionName, QString(u8"发现查找文件个数 : [ %1 ] -> ( %2 )").arg( filePath ).arg( spliteCount ).toStdString( ) );
