@@ -32,7 +32,6 @@ QString RequestNet::orgCurrentFormToUpdateTimeForm = u8R"(yyyy-%1 hh:mm:ss)";
 QString RequestNet::currentTimeForm = QObject::tr( u8R"(yyyy-MM-dd hh:mm:ss)" );
 QDateTime RequestNet::currentTime;
 
-
 RequestNet::RequestNet( QObject *parent ): QObject( parent ), rootUrl( GET_URL ), oStream( nullptr ), iStream( nullptr ), thisOStream( nullptr ), typeUrlMap( nullptr ) {
 	outPath = "Cache_Path_Dir";
 	expireDay = NovelInfo::getExpireDay( );
@@ -86,7 +85,6 @@ void RequestNet::deleteMember( ) {
 	deleteLater( );
 }
 
-
 Map_HtmlStrK_HtmlStrV * RequestNet::formHtmlGetTypeTheUrls( const interfacePlugsType::HtmlDocString &url, const HtmlDocString &htmlText ) { // todo : 从首页获取类型页面
 	auto removeBothSpaceHtmlText = htmlText;
 	HtmlStringTools::removeBothSpace( removeBothSpaceHtmlText );
@@ -117,7 +115,7 @@ Map_HtmlStrK_HtmlStrV * RequestNet::formHtmlGetTypeTheUrls( const interfacePlugs
 	HtmlDocString hrefKey = L"href";
 	for( ; vectorIterator != vectorEnd; ++vectorIterator ) {
 		auto element = vectorIterator->get( );
-		auto unorderedMap = element->findAttribute( [&]( const HtmlString &first, const HtmlString &scen ) ->bool {
+		auto unorderedMap = element->findAttribute( [&] ( const HtmlString &first, const HtmlString &scen ) ->bool {
 			if( HtmlStringTools::equRemoveSpaceOverHtmlString( first, hrefKey ) )
 				return true;
 			return false;
@@ -156,15 +154,11 @@ Vector_INovelInfoSPtr RequestNet::formHtmlGetTypePageNovels( const interfacePlug
 
 	if( vectorHtmlNodeSPtrShared ) { // 首次的页面算法
 		novelNodeXPathInfo.formTypePageGetNovelNameXpath = QString( tr( u8R"(./span[@class="s2"]/a)" ) ).toStdWString( );
-		novelNodeXPathInfo.formTypePageGetNovelUpdateTimeXpath = QString( tr( u8R"(./span[@class="s3"])" ) ).toStdWString( );
-		novelNodeXPathInfo.formTypePageGetNovelAuthorXpath = QString( tr( u8R"(./span[@class="s5"])" ) ).toStdWString( );
+		novelNodeXPathInfo.formTypePageGetNovelUpdateTimeXpath = QString( tr( u8R"(./span[@class="s5"])" ) ).toStdWString( );
+		novelNodeXPathInfo.formTypePageGetNovelAuthorXpath = QString( tr( u8R"(./span[@class="s4"])" ) ).toStdWString( );
 		novelNodeXPathInfo.formTypePageGetNovelLastUpdateItemXpath = QString( tr( u8R"(./span[@class="s3"]/a)" ) ).toStdWString( );
 		//novelNodeXPathInfo.formTypePageGetNovelInfoXpath = QString( tr( u8R"(./dd[@class='book_des'])" ) ).toStdWString( );
-		novelNodeXPathInfo.normal_update_time_function = [&]( HtmlString_Shared &html_string_shared )->QString {
-			size_t start = html_string_shared->find( L"(" );
-			*html_string_shared = html_string_shared->substr( start + 1 );
-			start = html_string_shared->find( L")" );
-			*html_string_shared = html_string_shared->substr( 0, start );
+		novelNodeXPathInfo.normal_update_time_function = [&] ( HtmlString_Shared &html_string_shared )->QString {
 			QString fromStdWString = QString::fromStdWString( *html_string_shared );
 			return timeArgForm.arg( fromStdWString );
 		};
@@ -178,6 +172,7 @@ Vector_INovelInfoSPtr RequestNet::formHtmlGetTypePageNovels( const interfacePlug
 	Vector_HtmlNodeSPtr_Shared htmlNodes = nullptr;
 	HtmlString_Shared content = nullptr;
 	QString rootUrl = GET_URL;
+	auto rootUrlWString = rootUrl.toStdWString( );
 	Novel_Xpath_Analysis_Error quitMsg;
 	HtmlNode *element;
 	auto novelInfoBuffPtr = std::make_shared< NovelInfo >( );
@@ -195,7 +190,7 @@ Vector_INovelInfoSPtr RequestNet::formHtmlGetTypePageNovels( const interfacePlug
 				break;
 			}
 			element = htmlNodes->at( 0 ).get( );
-			auto unorderedMapAttribute = element->findAttribute( []( const HtmlString &attributeName, const HtmlString &attributeValue )->bool {
+			auto unorderedMapAttribute = element->findAttribute( [] ( const HtmlString &attributeName, const HtmlString &attributeValue )->bool {
 				if( HtmlStringTools::equRemoveSpaceOverHtmlString( attributeName, L"href" ) )
 					return true;
 				return false;
@@ -207,8 +202,7 @@ Vector_INovelInfoSPtr RequestNet::formHtmlGetTypePageNovels( const interfacePlug
 			}
 			auto begin = unorderedMapAttribute->begin( );
 			auto second = begin->second;
-			auto newSecond = second.substr( 1, second.length( ) - 2 );
-			novelInfoBuffPtr->url = newSecond;
+			novelInfoBuffPtr->url = rootUrlWString + second.substr( 1, second.length( ) - 2 );
 			//////////// 名称 xpath
 			auto contentText = element->getNodeIncludeContentText( );
 			if( contentText )
@@ -265,6 +259,7 @@ Vector_INovelInfoSPtr RequestNet::formHtmlGetTypePageNovels( const interfacePlug
 			novelInfoBuffPtr->format = RequestNet::currentTimeForm.toStdWString( );
 			novelInfoBuffPtr->typePageUrl = request_url;
 			novelInfoBuffPtr->typeName = type_name;
+			novelInfoBuffPtr->rootUrl = rootUrlWString;
 			// 成功则赋值
 			novelInfoPtr = novelInfoBuffPtr;
 		} while( false );
@@ -312,12 +307,12 @@ HtmlDocString RequestNet::formHtmlGetNext( const interfacePlugsType::HtmlDocStri
 		if( htmlNodes ) {
 			auto iterator = htmlNodes->begin( );
 			auto endIterator = htmlNodes->end( );
-			HtmlString wstrNextPageKey = L"&gt;";
+			HtmlString wstrNextPageKey = L"下一页";
 			for( ; iterator != endIterator; ++iterator ) {
 				HtmlNode *element = iterator->get( );
 				HtmlString_Shared contentText = element->getNodeIncludeContentText( );
 				if( HtmlStringTools::equRemoveSpaceOverHtmlString( contentText.get( ), &wstrNextPageKey ) ) {
-					auto findAttribute = element->findAttribute( []( const HtmlString &attributeName, const HtmlString &attributeValue ) {
+					auto findAttribute = element->findAttribute( [] ( const HtmlString &attributeName, const HtmlString &attributeValue ) {
 						if( HtmlStringTools::equRemoveSpaceOverHtmlString( attributeName, L"href" ) )
 							return true;
 						return false;
@@ -326,13 +321,15 @@ HtmlDocString RequestNet::formHtmlGetNext( const interfacePlugsType::HtmlDocStri
 					if( pair == findAttribute->end( ) )
 						continue;
 					result = QString::fromStdWString( pair->second.substr( 1, pair->second.length( ) - 2 ) ).toStdWString( );
+					QUrl qurl( QString::fromStdWString( url ) );
+					QString qstringUrl = qurl.scheme( ) + "://" + qurl.host( );
+					result = qstringUrl.toStdWString( ) + result;
 					break;
 				}
 
 			}
 		}
 	}
-
 	return result;
 }
 bool RequestNet::isRequestNovelInfoUrl( const interfacePlugsType::INovelInfoPtr &novel_info_ptr ) {
