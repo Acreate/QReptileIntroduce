@@ -883,7 +883,7 @@ void checkFindKeYFiles( const std::shared_ptr< cylStd::ArgParser > &arg_parser )
 	auto callFunctionName = __FUNCTION__;
 	cylHtmlTools::HtmlWorkThreadPool threadPools;
 	std::vector< QString > spKey = { "\n", ",", "，", "。", ".", ":", "|", "-", "—", "_", "、", "\\", "/", " ", "?", "？", "`", "~", "!" };
-	QString splStrKey = "@#$%^&*(){}|:<>?·!@#$%^&*()_+=-~！@#￥%……&*（）——+｛｝|：“《》？，。、；‘【】、，。、；’【】＼＝－＋——）（×＆……％￥＃＠！～·";
+	QString splStrKey = "@#$%^&*(){}|:<>?·!@#$%^&*()_+=-~！@#￥%……&*（）——+｛｝|：“”《》？，。、；‘【】、，。、；’【】＼＝－＋——）（×＆……％￥＃＠！～·";
 	qsizetype signed_ = splStrKey.length( );
 	auto char_ = splStrKey.data( );
 	for( auto index = 0; index < signed_; ++index )
